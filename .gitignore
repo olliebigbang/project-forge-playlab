@@ -1,0 +1,10 @@
+.godot/
+.tools/
+build/web/
+artifacts/*.zip
+*.tmp
+*.log
+*.png.import
+.playwright-cli/
+screenshots/fixed-weapons-2.png
+screenshots/room1-smoke.png
