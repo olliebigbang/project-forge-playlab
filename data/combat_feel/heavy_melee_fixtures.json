@@ -1,0 +1,84 @@
+{
+  "schema": "forge-combat-feel-fixture-v1",
+  "notice": "DEVELOPER FIXTURE — NOT A LIVE GENERATED RESULT",
+  "fixtures": [
+    {
+      "id": "M01",
+      "prompt_zh": "一把巨大木勺，我要拿它近距离横扫并重重砸敌人，尽量保留勺头和长柄。",
+      "blueprint": {
+        "id": "fixture-m01", "display_name": "开发夹具 M01：巨大木勺",
+        "source_identity": "巨大木勺", "player_identity_text": "巨大木勺",
+        "behavior_family": "heavy_melee", "delivery": "whole_object_strike",
+        "impact_mode": "strike_edge", "weight_class": "heavy",
+        "grip_profile": "two_hand_rear", "silhouette_mass_distribution": "front_heavy",
+        "preserved_visual_features": ["勺头", "长柄"]
+      },
+      "anchors": {"grip_primary": [10, 48], "grip_secondary": [29, 48], "strike_point": [91, 48]},
+      "shapes": [
+        {"type": "rect", "rect": [8, 43, 68, 10], "color": "875f36"},
+        {"type": "rect", "rect": [14, 45, 62, 6], "color": "c49355"},
+        {"type": "circle", "center": [79, 48], "radius": 16, "color": "875f36"},
+        {"type": "circle", "center": [81, 46], "radius": 12, "color": "d4a865"}
+      ]
+    },
+    {
+      "id": "M02",
+      "prompt_zh": "一把平底锅，我要拿它快速拍击敌人，最后一击用锅底重重砸下去，尽量保留锅身和锅柄。",
+      "blueprint": {
+        "id": "fixture-m02", "display_name": "开发夹具 M02：平底锅",
+        "source_identity": "平底锅", "player_identity_text": "平底锅",
+        "behavior_family": "heavy_melee", "delivery": "whole_object_strike",
+        "impact_mode": "whole_body_collision", "weight_class": "light",
+        "grip_profile": "one_hand_rear", "silhouette_mass_distribution": "front_heavy",
+        "preserved_visual_features": ["锅身", "锅柄"]
+      },
+      "anchors": {"grip_primary": [48, 49], "grip_secondary": [48, 49], "strike_point": [85, 49]},
+      "shapes": [
+        {"type": "rect", "rect": [17, 45, 43, 9], "color": "3f4f5f"},
+        {"type": "rect", "rect": [18, 47, 42, 4], "color": "91a2ad"},
+        {"type": "circle", "center": [71, 49], "radius": 19, "color": "263746"},
+        {"type": "circle", "center": [71, 49], "radius": 14, "color": "8295a3"},
+        {"type": "circle", "center": [71, 49], "radius": 9, "color": "b9c5cc"}
+      ]
+    },
+    {
+      "id": "M03",
+      "prompt_zh": "一根旧拖把，我要拿它连续横扫敌人，尽量保留长杆和拖把头。",
+      "blueprint": {
+        "id": "fixture-m03", "display_name": "开发夹具 M03：旧拖把",
+        "source_identity": "旧拖把", "player_identity_text": "旧拖把",
+        "behavior_family": "heavy_melee", "delivery": "whole_object_strike",
+        "impact_mode": "strike_edge", "weight_class": "medium",
+        "grip_profile": "two_hand_rear", "silhouette_mass_distribution": "front_heavy",
+        "preserved_visual_features": ["长杆", "拖把头"]
+      },
+      "anchors": {"grip_primary": [9, 47], "grip_secondary": [28, 47], "strike_point": [91, 47]},
+      "shapes": [
+        {"type": "rect", "rect": [7, 43, 74, 7], "color": "8795a1"},
+        {"type": "rect", "rect": [11, 45, 70, 3], "color": "d1d9de"},
+        {"type": "rect", "rect": [79, 32, 8, 31], "color": "4e6772"},
+        {"type": "rect", "rect": [86, 28, 6, 39], "color": "53b7b1"},
+        {"type": "rect", "rect": [91, 31, 3, 33], "color": "98e3d8"}
+      ]
+    },
+    {
+      "id": "THRUST",
+      "prompt_zh": "开发者通用刺击夹具：巨大螺丝刀。",
+      "blueprint": {
+        "id": "fixture-thrust", "display_name": "开发夹具：通用刺击",
+        "source_identity": "巨大螺丝刀", "player_identity_text": "巨大螺丝刀",
+        "behavior_family": "heavy_melee", "delivery": "whole_object_strike",
+        "impact_mode": "strike_point", "weight_class": "medium",
+        "grip_profile": "two_hand_rear", "silhouette_mass_distribution": "balanced",
+        "preserved_visual_features": ["握柄", "金属杆", "尖端"]
+      },
+      "anchors": {"grip_primary": [13, 48], "grip_secondary": [30, 48], "strike_point": [92, 48]},
+      "shapes": [
+        {"type": "rect", "rect": [6, 38, 29, 20], "color": "c75b3c"},
+        {"type": "rect", "rect": [10, 41, 23, 14], "color": "ef8b52"},
+        {"type": "rect", "rect": [34, 45, 52, 6], "color": "a9bac4"},
+        {"type": "rect", "rect": [85, 47, 8, 2], "color": "eef4f7"}
+      ]
+    }
+  ]
+}

@@ -49,6 +49,9 @@ var visual_identity_confirmed := false
 var hud_stats: Label
 
 func _ready() -> void:
+	if _has_user_argument("--mode=combat-feel-slice-0"):
+		get_tree().call_deferred("change_scene_to_file", "res://scenes/combat_feel_slice_0.tscn")
+		return
 	randomize()
 	_build_theme()
 	provider_mode = _argument_value("--visual-provider=", MODE_MOCK).to_upper()

@@ -1,6 +1,7 @@
 .godot/
 .tools/
 build/web/
+build/windows/
 artifacts/*.zip
 *.tmp
 *.log
@@ -40,3 +41,6 @@ tools/open_playtest/output/
 tools/open_playtest/local_history/
 tools/open_playtest/**/__pycache__/
 tools/open_playtest/**/*.pyc
+**/*.translation
+**/*.csv.import
+*.gd.uid
