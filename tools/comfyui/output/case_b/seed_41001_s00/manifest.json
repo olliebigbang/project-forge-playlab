@@ -1,0 +1,46 @@
+{
+  "case_id": "case_b",
+  "prompt": "会飞出去再返回的机械闪电伞。",
+  "seed": 41001,
+  "workflow_file": "forge_object_sprite_v0.json",
+  "workflow_hash": "507095e0e1cbe0556d1bcac7cff8d28e93af65d843f69cc54de836ff267398a5",
+  "selected_comfyui_install": "ai_series_tools/ComfyUI",
+  "checkpoint": "RealVisXL_V5.0_fp16.safetensors",
+  "control_type": "none",
+  "control_strength": 0.0,
+  "generation_seconds": 2.039,
+  "postprocess_seconds": 0.04,
+  "raw_dimensions": [
+    512,
+    512
+  ],
+  "processed_dimensions": [
+    96,
+    96
+  ],
+  "alpha_coverage": 0.4911,
+  "opaque_bounds": [
+    7,
+    9,
+    82,
+    78
+  ],
+  "status": "success",
+  "failure_reason": "",
+  "prompt_id": "01a58c7b-ef67-44dd-92dd-ec1ca74694b2",
+  "run_id": "seed_41001_s00",
+  "request_id": "f073968763144b14855645270f4fa8ee",
+  "generation_size": [
+    512,
+    512
+  ],
+  "img2img_denoise": 1.0,
+  "background_border_rgb": [
+    232.0,
+    124.0,
+    160.0
+  ],
+  "background_expected_match": 0.9834,
+  "palette_limit": 32,
+  "outline": true
+}

@@ -1,0 +1,38 @@
+{
+  "case_id": "B04",
+  "local_request_id": "3112ac6b-71eb-4d80-9174-558f4d4ffea1",
+  "provider": "anthropic",
+  "endpoint": "https://api.anthropic.com/v1/messages",
+  "model_id": "claude-sonnet-5",
+  "response_model_id": "claude-sonnet-5",
+  "request_id": "msg_011CdfKCvNCazd9ox4oYfZ45",
+  "contract_version": "forge-semantic-v1.1",
+  "api_status": 200,
+  "api_request_performed": true,
+  "request_body_sha256": "1aff411a3cd7bde129f90cfdc53f563ced94791da049cd126766969ae9234c72",
+  "tool_input_sha256": "6914315979b4e94f21dfe381e2d2c2b6deb2af597ec852515775bff99124efaf",
+  "retry_count": 0,
+  "started_at": "2026-08-03T06:07:48.466Z",
+  "completed_at": "2026-08-03T06:08:02.306Z",
+  "elapsed_ms": 13844,
+  "input_tokens": 4711,
+  "output_tokens": 652,
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 0,
+  "result_type": "compiled",
+  "response_attestation": {
+    "exactly_one_legal_tool_use": true,
+    "sole_content_is_tool_use": true,
+    "stop_reason_is_tool_use": true,
+    "input_root_keys": [
+      "combat",
+      "confidence",
+      "identity",
+      "visual"
+    ],
+    "extra_root_keys": [],
+    "missing_root_keys": [],
+    "extra_root_wrapper": false
+  },
+  "failure_reason": ""
+}

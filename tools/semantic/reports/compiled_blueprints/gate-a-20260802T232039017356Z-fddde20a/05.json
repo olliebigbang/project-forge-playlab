@@ -1,0 +1,51 @@
+{
+  "identity": {
+    "name_zh": "机械雨伞",
+    "name_en": "mechanical umbrella",
+    "category": "tool",
+    "preserved_features": [
+      "folding rib structure",
+      "canopy fabric",
+      "handle grip",
+      "metal shaft",
+      "mechanical joints"
+    ],
+    "material_hints": [
+      "metal",
+      "fabric canopy",
+      "mechanical hinges"
+    ],
+    "silhouette_hints": [
+      "closed or semi-open umbrella silhouette",
+      "long shaft with curved or straight handle",
+      "radiating ribs under canopy"
+    ]
+  },
+  "combat": {
+    "behavior_family": "returning_thrown",
+    "delivery": "whole_object_return",
+    "impact_mode": "whole_body_collision",
+    "effect_type": "electric",
+    "drawback": "weapon_absent_while_flying",
+    "cadence_hint": "single_commit"
+  },
+  "visual": {
+    "prompt_en": "mechanical umbrella, side view, complete object visible, isolated on plain background, long metal shaft with folding ribs and canopy fabric, sturdy handle grip, subtle electric energy crackling along the ribs and shaft, small reinforced fixture near tip for holdable throwing grip, single object, detailed mechanical joints and hinges",
+    "negative_prompt_en": "not a sword, not a gun, not a boomerang weapon, not a generic staff, no unrelated weapon shapes, no multiple objects, no human figure",
+    "must_preserve": [
+      "folding rib structure",
+      "canopy fabric",
+      "handle grip",
+      "metal shaft",
+      "mechanical joints"
+    ],
+    "must_not_replace_with": [
+      "sword",
+      "gun",
+      "boomerang",
+      "generic staff",
+      "shield"
+    ]
+  },
+  "confidence": 0.9
+}

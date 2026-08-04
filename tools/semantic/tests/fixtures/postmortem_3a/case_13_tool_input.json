@@ -1,0 +1,48 @@
+{
+  "identity": {
+    "name_zh": "古老冰雾长枪",
+    "name_en": "ancient spear with frost mist emitter",
+    "category": "traditional_weapon",
+    "preserved_features": [
+      "长枪杆身",
+      "尖锐枪头",
+      "古老磨损质感",
+      "枪尖喷雾开口"
+    ],
+    "material_hints": [
+      "aged wood shaft",
+      "weathered metal spearhead",
+      "worn leather wrappings"
+    ],
+    "silhouette_hints": [
+      "long straight shaft with pointed tip",
+      "spearhead silhouette at one end"
+    ]
+  },
+  "combat": {
+    "behavior_family": "sustained_ranged",
+    "delivery": "continuous_emission",
+    "impact_mode": "continuous_stream",
+    "effect_type": "ice",
+    "drawback": "overheat",
+    "cadence_hint": "continuous"
+  },
+  "visual": {
+    "prompt_en": "Ancient spear with frost mist emitter, long weathered wooden shaft with worn leather wrappings, aged metal spearhead at the tip, small functional mist-emitting fixture built into the spearhead, icy frost vapor curling from the tip, isolated single object, side view, complete object visible from butt end to tip",
+    "negative_prompt_en": "not a gun, not a rifle, not a wand, not a staff, no futuristic sci-fi weapon, no unrelated firearm parts, instead of spear do not show generic blaster",
+    "must_preserve": [
+      "long straight shaft",
+      "pointed spearhead",
+      "ancient weathered material",
+      "mist emission point at tip"
+    ],
+    "must_not_replace_with": [
+      "gun",
+      "rifle",
+      "wand",
+      "staff",
+      "generic blaster"
+    ]
+  },
+  "confidence": 0.85
+}

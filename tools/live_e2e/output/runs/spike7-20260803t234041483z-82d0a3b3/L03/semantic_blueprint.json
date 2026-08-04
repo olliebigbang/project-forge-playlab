@@ -1,0 +1,51 @@
+{
+  "identity": {
+    "canonical_name_zh": "木勺",
+    "canonical_name_en": "wooden spoon",
+    "display_name_zh": "巨大战斗木勺",
+    "display_name_en": "Giant Battle Wooden Spoon",
+    "category": "household_object",
+    "required_identity_parts": [
+      "long handle",
+      "rounded scoop bowl",
+      "spoon neck connecting handle to bowl"
+    ],
+    "material_hints": [
+      "carved wood",
+      "polished wood grain"
+    ],
+    "silhouette_hints": [
+      "oversized long-handled spoon silhouette",
+      "elongated handle with wide rounded bowl at end"
+    ],
+    "optional_decorations": [
+      "metal band reinforcement on handle",
+      "carved rune motifs on bowl back"
+    ]
+  },
+  "combat": {
+    "behavior_family": "heavy_melee",
+    "delivery": "whole_object_strike",
+    "impact_mode": "strike_point",
+    "effect_type": "normal",
+    "drawback": "slow_movement",
+    "cadence_hint": "slow_heavy"
+  },
+  "visual": {
+    "prompt_en": "A giant wooden spoon, oversized and heavy, with a long carved wooden handle and a wide rounded scoop bowl at the end, made of polished wood showing natural grain, reinforced with a small metal band fitting for grip, isolated single object, side view, complete object fully visible against plain background",
+    "negative_prompt_en": "not a hammer, not a club, not a sword, not a shovel, not a paddle boat oar, no unrelated weapon shapes",
+    "must_preserve": [
+      "long handle",
+      "rounded scoop bowl",
+      "spoon neck connecting handle to bowl"
+    ],
+    "must_not_replace_with": [
+      "hammer",
+      "club",
+      "sword",
+      "shovel",
+      "generic blunt weapon"
+    ]
+  },
+  "confidence": 0.9
+}

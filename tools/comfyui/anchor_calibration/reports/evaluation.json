@@ -1,0 +1,947 @@
+{
+  "auto_adjustable_anchor_accuracy": {
+    "passed": 11,
+    "percent": 50.0,
+    "total": 22
+  },
+  "auto_usable_rate": {
+    "passed": 4,
+    "percent": 36.4,
+    "total": 11
+  },
+  "failures": [],
+  "final_usable_after_calibration_rate": {
+    "passed": 10,
+    "percent": 90.9,
+    "total": 11
+  },
+  "metric_definition": {
+    "auto_adjustable_anchor_accuracy": "GripPrimary plus EffectOrigin/StrikePoint within 9.0 px of manual visual-review point",
+    "auto_usable": "all adjustable anchors accurate, derived anchors geometrically valid, and reviewer confirms the sprite has usable semantics",
+    "final_usable": "the fixed visual-review points pass through the same set_manual_anchor/recompute/save path, derived anchors and copied asset validate, and the reviewer confirms usable semantics",
+    "ui_flow_scope": "A separate deterministic UI event test covers outside-press rejection, GripPrimary click-drag, step confirmation, EffectOrigin click, completion, and auto-confidence restoration. The 11-run percentage is a corpus calibration result, not 11 recorded GUI sessions."
+  },
+  "orientation_normalized_count": 4,
+  "results": [
+    {
+      "auto_adjustable_correct": 2,
+      "auto_adjustable_total": 2,
+      "auto_derived": {
+        "details": {
+          "GripSecondary": {
+            "distance_from_primary": 15.3,
+            "on_alpha": true,
+            "passed": true,
+            "point": [
+              34.0,
+              52.0
+            ]
+          }
+        },
+        "passed": true
+      },
+      "auto_point_results": {
+        "EffectOrigin": {
+          "accurate": true,
+          "auto": [
+            90.0,
+            48.0
+          ],
+          "distance_px": 0.0,
+          "manual_reference": [
+            90.0,
+            48.0
+          ]
+        },
+        "GripPrimary": {
+          "accurate": true,
+          "auto": [
+            19.0,
+            55.0
+          ],
+          "distance_px": 7.07,
+          "manual_reference": [
+            24.0,
+            50.0
+          ]
+        }
+      },
+      "auto_usable": true,
+      "corrected_anchors": {
+        "EffectOrigin": [
+          90.0,
+          48.0
+        ],
+        "GripPrimary": [
+          24.0,
+          50.0
+        ],
+        "GripSecondary": [
+          36.0,
+          49.0
+        ]
+      },
+      "final_derived": {
+        "details": {
+          "GripSecondary": {
+            "distance_from_primary": 12.04,
+            "on_alpha": true,
+            "passed": true,
+            "point": [
+              36.0,
+              49.0
+            ]
+          }
+        },
+        "passed": true
+      },
+      "final_geometry_pass": true,
+      "final_usable": true,
+      "limitations": [
+        "The image has no unambiguous conventional handle, so GripPrimary is a low-confidence fixture placement.",
+        "GripSecondary is intentionally omitted from manual_points and must be derived generically from alpha geometry."
+      ],
+      "output_sidecar": "res://tools/comfyui/anchor_calibration/output/case_a/seed_41001_s45/semantic_anchors.json",
+      "required_anchor_types": [
+        "GripPrimary",
+        "GripSecondary",
+        "EffectOrigin"
+      ],
+      "reviewer_usable_after_calibration": true,
+      "run": "case_a/seed_41001_s45",
+      "sprite_path": "res://tools/comfyui/output/case_a/seed_41001_s45/processed_sprite.png",
+      "training_flip_x": false
+    },
+    {
+      "auto_adjustable_correct": 2,
+      "auto_adjustable_total": 2,
+      "auto_derived": {
+        "details": {
+          "GripSecondary": {
+            "distance_from_primary": 15.62,
+            "on_alpha": true,
+            "passed": true,
+            "point": [
+              29.0,
+              54.0
+            ]
+          }
+        },
+        "passed": true
+      },
+      "auto_point_results": {
+        "EffectOrigin": {
+          "accurate": true,
+          "auto": [
+            90.0,
+            44.0
+          ],
+          "distance_px": 2.0,
+          "manual_reference": [
+            90.0,
+            42.0
+          ]
+        },
+        "GripPrimary": {
+          "accurate": true,
+          "auto": [
+            17.0,
+            64.0
+          ],
+          "distance_px": 7.62,
+          "manual_reference": [
+            20.0,
+            57.0
+          ]
+        }
+      },
+      "auto_usable": true,
+      "corrected_anchors": {
+        "EffectOrigin": [
+          90.0,
+          42.0
+        ],
+        "GripPrimary": [
+          20.0,
+          57.0
+        ],
+        "GripSecondary": [
+          32.0,
+          49.0
+        ]
+      },
+      "final_derived": {
+        "details": {
+          "GripSecondary": {
+            "distance_from_primary": 14.42,
+            "on_alpha": true,
+            "passed": true,
+            "point": [
+              32.0,
+              49.0
+            ]
+          }
+        },
+        "passed": true
+      },
+      "final_geometry_pass": true,
+      "final_usable": true,
+      "limitations": [
+        "GripSecondary is intentionally omitted from manual_points and must be derived generically from alpha geometry."
+      ],
+      "output_sidecar": "res://tools/comfyui/anchor_calibration/output/case_a/seed_41002_s70/semantic_anchors.json",
+      "required_anchor_types": [
+        "GripPrimary",
+        "GripSecondary",
+        "EffectOrigin"
+      ],
+      "reviewer_usable_after_calibration": true,
+      "run": "case_a/seed_41002_s70",
+      "sprite_path": "res://tools/comfyui/output/case_a/seed_41002_s70/processed_sprite.png",
+      "training_flip_x": false
+    },
+    {
+      "auto_adjustable_correct": 2,
+      "auto_adjustable_total": 2,
+      "auto_derived": {
+        "details": {
+          "GripSecondary": {
+            "distance_from_primary": 18.38,
+            "on_alpha": true,
+            "passed": true,
+            "point": [
+              34.0,
+              54.0
+            ]
+          }
+        },
+        "passed": true
+      },
+      "auto_point_results": {
+        "EffectOrigin": {
+          "accurate": true,
+          "auto": [
+            90.0,
+            47.0
+          ],
+          "distance_px": 0.0,
+          "manual_reference": [
+            90.0,
+            47.0
+          ]
+        },
+        "GripPrimary": {
+          "accurate": true,
+          "auto": [
+            17.0,
+            61.0
+          ],
+          "distance_px": 8.06,
+          "manual_reference": [
+            18.0,
+            53.0
+          ]
+        }
+      },
+      "auto_usable": true,
+      "corrected_anchors": {
+        "EffectOrigin": [
+          90.0,
+          47.0
+        ],
+        "GripPrimary": [
+          18.0,
+          53.0
+        ],
+        "GripSecondary": [
+          34.0,
+          50.0
+        ]
+      },
+      "final_derived": {
+        "details": {
+          "GripSecondary": {
+            "distance_from_primary": 16.28,
+            "on_alpha": true,
+            "passed": true,
+            "point": [
+              34.0,
+              50.0
+            ]
+          }
+        },
+        "passed": true
+      },
+      "final_geometry_pass": true,
+      "final_usable": true,
+      "limitations": [
+        "GripSecondary is intentionally omitted from manual_points and must be derived generically from alpha geometry."
+      ],
+      "output_sidecar": "res://tools/comfyui/anchor_calibration/output/case_a/seed_41003_s45/semantic_anchors.json",
+      "required_anchor_types": [
+        "GripPrimary",
+        "GripSecondary",
+        "EffectOrigin"
+      ],
+      "reviewer_usable_after_calibration": true,
+      "run": "case_a/seed_41003_s45",
+      "sprite_path": "res://tools/comfyui/output/case_a/seed_41003_s45/processed_sprite.png",
+      "training_flip_x": false
+    },
+    {
+      "auto_adjustable_correct": 1,
+      "auto_adjustable_total": 2,
+      "auto_derived": {
+        "details": {
+          "SpinPivot": {
+            "alpha_centroid": [
+              48.822,
+              42.743
+            ],
+            "distance_px": 0.0,
+            "passed": true,
+            "point": [
+              48.822,
+              42.743
+            ]
+          }
+        },
+        "passed": true
+      },
+      "auto_point_results": {
+        "GripPrimary": {
+          "accurate": false,
+          "auto": [
+            33.0,
+            65.0
+          ],
+          "distance_px": 39.56,
+          "manual_reference": [
+            71.0,
+            76.0
+          ]
+        },
+        "StrikePoint": {
+          "accurate": true,
+          "auto": [
+            88.0,
+            19.0
+          ],
+          "distance_px": 0.0,
+          "manual_reference": [
+            88.0,
+            19.0
+          ]
+        }
+      },
+      "auto_usable": false,
+      "corrected_anchors": {
+        "GripPrimary": [
+          71.0,
+          76.0
+        ],
+        "SpinPivot": [
+          48.82,
+          42.74
+        ],
+        "StrikePoint": [
+          88.0,
+          19.0
+        ]
+      },
+      "final_derived": {
+        "details": {
+          "SpinPivot": {
+            "alpha_centroid": [
+              48.822,
+              42.743
+            ],
+            "distance_px": 0.0,
+            "passed": true,
+            "point": [
+              48.822,
+              42.743
+            ]
+          }
+        },
+        "passed": true
+      },
+      "final_geometry_pass": true,
+      "final_usable": true,
+      "limitations": [
+        "The grip is partly merged into decorative geometry.",
+        "SpinPivot is intentionally omitted from manual_points and recorded only as an alpha-centroid reference."
+      ],
+      "output_sidecar": "res://tools/comfyui/anchor_calibration/output/case_b/seed_41001_s00/semantic_anchors.json",
+      "required_anchor_types": [
+        "GripPrimary",
+        "SpinPivot",
+        "StrikePoint"
+      ],
+      "reviewer_usable_after_calibration": true,
+      "run": "case_b/seed_41001_s00",
+      "sprite_path": "res://tools/comfyui/output/case_b/seed_41001_s00/processed_sprite.png",
+      "training_flip_x": false
+    },
+    {
+      "auto_adjustable_correct": 2,
+      "auto_adjustable_total": 2,
+      "auto_derived": {
+        "details": {
+          "SpinPivot": {
+            "alpha_centroid": [
+              46.849,
+              34.332
+            ],
+            "distance_px": 0.0,
+            "passed": true,
+            "point": [
+              46.849,
+              34.332
+            ]
+          }
+        },
+        "passed": true
+      },
+      "auto_point_results": {
+        "GripPrimary": {
+          "accurate": true,
+          "auto": [
+            45.0,
+            65.0
+          ],
+          "distance_px": 2.0,
+          "manual_reference": [
+            47.0,
+            65.0
+          ]
+        },
+        "StrikePoint": {
+          "accurate": true,
+          "auto": [
+            85.0,
+            33.0
+          ],
+          "distance_px": 0.0,
+          "manual_reference": [
+            85.0,
+            33.0
+          ]
+        }
+      },
+      "auto_usable": true,
+      "corrected_anchors": {
+        "GripPrimary": [
+          47.0,
+          65.0
+        ],
+        "SpinPivot": [
+          46.85,
+          34.33
+        ],
+        "StrikePoint": [
+          85.0,
+          33.0
+        ]
+      },
+      "final_derived": {
+        "details": {
+          "SpinPivot": {
+            "alpha_centroid": [
+              46.849,
+              34.332
+            ],
+            "distance_px": 0.0,
+            "passed": true,
+            "point": [
+              46.849,
+              34.332
+            ]
+          }
+        },
+        "passed": true
+      },
+      "final_geometry_pass": true,
+      "final_usable": true,
+      "limitations": [
+        "SpinPivot is intentionally omitted from manual_points and recorded only as an alpha-centroid reference."
+      ],
+      "output_sidecar": "res://tools/comfyui/anchor_calibration/output/case_b/seed_41003_s00/semantic_anchors.json",
+      "required_anchor_types": [
+        "GripPrimary",
+        "SpinPivot",
+        "StrikePoint"
+      ],
+      "reviewer_usable_after_calibration": true,
+      "run": "case_b/seed_41003_s00",
+      "sprite_path": "res://tools/comfyui/output/case_b/seed_41003_s00/processed_sprite.png",
+      "training_flip_x": false
+    },
+    {
+      "auto_adjustable_correct": 0,
+      "auto_adjustable_total": 2,
+      "auto_derived": {
+        "details": {
+          "GripSecondary": {
+            "distance_from_primary": 17.46,
+            "on_alpha": true,
+            "passed": true,
+            "point": [
+              33.0,
+              57.0
+            ]
+          }
+        },
+        "passed": true
+      },
+      "auto_point_results": {
+        "GripPrimary": {
+          "accurate": false,
+          "auto": [
+            17.0,
+            64.0
+          ],
+          "distance_px": 61.68,
+          "manual_reference": [
+            76.0,
+            46.0
+          ]
+        },
+        "StrikePoint": {
+          "accurate": false,
+          "auto": [
+            88.0,
+            41.0
+          ],
+          "distance_px": 82.57,
+          "manual_reference": [
+            7.0,
+            57.0
+          ]
+        }
+      },
+      "auto_usable": false,
+      "corrected_anchors": {
+        "GripPrimary": [
+          76.0,
+          46.0
+        ],
+        "GripSecondary": [
+          64.0,
+          48.0
+        ],
+        "StrikePoint": [
+          7.0,
+          57.0
+        ]
+      },
+      "final_derived": {
+        "details": {
+          "GripSecondary": {
+            "distance_from_primary": 12.17,
+            "on_alpha": true,
+            "passed": true,
+            "point": [
+              64.0,
+              48.0
+            ]
+          }
+        },
+        "passed": true
+      },
+      "final_geometry_pass": true,
+      "final_usable": true,
+      "limitations": [
+        "Runtime presentation must normalize orientation without altering the source sprite.",
+        "GripSecondary is intentionally omitted from manual_points and must be derived generically from alpha geometry."
+      ],
+      "output_sidecar": "res://tools/comfyui/anchor_calibration/output/case_c/seed_41001_s45/semantic_anchors.json",
+      "required_anchor_types": [
+        "GripPrimary",
+        "GripSecondary",
+        "StrikePoint"
+      ],
+      "reviewer_usable_after_calibration": true,
+      "run": "case_c/seed_41001_s45",
+      "sprite_path": "res://tools/comfyui/output/case_c/seed_41001_s45/processed_sprite.png",
+      "training_flip_x": true
+    },
+    {
+      "auto_adjustable_correct": 0,
+      "auto_adjustable_total": 2,
+      "auto_derived": {
+        "details": {
+          "GripSecondary": {
+            "distance_from_primary": 16.55,
+            "on_alpha": true,
+            "passed": true,
+            "point": [
+              32.0,
+              56.0
+            ]
+          }
+        },
+        "passed": true
+      },
+      "auto_point_results": {
+        "GripPrimary": {
+          "accurate": false,
+          "auto": [
+            17.0,
+            63.0
+          ],
+          "distance_px": 68.31,
+          "manual_reference": [
+            82.0,
+            42.0
+          ]
+        },
+        "StrikePoint": {
+          "accurate": false,
+          "auto": [
+            88.0,
+            39.0
+          ],
+          "distance_px": 82.38,
+          "manual_reference": [
+            7.0,
+            54.0
+          ]
+        }
+      },
+      "auto_usable": false,
+      "corrected_anchors": {
+        "GripPrimary": [
+          82.0,
+          42.0
+        ],
+        "GripSecondary": [
+          66.0,
+          45.0
+        ],
+        "StrikePoint": [
+          7.0,
+          54.0
+        ]
+      },
+      "final_derived": {
+        "details": {
+          "GripSecondary": {
+            "distance_from_primary": 16.28,
+            "on_alpha": true,
+            "passed": true,
+            "point": [
+              66.0,
+              45.0
+            ]
+          }
+        },
+        "passed": true
+      },
+      "final_geometry_pass": true,
+      "final_usable": true,
+      "limitations": [
+        "The grip silhouette is visually ambiguous.",
+        "Runtime presentation must normalize orientation without altering the source sprite.",
+        "GripSecondary is intentionally omitted from manual_points and must be derived generically from alpha geometry."
+      ],
+      "output_sidecar": "res://tools/comfyui/anchor_calibration/output/case_c/seed_41002_s70/semantic_anchors.json",
+      "required_anchor_types": [
+        "GripPrimary",
+        "GripSecondary",
+        "StrikePoint"
+      ],
+      "reviewer_usable_after_calibration": true,
+      "run": "case_c/seed_41002_s70",
+      "sprite_path": "res://tools/comfyui/output/case_c/seed_41002_s70/processed_sprite.png",
+      "training_flip_x": true
+    },
+    {
+      "auto_adjustable_correct": 0,
+      "auto_adjustable_total": 2,
+      "auto_derived": {
+        "details": {
+          "GripSecondary": {
+            "distance_from_primary": 18.44,
+            "on_alpha": true,
+            "passed": true,
+            "point": [
+              34.0,
+              52.0
+            ]
+          }
+        },
+        "passed": true
+      },
+      "auto_point_results": {
+        "GripPrimary": {
+          "accurate": false,
+          "auto": [
+            16.0,
+            56.0
+          ],
+          "distance_px": 63.79,
+          "manual_reference": [
+            79.0,
+            46.0
+          ]
+        },
+        "StrikePoint": {
+          "accurate": false,
+          "auto": [
+            88.0,
+            45.0
+          ],
+          "distance_px": 81.61,
+          "manual_reference": [
+            7.0,
+            55.0
+          ]
+        }
+      },
+      "auto_usable": false,
+      "corrected_anchors": {
+        "GripPrimary": [
+          79.0,
+          46.0
+        ],
+        "GripSecondary": [
+          67.0,
+          47.0
+        ],
+        "StrikePoint": [
+          7.0,
+          55.0
+        ]
+      },
+      "final_derived": {
+        "details": {
+          "GripSecondary": {
+            "distance_from_primary": 12.04,
+            "on_alpha": true,
+            "passed": true,
+            "point": [
+              67.0,
+              47.0
+            ]
+          }
+        },
+        "passed": true
+      },
+      "final_geometry_pass": true,
+      "final_usable": true,
+      "limitations": [
+        "Runtime presentation must normalize orientation without altering the source sprite.",
+        "GripSecondary is intentionally omitted from manual_points and must be derived generically from alpha geometry."
+      ],
+      "output_sidecar": "res://tools/comfyui/anchor_calibration/output/case_c/seed_41003_s45/semantic_anchors.json",
+      "required_anchor_types": [
+        "GripPrimary",
+        "GripSecondary",
+        "StrikePoint"
+      ],
+      "reviewer_usable_after_calibration": true,
+      "run": "case_c/seed_41003_s45",
+      "sprite_path": "res://tools/comfyui/output/case_c/seed_41003_s45/processed_sprite.png",
+      "training_flip_x": true
+    },
+    {
+      "auto_adjustable_correct": 1,
+      "auto_adjustable_total": 2,
+      "auto_derived": {
+        "details": {},
+        "passed": true
+      },
+      "auto_point_results": {
+        "EffectOrigin": {
+          "accurate": true,
+          "auto": [
+            85.0,
+            41.0
+          ],
+          "distance_px": 1.0,
+          "manual_reference": [
+            85.0,
+            40.0
+          ]
+        },
+        "GripPrimary": {
+          "accurate": false,
+          "auto": [
+            17.0,
+            75.0
+          ],
+          "distance_px": 16.4,
+          "manual_reference": [
+            27.0,
+            62.0
+          ]
+        }
+      },
+      "auto_usable": false,
+      "corrected_anchors": {
+        "EffectOrigin": [
+          85.0,
+          40.0
+        ],
+        "GripPrimary": [
+          27.0,
+          62.0
+        ]
+      },
+      "final_derived": {
+        "details": {},
+        "passed": true
+      },
+      "final_geometry_pass": true,
+      "final_usable": true,
+      "limitations": [
+        "The source object is furniture and has no naturally ergonomic weapon grip."
+      ],
+      "output_sidecar": "res://tools/comfyui/anchor_calibration/output/case_d/seed_41002_s70/semantic_anchors.json",
+      "required_anchor_types": [
+        "GripPrimary",
+        "EffectOrigin"
+      ],
+      "reviewer_usable_after_calibration": true,
+      "run": "case_d/seed_41002_s70",
+      "sprite_path": "res://tools/comfyui/output/case_d/seed_41002_s70/processed_sprite.png",
+      "training_flip_x": false
+    },
+    {
+      "auto_adjustable_correct": 1,
+      "auto_adjustable_total": 2,
+      "auto_derived": {
+        "details": {},
+        "passed": true
+      },
+      "auto_point_results": {
+        "EffectOrigin": {
+          "accurate": false,
+          "auto": [
+            77.0,
+            85.0
+          ],
+          "distance_px": 27.73,
+          "manual_reference": [
+            65.0,
+            60.0
+          ]
+        },
+        "GripPrimary": {
+          "accurate": true,
+          "auto": [
+            20.0,
+            73.0
+          ],
+          "distance_px": 8.06,
+          "manual_reference": [
+            27.0,
+            69.0
+          ]
+        }
+      },
+      "auto_usable": false,
+      "corrected_anchors": {
+        "EffectOrigin": [
+          65.0,
+          60.0
+        ],
+        "GripPrimary": [
+          27.0,
+          69.0
+        ]
+      },
+      "final_derived": {
+        "details": {},
+        "passed": true
+      },
+      "final_geometry_pass": true,
+      "final_usable": false,
+      "limitations": [
+        "There is no credible visible muzzle or emission nozzle.",
+        "Both fixture ergonomics and action semantics remain weak, with EffectOrigin especially low confidence."
+      ],
+      "output_sidecar": "res://tools/comfyui/anchor_calibration/output/case_d/seed_41003_s45/semantic_anchors.json",
+      "required_anchor_types": [
+        "GripPrimary",
+        "EffectOrigin"
+      ],
+      "reviewer_usable_after_calibration": false,
+      "run": "case_d/seed_41003_s45",
+      "sprite_path": "res://tools/comfyui/output/case_d/seed_41003_s45/processed_sprite.png",
+      "training_flip_x": false
+    },
+    {
+      "auto_adjustable_correct": 0,
+      "auto_adjustable_total": 2,
+      "auto_derived": {
+        "details": {},
+        "passed": true
+      },
+      "auto_point_results": {
+        "EffectOrigin": {
+          "accurate": false,
+          "auto": [
+            90.0,
+            51.0
+          ],
+          "distance_px": 84.05,
+          "manual_reference": [
+            6.0,
+            48.0
+          ]
+        },
+        "GripPrimary": {
+          "accurate": false,
+          "auto": [
+            17.0,
+            74.0
+          ],
+          "distance_px": 61.85,
+          "manual_reference": [
+            52.0,
+            23.0
+          ]
+        }
+      },
+      "auto_usable": false,
+      "corrected_anchors": {
+        "EffectOrigin": [
+          6.0,
+          48.0
+        ],
+        "GripPrimary": [
+          52.0,
+          23.0
+        ]
+      },
+      "final_derived": {
+        "details": {},
+        "passed": true
+      },
+      "final_geometry_pass": true,
+      "final_usable": true,
+      "limitations": [
+        "Runtime presentation must normalize orientation without altering the source sprite."
+      ],
+      "output_sidecar": "res://tools/comfyui/anchor_calibration/output/case_e/seed_41001_s00/semantic_anchors.json",
+      "required_anchor_types": [
+        "GripPrimary",
+        "EffectOrigin"
+      ],
+      "reviewer_usable_after_calibration": true,
+      "run": "case_e/seed_41001_s00",
+      "sprite_path": "res://tools/comfyui/output/case_e/seed_41001_s00/processed_sprite.png",
+      "training_flip_x": true
+    }
+  ],
+  "schema_version": 1,
+  "source_policy": {
+    "comfyui_started": false,
+    "existing_spike0_sprites_only": true,
+    "spike0_anchor_files_unchanged": true
+  },
+  "source_sprite_count": 11,
+  "spike": "Forge Semantic Anchor Calibration Spike 1"
+}

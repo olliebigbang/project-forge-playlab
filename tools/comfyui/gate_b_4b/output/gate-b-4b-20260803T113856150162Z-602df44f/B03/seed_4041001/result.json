@@ -1,0 +1,154 @@
+{
+  "artifact_hashes": {
+    "B03/seed_4041001/alpha_mask.png": {
+      "sha256": "21b9a637544805f1f7a14805eeee62920e338465a76f2f81dfb4ae8f34f86276",
+      "size": 1779
+    },
+    "B03/seed_4041001/debug/01_border_estimate.png": {
+      "sha256": "6158c49fb5e56cdcab92ab27605a415a961e3040d3a147d8887af2871752bbde",
+      "size": 1492
+    },
+    "B03/seed_4041001/debug/02_chroma_distance.png": {
+      "sha256": "3fd38edaa10df28bb5cc7e9ce69d5c3e30f033b568c40c8bfc5b251af58bfaac",
+      "size": 87476
+    },
+    "B03/seed_4041001/debug/03_flood_bg.png": {
+      "sha256": "d775d690bd6db7d05a77525cb5fae01ca0b31662338f51d408d9d4ae9fc797d0",
+      "size": 3053
+    },
+    "B03/seed_4041001/debug/04_largest_component.png": {
+      "sha256": "31bf9666779a00842975606580ae78d9a66dc6fb9c4b8144c71e48d27782dedb",
+      "size": 2673
+    },
+    "B03/seed_4041001/debug/05_candidate_fg.png": {
+      "sha256": "11402c5bce7baf348a7366b77a2fb6d9eb867078a6b07518c7ea79e58de96481",
+      "size": 3848
+    },
+    "B03/seed_4041001/debug/06_rejected_edge_pixels.png": {
+      "sha256": "e49833a5ef56f1d3663996fd8828fdc2494f4840e454a12bfbe8c2366834f104",
+      "size": 751
+    },
+    "B03/seed_4041001/debug/07_final_failure_region.png": {
+      "sha256": "9aa8b3b0e90b0e229d0445359993a31a188548a6dee041ed4a853e1800024e79",
+      "size": 3146
+    },
+    "B03/seed_4041001/debug/08_kept_components.png": {
+      "sha256": "31bf9666779a00842975606580ae78d9a66dc6fb9c4b8144c71e48d27782dedb",
+      "size": 2673
+    },
+    "B03/seed_4041001/debug/09_removed_components.png": {
+      "sha256": "883a139fce6c91330bc87d4a0c5780aa4833b3d1529c7fb631035d64a9622d54",
+      "size": 3468
+    },
+    "B03/seed_4041001/debug/10_sure_bg.png": {
+      "sha256": "3f40057d676140fa61b6ffad1feb2f52fecd1ee057ff48742a7b72e23e638a3c",
+      "size": 3394
+    },
+    "B03/seed_4041001/debug/11_sure_fg.png": {
+      "sha256": "aaf4c2cec84755e191e8c563f34d275de7ec37613655ff57febd937c4d6106e9",
+      "size": 3454
+    },
+    "B03/seed_4041001/debug/12_grabcut_foreground.png": {
+      "sha256": "2ece1e36686f0e030dbaa276e1407534389b9438a04787dcb2b8f385cf351202",
+      "size": 1664
+    },
+    "B03/seed_4041001/debug/13_shadow_likelihood.png": {
+      "sha256": "72438dcaf6113b5253fb131ff3ba140f0b80b3f3ce252a7fbc5c2ee264cf000b",
+      "size": 51435
+    },
+    "B03/seed_4041001/debug/14_soft_alpha.png": {
+      "sha256": "e98d4edf22235f42593fb74ee3b8fd24d5477dfcc6664e4729c023f1dbb07381",
+      "size": 4447
+    },
+    "B03/seed_4041001/metrics.json": {
+      "sha256": "3bfda82cbe274943f5740f3b1792e4b728f040603c0d29967703e50ea6b59cd5",
+      "size": 980
+    },
+    "B03/seed_4041001/processed_sprite.png": {
+      "sha256": "78d69563f939fa6f8b6a39b49f55123990ebd101c5570a66dd831e56750cadd0",
+      "size": 5397
+    },
+    "B03/seed_4041001/raw.png": {
+      "sha256": "4c3f93f421efe0452f93c801f0079d85c0cd6de9f47fa81d583e249aee94da0d",
+      "size": 298505
+    }
+  },
+  "case_id": "B03",
+  "copied_raw": {
+    "path": "B03/seed_4041001/raw.png",
+    "sha256": "4c3f93f421efe0452f93c801f0079d85c0cd6de9f47fa81d583e249aee94da0d",
+    "size": 298505
+  },
+  "ordinal": 5,
+  "seed": 4041001,
+  "source_raw": {
+    "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/raw.png",
+    "sha256": "4c3f93f421efe0452f93c801f0079d85c0cd6de9f47fa81d583e249aee94da0d",
+    "size": 298505
+  },
+  "v1": {
+    "alpha_mask": {
+      "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/alpha_mask.png",
+      "sha256": "a814d8ca0b2d01a1df42ca58c5246e2dc7849de580bf2b1030bf8bbfd12e7a94",
+      "size": 1547
+    },
+    "failure_reason": "",
+    "processed_sprite": {
+      "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/processed_sprite.png",
+      "sha256": "3ba869e2e911628d0e7fec8f6a296029617f633b561ed8a7709e54c252b3736f",
+      "size": 6292
+    },
+    "status": "success"
+  },
+  "v2": {
+    "failure_reason": "",
+    "method": "opencv_chroma_grabcut",
+    "metrics": {
+      "background_border_coherence": 0.687912,
+      "background_border_rgb": [
+        212.0,
+        93.0,
+        161.0
+      ],
+      "background_expected_match": 0.0,
+      "background_key_direction_similarity": 0.935345,
+      "background_residual_ratio": 0.003892,
+      "component_count": 1,
+      "edge_contact_ratio": 0.0,
+      "foreground_coverage": 0.165627,
+      "internal_hole_ratio": 0.030199,
+      "kept_component_count": 1,
+      "object_bbox": [
+        50,
+        174,
+        416,
+        144
+      ],
+      "outline": true,
+      "output_alpha_coverage": 0.227648,
+      "palette_limit": 32,
+      "postprocess_seconds": 0.47,
+      "processed_dimensions": [
+        96,
+        96
+      ],
+      "raw_dimensions": [
+        512,
+        512
+      ],
+      "removed_area": 16077,
+      "removed_component_count": 372,
+      "segmentation_confidence": 0.945231,
+      "shadow_residual_score": 0.047004,
+      "smallest_kept_component_area": 43418,
+      "soft_edge_pixel_ratio": 0.721094,
+      "sprite_size": 96,
+      "status": "success",
+      "visible_color_count": 32
+    },
+    "processor_invocation_count": 1,
+    "processor_sha256": "0b348a0202877629258439dc483711e6a4b9143d58863e0cae72dfe7d0926fe7",
+    "runner_observed_seconds": 0.472,
+    "status": "success"
+  }
+}

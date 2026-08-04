@@ -1,0 +1,7 @@
+{
+  "run_id": "limited-retest-3b-20260803T040934865715Z-79738d1b",
+  "status": "complete",
+  "result": "NEEDS WORK",
+  "evidence_sha256": "5b1900083853005b3ac8c1059f22a865d05c382bd5489c0621769ad6aff8fa28",
+  "gate_b_executed": false
+}

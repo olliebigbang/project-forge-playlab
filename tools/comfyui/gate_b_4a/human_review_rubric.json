@@ -1,0 +1,51 @@
+{
+  "purpose": "Human visual review only. This file is not read by the generation runner and must never be injected into ComfyUI.",
+  "review_basis": "Inspect each actual raw.png and processed_sprite.png, never only a prompt or JSON.",
+  "cases": {
+    "B01": {
+      "canonical_identity": "old vacuum cleaner",
+      "required_part_concepts": [
+        "vacuum body",
+        "long flexible hose",
+        "nozzle or suction head"
+      ]
+    },
+    "B02": {
+      "canonical_identity": "twin-bell mechanical alarm clock",
+      "required_part_concepts": [
+        "clock face",
+        "twin bells",
+        "clock body or hands"
+      ]
+    },
+    "B03": {
+      "canonical_identity": "stapler",
+      "required_part_concepts": [
+        "upper pressing arm",
+        "base",
+        "rear hinge"
+      ],
+      "note": "Giant is a display or silhouette modifier, not part of canonical identity. The frozen 3C required_identity_parts did not independently add rear hinge; this review requirement is not injected."
+    },
+    "B04": {
+      "canonical_identity": "green wine goblet",
+      "required_part_concepts": [
+        "cup bowl",
+        "stem",
+        "base"
+      ],
+      "note": "Stem is the goblet foot structure; slender is a silhouette modifier already present in frozen 3C evidence."
+    }
+  },
+  "boolean_fields": [
+    "single_complete_subject",
+    "no_person_hand_text",
+    "canonical_identity_recognizable_raw",
+    "silhouette_matches",
+    "forbidden_weapon_substitution",
+    "recognizable_at_96x96",
+    "facing_consistency"
+  ],
+  "integer_field": "required_parts_visible_count",
+  "required_parts_range": [0, 3]
+}

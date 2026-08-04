@@ -1,0 +1,636 @@
+{
+  "gate": "Forge Gate B 4B - Offline Alpha Extraction Spike",
+  "source_gate": "GATE_B_4A",
+  "source_run_id": "gate-b-4a-20260803T094025408228Z-e25bf1f7",
+  "source_gate_formal_status": "NEEDS WORK",
+  "source_status_basis": [
+    "4A technical Alpha delivery was 1/8, below its 6/8 threshold.",
+    "The 4B authorization explicitly requires the 4A formal conclusion to remain NEEDS WORK."
+  ],
+  "source_human_review_status": "PENDING",
+  "source_raw_identity_count_frozen_by_4b_contract": {
+    "passed": 6,
+    "total": 8
+  },
+  "source_report_directory_present": false,
+  "source_report_files": [],
+  "source_human_review": {
+    "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/human_visual_review.csv",
+    "size": 620,
+    "sha256": "05062aa42fb3ac8afc91ae5d509d58ddc308451598a3368988bd992ed5dedf18"
+  },
+  "generation_summary": {
+    "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/generation_summary.json",
+    "size": 5521,
+    "sha256": "cb9993c6bfb4cce0603060b9967894ad69f490c78d7bc5d404ad6dfdbd70cab9"
+  },
+  "gate_4a_config": {
+    "path": "tools/comfyui/gate_b_4a/forge_gate_b_4a_config.local.json",
+    "size": 811,
+    "sha256": "b9d52205a1cb812ba747594d49d6de69f0ae1c7e5a3d3787c289f28b3bac40fb"
+  },
+  "gate_4a_approved_run_manifest": {
+    "path": "tools/comfyui/gate_b_4a/approved_run_manifest.json",
+    "size": 1416,
+    "sha256": "02d33878f82a63e264e41a15818978f1bbe4b436a50326f0640afb74cc5fedb3"
+  },
+  "gate_4a_frozen_handoff": {
+    "path": "tools/comfyui/gate_b_4a/frozen/frozen_handoff.json",
+    "size": 17286,
+    "sha256": "cb084add3587889f1bcb00651b2f25458c03c5ef73bc5f44e436264f65c52083"
+  },
+  "gate_4a_reservation": {
+    "path": "tools/comfyui/gate_b_4a/GATE_B_4A_RUN.reservation.json",
+    "size": 491,
+    "sha256": "0a14a974d17c1cc126acb09c75e0d8593781b0ad73cac4775f94c9c2906a6b50"
+  },
+  "gate_4a_lifecycle": {
+    "path": "tools/comfyui/gate_b_4a/runtime/lifecycle.json",
+    "size": 211,
+    "sha256": "e1a69102afb131df8f3aaa8006c89c1a35f2795637b4bf941e711ec096c595e5"
+  },
+  "external_inputs": [
+    {
+      "path": "tools/comfyui/postprocess/process_sprite.py",
+      "size": 8835,
+      "sha256": "f748c8e61dfd022d351d84c57c2d68b50b3dc39685403c7af20cc0402eebc0e9"
+    },
+    {
+      "path": "tools/comfyui/workflows/forge_object_sprite_v0.json",
+      "size": 2023,
+      "sha256": "507095e0e1cbe0556d1bcac7cff8d28e93af65d843f69cc54de836ff267398a5"
+    }
+  ],
+  "case_matrix": [
+    {
+      "ordinal": 1,
+      "case_id": "B01",
+      "seed": 4041001,
+      "raw": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041001/raw.png",
+        "size": 314443,
+        "sha256": "1884627af7293f727c0c659ed8b0b6097c0f6ed1376da7e5098161d1dbc81978"
+      },
+      "manifest": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041001/manifest.json",
+        "size": 3546,
+        "sha256": "2c344f5354792d6a2f8f0d230c3a80fc911a4d2fd2c8c0d67d9832435aac9363"
+      },
+      "request_workflow": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041001/request_workflow.json",
+        "size": 3003,
+        "sha256": "e449dbec937bc0c2bac49bf45fa179b1196663b310805dfee92463516e4ff741"
+      },
+      "effective_positive_prompt_sha256": "d3ffa6c63efa17417bb7bd3781706a840e70a25946bd973dd69128f9e67da335",
+      "effective_negative_prompt_sha256": "6c09e286a58a52696439c6645ae66748ac2c891ca09fa5c974b748afb9ef8bae",
+      "request_workflow_sha256": "0f4360d274edd988ca43b1e20ae355f6ea7762e086a7ecfde078ea66817f413b",
+      "workflow_sha256": "507095e0e1cbe0556d1bcac7cff8d28e93af65d843f69cc54de836ff267398a5",
+      "checkpoint": "RealVisXL_V5.0_fp16.safetensors",
+      "checkpoint_sha256": "6a35a7855770ae9820a3c931d4964c3817b6d9e3c6f9c4dabb5b3a94e5643b80",
+      "v1_status": "failed",
+      "v1_failure_reason": "OBJECT_TOUCHES_RAW_EDGE",
+      "v1_processed_sprite": null,
+      "v1_alpha_mask": null
+    },
+    {
+      "ordinal": 2,
+      "case_id": "B01",
+      "seed": 4041002,
+      "raw": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041002/raw.png",
+        "size": 311364,
+        "sha256": "edadfc0cbc7ccca2a5500d4334939d857217c53d55e3597c6d2402a4337225e9"
+      },
+      "manifest": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041002/manifest.json",
+        "size": 3546,
+        "sha256": "19213af78df6d81614fd20291828c4074e034f15664512b48a9f4f096cd741cf"
+      },
+      "request_workflow": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041002/request_workflow.json",
+        "size": 3003,
+        "sha256": "cb148d054326460464bd0715033ec3e1182a47958a9ae39def77e131ed94f897"
+      },
+      "effective_positive_prompt_sha256": "d3ffa6c63efa17417bb7bd3781706a840e70a25946bd973dd69128f9e67da335",
+      "effective_negative_prompt_sha256": "6c09e286a58a52696439c6645ae66748ac2c891ca09fa5c974b748afb9ef8bae",
+      "request_workflow_sha256": "fee0b85910bfe42b80de9521a24fcf9c3c87757f669ec27a61a54e0461ad4b05",
+      "workflow_sha256": "507095e0e1cbe0556d1bcac7cff8d28e93af65d843f69cc54de836ff267398a5",
+      "checkpoint": "RealVisXL_V5.0_fp16.safetensors",
+      "checkpoint_sha256": "6a35a7855770ae9820a3c931d4964c3817b6d9e3c6f9c4dabb5b3a94e5643b80",
+      "v1_status": "failed",
+      "v1_failure_reason": "OBJECT_TOUCHES_RAW_EDGE",
+      "v1_processed_sprite": null,
+      "v1_alpha_mask": null
+    },
+    {
+      "ordinal": 3,
+      "case_id": "B02",
+      "seed": 4041001,
+      "raw": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041001/raw.png",
+        "size": 373332,
+        "sha256": "0e2a3191a037bca705dca34f7c50b1016abdbc985f9cebac73204f12817bdddb"
+      },
+      "manifest": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041001/manifest.json",
+        "size": 3864,
+        "sha256": "af10b8216db2523a35966df1a084c9cd11f36a6208d45b0a25823f57ef442406"
+      },
+      "request_workflow": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041001/request_workflow.json",
+        "size": 3321,
+        "sha256": "3d47c1db614ebc8309ac1286a6b73e4349516afe97328b5dcca64728ab59d721"
+      },
+      "effective_positive_prompt_sha256": "52e85482e9a2bc97046f68cdc48bbfcad652c1834dd6569a11393d5eceff3d03",
+      "effective_negative_prompt_sha256": "46f35b7273f338df641499674893d1690036eff6172e76d15e655203306d003f",
+      "request_workflow_sha256": "dfa93c6960522d4fffe7e59dc4d3bc160b1d38fad38edc0100868b270f10702c",
+      "workflow_sha256": "507095e0e1cbe0556d1bcac7cff8d28e93af65d843f69cc54de836ff267398a5",
+      "checkpoint": "RealVisXL_V5.0_fp16.safetensors",
+      "checkpoint_sha256": "6a35a7855770ae9820a3c931d4964c3817b6d9e3c6f9c4dabb5b3a94e5643b80",
+      "v1_status": "failed",
+      "v1_failure_reason": "OBJECT_TOUCHES_RAW_EDGE",
+      "v1_processed_sprite": null,
+      "v1_alpha_mask": null
+    },
+    {
+      "ordinal": 4,
+      "case_id": "B02",
+      "seed": 4041002,
+      "raw": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041002/raw.png",
+        "size": 332886,
+        "sha256": "badf5019fdf2d163e2d4df708fe6fe4949085f3237ed9c80bde1e52cb2bd4f7c"
+      },
+      "manifest": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041002/manifest.json",
+        "size": 3864,
+        "sha256": "f56638ca15b02836c586e2a3b4fe9db9726ecd1f30afd4b00831e8f40edbe7c1"
+      },
+      "request_workflow": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041002/request_workflow.json",
+        "size": 3321,
+        "sha256": "7e5248b5fd1451615b2418922a4a6eea3c41083da301b61c281d070e56ef7a52"
+      },
+      "effective_positive_prompt_sha256": "52e85482e9a2bc97046f68cdc48bbfcad652c1834dd6569a11393d5eceff3d03",
+      "effective_negative_prompt_sha256": "46f35b7273f338df641499674893d1690036eff6172e76d15e655203306d003f",
+      "request_workflow_sha256": "e508627a1d4ab32a48d319933708dbbe4c571e769f3822fc4042fe5c52adaf8a",
+      "workflow_sha256": "507095e0e1cbe0556d1bcac7cff8d28e93af65d843f69cc54de836ff267398a5",
+      "checkpoint": "RealVisXL_V5.0_fp16.safetensors",
+      "checkpoint_sha256": "6a35a7855770ae9820a3c931d4964c3817b6d9e3c6f9c4dabb5b3a94e5643b80",
+      "v1_status": "failed",
+      "v1_failure_reason": "OBJECT_TOUCHES_RAW_EDGE",
+      "v1_processed_sprite": null,
+      "v1_alpha_mask": null
+    },
+    {
+      "ordinal": 5,
+      "case_id": "B03",
+      "seed": 4041001,
+      "raw": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/raw.png",
+        "size": 298505,
+        "sha256": "4c3f93f421efe0452f93c801f0079d85c0cd6de9f47fa81d583e249aee94da0d"
+      },
+      "manifest": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/manifest.json",
+        "size": 3866,
+        "sha256": "d42dbb9cbf821c6590abb9d6e8cc09aa1bf9b2204a453049035967e695e19c61"
+      },
+      "request_workflow": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/request_workflow.json",
+        "size": 3146,
+        "sha256": "ece601a10053731d43882a51926fec6d79c74bac716352624addbe06e26018a7"
+      },
+      "effective_positive_prompt_sha256": "b76cd670bbacb1bdd9f4e4afdc177fa49c6e8e0937da0ee43460a553fda75f76",
+      "effective_negative_prompt_sha256": "d126b70b9c5628ddb988dee19d4de25db32303cbc7a8fe365da4103558dc2031",
+      "request_workflow_sha256": "3e46cf0c3aad6d0fb10ec72efce0c17c4ecab5869507991e272bdffd721cfeb7",
+      "workflow_sha256": "507095e0e1cbe0556d1bcac7cff8d28e93af65d843f69cc54de836ff267398a5",
+      "checkpoint": "RealVisXL_V5.0_fp16.safetensors",
+      "checkpoint_sha256": "6a35a7855770ae9820a3c931d4964c3817b6d9e3c6f9c4dabb5b3a94e5643b80",
+      "v1_status": "success",
+      "v1_failure_reason": "",
+      "v1_processed_sprite": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/processed_sprite.png",
+        "size": 6292,
+        "sha256": "3ba869e2e911628d0e7fec8f6a296029617f633b561ed8a7709e54c252b3736f"
+      },
+      "v1_alpha_mask": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/alpha_mask.png",
+        "size": 1547,
+        "sha256": "a814d8ca0b2d01a1df42ca58c5246e2dc7849de580bf2b1030bf8bbfd12e7a94"
+      }
+    },
+    {
+      "ordinal": 6,
+      "case_id": "B03",
+      "seed": 4041002,
+      "raw": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041002/raw.png",
+        "size": 279237,
+        "sha256": "392c17da287d4c9d5cd9bd20d881b3116bb446501e07f8dd30e174dae50f8d9a"
+      },
+      "manifest": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041002/manifest.json",
+        "size": 3689,
+        "sha256": "086ba8d709e3ebebe848e7ff11fc7f2fd298fce7945e67dcc3f3a086be224254"
+      },
+      "request_workflow": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041002/request_workflow.json",
+        "size": 3146,
+        "sha256": "300c5090a9a5fa685a1663250e61e87bf82c23a80cb0c77388a086cf6ebe315b"
+      },
+      "effective_positive_prompt_sha256": "b76cd670bbacb1bdd9f4e4afdc177fa49c6e8e0937da0ee43460a553fda75f76",
+      "effective_negative_prompt_sha256": "d126b70b9c5628ddb988dee19d4de25db32303cbc7a8fe365da4103558dc2031",
+      "request_workflow_sha256": "e6b6f1f7dda4489e73eb40c03fe1668fd65c777728d48a5ed963ee7bac42a3d6",
+      "workflow_sha256": "507095e0e1cbe0556d1bcac7cff8d28e93af65d843f69cc54de836ff267398a5",
+      "checkpoint": "RealVisXL_V5.0_fp16.safetensors",
+      "checkpoint_sha256": "6a35a7855770ae9820a3c931d4964c3817b6d9e3c6f9c4dabb5b3a94e5643b80",
+      "v1_status": "failed",
+      "v1_failure_reason": "OBJECT_TOUCHES_RAW_EDGE",
+      "v1_processed_sprite": null,
+      "v1_alpha_mask": null
+    },
+    {
+      "ordinal": 7,
+      "case_id": "B04",
+      "seed": 4041001,
+      "raw": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041001/raw.png",
+        "size": 262715,
+        "sha256": "917809f0b79be71f6daa35215caee2253accf7aa385f535c78f0042fa16fa39d"
+      },
+      "manifest": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041001/manifest.json",
+        "size": 3540,
+        "sha256": "00f81b5e15642f4a04a539b654ba73f886abb7c8b973ab715b0ed17a4f3c5d70"
+      },
+      "request_workflow": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041001/request_workflow.json",
+        "size": 2997,
+        "sha256": "3afb61d2f008e1c4de83eff3f9b58116e5fe1d995bc055b78678d0412727c85b"
+      },
+      "effective_positive_prompt_sha256": "05e63d615ac73cacea35f0e332bfdad51d3f7445f7566b643a94bb5e9c998f58",
+      "effective_negative_prompt_sha256": "780f2723acb747955ac22e91fdc2922910d1eca4dbdaa29185a64c6e47ca8a72",
+      "request_workflow_sha256": "84295831c7747f672d3026649990ade0ac3b906d75ce7a59617bc6d300c77e93",
+      "workflow_sha256": "507095e0e1cbe0556d1bcac7cff8d28e93af65d843f69cc54de836ff267398a5",
+      "checkpoint": "RealVisXL_V5.0_fp16.safetensors",
+      "checkpoint_sha256": "6a35a7855770ae9820a3c931d4964c3817b6d9e3c6f9c4dabb5b3a94e5643b80",
+      "v1_status": "failed",
+      "v1_failure_reason": "OBJECT_TOUCHES_RAW_EDGE",
+      "v1_processed_sprite": null,
+      "v1_alpha_mask": null
+    },
+    {
+      "ordinal": 8,
+      "case_id": "B04",
+      "seed": 4041002,
+      "raw": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041002/raw.png",
+        "size": 255297,
+        "sha256": "344af8aa9c75dde57b702fbde2d9e9f87044896cbaa4c34edd6ef9272a068a02"
+      },
+      "manifest": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041002/manifest.json",
+        "size": 3552,
+        "sha256": "a9b6853d34c80a9e74f4cc4afcd62f762c17aa28b91bfb3bdd780e6d24bb9353"
+      },
+      "request_workflow": {
+        "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041002/request_workflow.json",
+        "size": 2997,
+        "sha256": "8645bba83eb8c27e088d91f4aa04123d3043205b4d346eb647bdebaa19ea4882"
+      },
+      "effective_positive_prompt_sha256": "05e63d615ac73cacea35f0e332bfdad51d3f7445f7566b643a94bb5e9c998f58",
+      "effective_negative_prompt_sha256": "780f2723acb747955ac22e91fdc2922910d1eca4dbdaa29185a64c6e47ca8a72",
+      "request_workflow_sha256": "2b8b9f087c1becc1d0ed11882bf338ad4b8fba52893e2d2fbfe435bf18d49fd1",
+      "workflow_sha256": "507095e0e1cbe0556d1bcac7cff8d28e93af65d843f69cc54de836ff267398a5",
+      "checkpoint": "RealVisXL_V5.0_fp16.safetensors",
+      "checkpoint_sha256": "6a35a7855770ae9820a3c931d4964c3817b6d9e3c6f9c4dabb5b3a94e5643b80",
+      "v1_status": "failed",
+      "v1_failure_reason": "BACKGROUND_NOT_HIGH_CONTRAST_CHROMA",
+      "v1_processed_sprite": null,
+      "v1_alpha_mask": null
+    }
+  ],
+  "frozen_gate_4a_tree_file_count": 78,
+  "frozen_gate_4a_tree": {
+    "tools/comfyui/gate_b_4a/approved_run_manifest.json": {
+      "size": 1416,
+      "sha256": "02d33878f82a63e264e41a15818978f1bbe4b436a50326f0640afb74cc5fedb3"
+    },
+    "tools/comfyui/gate_b_4a/forge_gate_b_4a_config.example.json": {
+      "size": 739,
+      "sha256": "4827791070d6875ecb9267ab7a89b354eb4919f7f6c10d23b484b540c0aa07bd"
+    },
+    "tools/comfyui/gate_b_4a/forge_gate_b_4a_config.local.json": {
+      "size": 811,
+      "sha256": "b9d52205a1cb812ba747594d49d6de69f0ae1c7e5a3d3787c289f28b3bac40fb"
+    },
+    "tools/comfyui/gate_b_4a/frozen/frozen_handoff.json": {
+      "size": 17286,
+      "sha256": "cb084add3587889f1bcb00651b2f25458c03c5ef73bc5f44e436264f65c52083"
+    },
+    "tools/comfyui/gate_b_4a/frozen/protected_history.json": {
+      "size": 3855,
+      "sha256": "3fb1fa19652500993aa400bcea1b609a486782bfbffaa996591f998c80b763eb"
+    },
+    "tools/comfyui/gate_b_4a/gate_b_4a_assets.py": {
+      "size": 10319,
+      "sha256": "e2a625b7131867e5a8d9b981f3cdb301fa4a3c194022de6371f3e40a61183441"
+    },
+    "tools/comfyui/gate_b_4a/gate_b_4a_finalize.py": {
+      "size": 19428,
+      "sha256": "0f96fc1756b9690cbbe28e8c65b407dd05384a5931e81244864ff94749a7e9fd"
+    },
+    "tools/comfyui/gate_b_4a/gate_b_4a_lifecycle.ps1": {
+      "size": 7765,
+      "sha256": "9b3a1501b58a6af653557811b651be4a9f59eb0483c18109414a41046b454794"
+    },
+    "tools/comfyui/gate_b_4a/GATE_B_4A_RUN.reservation.json": {
+      "size": 491,
+      "sha256": "0a14a974d17c1cc126acb09c75e0d8593781b0ad73cac4775f94c9c2906a6b50"
+    },
+    "tools/comfyui/gate_b_4a/gate_b_4a_runner.py": {
+      "size": 34129,
+      "sha256": "f2afcffd05aee56c34b4d594dbdbde5223c13f4e518b14cb1219a523f93bb0e2"
+    },
+    "tools/comfyui/gate_b_4a/human_review_rubric.json": {
+      "size": 1645,
+      "sha256": "3d567ca55615a0151f81598db4fcb105361362d8f4c7be7e1646be68863783b0"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041001/generation.log": {
+      "size": 367,
+      "sha256": "c4e5adfc562eaf5f2b9f33087fe8a1185c87b60d4be52d98aae43fb596b9008a"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041001/input_sketch.png": {
+      "size": 1878,
+      "sha256": "c7140a5e9fe027e9409b5e3b42297d3f46c72f1b19a18f6e6a96313263806f46"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041001/manifest.json": {
+      "size": 3546,
+      "sha256": "2c344f5354792d6a2f8f0d230c3a80fc911a4d2fd2c8c0d67d9832435aac9363"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041001/raw.png": {
+      "size": 314443,
+      "sha256": "1884627af7293f727c0c659ed8b0b6097c0f6ed1376da7e5098161d1dbc81978"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041001/request_workflow.json": {
+      "size": 3003,
+      "sha256": "e449dbec937bc0c2bac49bf45fa179b1196663b310805dfee92463516e4ff741"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041002/generation.log": {
+      "size": 367,
+      "sha256": "626ce938f6e62a5472d511ef709a378da8f830b32c781e38c6b71ad5c4ca55ce"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041002/input_sketch.png": {
+      "size": 1878,
+      "sha256": "c7140a5e9fe027e9409b5e3b42297d3f46c72f1b19a18f6e6a96313263806f46"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041002/manifest.json": {
+      "size": 3546,
+      "sha256": "19213af78df6d81614fd20291828c4074e034f15664512b48a9f4f096cd741cf"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041002/raw.png": {
+      "size": 311364,
+      "sha256": "edadfc0cbc7ccca2a5500d4334939d857217c53d55e3597c6d2402a4337225e9"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041002/request_workflow.json": {
+      "size": 3003,
+      "sha256": "cb148d054326460464bd0715033ec3e1182a47958a9ae39def77e131ed94f897"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041001/generation.log": {
+      "size": 367,
+      "sha256": "d9aab7e72024854a596ad63c605fcd02d39390e0dac9931999125f52e14e70c2"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041001/input_sketch.png": {
+      "size": 1878,
+      "sha256": "c7140a5e9fe027e9409b5e3b42297d3f46c72f1b19a18f6e6a96313263806f46"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041001/manifest.json": {
+      "size": 3864,
+      "sha256": "af10b8216db2523a35966df1a084c9cd11f36a6208d45b0a25823f57ef442406"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041001/raw.png": {
+      "size": 373332,
+      "sha256": "0e2a3191a037bca705dca34f7c50b1016abdbc985f9cebac73204f12817bdddb"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041001/request_workflow.json": {
+      "size": 3321,
+      "sha256": "3d47c1db614ebc8309ac1286a6b73e4349516afe97328b5dcca64728ab59d721"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041002/generation.log": {
+      "size": 367,
+      "sha256": "361e14f52d9985f0ecfa254f6a5d9c0322d49ea4f88b2665438aed056bf31dfc"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041002/input_sketch.png": {
+      "size": 1878,
+      "sha256": "c7140a5e9fe027e9409b5e3b42297d3f46c72f1b19a18f6e6a96313263806f46"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041002/manifest.json": {
+      "size": 3864,
+      "sha256": "f56638ca15b02836c586e2a3b4fe9db9726ecd1f30afd4b00831e8f40edbe7c1"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041002/raw.png": {
+      "size": 332886,
+      "sha256": "badf5019fdf2d163e2d4df708fe6fe4949085f3237ed9c80bde1e52cb2bd4f7c"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041002/request_workflow.json": {
+      "size": 3321,
+      "sha256": "7e5248b5fd1451615b2418922a4a6eea3c41083da301b61c281d070e56ef7a52"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/alpha_mask.png": {
+      "size": 1547,
+      "sha256": "a814d8ca0b2d01a1df42ca58c5246e2dc7849de580bf2b1030bf8bbfd12e7a94"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/generation.log": {
+      "size": 345,
+      "sha256": "93301f7784108b380de39c1de49fe607bb9d0f2c06123a0d60c013e127d1b3c3"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/input_sketch.png": {
+      "size": 1878,
+      "sha256": "c7140a5e9fe027e9409b5e3b42297d3f46c72f1b19a18f6e6a96313263806f46"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/manifest.json": {
+      "size": 3866,
+      "sha256": "d42dbb9cbf821c6590abb9d6e8cc09aa1bf9b2204a453049035967e695e19c61"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/processed_sprite.png": {
+      "size": 6292,
+      "sha256": "3ba869e2e911628d0e7fec8f6a296029617f633b561ed8a7709e54c252b3736f"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/raw.png": {
+      "size": 298505,
+      "sha256": "4c3f93f421efe0452f93c801f0079d85c0cd6de9f47fa81d583e249aee94da0d"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/request_workflow.json": {
+      "size": 3146,
+      "sha256": "ece601a10053731d43882a51926fec6d79c74bac716352624addbe06e26018a7"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041002/generation.log": {
+      "size": 367,
+      "sha256": "82d73bbc1a7c53f142a88925bcaae87842c05600c63cbf3630482c73320e63b6"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041002/input_sketch.png": {
+      "size": 1878,
+      "sha256": "c7140a5e9fe027e9409b5e3b42297d3f46c72f1b19a18f6e6a96313263806f46"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041002/manifest.json": {
+      "size": 3689,
+      "sha256": "086ba8d709e3ebebe848e7ff11fc7f2fd298fce7945e67dcc3f3a086be224254"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041002/raw.png": {
+      "size": 279237,
+      "sha256": "392c17da287d4c9d5cd9bd20d881b3116bb446501e07f8dd30e174dae50f8d9a"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041002/request_workflow.json": {
+      "size": 3146,
+      "sha256": "300c5090a9a5fa685a1663250e61e87bf82c23a80cb0c77388a086cf6ebe315b"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041001/generation.log": {
+      "size": 367,
+      "sha256": "9e24f5e1a79a5370280c2e080f94953099a30d924a7154033b72c52ae6ed6b26"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041001/input_sketch.png": {
+      "size": 1878,
+      "sha256": "c7140a5e9fe027e9409b5e3b42297d3f46c72f1b19a18f6e6a96313263806f46"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041001/manifest.json": {
+      "size": 3540,
+      "sha256": "00f81b5e15642f4a04a539b654ba73f886abb7c8b973ab715b0ed17a4f3c5d70"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041001/raw.png": {
+      "size": 262715,
+      "sha256": "917809f0b79be71f6daa35215caee2253accf7aa385f535c78f0042fa16fa39d"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041001/request_workflow.json": {
+      "size": 2997,
+      "sha256": "3afb61d2f008e1c4de83eff3f9b58116e5fe1d995bc055b78678d0412727c85b"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041002/generation.log": {
+      "size": 379,
+      "sha256": "255d3c66ec4c57493b3803d9782d86a913bac89737b3823e77b1bb154dec779f"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041002/input_sketch.png": {
+      "size": 1878,
+      "sha256": "c7140a5e9fe027e9409b5e3b42297d3f46c72f1b19a18f6e6a96313263806f46"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041002/manifest.json": {
+      "size": 3552,
+      "sha256": "a9b6853d34c80a9e74f4cc4afcd62f762c17aa28b91bfb3bdd780e6d24bb9353"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041002/raw.png": {
+      "size": 255297,
+      "sha256": "344af8aa9c75dde57b702fbde2d9e9f87044896cbaa4c34edd6ef9272a068a02"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041002/request_workflow.json": {
+      "size": 2997,
+      "sha256": "8645bba83eb8c27e088d91f4aa04123d3043205b4d346eb647bdebaa19ea4882"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/generation_summary.json": {
+      "size": 5521,
+      "sha256": "cb9993c6bfb4cce0603060b9967894ad69f490c78d7bc5d404ad6dfdbd70cab9"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/human_visual_review.csv": {
+      "size": 620,
+      "sha256": "05062aa42fb3ac8afc91ae5d509d58ddc308451598a3368988bd992ed5dedf18"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/raw_processed_comparison.png": {
+      "size": 729167,
+      "sha256": "4ae99c65fbb691eac4a276633c628016c96d8550eae29b273e51499c617028df"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/required_parts_review.png": {
+      "size": 1639688,
+      "sha256": "cdfecd1b1dfb2df5f7208cc3093614f900a677834f355c82e0b48ae77f40c0f7"
+    },
+    "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/RUN_COMPLETE.json": {
+      "size": 91,
+      "sha256": "8f22598421ae05f1fb3181bffc6f1883cc684e7c9cce3d51367dc0b25ed14ac8"
+    },
+    "tools/comfyui/gate_b_4a/runtime/comfy_output/ForgeGateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041001/raw_00001_.png": {
+      "size": 314443,
+      "sha256": "1884627af7293f727c0c659ed8b0b6097c0f6ed1376da7e5098161d1dbc81978"
+    },
+    "tools/comfyui/gate_b_4a/runtime/comfy_output/ForgeGateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041002/raw_00001_.png": {
+      "size": 311364,
+      "sha256": "edadfc0cbc7ccca2a5500d4334939d857217c53d55e3597c6d2402a4337225e9"
+    },
+    "tools/comfyui/gate_b_4a/runtime/comfy_output/ForgeGateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041001/raw_00001_.png": {
+      "size": 373332,
+      "sha256": "0e2a3191a037bca705dca34f7c50b1016abdbc985f9cebac73204f12817bdddb"
+    },
+    "tools/comfyui/gate_b_4a/runtime/comfy_output/ForgeGateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041002/raw_00001_.png": {
+      "size": 332886,
+      "sha256": "badf5019fdf2d163e2d4df708fe6fe4949085f3237ed9c80bde1e52cb2bd4f7c"
+    },
+    "tools/comfyui/gate_b_4a/runtime/comfy_output/ForgeGateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/raw_00001_.png": {
+      "size": 298505,
+      "sha256": "4c3f93f421efe0452f93c801f0079d85c0cd6de9f47fa81d583e249aee94da0d"
+    },
+    "tools/comfyui/gate_b_4a/runtime/comfy_output/ForgeGateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041002/raw_00001_.png": {
+      "size": 279237,
+      "sha256": "392c17da287d4c9d5cd9bd20d881b3116bb446501e07f8dd30e174dae50f8d9a"
+    },
+    "tools/comfyui/gate_b_4a/runtime/comfy_output/ForgeGateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041001/raw_00001_.png": {
+      "size": 262715,
+      "sha256": "917809f0b79be71f6daa35215caee2253accf7aa385f535c78f0042fa16fa39d"
+    },
+    "tools/comfyui/gate_b_4a/runtime/comfy_output/ForgeGateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041002/raw_00001_.png": {
+      "size": 255297,
+      "sha256": "344af8aa9c75dde57b702fbde2d9e9f87044896cbaa4c34edd6ef9272a068a02"
+    },
+    "tools/comfyui/gate_b_4a/runtime/comfyui.stderr.log": {
+      "size": 11365,
+      "sha256": "4effed18f6ff42f79ed1b8b7225978432bde8647c3b5755425aa9acd4db0a655"
+    },
+    "tools/comfyui/gate_b_4a/runtime/comfyui.stdout.log": {
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "tools/comfyui/gate_b_4a/runtime/input/GateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041001.png": {
+      "size": 1878,
+      "sha256": "c7140a5e9fe027e9409b5e3b42297d3f46c72f1b19a18f6e6a96313263806f46"
+    },
+    "tools/comfyui/gate_b_4a/runtime/input/GateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041002.png": {
+      "size": 1878,
+      "sha256": "c7140a5e9fe027e9409b5e3b42297d3f46c72f1b19a18f6e6a96313263806f46"
+    },
+    "tools/comfyui/gate_b_4a/runtime/input/GateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041001.png": {
+      "size": 1878,
+      "sha256": "c7140a5e9fe027e9409b5e3b42297d3f46c72f1b19a18f6e6a96313263806f46"
+    },
+    "tools/comfyui/gate_b_4a/runtime/input/GateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041002.png": {
+      "size": 1878,
+      "sha256": "c7140a5e9fe027e9409b5e3b42297d3f46c72f1b19a18f6e6a96313263806f46"
+    },
+    "tools/comfyui/gate_b_4a/runtime/input/GateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001.png": {
+      "size": 1878,
+      "sha256": "c7140a5e9fe027e9409b5e3b42297d3f46c72f1b19a18f6e6a96313263806f46"
+    },
+    "tools/comfyui/gate_b_4a/runtime/input/GateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041002.png": {
+      "size": 1878,
+      "sha256": "c7140a5e9fe027e9409b5e3b42297d3f46c72f1b19a18f6e6a96313263806f46"
+    },
+    "tools/comfyui/gate_b_4a/runtime/input/GateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041001.png": {
+      "size": 1878,
+      "sha256": "c7140a5e9fe027e9409b5e3b42297d3f46c72f1b19a18f6e6a96313263806f46"
+    },
+    "tools/comfyui/gate_b_4a/runtime/input/GateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041002.png": {
+      "size": 1878,
+      "sha256": "c7140a5e9fe027e9409b5e3b42297d3f46c72f1b19a18f6e6a96313263806f46"
+    },
+    "tools/comfyui/gate_b_4a/runtime/lifecycle.json": {
+      "size": 211,
+      "sha256": "e1a69102afb131df8f3aaa8006c89c1a35f2795637b4bf941e711ec096c595e5"
+    },
+    "tools/comfyui/gate_b_4a/test_gate_b_4a.py": {
+      "size": 10002,
+      "sha256": "7d3c3b96955370bc18aecf8484a7b3c47a7bdc972958412a5dd4b0c95218d756"
+    }
+  },
+  "constraints": {
+    "raw_images_may_be_modified": false,
+    "gate_4a_files_may_be_overwritten": false,
+    "comfyui_may_be_started": false,
+    "anthropic_may_be_called": false,
+    "network_may_be_used": false
+  }
+}

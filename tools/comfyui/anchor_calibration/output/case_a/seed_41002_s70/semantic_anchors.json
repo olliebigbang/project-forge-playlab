@@ -1,0 +1,63 @@
+{
+  "anchor_source": {
+    "EffectOrigin": "manual_player_calibration",
+    "GripPrimary": "manual_player_calibration",
+    "GripSecondary": "derived_after_primary_calibration"
+  },
+  "auto_anchor_source": {
+    "EffectOrigin": "AnchorResolver:muzzle",
+    "GripPrimary": "AnchorResolver:alpha_local_search+profile",
+    "GripSecondary": "alpha_centroid_from_primary"
+  },
+  "auto_anchors": {
+    "EffectOrigin": [
+      90.0,
+      44.0
+    ],
+    "GripPrimary": [
+      17.0,
+      64.0
+    ],
+    "GripSecondary": [
+      29.0,
+      54.0
+    ]
+  },
+  "auto_confidence": {
+    "EffectOrigin": 0.58,
+    "GripPrimary": 0.88,
+    "GripSecondary": 0.76
+  },
+  "behavior_family": "sustained_ranged",
+  "case_id": "case_a",
+  "confidence": {
+    "EffectOrigin": 0.95,
+    "GripPrimary": 0.95,
+    "GripSecondary": 0.9
+  },
+  "corrected_anchors": {
+    "EffectOrigin": [
+      90.0,
+      42.0
+    ],
+    "GripPrimary": [
+      20.0,
+      57.0
+    ],
+    "GripSecondary": [
+      32.0,
+      49.0
+    ]
+  },
+  "grip_profile": "two_hand_rear",
+  "required_anchor_types": [
+    "GripPrimary",
+    "GripSecondary",
+    "EffectOrigin"
+  ],
+  "run_id": "seed_41002_s70",
+  "source_sprite": "res://tools/comfyui/output/case_a/seed_41002_s70/processed_sprite.png",
+  "training_transform": {
+    "flip_x": false
+  }
+}

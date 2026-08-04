@@ -1,0 +1,22 @@
+{
+  "algorithm": "SHA-256",
+  "prompt_policy": "forge-open-identity-v1",
+  "official_run": "seed_52002_policy1",
+  "files": {
+    "tools/comfyui/open_identity/output/spike2_case_01/seed_52002_policy1/manifest.json": "afe664fe9e572f4ff6db547d639c5aa5445e7983f766802329dd0c30d3512759",
+    "tools/comfyui/open_identity/output/spike2_case_01/seed_52002_policy1/processed_sprite.png": "3202e3f4f5b0f905dca04a7b63966e5a33b9ef1414f5661c71cf394e2c2e9579",
+    "tools/comfyui/open_identity/output/spike2_case_01/seed_52002_policy1/raw.png": "aec9d5a4c8d2c81c9c81d2ecc5fd5e6991a1da7d8786a933739fea36a8381ca5",
+    "tools/comfyui/open_identity/output/spike2_case_02/seed_52002_policy1/manifest.json": "25f22c4187eff1853efc16bc150ac9145e9f8b938a51f555721671c6ed556384",
+    "tools/comfyui/open_identity/output/spike2_case_02/seed_52002_policy1/processed_sprite.png": "154eb6e026d7f929ba03239f7aeec69bb29e735c714dae4d73d0d323b7c886b9",
+    "tools/comfyui/open_identity/output/spike2_case_02/seed_52002_policy1/raw.png": "9d5922f166880f85e5f1d5a44f8487b1b05d18b1db4b7fbc8fdc2c307cbf5241",
+    "tools/comfyui/open_identity/output/spike2_case_03/seed_52002_policy1/manifest.json": "199a1312942d0b5a049060dba046275fdc26fb4724bbed0f90d268a674c0abc6",
+    "tools/comfyui/open_identity/output/spike2_case_03/seed_52002_policy1/processed_sprite.png": "1c9f6f044e4626d6432aa5360ab1d09dec2afcbcfb246e04e5230edb166ad097",
+    "tools/comfyui/open_identity/output/spike2_case_03/seed_52002_policy1/raw.png": "21c9064ea16831290323648dcf1d6a7032027e7d5bdeed1733f1e27cd1e68160",
+    "tools/comfyui/open_identity/output/spike2_case_04/seed_52002_policy1/manifest.json": "eb44b7ea551a6bb76422fd4cc228bbc6b19bc192d405643d35e494119eea8062",
+    "tools/comfyui/open_identity/output/spike2_case_04/seed_52002_policy1/processed_sprite.png": "89b34f9e4b7c635f779f288e4abda15f0d9e82557bae46630c0f993a6fdb314f",
+    "tools/comfyui/open_identity/output/spike2_case_04/seed_52002_policy1/raw.png": "0f6b3e1d42c2bcd03ede9689707747c5fc614421163573e0e645372f8259547b",
+    "tools/comfyui/open_identity/output/spike2_case_05/seed_52002_policy1/manifest.json": "89b0f3c9faf24800e5ee723d2ef11541f4a29014fa031b1548b1434445bf4566",
+    "tools/comfyui/open_identity/output/spike2_case_05/seed_52002_policy1/processed_sprite.png": "899bdb923b7b55d6186dc566eff6d147a5dd8d0875ddb60a283ec9f68c9df0ce",
+    "tools/comfyui/open_identity/output/spike2_case_05/seed_52002_policy1/raw.png": "3c7b63a32130c1a56be46d02847ea403f44d72dbc1373b5cdbf953af17a70c24"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "contract": "forge-live-e2e-spike7-recovery-v1",
+  "run_id": "spike7-20260803t234041483z-82d0a3b3",
+  "source_session_id": "live-e2e-20260803t234041475z-a6d56b4e",
+  "recovery_session_id": "live-e2e-20260804t033352546z-e384be65",
+  "reason": "ATOMIC_STAGE_METRICS_NAME_COLLISION",
+  "reused_case": "L01",
+  "reused_technical_evidence": true,
+  "manual_confirmation_repeated": true,
+  "prior_semantic_calls": 1,
+  "remaining_semantic_call_limit": 2,
+  "archived_failed_publish_stages": [],
+  "archived_failed_publish_sha256": {},
+  "source_files_sha256": {
+    "birefnet_manifest.json": "a971c1ba4cb4f268ed56a966b484cf190d781c71ed50608fc22e81ac50418dbf",
+    "birefnet_mask.png": "8b56a2545ecb5919aa4753e51f548b7c980b6185914748439bd15fb59584c2d7",
+    "birefnet_rgba.png": "9818d2f292252120bed89bcec87aa6ec8600b2819411f93cc9411959388e5415",
+    "flux_manifest.json": "222a9a88ae85eb54cbf7e34cb79f162c1ff5df5ff2dc00c8e45b887e7aa9b895",
+    "flux_raw.png": "037be1b55af413fa24af20d9d43021c7be7bb94d01b257da4e10124f657cc627",
+    "player_input.json": "9abd1378776a04f4b2a7c224c9c6a78bb0ab949f5e3b35c38304117182be21bb",
+    "postprocess_metrics.json": "754a7bd2286984fcd126010b43414deab0a320505811ed3c6ddc23f6c8fcd40d",
+    "processed_sprite.png": "9e16508cd96a6108327a6edd535a9183dcb141bdf69a4b25c5840dbf97666b9d",
+    "semantic_blueprint.json": "4a2e4dce7248a18f91286ef5aa5055f0e06cde7bff2a14c8d3c70925ea24ba15",
+    "semantic_response_redacted.json": "640358b615fdb5544acabcc06e113b75c19e4529e4e6d336c415b85eba7988c7",
+    "stage_metrics.json": "2af9f8fb380f16676eb1225485cc854ea2847addf9d057bcad6aa91c6f0c01af",
+    "static_visual_projection.json": "10a3bff984f764a5f07f5d32785ebb29a665393963c59de091f33f47ac459a75",
+    "technical_manifest.json": "4e533ea6cecae6ee8a6ab48eb1e78f456710cf07dffd2c6360386eed4fb9b0aa"
+  },
+  "created_at_utc": "2026-08-04T03:34:38.208Z"
+}

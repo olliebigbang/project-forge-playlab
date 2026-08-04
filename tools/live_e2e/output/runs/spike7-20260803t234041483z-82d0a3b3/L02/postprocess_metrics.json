@@ -1,0 +1,47 @@
+{
+  "contract": "forge-birefnet-pixel-postprocess-v1",
+  "status": "success",
+  "segmentation_source": "official_birefnet_rgba_plus_mask",
+  "pixel_cleanup_only": true,
+  "case_specific_logic": false,
+  "raw_dimensions": [
+    512,
+    512
+  ],
+  "sprite_size": 96,
+  "palette_limit": 32,
+  "margin_ratio": 0.1,
+  "outline": true,
+  "rgba_mask_mean_abs_difference": 0.0,
+  "rgba_mask_binary_iou": 1.0,
+  "foreground_coverage": 0.28746,
+  "foreground_certainty": 0.986143,
+  "confident_foreground_ratio": 0.989437,
+  "segmentation_confidence": 0.991981,
+  "minimum_segmentation_confidence": 0.72,
+  "input_component_count": 1,
+  "removed_tiny_component_count": 0,
+  "removed_tiny_area": 0,
+  "tiny_noise_area_limit": 4,
+  "repaired_small_hole_count": 0,
+  "repaired_small_hole_area": 0,
+  "small_hole_area_limit": 16,
+  "kept_component_count": 1,
+  "smallest_kept_component_area": 75511,
+  "cleanup_policy": "retain_all_non_tiny_components",
+  "largest_component_only": false,
+  "postprocess_seconds": 0.061,
+  "processed_dimensions": [
+    96,
+    96
+  ],
+  "alpha_coverage": 0.509115,
+  "opaque_bounds": [
+    15,
+    7,
+    66,
+    82
+  ],
+  "visible_color_count": 32,
+  "alpha_valid": true
+}

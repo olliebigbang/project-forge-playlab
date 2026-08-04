@@ -1,0 +1,43 @@
+{
+  "background_border_coherence": 0.594532,
+  "background_border_rgb": [
+    138.0,
+    21.0,
+    99.0
+  ],
+  "background_expected_match": 0.052207,
+  "background_key_direction_similarity": 0.979272,
+  "background_residual_ratio": 0.000377,
+  "component_count": 1,
+  "edge_contact_ratio": 0.0,
+  "foreground_coverage": 0.091145,
+  "internal_hole_ratio": 0.037737,
+  "kept_component_count": 1,
+  "object_bbox": [
+    181,
+    59,
+    156,
+    259
+  ],
+  "outline": true,
+  "output_alpha_coverage": 0.303385,
+  "palette_limit": 32,
+  "postprocess_seconds": 1.15,
+  "processed_dimensions": [
+    96,
+    96
+  ],
+  "raw_dimensions": [
+    512,
+    512
+  ],
+  "removed_area": 57201,
+  "removed_component_count": 48,
+  "segmentation_confidence": 0.952025,
+  "shadow_residual_score": 0.005705,
+  "smallest_kept_component_area": 23893,
+  "soft_edge_pixel_ratio": 0.436102,
+  "sprite_size": 96,
+  "status": "success",
+  "visible_color_count": 32
+}

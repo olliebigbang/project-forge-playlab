@@ -1,0 +1,208 @@
+{
+  "contract": "forge-flux2-frozen-semantic-blueprints-v1",
+  "created_at": "2026-08-03T12:35:14.340643+00:00",
+  "source_handoff": "tools/comfyui/gate_b_4a/frozen/frozen_handoff.json",
+  "source_handoff_sha256": "cb084add3587889f1bcb00651b2f25458c03c5ef73bc5f44e436264f65c52083",
+  "case_order": [
+    "B01",
+    "B02",
+    "B03",
+    "B04"
+  ],
+  "seeds": [
+    4041001,
+    4041002
+  ],
+  "planned_generation_count": 8,
+  "source_language_sent_to_flux": "English only",
+  "semantic_reinterpretation_performed": false,
+  "cases": {
+    "B01": {
+      "source_file": "tools/semantic/output/blind_retest_3c/blind-retest-3c-20260803T060715018997Z-4ddf8f31/B01/result.json",
+      "source_result_sha256": "5eb529c9f817b5ef8d2061f3068af3fda61c57fa1485174afc60e244bc48a918",
+      "source_tool_input_sha256": "d7fdfc05e968a69711e1d8588703e3157156ef69f352fd4bee278be1cec5031e",
+      "projection_sha256": "05601383ec1f33255b3f37d678c8ec8bcf1355741172d69e225726ec19376523",
+      "blueprint": {
+        "identity": {
+          "canonical_name_en": "old vacuum cleaner",
+          "required_identity_parts": [
+            "long flexible hose",
+            "main canister body",
+            "nozzle end",
+            "wheels or base"
+          ],
+          "material_hints": [
+            "worn metal",
+            "scuffed plastic",
+            "rubber hose"
+          ],
+          "silhouette_hints": [
+            "bulky rounded canister with a long curling hose extending from the front"
+          ],
+          "optional_decorations": [
+            "rust patches",
+            "scorch marks",
+            "dented casing"
+          ]
+        },
+        "visual": {
+          "prompt_en": "An old vacuum cleaner with a bulky rounded canister body and a long flexible hose, worn metal and scuffed plastic casing, rubber hose with rust patches and scorch marks, a small reinforced nozzle fixture emitting a stream of scorching hot sand, isolated object, side view, complete object fully visible",
+          "negative_prompt_en": "not a gun, not a flamethrower weapon, not a rifle, no human figure, no background scene, not a hose without a vacuum body",
+          "must_preserve": [
+            "long flexible hose",
+            "main canister body",
+            "nozzle end",
+            "wheels or base"
+          ],
+          "must_not_replace_with": [
+            "gun",
+            "flamethrower weapon",
+            "rifle",
+            "generic hose without vacuum body",
+            "sword"
+          ]
+        }
+      }
+    },
+    "B02": {
+      "source_file": "tools/semantic/output/blind_retest_3c/blind-retest-3c-20260803T060715018997Z-4ddf8f31/B02/result.json",
+      "source_result_sha256": "8255ec89850c145ecc707bacac2dafd97d502ce7e021b0593e42ac5cb2cb0ed6",
+      "source_tool_input_sha256": "ee9d4308c471681f164934e81f9f2336d3310ee7f4e5edaf3a8cc840bd04006b",
+      "projection_sha256": "1d60474d7cf10145235c16cf1e5b3fe563ac1af00da45671d41c405160d37536",
+      "blueprint": {
+        "identity": {
+          "canonical_name_en": "double bell mechanical alarm clock",
+          "required_identity_parts": [
+            "twin bells on top",
+            "clock face with hands",
+            "bell striker arm",
+            "round clock body",
+            "support feet"
+          ],
+          "material_hints": [
+            "metal casing",
+            "brass bells",
+            "glass clock face cover"
+          ],
+          "silhouette_hints": [
+            "round-bodied clock with two dome bells mounted on top like ears",
+            "classic vintage alarm clock outline"
+          ],
+          "optional_decorations": [
+            "small wind-up key on back",
+            "aged metallic patina",
+            "tick marks on clock face"
+          ]
+        },
+        "visual": {
+          "prompt_en": "A double bell mechanical alarm clock, isolated single object, side view, complete object fully visible, round metal clock body with a glass-covered clock face and hands, two dome-shaped brass bells mounted on top like ears with a small striker arm between them, support feet at the base, aged metallic casing with a small wind-up key on the back, vintage industrial look with a faint Forge reinforced rim for durability during throwing, clean neutral background",
+          "negative_prompt_en": "do not depict a gun, sword, shuriken, boomerang, generic weapon, disc, or any object other than an alarm clock; avoid multiple clocks, cartoon distortion, or missing bells",
+          "must_preserve": [
+            "twin bells on top",
+            "clock face with hands",
+            "bell striker arm",
+            "round clock body",
+            "support feet"
+          ],
+          "must_not_replace_with": [
+            "gun",
+            "sword",
+            "boomerang",
+            "shuriken",
+            "generic throwing weapon"
+          ]
+        }
+      }
+    },
+    "B03": {
+      "source_file": "tools/semantic/output/blind_retest_3c/blind-retest-3c-20260803T060715018997Z-4ddf8f31/B03/result.json",
+      "source_result_sha256": "116f6bae56d34927d088ad544ec40fad7ed17b2a6d3dda20cf4c874e9ce6b4aa",
+      "source_tool_input_sha256": "9678c5cf7b33e6d7e60ac4ca1aa219608a0edbd6047110c06d6b4e72f766af0e",
+      "projection_sha256": "ef5968d97073accc9f086c01d6e18a69e712bf982920b2ae1e01183ca841ddf5",
+      "blueprint": {
+        "identity": {
+          "canonical_name_en": "stapler",
+          "required_identity_parts": [
+            "hinged top arm",
+            "base plate",
+            "spring-loaded press mechanism",
+            "staple magazine slot"
+          ],
+          "material_hints": [
+            "heavy metal body",
+            "painted steel casing"
+          ],
+          "silhouette_hints": [
+            "elongated rectangular clamp shape with hinged top jaw"
+          ],
+          "optional_decorations": [
+            "worn paint scuffs",
+            "brand-style engraving"
+          ]
+        },
+        "visual": {
+          "prompt_en": "A giant oversized stapler shown as an isolated object, side view, complete object visible, heavy metal body with a hinged top arm and a solid base plate, spring-loaded press mechanism visible at the hinge, staple magazine slot along the body, thick painted steel casing, faint worn paint scuffs, slightly reinforced clamping edge for combat use, held like a massive melee clamp weapon, dramatic fantasy lighting, isolated on plain background",
+          "negative_prompt_en": "not a gun, not a sword, not scissors, not a bear trap, not a robotic claw, no unrelated weapon shapes, no background clutter, no multiple objects",
+          "must_preserve": [
+            "hinged top arm",
+            "base plate",
+            "spring-loaded press mechanism",
+            "staple magazine slot"
+          ],
+          "must_not_replace_with": [
+            "gun",
+            "sword",
+            "scissors",
+            "bear trap",
+            "robotic claw"
+          ]
+        }
+      }
+    },
+    "B04": {
+      "source_file": "tools/semantic/output/blind_retest_3c/blind-retest-3c-20260803T060715018997Z-4ddf8f31/B04/result.json",
+      "source_result_sha256": "bcc65d2408980f32cf1c9eab037c67af6e562402c4ea39a3159ebb195cb48983",
+      "source_tool_input_sha256": "6914315979b4e94f21dfe381e2d2c2b6deb2af597ec852515775bff99124efaf",
+      "projection_sha256": "052c4c2746f16963430cfea8874809cbb654fc4b5c7ac32c2981b2ec93c38a7a",
+      "blueprint": {
+        "identity": {
+          "canonical_name_en": "goblet",
+          "required_identity_parts": [
+            "cup bowl",
+            "stem",
+            "base foot"
+          ],
+          "material_hints": [
+            "glass",
+            "green tinted glass"
+          ],
+          "silhouette_hints": [
+            "tall stemmed drinking vessel outline",
+            "wide bowl narrowing to slender stem widening to round base"
+          ],
+          "optional_decorations": [
+            "ornate rim engraving",
+            "faint acidic glow at rim"
+          ]
+        },
+        "visual": {
+          "prompt_en": "A green stemmed goblet, isolated single object, side view, complete object visible, wide cup bowl, slender stem, round base foot, translucent green tinted glass material, faint acidic green liquid glowing near the rim as a small functional emitter detail at the cup mouth, ornate rim engraving, fantasy game asset style, clean background",
+          "negative_prompt_en": "not a gun, not a cannon, not a hose nozzle weapon, not a sword, not an umbrella, no human hands, no full body character",
+          "must_preserve": [
+            "cup bowl",
+            "stem",
+            "base foot",
+            "tall stemmed drinking vessel outline"
+          ],
+          "must_not_replace_with": [
+            "gun",
+            "cannon",
+            "hose",
+            "sword",
+            "umbrella"
+          ]
+        }
+      }
+    }
+  }
+}

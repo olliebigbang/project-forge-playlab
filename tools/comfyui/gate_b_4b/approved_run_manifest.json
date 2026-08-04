@@ -1,0 +1,35 @@
+{
+  "gate": "Forge Gate B 4B - Offline Alpha Extraction Spike",
+  "approval_scope": "One deterministic offline postprocess pass over the eight frozen Gate B 4A raw images.",
+  "input_manifest_sha256": "95b4e4141e241e723bffa9c8a0dc22cbd19b1780c7ef1f02e39c80ac0574709d",
+  "gameplay_freeze_sha256": "27b1f9d643862adbd004a6c04326a680d386229ee064a2a46f1eb2a178fa2245",
+  "processor_sha256": "0b348a0202877629258439dc483711e6a4b9143d58863e0cae72dfe7d0926fe7",
+  "runner_sha256": "60b3d81ac2b87384ffdb058ff8ce9ee48d5547c16915d7a81209ac0f942b9671",
+  "human_structure_rubric_sha256": "1a3bf2c2281f812e4af71a6521b70c0e128f2f5b287be504c347f5c0b40b8f46",
+  "offline_segmentation_audit_sha256": "7460c0988e58d4d33c825f2e7e3b51a31bdaa5b865e8973948d446bb40b4855b",
+  "method_a": {
+    "name": "OpenCV Chroma + GrabCut",
+    "expected_background_rgb": [255, 0, 255],
+    "grabcut_iterations": 5,
+    "sprite_size": 96,
+    "palette_limit": 32,
+    "margin_ratio": 0.1,
+    "one_pixel_outline": true,
+    "debug_outputs": true
+  },
+  "method_b": {
+    "status": "UNAVAILABLE_OFFLINE",
+    "execution_allowed": false,
+    "reason": "No locally installed learned background-removal weights are callable without a forbidden download or upload API."
+  },
+  "case_count": 4,
+  "raw_image_count": 8,
+  "processor_invocations_per_raw": 1,
+  "automatic_retry_count": 0,
+  "network_allowed": false,
+  "anthropic_allowed": false,
+  "comfyui_start_allowed": false,
+  "image_generation_allowed": false,
+  "gate_4a_mutation_allowed": false,
+  "gameplay_mutation_allowed": false
+}

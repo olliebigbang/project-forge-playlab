@@ -1,0 +1,59 @@
+{
+  "contract": "forge-birefnet-spike6-human-review-rubric-v1",
+  "review_basis": "Direct visual inspection of each frozen raw PNG, BiRefNet RGBA, BiRefNet mask, and final 96x96 sprite. Prompts and metrics are not substitutes for image inspection.",
+  "boolean_values": [
+    "TRUE",
+    "FALSE"
+  ],
+  "edge_quality_values": [
+    "GOOD",
+    "ACCEPTABLE",
+    "POOR"
+  ],
+  "field_rules": {
+    "foreground_complete": "The source subject remains present without a visibly severed identity-bearing region.",
+    "required_parts_preserved": "At least two case-declared identity structures visible in the frozen raw image remain visible after segmentation and 96x96 delivery.",
+    "no_background_residual": "No visible area of the flat source background remains as a foreground region.",
+    "no_shadow_residual": "No detached ground plane or cast shadow remains in the delivered sprite.",
+    "no_magenta_contamination": "No visible chroma spill or chroma-ambiguous magenta region remains in the delivered sprite. A retained emission region that cannot be distinguished safely from the magenta test background fails conservatively.",
+    "identity_recognizable_96": "The intended canonical object can be recognized from the actual 96x96 sprite.",
+    "serious_structure_loss": "A major subject region or identity-bearing structure present in raw is removed or severed.",
+    "usable_sprite": "foreground_complete, required_parts_preserved, no_background_residual, no_shadow_residual, no_magenta_contamination, identity_recognizable_96, no serious_structure_loss, and edge quality GOOD or ACCEPTABLE are all required."
+  },
+  "case_required_parts": {
+    "B01": [
+      "vacuum body",
+      "long flexible hose",
+      "nozzle or suction head"
+    ],
+    "B02": [
+      "clock face",
+      "twin bells or actual generated clock-body structure",
+      "small clock feet and top structure"
+    ],
+    "B03": [
+      "upper pressing arm",
+      "base",
+      "rear hinge"
+    ],
+    "B04": [
+      "cup bowl",
+      "thin stem",
+      "base"
+    ]
+  },
+  "pass_gates": {
+    "rgba_and_mask_min": 8,
+    "usable_sprite_min": 7,
+    "identity_recognizable_96_min": 7,
+    "serious_structure_loss_max": 0,
+    "background_residual_max": 0,
+    "shadow_residual_max": 0,
+    "b01_both_hose_and_nozzle_required": true,
+    "b03_both_subjects_complete_required": true,
+    "b04_both_stem_and_base_required": true,
+    "automatic_retry_max": 0,
+    "case_specific_correction_max": 0
+  },
+  "reviewer_policy": "Reviewer identity is recorded explicitly; no user approval is implied."
+}

@@ -1,0 +1,50 @@
+{
+  "identity": {
+    "name_zh": "毒泡泡橡皮鸭",
+    "name_en": "poison bubble rubber duck",
+    "category": "toy",
+    "preserved_features": [
+      "classic rubber duck silhouette",
+      "rounded body and flat bottom",
+      "small wing details",
+      "orange flat beak",
+      "glossy toy-like surface"
+    ],
+    "material_hints": [
+      "rubber",
+      "glossy plastic-like coating"
+    ],
+    "silhouette_hints": [
+      "small rounded bath toy duck shape",
+      "flat beak protruding forward",
+      "compact rounded body"
+    ]
+  },
+  "combat": {
+    "behavior_family": "sustained_ranged",
+    "delivery": "continuous_emission",
+    "impact_mode": "continuous_stream",
+    "effect_type": "poison",
+    "drawback": "overheat",
+    "cadence_hint": "continuous"
+  },
+  "visual": {
+    "prompt_en": "A poison bubble rubber duck, classic rubber duck silhouette with rounded glossy body, flat orange beak, and small wing details, faithfully preserved as a toy, with a small functional emitter fitted near the beak to emit continuous poisonous bubbles, one isolated object, side view, complete object fully visible, toy-like glossy rubber material texture, sickly green poison tint accents",
+    "negative_prompt_en": "not a gun, not a Gatling gun, not a weapon, not a creature, not a real duck, not an umbrella, no human hands, no background scenery, no other objects",
+    "must_preserve": [
+      "classic rubber duck silhouette",
+      "rounded body and flat bottom",
+      "orange flat beak",
+      "small wing details",
+      "glossy toy-like surface"
+    ],
+    "must_not_replace_with": [
+      "real duck",
+      "gun",
+      "Gatling gun",
+      "umbrella",
+      "generic creature"
+    ]
+  },
+  "confidence": 0.9
+}

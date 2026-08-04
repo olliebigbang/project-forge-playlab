@@ -1,0 +1,55 @@
+{
+  "identity": {
+    "canonical_name_zh": "旧落地风扇",
+    "canonical_name_en": "old standing fan",
+    "display_name_zh": "喷冰雾的旧落地风扇",
+    "display_name_en": "Old Standing Fan with Frost Mist Emission",
+    "category": "household_object",
+    "required_identity_parts": [
+      "circular blade guard cage",
+      "rotating fan blades",
+      "tall vertical stand",
+      "motor housing at hub"
+    ],
+    "material_hints": [
+      "worn metal",
+      "painted steel",
+      "plastic blades"
+    ],
+    "silhouette_hints": [
+      "tall upright oscillating fan silhouette",
+      "round caged head atop slender pole stand"
+    ],
+    "optional_decorations": [
+      "rust patches",
+      "faded paint chips",
+      "small control knobs on housing"
+    ]
+  },
+  "combat": {
+    "behavior_family": "sustained_ranged",
+    "delivery": "continuous_emission",
+    "impact_mode": "continuous_stream",
+    "effect_type": "ice",
+    "drawback": "overheat",
+    "cadence_hint": "continuous"
+  },
+  "visual": {
+    "prompt_en": "An old standing fan, full object visible, side view, isolated on plain background, tall vertical stand with slender pole, round wire blade guard cage housing visible fan blades, worn painted metal motor housing at the hub, aged worn metal texture with subtle rust patches and faded paint, small Forge-adapted frost emitter fixture attached near the blade guard releasing cold icy mist, single cohesive object, complete silhouette from base to head",
+    "negative_prompt_en": "not a gun, not a weapon, not a sword, no human figures, no multiple objects, no text, no watermark, not a heater, not an air conditioner unit",
+    "must_preserve": [
+      "circular blade guard cage",
+      "rotating fan blades",
+      "tall vertical stand",
+      "motor housing at hub"
+    ],
+    "must_not_replace_with": [
+      "gun",
+      "rifle",
+      "sword",
+      "air conditioner",
+      "heater"
+    ]
+  },
+  "confidence": 0.9
+}

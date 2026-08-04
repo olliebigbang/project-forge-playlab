@@ -1,0 +1,6 @@
+{
+  "run_id": "blind-retest-3c-20260803T060715018997Z-4ddf8f31",
+  "status": "PENDING_HUMAN_REVIEW",
+  "pending_evidence_sha256": "650c0de04ebe417c822a19d542528908170897047daacefd5e79e589efe74f29",
+  "gate_b_executed": false
+}

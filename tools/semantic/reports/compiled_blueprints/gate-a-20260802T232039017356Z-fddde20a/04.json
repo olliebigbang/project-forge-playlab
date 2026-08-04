@@ -1,0 +1,47 @@
+{
+  "identity": {
+    "name_zh": "吸血巨型鸡腿",
+    "name_en": "Giant Lifesteal Chicken Leg",
+    "category": "food",
+    "preserved_features": [
+      "oversized drumstick shape",
+      "thick meaty bulb end",
+      "protruding bone handle",
+      "roasted skin texture"
+    ],
+    "material_hints": [
+      "roasted meat",
+      "crispy skin",
+      "bone"
+    ],
+    "silhouette_hints": [
+      "classic chicken drumstick silhouette",
+      "bulbous meat head with narrow bone grip"
+    ]
+  },
+  "combat": {
+    "behavior_family": "heavy_melee",
+    "delivery": "whole_object_strike",
+    "impact_mode": "whole_body_collision",
+    "effect_type": "lifesteal",
+    "drawback": "slow_movement",
+    "cadence_hint": "slow_heavy"
+  },
+  "visual": {
+    "prompt_en": "Giant Lifesteal Chicken Leg, oversized roasted chicken drumstick with thick meaty bulb end and protruding bone handle, crispy golden-brown skin texture, subtle dark red lifesteal glow along the meat surface, reinforced holdable bone grip for a Forge weapon adaptation, one isolated object, side view, complete object visible",
+    "negative_prompt_en": "not a gun, not a sword, not a hammer, not a generic melee weapon, no unrelated weapon shape, no human hand visible",
+    "must_preserve": [
+      "oversized drumstick shape",
+      "thick meaty bulb end",
+      "protruding bone handle",
+      "roasted skin texture"
+    ],
+    "must_not_replace_with": [
+      "sword",
+      "hammer",
+      "gun",
+      "generic melee weapon"
+    ]
+  },
+  "confidence": 0.9
+}

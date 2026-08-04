@@ -50,6 +50,27 @@ func undo_last() -> void:
 func has_ink() -> bool:
 	return not strokes.is_empty()
 
+func restore_geometry(summary: Dictionary) -> void:
+	strokes.clear()
+	var raw_strokes: Array = summary.get("raw_strokes", [])
+	for raw_value: Variant in raw_strokes:
+		if not raw_value is Array:
+			continue
+		var restored := PackedVector2Array()
+		for point_value: Variant in raw_value:
+			if point_value is Array and (point_value as Array).size() >= 2:
+				var point := point_value as Array
+				restored.append(Vector2(
+					clampf(float(point[0]), 0.0, 1.0) * maxf(1.0, size.x),
+					clampf(float(point[1]), 0.0, 1.0) * maxf(1.0, size.y)
+				))
+		if not restored.is_empty():
+			strokes.append(restored)
+	current_stroke = PackedVector2Array()
+	drawing = false
+	queue_redraw()
+	sketch_changed.emit()
+
 func geometry_summary() -> Dictionary:
 	if strokes.is_empty():
 		return {
@@ -161,4 +182,3 @@ func _empty_grid() -> Array:
 	for _row: int in range(8):
 		grid.append([0, 0, 0, 0, 0, 0, 0, 0])
 	return grid
-

@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://uwvxyvfqbsmq"
+
+[deps]
+
+files=["res://tools/semantic/reports/gate_a_results.api.translation", "res://tools/semantic/reports/gate_a_results.result.translation", "res://tools/semantic/reports/gate_a_results.schema.translation", "res://tools/semantic/reports/gate_a_results.identity.translation", "res://tools/semantic/reports/gate_a_results.behavior.translation", "res://tools/semantic/reports/gate_a_results.preserved.translation", "res://tools/semantic/reports/gate_a_results.clarification.translation", "res://tools/semantic/reports/gate_a_results.fixed.translation", "res://tools/semantic/reports/gate_a_results.reviewer.translation", "res://tools/semantic/reports/gate_a_results.input.translation", "res://tools/semantic/reports/gate_a_results.output.translation", "res://tools/semantic/reports/gate_a_results.elapsed.translation"]
+
+source_file="res://tools/semantic/reports/gate_a_results.csv"
+dest_files=["res://tools/semantic/reports/gate_a_results.api.translation", "res://tools/semantic/reports/gate_a_results.result.translation", "res://tools/semantic/reports/gate_a_results.schema.translation", "res://tools/semantic/reports/gate_a_results.identity.translation", "res://tools/semantic/reports/gate_a_results.behavior.translation", "res://tools/semantic/reports/gate_a_results.preserved.translation", "res://tools/semantic/reports/gate_a_results.clarification.translation", "res://tools/semantic/reports/gate_a_results.fixed.translation", "res://tools/semantic/reports/gate_a_results.reviewer.translation", "res://tools/semantic/reports/gate_a_results.input.translation", "res://tools/semantic/reports/gate_a_results.output.translation", "res://tools/semantic/reports/gate_a_results.elapsed.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

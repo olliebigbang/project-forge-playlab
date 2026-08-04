@@ -1,0 +1,21 @@
+case_id,api_status,result_type,schema_valid,identity_correct,behavior_correct,preserved_features_quality,clarification_correct,fixed_weapon_substitution,reviewer_reason,input_tokens,output_tokens,elapsed_ms
+01,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；结果工具错误('failed', None)",0,0,438
+02,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；结果工具错误('failed', None)",0,0,438
+03,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；结果工具错误('failed', None)",0,0,390
+04,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；结果工具错误('failed', None)",0,0,437
+05,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；结果工具错误('failed', None)",0,0,391
+06,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；结果工具错误('failed', None)",0,0,359
+07,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；结果工具错误('failed', None)",0,0,421
+08,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；结果工具错误('failed', None)",0,0,438
+09,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；结果工具错误('failed', None)",0,0,406
+10,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；结果工具错误('failed', None)",0,0,375
+11,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；结果工具错误('failed', None)",0,0,375
+12,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；结果工具错误('failed', None)",0,0,391
+13,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；结果工具错误('failed', None)",0,0,406
+14,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；结果工具错误('failed', None)",0,0,453
+15,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；结果工具错误('failed', None)",0,0,422
+16,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；结果工具错误('failed', None)",0,0,438
+17,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；澄清工具错误('failed', None)",0,0,438
+18,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；澄清工具错误('failed', None)",0,0,515
+19,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；结果工具错误('failed', None)",0,0,390
+20,400,failed,False,False,False,0,False,False,"API 未成功(400)；结构或跨字段验证失败；结果工具错误('failed', None)",0,0,375

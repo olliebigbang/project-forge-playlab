@@ -1,0 +1,37 @@
+{
+  "method": "v1_exact_chroma_flood_replay",
+  "source_raw": "C:\\Users\\Eddie L\\Documents\\project-forge-playlab\\tools\\comfyui\\gate_b_4a\\output\\gate-b-4a-20260803T094025408228Z-e25bf1f7\\B03\\seed_4041001\\raw.png",
+  "source_manifest": "C:\\Users\\Eddie L\\Documents\\project-forge-playlab\\tools\\comfyui\\gate_b_4a\\output\\gate-b-4a-20260803T094025408228Z-e25bf1f7\\B03\\seed_4041001\\manifest.json",
+  "recorded_v1_status": "success",
+  "recorded_v1_failure_reason": "",
+  "border_background_rgb": [
+    211.0,
+    93.0,
+    162.0
+  ],
+  "expected_background_match_ratio": 0.706458,
+  "distance_threshold": 82.0,
+  "candidate_foreground_coverage": 0.302753,
+  "largest_component_coverage": 0.241779,
+  "initial_component_count": 139,
+  "closed_component_count": 1,
+  "first_largest_component_area": 62993,
+  "final_largest_component_area": 63381,
+  "largest_component_bounds_xyxy": [
+    38,
+    174,
+    467,
+    390
+  ],
+  "rejected_edge_pixel_count": 0,
+  "failed_expected_chroma_border_pixel_count": 600,
+  "debug_files": [
+    "border_background_estimate.png",
+    "chroma_distance_map.png",
+    "flood_filled_background.png",
+    "candidate_foreground.png",
+    "largest_component.png",
+    "rejected_edge_pixels.png",
+    "final_failure_region.png"
+  ]
+}

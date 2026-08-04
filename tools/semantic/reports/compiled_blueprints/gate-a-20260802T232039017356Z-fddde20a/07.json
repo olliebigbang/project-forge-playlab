@@ -1,0 +1,49 @@
+{
+  "identity": {
+    "name_zh": "巨型法棍",
+    "name_en": "Giant Baguette",
+    "category": "food",
+    "preserved_features": [
+      "elongated baguette shape",
+      "crusty golden-brown surface",
+      "scored slashes on crust",
+      "tapered ends",
+      "bite marks / mouth-like opening"
+    ],
+    "material_hints": [
+      "baked bread crust",
+      "soft bread interior"
+    ],
+    "silhouette_hints": [
+      "long cylindrical loaf tapering at both ends",
+      "held like a club"
+    ]
+  },
+  "combat": {
+    "behavior_family": "heavy_melee",
+    "delivery": "whole_object_strike",
+    "impact_mode": "strike_edge",
+    "effect_type": "other",
+    "drawback": "long_recovery",
+    "cadence_hint": "slow_heavy"
+  },
+  "visual": {
+    "prompt_en": "Giant Baguette, an oversized crusty baguette loaf with golden-brown scored crust, tapered ends, and an animated bite-mark mouth opening along its side, reinforced grip wrap near one end for holding as a melee club, one isolated object, side view, complete object visible",
+    "negative_prompt_en": "do not depict a sword, do not depict a bat, do not depict a hammer, do not depict a gun, no generic weapon replacing the bread shape",
+    "must_preserve": [
+      "elongated baguette shape",
+      "crusty golden-brown surface",
+      "scored slashes on crust",
+      "tapered ends",
+      "bite marks / mouth-like opening"
+    ],
+    "must_not_replace_with": [
+      "sword",
+      "baseball bat",
+      "hammer",
+      "generic melee weapon",
+      "gun"
+    ]
+  },
+  "confidence": 0.85
+}

@@ -1,0 +1,24 @@
+{
+  "contract": "forge-live-static-visual-projection-v1",
+  "semantic_blueprint_modified": false,
+  "source_fields": [
+    "identity.canonical_name_en",
+    "identity.required_identity_parts",
+    "identity.material_hints",
+    "identity.silhouette_hints",
+    "identity.optional_decorations",
+    "visual.prompt_en",
+    "visual.negative_prompt_en",
+    "visual.must_preserve",
+    "visual.must_not_replace_with",
+    "combat.effect_type"
+  ],
+  "source_visual_prompt": "A giant wooden spoon, oversized and heavy, with a long carved wooden handle and a wide rounded scoop bowl at the end, made of polished wood showing natural grain, reinforced with a small metal band fitting for grip, isolated single object, side view, complete object fully visible against plain background",
+  "effect_type": "normal",
+  "physical_fixture_terms": [
+    "a small neutral forge functional fixture"
+  ],
+  "static_prompt_en": "canonical object identity: wooden spoon; identity-critical physical parts: long handle, rounded scoop bowl, spoon neck connecting handle to bowl; physical material cues: carved wood, polished wood grain; silhouette cues: oversized long-handled spoon silhouette, elongated handle with wide rounded bowl at end; optional small forge decorations only: metal band reinforcement on handle, carved rune motifs on bowl back; solid effect fixture: a small neutral forge functional fixture; one isolated handcrafted fantasy game prop; complete object visible; single subject; side view or slight three-quarter side view; facing right; readable silhouette; clear holdable region; clear solid functional fixture; flat high-contrast magenta studio background; object centered with generous empty margin; no crop",
+  "static_negative_prompt_en": "person, human, face, hand, character holding object, text, label, logo, watermark, UI, inventory grid, weapon sheet, multiple views, multiple objects, scenery, room, floor, ground shadow, cropped object, gun substitution, gatling substitution, sword substitution, greatsword substitution, umbrella substitution, boomerang substitution, dynamic trail, fire trail, electric trail, steam cloud, floating mist, acid stream, projectile, bullet, blood energy, return trail, motion blur, large glowing smoke; not a hammer, not a club, not a sword, not a shovel, not a paddle boat oar, no unrelated weapon shapes; do not replace with: hammer, club, sword, shovel, generic blunt weapon",
+  "dynamic_term_scan": "PASS"
+}

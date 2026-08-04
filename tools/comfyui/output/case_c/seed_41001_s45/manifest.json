@@ -1,0 +1,46 @@
+{
+  "case_id": "case_c",
+  "prompt": "一把会吸血的链锯大剑。",
+  "seed": 41001,
+  "workflow_file": "forge_object_sprite_v0.json",
+  "workflow_hash": "507095e0e1cbe0556d1bcac7cff8d28e93af65d843f69cc54de836ff267398a5",
+  "selected_comfyui_install": "ai_series_tools/ComfyUI",
+  "checkpoint": "RealVisXL_V5.0_fp16.safetensors",
+  "control_type": "img2img_sketch_fallback",
+  "control_strength": 0.45,
+  "generation_seconds": 2.061,
+  "postprocess_seconds": 0.035,
+  "raw_dimensions": [
+    512,
+    512
+  ],
+  "processed_dimensions": [
+    96,
+    96
+  ],
+  "alpha_coverage": 0.1529,
+  "opaque_bounds": [
+    7,
+    30,
+    82,
+    36
+  ],
+  "status": "success",
+  "failure_reason": "",
+  "prompt_id": "adaaf3b6-ebbe-4fc6-b55f-f70983ad13e9",
+  "run_id": "seed_41001_s45",
+  "request_id": "c74b69c3a287425191ddf780c05ef613",
+  "generation_size": [
+    512,
+    512
+  ],
+  "img2img_denoise": 0.721,
+  "background_border_rgb": [
+    236.0,
+    93.0,
+    198.0
+  ],
+  "background_expected_match": 1.0,
+  "palette_limit": 32,
+  "outline": true
+}

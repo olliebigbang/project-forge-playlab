@@ -1,0 +1,11 @@
+case_id=spike2_case_02
+run_id=seed_52002_policy1
+seed=52002
+prompt_id=bbe1349f-89d1-4fe6-ad2c-2835129a1de9
+status=success
+audit_enriched_from_manifest=true
+prompt_policy_version=forge-open-identity-v1
+control_type=none
+control_strength=0.0
+generation_seconds=2.035
+postprocess_seconds=0.037

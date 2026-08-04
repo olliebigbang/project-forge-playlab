@@ -1,0 +1,28 @@
+{
+  "EffectOrigin": [
+    90,
+    44
+  ],
+  "GripPrimary": [
+    17,
+    64
+  ],
+  "GripSecondary": [
+    30,
+    52
+  ],
+  "Muzzle": [
+    90,
+    44
+  ],
+  "SpinPivot": [
+    45,
+    44
+  ],
+  "Tip": [
+    88,
+    32
+  ],
+  "anchor_source": "alpha_local_search+profile",
+  "confidence": 0.88
+}

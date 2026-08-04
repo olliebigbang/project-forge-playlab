@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://ddksehwl3nwsj"
+
+[deps]
+
+files=["res://tools/comfyui/reports/spike_scores.run.translation", "res://tools/comfyui/reports/spike_scores.single.translation", "res://tools/comfyui/reports/spike_scores.nb.translation", "res://tools/comfyui/reports/spike_scores.complete.translation", "res://tools/comfyui/reports/spike_scores.facing.translation", "res://tools/comfyui/reports/spike_scores.identity.translation", "res://tools/comfyui/reports/spike_scores.sketch.translation", "res://tools/comfyui/reports/spike_scores.description.translation", "res://tools/comfyui/reports/spike_scores.background.translation", "res://tools/comfyui/reports/spike_scores.recognizable.translation", "res://tools/comfyui/reports/spike_scores.holdable.translation", "res://tools/comfyui/reports/spike_scores.grip.translation", "res://tools/comfyui/reports/spike_scores.effect.translation", "res://tools/comfyui/reports/spike_scores.seed.translation", "res://tools/comfyui/reports/spike_scores.generation.translation", "res://tools/comfyui/reports/spike_scores.retry.translation", "res://tools/comfyui/reports/spike_scores.status.translation", "res://tools/comfyui/reports/spike_scores.notes.translation"]
+
+source_file="res://tools/comfyui/reports/spike_scores.csv"
+dest_files=["res://tools/comfyui/reports/spike_scores.run.translation", "res://tools/comfyui/reports/spike_scores.single.translation", "res://tools/comfyui/reports/spike_scores.nb.translation", "res://tools/comfyui/reports/spike_scores.complete.translation", "res://tools/comfyui/reports/spike_scores.facing.translation", "res://tools/comfyui/reports/spike_scores.identity.translation", "res://tools/comfyui/reports/spike_scores.sketch.translation", "res://tools/comfyui/reports/spike_scores.description.translation", "res://tools/comfyui/reports/spike_scores.background.translation", "res://tools/comfyui/reports/spike_scores.recognizable.translation", "res://tools/comfyui/reports/spike_scores.holdable.translation", "res://tools/comfyui/reports/spike_scores.grip.translation", "res://tools/comfyui/reports/spike_scores.effect.translation", "res://tools/comfyui/reports/spike_scores.seed.translation", "res://tools/comfyui/reports/spike_scores.generation.translation", "res://tools/comfyui/reports/spike_scores.retry.translation", "res://tools/comfyui/reports/spike_scores.status.translation", "res://tools/comfyui/reports/spike_scores.notes.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

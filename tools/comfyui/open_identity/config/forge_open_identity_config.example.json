@@ -1,0 +1,21 @@
+{
+  "api_base": "http://127.0.0.1:8188",
+  "selected_install_label": "ai_series_tools/ComfyUI",
+  "comfyui_install": "${FORGE_COMFYUI_INSTALL}",
+  "python_executable": "${FORGE_COMFYUI_PYTHON}",
+  "checkpoint": "RealVisXL_V5.0_fp16.safetensors",
+  "workflow_file": "../../workflows/forge_object_sprite_v0.json",
+  "bridge_script": "../../bridge/forge_comfy_bridge.py",
+  "postprocess_script": "../../postprocess/process_sprite.py",
+  "input_directory": "../../runtime/input",
+  "comfy_output_directory": "../../runtime/comfy_output",
+  "output_root": "../output",
+  "timeout_seconds": 120,
+  "poll_interval_seconds": 0.5,
+  "generation_width": 512,
+  "generation_height": 512,
+  "background_rgb": [255, 0, 255],
+  "sprite_size": 96,
+  "max_colors": 32,
+  "outline": true
+}

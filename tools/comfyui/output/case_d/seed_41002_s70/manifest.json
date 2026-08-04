@@ -1,0 +1,46 @@
+{
+  "case_id": "case_d",
+  "prompt": "一把冒蓝火、会连续发射螺丝的木质椅子。",
+  "seed": 41002,
+  "workflow_file": "forge_object_sprite_v0.json",
+  "workflow_hash": "507095e0e1cbe0556d1bcac7cff8d28e93af65d843f69cc54de836ff267398a5",
+  "selected_comfyui_install": "ai_series_tools/ComfyUI",
+  "checkpoint": "RealVisXL_V5.0_fp16.safetensors",
+  "control_type": "img2img_sketch_fallback",
+  "control_strength": 0.7,
+  "generation_seconds": 2.053,
+  "postprocess_seconds": 0.036,
+  "raw_dimensions": [
+    512,
+    512
+  ],
+  "processed_dimensions": [
+    96,
+    96
+  ],
+  "alpha_coverage": 0.3864,
+  "opaque_bounds": [
+    11,
+    6,
+    73,
+    84
+  ],
+  "status": "success",
+  "failure_reason": "",
+  "prompt_id": "9c694b18-54a2-433e-87fd-dea964eed6c8",
+  "run_id": "seed_41002_s70",
+  "request_id": "0da82c9625aa41f498853b279a093595",
+  "generation_size": [
+    512,
+    512
+  ],
+  "img2img_denoise": 0.566,
+  "background_border_rgb": [
+    236.0,
+    45.0,
+    231.0
+  ],
+  "background_expected_match": 1.0,
+  "palette_limit": 32,
+  "outline": true
+}

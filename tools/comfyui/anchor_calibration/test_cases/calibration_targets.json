@@ -1,0 +1,258 @@
+{
+  "schema_version": 1,
+  "coordinate_space": {
+    "width": 96,
+    "height": 96,
+    "origin": "top_left",
+    "units": "pixels"
+  },
+  "provenance": "Manual visual review of the 11 successful transparent Spike 0 sprites. These are calibration observations, not object-specific runtime rules.",
+  "runs": [
+    {
+      "case_id": "case_a",
+      "run_id": "seed_41001_s45",
+      "sprite_path": "res://tools/comfyui/output/case_a/seed_41001_s45/processed_sprite.png",
+      "behavior_family": "sustained_ranged",
+      "grip_profile": "two_hand_rear",
+      "required_anchor_types": ["GripPrimary", "GripSecondary", "EffectOrigin"],
+      "manual_points": {
+        "GripPrimary": [24, 50],
+        "EffectOrigin": [90, 48]
+      },
+      "point_confidence": {
+        "GripPrimary": 0.45,
+        "EffectOrigin": 0.9
+      },
+      "reviewer_usable_after_calibration": true,
+      "visual_notes": "The rear sleeve is the best available hold region; the blue outlet is at the right end.",
+      "limitations": [
+        "The image has no unambiguous conventional handle, so GripPrimary is a low-confidence fixture placement.",
+        "GripSecondary is intentionally omitted from manual_points and must be derived generically from alpha geometry."
+      ]
+    },
+    {
+      "case_id": "case_a",
+      "run_id": "seed_41002_s70",
+      "sprite_path": "res://tools/comfyui/output/case_a/seed_41002_s70/processed_sprite.png",
+      "behavior_family": "sustained_ranged",
+      "grip_profile": "two_hand_rear",
+      "required_anchor_types": ["GripPrimary", "GripSecondary", "EffectOrigin"],
+      "manual_points": {
+        "GripPrimary": [20, 57],
+        "EffectOrigin": [90, 42]
+      },
+      "point_confidence": {
+        "GripPrimary": 0.95,
+        "EffectOrigin": 0.95
+      },
+      "reviewer_usable_after_calibration": true,
+      "visual_notes": "The lower rear grip is distinct and the right-facing barrel center is visually clear.",
+      "limitations": [
+        "GripSecondary is intentionally omitted from manual_points and must be derived generically from alpha geometry."
+      ]
+    },
+    {
+      "case_id": "case_a",
+      "run_id": "seed_41003_s45",
+      "sprite_path": "res://tools/comfyui/output/case_a/seed_41003_s45/processed_sprite.png",
+      "behavior_family": "sustained_ranged",
+      "grip_profile": "two_hand_rear",
+      "required_anchor_types": ["GripPrimary", "GripSecondary", "EffectOrigin"],
+      "manual_points": {
+        "GripPrimary": [18, 53],
+        "EffectOrigin": [90, 47]
+      },
+      "point_confidence": {
+        "GripPrimary": 0.85,
+        "EffectOrigin": 0.9
+      },
+      "reviewer_usable_after_calibration": true,
+      "visual_notes": "The bottom bend of the U-shaped rear handle is usable; the right end cap is the functional outlet.",
+      "limitations": [
+        "GripSecondary is intentionally omitted from manual_points and must be derived generically from alpha geometry."
+      ]
+    },
+    {
+      "case_id": "case_b",
+      "run_id": "seed_41001_s00",
+      "sprite_path": "res://tools/comfyui/output/case_b/seed_41001_s00/processed_sprite.png",
+      "behavior_family": "returning_thrown",
+      "grip_profile": "center_shaft",
+      "required_anchor_types": ["GripPrimary", "StrikePoint", "SpinPivot"],
+      "manual_points": {
+        "GripPrimary": [71, 76],
+        "StrikePoint": [88, 19]
+      },
+      "point_confidence": {
+        "GripPrimary": 0.7,
+        "StrikePoint": 0.85
+      },
+      "reviewer_usable_after_calibration": true,
+      "reviewer_reference": {
+        "SpinPivot": [49, 43],
+        "spin_pivot_alpha_centroid_exact": [48.822, 42.743]
+      },
+      "visual_notes": "The curved shaft neck is the practical hold region; the right upper canopy rim is the outward strike edge.",
+      "limitations": [
+        "The grip is partly merged into decorative geometry.",
+        "SpinPivot is intentionally omitted from manual_points and recorded only as an alpha-centroid reference."
+      ]
+    },
+    {
+      "case_id": "case_b",
+      "run_id": "seed_41003_s00",
+      "sprite_path": "res://tools/comfyui/output/case_b/seed_41003_s00/processed_sprite.png",
+      "behavior_family": "returning_thrown",
+      "grip_profile": "center_shaft",
+      "required_anchor_types": ["GripPrimary", "StrikePoint", "SpinPivot"],
+      "manual_points": {
+        "GripPrimary": [47, 65],
+        "StrikePoint": [85, 33]
+      },
+      "point_confidence": {
+        "GripPrimary": 0.9,
+        "StrikePoint": 0.85
+      },
+      "reviewer_usable_after_calibration": true,
+      "reviewer_reference": {
+        "SpinPivot": [47, 34],
+        "spin_pivot_alpha_centroid_exact": [46.849, 34.332]
+      },
+      "visual_notes": "The center shaft gives a clear hold position; the right canopy rim is the outward strike edge.",
+      "limitations": [
+        "SpinPivot is intentionally omitted from manual_points and recorded only as an alpha-centroid reference."
+      ]
+    },
+    {
+      "case_id": "case_c",
+      "run_id": "seed_41001_s45",
+      "sprite_path": "res://tools/comfyui/output/case_c/seed_41001_s45/processed_sprite.png",
+      "behavior_family": "heavy_melee",
+      "grip_profile": "two_hand_rear",
+      "required_anchor_types": ["GripPrimary", "GripSecondary", "StrikePoint"],
+      "manual_points": {
+        "GripPrimary": [76, 46],
+        "StrikePoint": [7, 57]
+      },
+      "point_confidence": {
+        "GripPrimary": 0.9,
+        "StrikePoint": 0.95
+      },
+      "reviewer_usable_after_calibration": true,
+      "visual_notes": "The curved handle is on the right and the blade tip is on the left, making this sprite visibly left-facing.",
+      "limitations": [
+        "Runtime presentation must normalize orientation without altering the source sprite.",
+        "GripSecondary is intentionally omitted from manual_points and must be derived generically from alpha geometry."
+      ]
+    },
+    {
+      "case_id": "case_c",
+      "run_id": "seed_41002_s70",
+      "sprite_path": "res://tools/comfyui/output/case_c/seed_41002_s70/processed_sprite.png",
+      "behavior_family": "heavy_melee",
+      "grip_profile": "two_hand_rear",
+      "required_anchor_types": ["GripPrimary", "GripSecondary", "StrikePoint"],
+      "manual_points": {
+        "GripPrimary": [82, 42],
+        "StrikePoint": [7, 54]
+      },
+      "point_confidence": {
+        "GripPrimary": 0.65,
+        "StrikePoint": 0.85
+      },
+      "reviewer_usable_after_calibration": true,
+      "visual_notes": "The ring-like rear region is the best hold area; the cutting end is at the left edge.",
+      "limitations": [
+        "The grip silhouette is visually ambiguous.",
+        "Runtime presentation must normalize orientation without altering the source sprite.",
+        "GripSecondary is intentionally omitted from manual_points and must be derived generically from alpha geometry."
+      ]
+    },
+    {
+      "case_id": "case_c",
+      "run_id": "seed_41003_s45",
+      "sprite_path": "res://tools/comfyui/output/case_c/seed_41003_s45/processed_sprite.png",
+      "behavior_family": "heavy_melee",
+      "grip_profile": "two_hand_rear",
+      "required_anchor_types": ["GripPrimary", "GripSecondary", "StrikePoint"],
+      "manual_points": {
+        "GripPrimary": [79, 46],
+        "StrikePoint": [7, 55]
+      },
+      "point_confidence": {
+        "GripPrimary": 0.95,
+        "StrikePoint": 0.95
+      },
+      "reviewer_usable_after_calibration": true,
+      "visual_notes": "The purple handle is on the right and the thin blade tip is on the left, making this sprite visibly left-facing.",
+      "limitations": [
+        "Runtime presentation must normalize orientation without altering the source sprite.",
+        "GripSecondary is intentionally omitted from manual_points and must be derived generically from alpha geometry."
+      ]
+    },
+    {
+      "case_id": "case_d",
+      "run_id": "seed_41002_s70",
+      "sprite_path": "res://tools/comfyui/output/case_d/seed_41002_s70/processed_sprite.png",
+      "behavior_family": "sustained_ranged",
+      "grip_profile": "bottom_handle",
+      "required_anchor_types": ["GripPrimary", "EffectOrigin"],
+      "manual_points": {
+        "GripPrimary": [27, 62],
+        "EffectOrigin": [85, 40]
+      },
+      "point_confidence": {
+        "GripPrimary": 0.7,
+        "EffectOrigin": 0.8
+      },
+      "reviewer_usable_after_calibration": true,
+      "visual_notes": "The left seat-frame junction can accept a fixture; the right mechanical projection reads as the screw outlet.",
+      "limitations": [
+        "The source object is furniture and has no naturally ergonomic weapon grip."
+      ]
+    },
+    {
+      "case_id": "case_d",
+      "run_id": "seed_41003_s45",
+      "sprite_path": "res://tools/comfyui/output/case_d/seed_41003_s45/processed_sprite.png",
+      "behavior_family": "sustained_ranged",
+      "grip_profile": "bottom_handle",
+      "required_anchor_types": ["GripPrimary", "EffectOrigin"],
+      "manual_points": {
+        "GripPrimary": [27, 69],
+        "EffectOrigin": [65, 60]
+      },
+      "point_confidence": {
+        "GripPrimary": 0.55,
+        "EffectOrigin": 0.35
+      },
+      "reviewer_usable_after_calibration": false,
+      "visual_notes": "The lower-left chair frame can accept a fixture; the right seat-frame edge is only a fallback power outlet.",
+      "limitations": [
+        "There is no credible visible muzzle or emission nozzle.",
+        "Both fixture ergonomics and action semantics remain weak, with EffectOrigin especially low confidence."
+      ]
+    },
+    {
+      "case_id": "case_e",
+      "run_id": "seed_41001_s00",
+      "sprite_path": "res://tools/comfyui/output/case_e/seed_41001_s00/processed_sprite.png",
+      "behavior_family": "sustained_ranged",
+      "grip_profile": "bottom_handle",
+      "required_anchor_types": ["GripPrimary", "EffectOrigin"],
+      "manual_points": {
+        "GripPrimary": [52, 23],
+        "EffectOrigin": [6, 48]
+      },
+      "point_confidence": {
+        "GripPrimary": 0.9,
+        "EffectOrigin": 0.95
+      },
+      "reviewer_usable_after_calibration": true,
+      "visual_notes": "The center of the top arch is the natural handle point; the spout outlet is clearly on the left.",
+      "limitations": [
+        "Runtime presentation must normalize orientation without altering the source sprite."
+      ]
+    }
+  ]
+}

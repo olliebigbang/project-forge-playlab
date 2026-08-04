@@ -1,0 +1,21 @@
+case_id,api_status,result_type,schema_valid,identity_correct,behavior_correct,preserved_features_quality,clarification_correct,fixed_weapon_substitution,reviewer_reason,input_tokens,output_tokens,elapsed_ms
+01,200,compiled,True,True,True,1,False,False,身份: 中英身份均匹配；行为: 匹配 returning_thrown；特征: 2/3；质量=1；缺失 桌腿 / table legs,3927,624,6547
+02,200,compiled,True,True,True,1,False,False,身份: 中英身份均匹配；行为: 匹配 sustained_ranged；特征: 3/4；质量=1；缺失 椅腿 / chair legs,3922,585,6469
+03,200,compiled,True,True,True,2,False,False,身份: 中英身份均匹配；行为: 匹配 sustained_ranged；特征: 3/3；质量=2,3926,590,6282
+04,200,compiled,True,False,True,1,False,False,身份: 英文身份不匹配(Giant Lifesteal Chicken Leg)；行为: 匹配 heavy_melee；特征: 2/3；质量=1；缺失 鸡腿骨 / chicken leg bone,3938,638,6485
+05,200,compiled,True,True,True,2,False,False,身份: 中英身份均匹配；行为: 匹配 returning_thrown；特征: 3/3；质量=2,3932,635,7313
+06,200,compiled,True,True,True,2,False,False,身份: 中英身份均匹配；行为: 匹配 sustained_ranged；特征: 3/3；质量=2,3929,628,6937
+07,200,compiled,True,True,True,1,False,False,身份: 中英身份均匹配；行为: 匹配 heavy_melee；特征: 2/3；质量=1；缺失 面包轮廓 / bread silhouette,3937,616,6907
+08,200,compiled,True,True,True,1,False,False,身份: 中英身份均匹配；行为: 匹配 sustained_ranged；特征: 2/3；质量=1；缺失 工具箱结构 / toolbox construction,3926,631,7375
+09,200,compiled,True,True,True,1,False,False,身份: 中英身份均匹配；行为: 匹配 returning_thrown；特征: 2/3；质量=1；缺失 机翼 / wings,3934,565,6765
+10,200,failed,False,False,False,0,False,False,"结构或跨字段验证失败；结果工具错误('failed', 'submit_forge_semantic_blueprint')",3928,606,7578
+11,200,compiled,True,True,True,1,False,False,身份: 中英身份均匹配；行为: 匹配 returning_thrown；特征: 2/3；质量=1；缺失 两侧长杆 / side rails,3932,631,9578
+12,200,compiled,True,True,True,2,False,False,身份: 中英身份均匹配；行为: 匹配 sustained_ranged；特征: 3/3；质量=2,3931,671,6907
+13,200,failed,False,False,False,0,False,False,"结构或跨字段验证失败；结果工具错误('failed', 'submit_forge_semantic_blueprint')",3933,632,7438
+14,200,compiled,True,True,True,1,False,False,"身份: 中英身份均匹配；行为: 匹配 returning_thrown；特征: 1/3；质量=1；缺失 锅身 / pan body, 金属厨具身份 / metal cookware identity",3933,552,6609
+15,200,compiled,True,True,True,2,False,False,身份: 中英身份均匹配；行为: 匹配 sustained_ranged；特征: 3/3；质量=2,3928,664,7219
+16,200,compiled,True,True,True,2,False,False,身份: 中英身份均匹配；行为: 匹配 heavy_melee；特征: 3/3；质量=2,3934,655,8313
+17,200,failed,False,False,False,0,False,False,"结构或跨字段验证失败；澄清工具错误('failed', 'request_forge_clarification')",3921,164,2579
+18,200,failed,False,False,False,0,False,False,"结构或跨字段验证失败；澄清工具错误('failed', 'request_forge_clarification')",3938,218,3719
+19,200,compiled,True,True,True,1,False,False,"身份: 中英身份均匹配；行为: 匹配 sustained_ranged；特征: 1/3；质量=1；缺失 木箱 / wooden box, 工具箱身份 / toolbox identity",3930,582,6547
+20,200,compiled,True,True,True,1,False,False,身份: 中英身份均匹配；行为: 匹配 heavy_melee；特征: 2/3；质量=1；缺失 抽象身份 / abstract identity,3936,706,8125

@@ -1,0 +1,8 @@
+{
+  "workflow_sha256": "56d74936b840de2ce2d5e823b6ad1704b9e65dd7ddd8b7a0edbfb5d4d4cf19df",
+  "prompt_id": "e3b71310-2b82-4505-af03-cf0e309a700a",
+  "retry_count": 0,
+  "rgba_sha256": "9818d2f292252120bed89bcec87aa6ec8600b2819411f93cc9411959388e5415",
+  "mask_sha256": "8b56a2545ecb5919aa4753e51f548b7c980b6185914748439bd15fb59584c2d7",
+  "status": "success"
+}

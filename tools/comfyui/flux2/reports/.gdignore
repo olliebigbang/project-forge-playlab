@@ -1,0 +1,1 @@
+# Evidence files are loaded explicitly by tooling and must not be imported as Godot resources.

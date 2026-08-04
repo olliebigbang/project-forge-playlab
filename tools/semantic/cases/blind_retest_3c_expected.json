@@ -1,0 +1,59 @@
+{
+  "contract_version": "forge-semantic-blind-retest-3c-expected-v1",
+  "case_order": ["B01", "B02", "B03", "B04"],
+  "freeze_policy": "expected_and_review_rubric_sha256_must_be_reserved_before_any_provider_call",
+  "cases": {
+    "B01": {
+      "result_type": "compiled",
+      "canonical_base_zh_aliases": ["吸尘器", "旧吸尘器", "老吸尘器", "老旧吸尘器", "旧式吸尘器", "老式吸尘器"],
+      "canonical_base_en_aliases": ["vacuum cleaner", "old vacuum cleaner", "aged vacuum cleaner", "vintage vacuum cleaner", "antique vacuum cleaner"],
+      "behavior_family": "sustained_ranged",
+      "manual_structure_review": {
+        "concepts": [
+          {"concept_id": "vacuum_body", "label_zh": "吸尘器主体", "label_en": "vacuum body"},
+          {"concept_id": "long_hose", "label_zh": "长软管", "label_en": "long hose"},
+          {"concept_id": "nozzle_or_suction_head", "label_zh": "吸嘴或吸头", "label_en": "nozzle or suction head"}
+        ]
+      }
+    },
+    "B02": {
+      "result_type": "compiled",
+      "canonical_base_zh_aliases": ["双铃机械闹钟", "机械双铃闹钟", "双铃闹钟"],
+      "canonical_base_en_aliases": ["twin-bell mechanical alarm clock", "mechanical twin-bell alarm clock", "twin-bell alarm clock", "double-bell mechanical alarm clock", "mechanical double-bell alarm clock", "double-bell alarm clock"],
+      "behavior_family": "returning_thrown",
+      "manual_structure_review": {
+        "concepts": [
+          {"concept_id": "clock_face", "label_zh": "钟面", "label_en": "clock face"},
+          {"concept_id": "twin_bells", "label_zh": "双铃", "label_en": "twin bells"},
+          {"concept_id": "clock_hands_or_body", "label_zh": "指针或钟体", "label_en": "hands or clock body"}
+        ]
+      }
+    },
+    "B03": {
+      "result_type": "compiled",
+      "canonical_base_zh_aliases": ["巨大订书机", "巨型订书机", "大号订书机", "巨大订书器", "巨型订书器", "大号订书器"],
+      "canonical_base_en_aliases": ["giant stapler", "oversized stapler", "large stapler", "giant office stapler", "oversized office stapler"],
+      "behavior_family": "heavy_melee",
+      "manual_structure_review": {
+        "concepts": [
+          {"concept_id": "stapler_upper_pressing_arm", "label_zh": "上压臂", "label_en": "upper pressing arm"},
+          {"concept_id": "stapler_base", "label_zh": "底座", "label_en": "base"},
+          {"concept_id": "stapler_rear_hinge", "label_zh": "后部铰链", "label_en": "rear hinge"}
+        ]
+      }
+    },
+    "B04": {
+      "result_type": "compiled",
+      "canonical_base_zh_aliases": ["高脚杯", "绿色高脚杯", "绿高脚杯", "葡萄酒杯", "绿色葡萄酒杯"],
+      "canonical_base_en_aliases": ["goblet", "wine goblet", "green goblet", "green wine goblet", "wine glass", "green wine glass", "stemmed goblet", "green stemmed goblet"],
+      "behavior_family": "sustained_ranged",
+      "manual_structure_review": {
+        "concepts": [
+          {"concept_id": "goblet_cup_bowl", "label_zh": "杯身", "label_en": "cup bowl"},
+          {"concept_id": "goblet_narrow_stem", "label_zh": "细长杯脚", "label_en": "narrow stem"},
+          {"concept_id": "goblet_base", "label_zh": "底座", "label_en": "base"}
+        ]
+      }
+    }
+  }
+}

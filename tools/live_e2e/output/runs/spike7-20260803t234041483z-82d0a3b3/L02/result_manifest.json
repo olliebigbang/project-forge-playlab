@@ -1,0 +1,40 @@
+{
+  "contract": "forge-live-e2e-spike7-case-result-v1",
+  "case_id": "L02",
+  "revision": 2,
+  "seed": 7071002,
+  "status": "completed",
+  "technical_success": true,
+  "product_success": true,
+  "semantic_success": true,
+  "blueprint_valid": true,
+  "behavior_family": "returning_thrown",
+  "behavior_expected": "returning_thrown",
+  "behavior_correct": true,
+  "identity_review": {
+    "identity_recognizable": true,
+    "required_parts_preserved": [
+      true,
+      true,
+      true
+    ],
+    "required_parts_preserved_count": 3,
+    "no_fixed_weapon_substitution": true,
+    "no_baked_dynamic_effect": true,
+    "confirmation_seconds": 13.989
+  },
+  "anchor_complete": true,
+  "training": {
+    "moved": true,
+    "attacked": true,
+    "dodged": true,
+    "behavior_family_observed": true,
+    "training_load_seconds": 0.012
+  },
+  "failure_stage": "",
+  "failure_reason": "",
+  "retry_count": 0,
+  "mock_fallback": false,
+  "stale_request_committed": false,
+  "completed_at_utc": "2026-08-04T03:36:43.452Z"
+}

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource path="res://scripts/semantic_anchor_spike.gd" type="Script" id="1_semantic"]
+
+[node name="SemanticAnchorSpike" type="Node2D"]
+script = ExtResource("1_semantic")

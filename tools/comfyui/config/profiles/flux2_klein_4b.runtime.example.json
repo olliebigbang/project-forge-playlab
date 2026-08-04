@@ -1,0 +1,12 @@
+{
+  "visual_provider": "LOCAL_COMFYUI",
+  "comfy_profile": "flux2_klein_4b",
+  "api_base": "http://127.0.0.1:8190",
+  "python_executable": "C:/AI/ComfyUI-ForgeFlux2/.venv/Scripts/python.exe",
+  "output_root": "../../flux2/output",
+  "output_group": "interactive",
+  "timeout_seconds": 120,
+  "profile_file": "flux2_klein_4b.json",
+  "bridge_script": "../../flux2/bridge/flux2_profile_bridge.py",
+  "enable_sketch_edit": false
+}

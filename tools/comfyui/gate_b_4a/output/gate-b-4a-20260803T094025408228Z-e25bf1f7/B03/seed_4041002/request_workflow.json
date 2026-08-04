@@ -1,0 +1,97 @@
+{
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "RealVisXL_V5.0_fp16.safetensors"
+    }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "GateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041002.png"
+    }
+  },
+  "3": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "2",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    }
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "1",
+        1
+      ],
+      "text": "canonical object identity: stapler. required identity parts: hinged top arm; base plate; spring-loaded press mechanism; staple magazine slot. material hints: heavy metal body; painted steel casing. silhouette hints: elongated rectangular clamp shape with hinged top jaw. optional decorations: worn paint scuffs; brand-style engraving. frozen visual description: A giant oversized stapler shown as an isolated object, side view, complete object visible, heavy metal body with a hinged top arm and a solid base plate, spring-loaded press mechanism visible at the hinge, staple magazine slot along the body, thick painted steel casing, faint worn paint scuffs, slightly reinforced clamping edge for combat use, held like a massive melee clamp weapon, dramatic fantasy lighting, isolated on plain background. one isolated fantasy game prop, side view, facing right, complete object visible, clear handle or holdable region, clear functional front or effect-emission region, no person, no hand, no character, no text, no watermark, no UI, no environment scene, flat high-contrast solid chroma key magenta background, readable silhouette, handcrafted fantasy toy aesthetic, centered object, generous empty margin."
+    }
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "1",
+        1
+      ],
+      "text": "not a gun, not a sword, not scissors, not a bear trap, not a robotic claw, no unrelated weapon shapes, no background clutter, no multiple objects. portrait, human, face, hands, fingers, character holding object, person, weapon sheet, multiple views, multiple objects, inventory grid, text, label, letters, logo, watermark, UI, scenery, room, landscape, environment, pedestal, cropped object, cut off, border."
+    }
+  },
+  "6": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "4",
+        0
+      ],
+      "negative": [
+        "5",
+        0
+      ],
+      "latent_image": [
+        "3",
+        0
+      ],
+      "seed": 4041002,
+      "steps": 26,
+      "cfg": 6.5,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 1.0
+    }
+  },
+  "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "6",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    }
+  },
+  "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "7",
+        0
+      ],
+      "filename_prefix": "ForgeGateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041002/raw"
+    }
+  }
+}

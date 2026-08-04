@@ -1,0 +1,78 @@
+{
+  "evaluation_method": "Manual visual review of the five policy1 raw and 96x96 images. One generic prompt-policy correction was allowed; no case-specific prompt or retry was used.",
+  "official_run": "seed_52002_policy1",
+  "prompt_policy": "forge-open-identity-v1",
+  "summary": {
+    "blueprint_identity_passthrough": "5/5",
+    "behavior_family_correct": "5/5",
+    "same_sustained_family_distinct_input_identities": "3/3",
+    "technical_alpha_delivery": "5/5",
+    "raw_visual_identity_preserved": "2/5",
+    "identity_recognizable_at_96": "2/5",
+    "no_person_or_hands": "4/5",
+    "description_specific_effect_visible": "0/5",
+    "ai_semantic_interpretation_used": false
+  },
+  "cases": [
+    {
+      "case_id": "spike2_case_01",
+      "expected_identity": "木桌",
+      "behavior_family": "returning_thrown",
+      "raw_identity_preserved": false,
+      "recognizable_at_96": false,
+      "no_person_or_hands": false,
+      "description_effect_visible": false,
+      "status": "semantic_failure",
+      "notes": "Generated a full human figure rather than a table. Chroma-key cleanup retained only a body fragment, yet the technical Alpha gate accepted it."
+    },
+    {
+      "case_id": "spike2_case_02",
+      "expected_identity": "木椅",
+      "behavior_family": "sustained_ranged",
+      "raw_identity_preserved": false,
+      "recognizable_at_96": false,
+      "no_person_or_hands": true,
+      "description_effect_visible": false,
+      "status": "semantic_failure",
+      "notes": "Generated an ornate fantasy mace or staff; no chair identity or screw-emission feature survived."
+    },
+    {
+      "case_id": "spike2_case_03",
+      "expected_identity": "旧茶壶",
+      "behavior_family": "sustained_ranged",
+      "raw_identity_preserved": true,
+      "recognizable_at_96": true,
+      "no_person_or_hands": true,
+      "description_effect_visible": false,
+      "status": "identity_success",
+      "notes": "A teapot remains recognizable in raw and 96x96 output; high-temperature steam is not depicted."
+    },
+    {
+      "case_id": "spike2_case_04",
+      "expected_identity": "巨大鸡腿",
+      "behavior_family": "heavy_melee",
+      "raw_identity_preserved": false,
+      "recognizable_at_96": false,
+      "no_person_or_hands": true,
+      "description_effect_visible": false,
+      "status": "semantic_failure",
+      "notes": "Generated an ornate staff; no chicken-leg identity or life-drain cue survived."
+    },
+    {
+      "case_id": "spike2_case_05",
+      "expected_identity": "机械雨伞",
+      "behavior_family": "sustained_ranged",
+      "raw_identity_preserved": true,
+      "recognizable_at_96": true,
+      "no_person_or_hands": true,
+      "description_effect_visible": false,
+      "status": "identity_success",
+      "notes": "An umbrella remains recognizable in raw and 96x96 output; mechanical/electric emission is not visible."
+    }
+  ],
+  "diagnostic_policy0": {
+    "run": "seed_52002",
+    "visual_identity_preserved": "0/5",
+    "finding": "All five outputs became handguns because positive CLIP text named forbidden archetypes while attempting to negate them. Those nouns were removed globally; this run is retained as failure evidence and is not the official score."
+  }
+}

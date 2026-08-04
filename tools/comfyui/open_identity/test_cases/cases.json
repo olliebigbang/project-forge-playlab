@@ -1,0 +1,51 @@
+{
+  "spike": "Forge Open Identity Interpretation Spike 2",
+  "seed": 52002,
+  "cases": [
+    {
+      "case_id": "spike2_case_01",
+      "player_text": "会飞出去撞敌人再返回的木桌",
+      "expected_identity": "木桌",
+      "expected_behavior_family": "returning_thrown",
+      "generate_visual": true
+    },
+    {
+      "case_id": "spike2_case_02",
+      "player_text": "会连续发射螺丝的木椅",
+      "expected_identity": "木椅",
+      "expected_behavior_family": "sustained_ranged",
+      "generate_visual": true
+    },
+    {
+      "case_id": "spike2_case_03",
+      "player_text": "喷射高温蒸汽的旧茶壶",
+      "expected_identity": "旧茶壶",
+      "expected_behavior_family": "sustained_ranged",
+      "generate_visual": true
+    },
+    {
+      "case_id": "spike2_case_04",
+      "player_text": "会吸血的巨大鸡腿",
+      "expected_identity": "巨大鸡腿",
+      "expected_behavior_family": "heavy_melee",
+      "generate_visual": true
+    },
+    {
+      "case_id": "spike2_case_05",
+      "player_text": "能放出电流的机械雨伞",
+      "expected_identity": "机械雨伞",
+      "expected_behavior_family": "sustained_ranged",
+      "generate_visual": true
+    },
+    {
+      "case_id": "spike2_case_06",
+      "player_text": "",
+      "expected_identity": "unknown_until_player_answer",
+      "expected_behavior_family": "unknown_until_player_answer",
+      "sketch_only": true,
+      "sketch": "abstract_sketch.png",
+      "generate_visual": false,
+      "expected_clarification": "你画的是什么？"
+    }
+  ]
+}

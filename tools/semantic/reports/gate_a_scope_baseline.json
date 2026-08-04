@@ -1,0 +1,22 @@
+{
+  "algorithm": "SHA-256",
+  "scope": [
+    "project.godot",
+    "scripts/**",
+    "scenes/**"
+  ],
+  "aggregate_sha256": "a55d06e8352c41841ff1cc7328f29be35c54bd57575c16360adb5f3ec3207911",
+  "captured_before_gate_a_implementation": true,
+  "captured_date": "2026-08-03",
+  "pre_execution_protected_scope": {
+    "algorithm": "SHA-256(path=uppercase-file-sha256 records)",
+    "file_count": 685,
+    "aggregate_sha256": "1bf61fa7f39626f160b36db7a2d1fca1a348b4e26e19d5d10f1f8746999c2c72",
+    "captured_after_offline_implementation_before_any_real_gate_a_call": true,
+    "excludes_only": [
+      "tools/semantic/**",
+      ".gitignore",
+      "generated .git/.godot/.tools/build/artifacts/.playwright-cli roots"
+    ]
+  }
+}

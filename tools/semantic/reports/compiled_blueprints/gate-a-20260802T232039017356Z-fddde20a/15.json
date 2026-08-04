@@ -1,0 +1,50 @@
+{
+  "identity": {
+    "name_zh": "老式照相机",
+    "name_en": "vintage camera",
+    "category": "tool",
+    "preserved_features": [
+      "accordion-style bellows body",
+      "large front lens",
+      "flash bulb attachment on side",
+      "leather-textured exterior",
+      "top viewfinder"
+    ],
+    "material_hints": [
+      "leather",
+      "brass",
+      "glass lens",
+      "black lacquered metal"
+    ],
+    "silhouette_hints": [
+      "boxy folding camera body with protruding lens and flash bulb"
+    ]
+  },
+  "combat": {
+    "behavior_family": "sustained_ranged",
+    "delivery": "continuous_emission",
+    "impact_mode": "continuous_stream",
+    "effect_type": "light",
+    "drawback": "overheat",
+    "cadence_hint": "continuous"
+  },
+  "visual": {
+    "prompt_en": "A vintage camera, side view, complete object visible, isolated on plain background, featuring an accordion-style bellows body, large front glass lens, a prominent flash bulb attachment mounted on the side as a small Forge-adapted emitter, leather-textured black exterior with brass fittings, top viewfinder, single isolated object, detailed and realistic vintage photographic equipment design",
+    "negative_prompt_en": "not a gun, not a laser weapon, not a flashlight, not a futuristic device, no gun barrel, no glowing energy weapon shape, do not replace with generic sci-fi blaster",
+    "must_preserve": [
+      "accordion-style bellows body",
+      "large front lens",
+      "flash bulb attachment on side",
+      "leather-textured exterior",
+      "top viewfinder"
+    ],
+    "must_not_replace_with": [
+      "generic ray gun",
+      "laser blaster",
+      "flashlight weapon",
+      "sci-fi energy weapon",
+      "gun barrel"
+    ]
+  },
+  "confidence": 0.86
+}

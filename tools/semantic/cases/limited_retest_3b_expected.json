@@ -1,0 +1,136 @@
+{
+  "contract_version": "forge-semantic-limited-retest-3b-expected-v1",
+  "case_order": ["10", "13", "17", "18", "04", "01"],
+  "cases": {
+    "10": {
+      "result_type": "compiled",
+      "canonical_name_zh_aliases": ["旧铜钟", "老铜钟", "古旧铜钟", "古老青铜钟", "旧青铜钟"],
+      "canonical_name_en_aliases": ["old bronze bell", "aged bronze bell", "antique bronze bell", "vintage bronze bell", "ancient bronze bell", "old copper bell", "aged copper bell", "antique copper bell", "ancient copper bell"],
+      "display_identity_zh": ["钟"],
+      "display_identity_en": ["bell"],
+      "category_values": ["instrument", "household_object"],
+      "behavior_family": "sustained_ranged",
+      "effect_type": "sound",
+      "required_concepts": [
+        {
+          "name": "bell_body",
+          "aliases": ["bell body", "bell-shaped body", "cast bell body", "bell shell", "bell wall", "bell walls", "钟体", "钟身", "钟壳", "圆钟形主体", "钟壁", "厚重钟壁"]
+        },
+        {
+          "name": "bell_opening",
+          "aliases": ["bell opening", "bell mouth", "flared opening", "flared rim", "wide flared rim", "flared bell rim", "钟口", "钟沿", "钟口边缘", "钟口边缘外扩"]
+        }
+      ],
+      "allowed_additional_parts": [
+        {
+          "name": "bell_clapper",
+          "aliases": ["clapper", "bell clapper", "hanging clapper", "钟舌", "钟锤"]
+        },
+        {
+          "name": "bell_suspension",
+          "aliases": ["suspension loop", "top loop", "bell crown", "bell handle", "挂环", "吊环", "钟钮"]
+        }
+      ]
+    },
+    "13": {
+      "result_type": "compiled",
+      "canonical_name_zh_aliases": ["古老长枪", "古代长枪", "旧长枪", "古老长矛", "古代长矛"],
+      "canonical_name_en_aliases": ["ancient spear", "ancient long spear", "old spear", "aged spear", "antique spear", "ancient lance", "old lance"],
+      "display_identity_zh": ["长枪", "长矛"],
+      "display_identity_en": ["spear", "lance"],
+      "category_values": ["traditional_weapon"],
+      "behavior_family": "sustained_ranged",
+      "effect_type": "ice",
+      "required_concepts": [
+        {
+          "name": "long_shaft",
+          "aliases": ["long shaft", "spear shaft", "lance shaft", "long straight shaft", "wooden shaft", "long wooden shaft", "long pole", "杆身", "长杆", "枪杆", "矛杆", "长枪杆身"]
+        },
+        {
+          "name": "spearhead",
+          "aliases": ["spearhead", "spear head", "spear tip", "lance head", "lance tip", "pointed spearhead", "pointed head", "pointed tip", "枪头", "枪尖", "矛尖", "尖锐枪头"]
+        }
+      ],
+      "allowed_additional_parts": [
+        {
+          "name": "spear_grip",
+          "aliases": ["grip", "hand grip", "wrapped grip", "leather-wrapped grip", "握把", "握持区"]
+        },
+        {
+          "name": "shaft_butt",
+          "aliases": ["spear butt", "shaft butt", "butt cap", "end cap", "枪尾", "杆尾", "尾端"]
+        }
+      ]
+    },
+    "17": {
+      "result_type": "needs_clarification",
+      "ambiguity_type": "identity_unclear",
+      "question_focus": "identity",
+      "known_identity_hint_aliases": ["", "红色的东西", "红色东西", "红色物体", "红色物件", "红色物品", "red object", "red thing"],
+      "required_action_evidence": [
+        ["非常快", "速度很快", "很快", "very fast", "fast speed", "high speed"]
+      ]
+    },
+    "18": {
+      "result_type": "needs_clarification",
+      "ambiguity_type": "behavior_conflict",
+      "question_focus": "behavior_choice",
+      "known_identity_hint": "",
+      "required_action_evidence": [
+        ["一直拿在手里持续喷火", "拿在手里持续喷火", "持续喷火", "手持喷火", "held continuous fire spray", "continuous fire emission while held"],
+        ["整件飞出去撞人再回来", "整件飞出去再返回", "飞出去撞人再返回", "飞出返回", "whole object flies out and returns", "throw whole object and return"]
+      ]
+    },
+    "04": {
+      "result_type": "compiled",
+      "canonical_name_zh_aliases": ["巨大鸡腿", "巨大的鸡腿", "巨型鸡腿", "大鸡腿"],
+      "canonical_name_en_aliases": ["giant chicken leg", "giant chicken drumstick", "giant drumstick", "oversized chicken leg", "oversized drumstick"],
+      "display_identity_zh": ["鸡腿"],
+      "display_identity_en": ["chicken leg", "drumstick"],
+      "category_values": ["food"],
+      "behavior_family": "heavy_melee",
+      "effect_type": "lifesteal",
+      "required_concepts": [
+        {
+          "name": "meaty_body",
+          "aliases": ["meaty body", "thick meaty body", "thick meaty end", "meaty bulb end", "thick meaty bulb end", "bulbous meat end", "drumstick body", "chicken leg body", "meat portion", "large meat portion", "fleshy body", "fleshy end", "肉身", "肉块", "肉质主体", "粗大肉端"]
+        },
+        {
+          "name": "bone_end",
+          "aliases": ["drumstick bone", "chicken leg bone", "exposed bone", "protruding bone", "bone handle", "bone grip", "bone end", "narrow bone end", "鸡腿骨", "腿骨", "骨端", "骨柄", "突出的骨柄"]
+        }
+      ],
+      "allowed_additional_parts": []
+    },
+    "01": {
+      "result_type": "compiled",
+      "canonical_name_zh_aliases": ["老木桌", "老旧木桌", "旧木桌", "古老木桌"],
+      "canonical_name_en_aliases": ["old wooden table", "old wood table", "aged wooden table", "weathered wooden table"],
+      "display_identity_zh": ["桌"],
+      "display_identity_en": ["table"],
+      "category_values": ["furniture"],
+      "behavior_family": "returning_thrown",
+      "effect_type": "normal",
+      "required_concepts": [
+        {
+          "name": "tabletop",
+          "aliases": ["tabletop", "table top", "broad tabletop", "flat tabletop", "rectangular tabletop", "flat rectangular tabletop", "桌面", "台面"]
+        },
+        {
+          "name": "table_legs",
+          "aliases": ["table leg", "table legs", "four legs", "four wooden legs", "wooden legs", "four sturdy wooden legs", "four support legs", "supporting legs", "桌腿", "桌脚", "四条桌腿"]
+        }
+      ],
+      "allowed_additional_parts": [
+        {
+          "name": "table_apron",
+          "aliases": ["table apron", "support apron", "wooden apron", "underframe", "support frame", "桌围板", "围板", "支撑框架"]
+        },
+        {
+          "name": "table_brace",
+          "aliases": ["cross brace", "support brace", "leg brace", "横撑", "支撑横杆"]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "source_run_id": "gate-a-20260802T232039017356Z-fddde20a",
+  "fixtures_are_unmodified_tool_use_inputs": true,
+  "cases": {
+    "10": {
+      "tool_name": "submit_forge_semantic_blueprint",
+      "tool_use_id": "toolu_011po9VbYWi6PpzdEnmhPPcX",
+      "source": "reports/raw_response_redacted/gate-a-20260802T232039017356Z-fddde20a/10.json",
+      "fixture": "case_10_tool_input.json"
+    },
+    "13": {
+      "tool_name": "submit_forge_semantic_blueprint",
+      "tool_use_id": "toolu_01WJZfhhegXEYq4xevaWeAT6",
+      "source": "reports/raw_response_redacted/gate-a-20260802T232039017356Z-fddde20a/13.json",
+      "fixture": "case_13_tool_input.json"
+    },
+    "17": {
+      "tool_name": "request_forge_clarification",
+      "tool_use_id": "toolu_01L78RUm5xAycS2TqoUZhViL",
+      "source": "reports/raw_response_redacted/gate-a-20260802T232039017356Z-fddde20a/17.json",
+      "fixture": "case_17_tool_input.json"
+    },
+    "18": {
+      "tool_name": "request_forge_clarification",
+      "tool_use_id": "toolu_01Ba8uw1n5g2X3JPVmvRMDXP",
+      "source": "reports/raw_response_redacted/gate-a-20260802T232039017356Z-fddde20a/18.json",
+      "fixture": "case_18_tool_input.json"
+    }
+  }
+}

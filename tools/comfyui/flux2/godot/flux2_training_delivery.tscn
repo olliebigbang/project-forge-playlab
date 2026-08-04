@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource path="res://tools/comfyui/flux2/godot/flux2_training_delivery.gd" type="Script" id="1_flux2_training"]
+
+[node name="ForgeFlux2TrainingDelivery" type="Node2D"]
+script = ExtResource("1_flux2_training")

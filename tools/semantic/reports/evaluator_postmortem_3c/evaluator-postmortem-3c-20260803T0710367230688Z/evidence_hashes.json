@@ -1,0 +1,35 @@
+{
+  "algorithm": "SHA-256",
+  "postmortem_id": "evaluator-postmortem-3c-20260803T0710367230688Z",
+  "source_run_id": "blind-retest-3c-20260803T060715018997Z-4ddf8f31",
+  "source_pending_evidence_sha256": "650c0de04ebe417c822a19d542528908170897047daacefd5e79e589efe74f29",
+  "official_automatic_verdict": {
+    "status": "NEEDS WORK",
+    "identity_correct_count": 3,
+    "behavior_correct_count": 4,
+    "unchanged": true
+  },
+  "independent_semantic_review": {
+    "identity_correct_count": 4,
+    "behavior_correct_count": 4,
+    "cases_with_at_least_two_confirmed_structures": 4,
+    "confirmed_structure_concept_count": 11,
+    "gate_b_recommended": true,
+    "gate_b_executed": false
+  },
+  "files": {
+    "tools/semantic/reports/evaluator_postmortem_3c/evaluator-postmortem-3c-20260803T0710367230688Z/EVALUATOR_POSTMORTEM_3C.md": "d0f740b99f5af148c8b15e53f6041f9150789fd67890db0bc8cb7c2d955cf18a",
+    "tools/semantic/reports/evaluator_postmortem_3c/evaluator-postmortem-3c-20260803T0710367230688Z/official_automatic_verdict.json": "4ce3a2aefdc2ebdaa292af4cb9a732e48e769b0e6d99c1448da0424de2e3b9b5",
+    "tools/semantic/reports/evaluator_postmortem_3c/evaluator-postmortem-3c-20260803T0710367230688Z/independent_semantic_review.json": "409ec6caa9ee2b4b3769935c057784ef58dd9f4bb40acebbb7a0f4cb51c09435",
+    "tools/semantic/reports/evaluator_postmortem_3c/evaluator-postmortem-3c-20260803T0710367230688Z/human_structure_review.csv": "04688ac15a0e9f74da349c7fd040e586ea4b50311f4b36e46df153d22593469d",
+    "tools/semantic/reports/evaluator_postmortem_3c/evaluator-postmortem-3c-20260803T0710367230688Z/source_evidence_hashes.json": "c90d43f048abc08cb7b9272f80ec17ab5241989868a847a2cda11ad6035ea63b",
+    "tools/semantic/tests/test_evaluator_postmortem_3c.py": "2ea1a88dc9ba1748ff3b51eafa7a585101f4834a7787c46829f33b18fa0f97b8"
+  },
+  "scope": {
+    "external_api_calls_performed": 0,
+    "official_3c_files_modified": false,
+    "comfyui_started": false,
+    "gate_b_started": false,
+    "v2_started": false
+  }
+}

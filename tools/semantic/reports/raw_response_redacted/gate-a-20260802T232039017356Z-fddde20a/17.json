@@ -1,0 +1,40 @@
+{
+  "model": "claude-sonnet-5",
+  "id": "msg_011CdenJhYLRz2TWWY34f9hW",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    {
+      "type": "tool_use",
+      "id": "toolu_01L78RUm5xAycS2TqoUZhViL",
+      "name": "request_forge_clarification",
+      "input": {
+        "question_zh": "请问这个红色的东西具体是什么物品？（例如家具、工具、玩具等）",
+        "ambiguity_type": "identity_unclear",
+        "known_identity_hint": "红色的东西",
+        "known_action_hints": "非常快"
+      },
+      "caller": {
+        "type": "direct"
+      }
+    }
+  ],
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "stop_details": null,
+  "usage": {
+    "input_tokens": 3921,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 164,
+    "output_tokens_details": {
+      "thinking_tokens": 0
+    },
+    "service_tier": "standard",
+    "inference_geo": "global"
+  }
+}

@@ -1,0 +1,76 @@
+=== Godot parse/import scan ===
+Godot Engine v4.7.1.stable.official.a13da4feb - https://godotengine.org
+
+[   0% ] first_scan_filesystem | Started Project initialization (5 steps)
+[   0% ] first_scan_filesystem | Scanning file structure...
+[  16% ] first_scan_filesystem | Loading global class names...
+[  33% ] first_scan_filesystem | Verifying GDExtensions...
+[  50% ] first_scan_filesystem | Creating autoload scripts...
+[  66% ] first_scan_filesystem | Initializing plugins...
+[  83% ] first_scan_filesystem | Starting file scan...
+[ DONE ] first_scan_filesystem
+
+[   0% ] _update_scan_actions | Started Scanning actions... (3 steps)
+[   0% ] _update_scan_actions | calibration_step2.png
+[  25% ] _update_scan_actions | calibration_ui.png
+[  50% ] _update_scan_actions | training_zone.png
+[ DONE ] _update_scan_actions
+
+[   0% ] reimport | Started (Re)Importing Assets (3 steps)
+[   0% ] reimport | Preparing files to reimport...
+[  25% ] reimport | Preparing files to reimport...
+[  50% ] reimport | Preparing files to reimport...
+[   0% ] reimport | Executing pre-reimport operations...
+[   0% ] reimport | calibration_step2.png
+[  25% ] reimport | calibration_ui.png
+[  50% ] reimport | training_zone.png
+[  75% ] reimport | Finalizing Asset Import...
+[ DONE ] reimport
+
+[   0% ] reimport | Started (Re)Importing Assets (3 steps)
+[   0% ] reimport | Executing post-reimport operations...
+[ DONE ] reimport
+
+[   0% ] loading_editor_layout | Started Loading editor (5 steps)
+[   0% ] loading_editor_layout | Loading editor layout...
+[  16% ] loading_editor_layout | Loading docks...
+[ DONE ] loading_editor_layout
+
+=== Playlab and semantic UI tests ===
+Godot Engine v4.7.1.stable.official.a13da4feb - https://godotengine.org
+
+Forge Playlab V1 deterministic test suite
+PASS | Blueprint required fields and enums
+PASS | Unsupported values repair deterministically
+PASS | Three fixed blueprints instantiate
+PASS | Alpha bounds extraction
+PASS | Default anchors resolve
+PASS | Local grip correction finds opaque pixels
+PASS | No alpha fails safely
+PASS | Muzzle and tip stay on forward edge
+PASS | Delta cannot remove drawback for free
+PASS | Three weapons damage three enemies
+PASS | Guard has no hard immunity
+PASS | Forge is locked during combat
+PASS | Intermission change can happen once
+PASS | Local JSONL logging writes
+PASS | Web export can load main flow
+PASS | Visual provider ignores stale revisions
+PASS | Mock visual provider remains operational
+PASS | Semantic anchors are behavior-declared
+PASS | Two-hand secondary grip derives from Alpha
+PASS | Returning pivot uses Alpha centroid
+PASS | Semantic calibration saves complete final anchors
+PASS | Calibrated training asset normalizes orientation without source mutation
+PASS | Spike 1 corpus contains exactly 11 existing sprites
+PASS | Semantic calibrator completes the two-step pointer flow
+PASS | Retaining auto suggestion restores original confidence
+RESULT: 25 passed, 0 failed
+
+=== 11-sprite corpus evaluation ===
+Godot Engine v4.7.1.stable.official.a13da4feb - https://godotengine.org
+
+SPIKE1_AUTO_ANCHORS=11/22 (50.0%)
+SPIKE1_AUTO_USABLE=4/11 (36.4%)
+SPIKE1_FINAL_USABLE=10/11 (90.9%)
+SPIKE1_RESULT=PASS

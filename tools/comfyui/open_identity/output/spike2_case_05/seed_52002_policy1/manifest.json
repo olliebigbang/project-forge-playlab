@@ -1,0 +1,50 @@
+{
+  "case_id": "spike2_case_05",
+  "prompt": "能放出电流的机械雨伞",
+  "player_identity_text": "能放出电流的机械雨伞",
+  "generation_prompt": "Recognizable original object, player identity text 能放出电流的机械雨伞. Visual description from the same player evidence 能放出电流的机械雨伞. The generated prop must remain recognizably this same object. Combat behavior may add a Forge fixture or readable functional region, but must not replace, redesign, or rename the source object as a different object. Preserve its ordinary object identity. Preserve this evidence player_identity_text_verbatim=能放出电流的机械雨伞. Prompt policy forge-open-identity-v1.",
+  "generation_prompt_sha256": "d8920d5114335fdb25b324024aa4d502df6e2e147fe7074de3d73276974d934d",
+  "prompt_policy_version": "forge-open-identity-v1",
+  "seed": 52002,
+  "workflow_file": "forge_object_sprite_v0.json",
+  "workflow_hash": "507095e0e1cbe0556d1bcac7cff8d28e93af65d843f69cc54de836ff267398a5",
+  "selected_comfyui_install": "ai_series_tools/ComfyUI",
+  "checkpoint": "RealVisXL_V5.0_fp16.safetensors",
+  "control_type": "none",
+  "control_strength": 0.0,
+  "generation_seconds": 2.03,
+  "postprocess_seconds": 0.04,
+  "raw_dimensions": [
+    512,
+    512
+  ],
+  "processed_dimensions": [
+    96,
+    96
+  ],
+  "alpha_coverage": 0.2133,
+  "opaque_bounds": [
+    7,
+    14,
+    82,
+    67
+  ],
+  "status": "success",
+  "failure_reason": "",
+  "prompt_id": "ce8490ce-dce8-4441-823a-01a8b944ee40",
+  "run_id": "seed_52002_policy1",
+  "request_id": "87573ed3fdaa4e89a153b95a1d9eee5d",
+  "generation_size": [
+    512,
+    512
+  ],
+  "img2img_denoise": 1.0,
+  "background_border_rgb": [
+    232.0,
+    44.0,
+    176.0
+  ],
+  "background_expected_match": 1.0,
+  "palette_limit": 32,
+  "outline": true
+}

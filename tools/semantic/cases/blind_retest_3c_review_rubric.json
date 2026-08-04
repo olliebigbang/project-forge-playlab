@@ -1,0 +1,24 @@
+{
+  "review_rubric_version": "forge-semantic-blind-retest-3c-manual-structure-v1",
+  "case_order": ["B01", "B02", "B03", "B04"],
+  "quality_policy": {
+    "quality_2_minimum_confirmed_concepts": 2,
+    "quality_2_requires_all_declared_parts_structural": true,
+    "quality_1_minimum_confirmed_concepts": 1,
+    "quality_0_confirmed_concepts": 0
+  },
+  "review_rules": [
+    "Use only the pre-frozen concept_id values for the case.",
+    "Quote model output exactly from actual_required_identity_parts and, when useful, actual_must_preserve; do not paraphrase it.",
+    "Judge whether each required_identity_parts quote expresses the same structural concept as the pre-frozen label; must_preserve quotes are optional propagation evidence.",
+    "A confirmed concept must be structural, not merely material, colour, effect, action, or decoration.",
+    "Do not add an alias, rename a concept, or change the expected concept list after any provider call.",
+    "Quality 2 requires at least two distinct confirmed concepts in required_identity_parts and no non-structural required_identity_parts."
+  ],
+  "concept_ids_by_case": {
+    "B01": ["vacuum_body", "long_hose", "nozzle_or_suction_head"],
+    "B02": ["clock_face", "twin_bells", "clock_hands_or_body"],
+    "B03": ["stapler_upper_pressing_arm", "stapler_base", "stapler_rear_hinge"],
+    "B04": ["goblet_cup_bowl", "goblet_narrow_stem", "goblet_base"]
+  }
+}

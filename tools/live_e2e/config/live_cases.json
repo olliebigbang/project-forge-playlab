@@ -1,0 +1,60 @@
+{
+  "contract": "forge-live-e2e-spike7-config-v1",
+  "approved_model_id": "claude-sonnet-5",
+  "semantic_contract": "forge-semantic-v1.1",
+  "explicit_launch_argument": "--forge-live-e2e-spike7",
+  "api_base": "http://127.0.0.1:8190",
+  "bridge_base": "http://127.0.0.1:8767",
+  "retry_limit": 0,
+  "mock_fallback": false,
+  "cases": [
+    {
+      "case_id": "L01",
+      "ordinal": 1,
+      "seed": 7071001,
+      "player_input": "一台会持续喷出冰雾的旧落地风扇。",
+      "expected_identity_zh": "旧落地风扇",
+      "expected_identity_en": "old standing fan",
+      "expected_behavior_family": "sustained_ranged",
+      "expected_effect_type": "ice",
+      "required_identity_parts": ["风扇头", "支撑杆", "底座"],
+      "required_identity_parts_en": ["fan head", "support pole", "base"],
+      "second_anchor_type": "EffectOrigin",
+      "second_anchor_question": "冰雾从哪里发出？",
+      "forbidden_substitutions": ["gatling gun", "gun", "umbrella", "greatsword"],
+      "static_forbidden": ["large floating ice mist", "floating frost cloud", "ice trail"]
+    },
+    {
+      "case_id": "L02",
+      "ordinal": 2,
+      "seed": 7071002,
+      "player_input": "一个扔出去绕一圈后会飞回来的红色旅行箱。",
+      "expected_identity_zh": "红色旅行箱",
+      "expected_identity_en": "red suitcase",
+      "expected_behavior_family": "returning_thrown",
+      "expected_effect_type": "normal",
+      "required_identity_parts": ["箱体", "提手", "箱角或轮子"],
+      "required_identity_parts_en": ["suitcase body", "handle", "corners or wheels"],
+      "second_anchor_type": "SpinPivot",
+      "second_anchor_question": "你希望它围绕哪里旋转？",
+      "forbidden_substitutions": ["boomerang", "gatling gun", "umbrella", "greatsword", "ordinary weapon"],
+      "static_forbidden": ["return trail", "motion trail", "flying scene"]
+    },
+    {
+      "case_id": "L03",
+      "ordinal": 3,
+      "seed": 7071003,
+      "player_input": "一把我要拿来近距离砸敌人的巨大木勺。",
+      "expected_identity_zh": "巨大木勺",
+      "expected_identity_en": "giant wooden spoon",
+      "expected_behavior_family": "heavy_melee",
+      "expected_effect_type": "normal",
+      "required_identity_parts": ["勺头", "长柄", "木材身份"],
+      "required_identity_parts_en": ["spoon bowl", "long handle", "wooden material identity"],
+      "second_anchor_type": "StrikePoint",
+      "second_anchor_question": "你想用哪一部分击中敌人？",
+      "forbidden_substitutions": ["hammer", "greatsword", "sword", "gatling gun", "umbrella"],
+      "static_forbidden": ["impact trail", "motion trail", "combat scene"]
+    }
+  ]
+}

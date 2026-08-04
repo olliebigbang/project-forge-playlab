@@ -1,0 +1,51 @@
+{
+  "identity": {
+    "name_zh": "旧小提琴",
+    "name_en": "old violin",
+    "category": "instrument",
+    "preserved_features": [
+      "violin body with f-holes",
+      "wooden bridge and strings",
+      "scroll and pegbox at neck",
+      "attached bow used as striking part",
+      "aged worn wood finish"
+    ],
+    "material_hints": [
+      "aged varnished wood",
+      "gut or steel strings",
+      "horsehair bow"
+    ],
+    "silhouette_hints": [
+      "classic violin hourglass body silhouette",
+      "long thin neck with scroll",
+      "bow held alongside body"
+    ]
+  },
+  "combat": {
+    "behavior_family": "heavy_melee",
+    "delivery": "melee_swing",
+    "impact_mode": "strike_edge",
+    "effect_type": "normal",
+    "drawback": "slow_movement",
+    "cadence_hint": "slow_heavy"
+  },
+  "visual": {
+    "prompt_en": "An old violin, identity-bearing hourglass wooden body with f-holes, worn varnished finish, scroll and pegbox neck, paired with its horsehair bow reinforced like a serrated sawing edge for close combat, small functional grip fitting added near the neck, one isolated object, side view, complete object fully visible",
+    "negative_prompt_en": "do not depict a saw, do not depict a sword, do not depict a generic melee weapon, no gun, no unrelated tool, not a chainsaw, no human figure",
+    "must_preserve": [
+      "violin body with f-holes",
+      "wooden bridge and strings",
+      "scroll and pegbox at neck",
+      "attached bow used as striking part",
+      "aged worn wood finish"
+    ],
+    "must_not_replace_with": [
+      "saw",
+      "sword",
+      "chainsaw",
+      "generic melee weapon",
+      "gun"
+    ]
+  },
+  "confidence": 0.82
+}

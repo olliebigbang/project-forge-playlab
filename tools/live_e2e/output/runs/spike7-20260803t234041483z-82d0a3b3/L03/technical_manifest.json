@@ -1,0 +1,13 @@
+{
+  "contract": "forge-live-e2e-spike7-session-v1",
+  "case_id": "L03",
+  "revision": 3,
+  "seed": 7071003,
+  "semantic_calls": 1,
+  "flux_calls": 1,
+  "birefnet_calls": 1,
+  "retry_count": 0,
+  "mock_fallback": false,
+  "status": "technical_success",
+  "completed_at_utc": "2026-08-04T03:44:07.695Z"
+}

@@ -1,0 +1,9 @@
+﻿case_id,seed,single_complete_subject,no_person_hand_text,canonical_identity_recognizable_raw,required_parts_visible_count,silhouette_matches,forbidden_weapon_substitution,recognizable_at_96x96,facing_consistency,alpha_delivery_success,generation_seconds,postprocess_seconds,reviewer,notes
+B01,4041001,,,,,,,,,false,9.132,0.048,,
+B01,4041002,,,,,,,,,false,2.534,0.015,,
+B02,4041001,,,,,,,,,false,2.548,0.017,,
+B02,4041002,,,,,,,,,false,2.009,0.017,,
+B03,4041001,,,,,,,,,true,2.511,0.036,,
+B03,4041002,,,,,,,,,false,2.131,0.017,,
+B04,4041001,,,,,,,,,false,2.554,0.014,,
+B04,4041002,,,,,,,,,false,2.554,0.004,,

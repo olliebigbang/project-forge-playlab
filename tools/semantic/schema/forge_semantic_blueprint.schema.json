@@ -1,0 +1,229 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "identity",
+    "combat",
+    "visual",
+    "confidence"
+  ],
+  "properties": {
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_name_zh",
+        "canonical_name_en",
+        "display_name_zh",
+        "display_name_en",
+        "category",
+        "required_identity_parts",
+        "material_hints",
+        "silhouette_hints",
+        "optional_decorations"
+      ],
+      "properties": {
+        "canonical_name_zh": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "canonical_name_en": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "display_name_zh": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "display_name_en": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "furniture",
+            "food",
+            "tool",
+            "toy",
+            "traditional_weapon",
+            "household_object",
+            "instrument",
+            "clothing",
+            "abstract_fantasy",
+            "other"
+          ]
+        },
+        "required_identity_parts": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 5,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "material_hints": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 4,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          }
+        },
+        "silhouette_hints": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "optional_decorations": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 4,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        }
+      }
+    },
+    "combat": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "behavior_family",
+        "delivery",
+        "impact_mode",
+        "effect_type",
+        "drawback",
+        "cadence_hint"
+      ],
+      "properties": {
+        "behavior_family": {
+          "type": "string",
+          "enum": [
+            "sustained_ranged",
+            "returning_thrown",
+            "heavy_melee"
+          ]
+        },
+        "delivery": {
+          "type": "string",
+          "enum": [
+            "continuous_emission",
+            "projectile_stream",
+            "whole_object_return",
+            "whole_object_strike",
+            "melee_swing"
+          ]
+        },
+        "impact_mode": {
+          "type": "string",
+          "enum": [
+            "emitter_projectiles",
+            "continuous_stream",
+            "whole_body_collision",
+            "strike_edge",
+            "strike_point"
+          ]
+        },
+        "effect_type": {
+          "type": "string",
+          "enum": [
+            "normal",
+            "fire",
+            "electric",
+            "ice",
+            "steam",
+            "lifesteal",
+            "fastener",
+            "poison",
+            "sound",
+            "light",
+            "other"
+          ]
+        },
+        "drawback": {
+          "type": "string",
+          "enum": [
+            "overheat",
+            "slow_startup",
+            "slow_movement",
+            "weapon_absent_while_flying",
+            "long_recovery",
+            "lower_damage",
+            "unstable_recoil"
+          ]
+        },
+        "cadence_hint": {
+          "type": "string",
+          "enum": [
+            "continuous",
+            "single_commit",
+            "slow_heavy"
+          ]
+        }
+      }
+    },
+    "visual": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "prompt_en",
+        "negative_prompt_en",
+        "must_preserve",
+        "must_not_replace_with"
+      ],
+      "properties": {
+        "prompt_en": {
+          "type": "string",
+          "minLength": 40,
+          "maxLength": 1000
+        },
+        "negative_prompt_en": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "must_preserve": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 6,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "must_not_replace_with": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          }
+        }
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  }
+}

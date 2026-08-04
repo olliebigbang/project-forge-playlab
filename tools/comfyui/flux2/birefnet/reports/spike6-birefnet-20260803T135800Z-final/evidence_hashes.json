@@ -1,0 +1,571 @@
+{
+  "algorithm": "SHA-256",
+  "contract": "forge-birefnet-spike6-evidence-hashes-v1",
+  "delivery_file_count": 13,
+  "delivery_files": [
+    {
+      "bytes": 3012,
+      "path": "alpha_metrics.csv",
+      "sha256": "d139a5f84568e17e57b905e89ee36010e22067783c20ddba780621b2ea1c4621"
+    },
+    {
+      "bytes": 6208,
+      "path": "automated_test_results.json",
+      "sha256": "bed104a5ab5c46c9040a4ccfd797e017f8b99d8f7c67ad0912d2299f35f4a20b"
+    },
+    {
+      "bytes": 4511,
+      "path": "BIREFNET_ALPHA_REPORT.md",
+      "sha256": "91229bc1522c51e50b6c583ec5f0cbfae3bc0fff61de58a625f65430a7086a7e"
+    },
+    {
+      "bytes": 11565,
+      "path": "birefnet_alpha_summary.json",
+      "sha256": "02ca31c6f99f9a30140154ea739e5e29d7b8c3ea3830d66729184366f0f067ae"
+    },
+    {
+      "bytes": 82732,
+      "path": "birefnet_masks.png",
+      "sha256": "62c1cd92a09e3eff9f20cec9098219b49d70653a2165b12d9dfebce3d1c33a2f"
+    },
+    {
+      "bytes": 828512,
+      "path": "birefnet_raw_rgba_comparison.png",
+      "sha256": "fabf5f61fbc049ef9684c3d54065b7944231c2bc3b147662c745e3b344e29727"
+    },
+    {
+      "bytes": 70836,
+      "path": "final_96_sprite_sheet.png",
+      "sha256": "94c3a46a5cab2bb392346f92f12beca8fcd518dd7f551b7e7dca4ad8cf9490cd"
+    },
+    {
+      "bytes": 2467,
+      "path": "human_structure_review.csv",
+      "sha256": "2ecd600448efadf699d8aec023f5e72802adfe5edaf13981b7913cac6fa279e9"
+    },
+    {
+      "bytes": 2574,
+      "path": "human_structure_review_rubric.json",
+      "sha256": "5b77215a8cb3b80def232ec1113038234f533cbaa9fe6616180cc98c98d40b7b"
+    },
+    {
+      "bytes": 1974,
+      "path": "model_download_manifest.json",
+      "sha256": "a08789af504b93b13caa227416934d92f59ae208602981f7e7875bd909dd128b"
+    },
+    {
+      "bytes": 2498,
+      "path": "official_source_manifest.json",
+      "sha256": "5f9dca46509be2d0203cd7ac633f58ea176e4cf7c9de455baa016a092cd6d27c"
+    },
+    {
+      "bytes": 684053,
+      "path": "old_alpha_vs_birefnet.png",
+      "sha256": "7350766933875748e4027abec9933ba612a9f41d54fb2e6313f6a7e33704dec8"
+    },
+    {
+      "bytes": 15909,
+      "path": "review_packet_manifest.json",
+      "sha256": "575f6f8705108342f36d17634c186c99aa89c1f83921dd025a3cfbaca2e08863"
+    }
+  ],
+  "excluded_self": "evidence_hashes.json",
+  "external_model_not_copied_to_git": true,
+  "formal_classification": "MODEL PASS / ALPHA PASS",
+  "run_id": "spike6-birefnet-20260803T135800Z",
+  "source_file_count": 98,
+  "source_files": [
+    {
+      "bytes": 35823,
+      "path": "C:/AI/ComfyUI-ForgeFlux2/ComfyUI/LICENSE",
+      "sha256": "230184f60bae2feaf244f10a8bac053c8ff33a183bcc365b4d8b876d2b7f4809"
+    },
+    {
+      "bytes": 10055,
+      "path": "C:/AI/ComfyUI-ForgeFlux2/ComfyUI/blueprints/Remove Background (BiRefNet).json",
+      "sha256": "ab7bf67d91a17750222da4131790ca38f651d8078ff28213e15cf0ebd86b3354"
+    },
+    {
+      "bytes": 165,
+      "path": "C:/AI/ComfyUI-ForgeFlux2/ComfyUI/comfy/background_removal/birefnet.json",
+      "sha256": "8e2e1cfe0872af4c35e34fd7aecd5bd9b664775b0489a4b84bbc4b1e7466193d"
+    },
+    {
+      "bytes": 30361,
+      "path": "C:/AI/ComfyUI-ForgeFlux2/ComfyUI/comfy/background_removal/birefnet.py",
+      "sha256": "4275f59a66db50332f72bf4ad86f56d03328424ac56d5c4db0c9ff7c6fa62b3e"
+    },
+    {
+      "bytes": 3092,
+      "path": "C:/AI/ComfyUI-ForgeFlux2/ComfyUI/comfy/bg_removal_model.py",
+      "sha256": "7f1ad7f5cecc51c7dc07ee071e7c2145b55286b9d35a5ea0877090bfa602934c"
+    },
+    {
+      "bytes": 2398,
+      "path": "C:/AI/ComfyUI-ForgeFlux2/ComfyUI/comfy_extras/nodes_bg_removal.py",
+      "sha256": "501bcee5b6c7fcf889b400ce840500dcd3b9166d52014da3e8df0138c0cdb1fe"
+    },
+    {
+      "bytes": 444473596,
+      "path": "C:/AI/ComfyUI-ForgeFlux2/ComfyUI/models/background_removal/birefnet.safetensors",
+      "sha256": "9ab37426bf4de0567af6b5d21b16151357149139362e6e8992021b8ce356a154"
+    },
+    {
+      "bytes": 18340,
+      "path": "tools/comfyui/flux2/birefnet/build_review_assets.py",
+      "sha256": "a4000ba3a78e8711b28a1deed39ce34760d441007d4dfd3155bcd646028c557c"
+    },
+    {
+      "bytes": 29647,
+      "path": "tools/comfyui/flux2/birefnet/config/spike5_evidence.freeze.json",
+      "sha256": "57b1de80841d4c5f3da4c07b5cb0dee606a3a3dbfffbbb1ba387d617f59f7af8"
+    },
+    {
+      "bytes": 579,
+      "path": "tools/comfyui/flux2/birefnet/config/spike6_birefnet_config.example.json",
+      "sha256": "3fee6a79c16c6e168ed3e0c6398dc8471179440ff7396fc35f2ba4d627e34761"
+    },
+    {
+      "bytes": 6276,
+      "path": "tools/comfyui/flux2/birefnet/download/download_birefnet_official.ps1",
+      "sha256": "904777d4cfbe2a8b8e3b79f9ba564de3d9e942b1d7e99814c20064ba03b3e19f"
+    },
+    {
+      "bytes": 29324,
+      "path": "tools/comfyui/flux2/birefnet/finalize_spike6_evidence.py",
+      "sha256": "fe24fe9373b69d44ad051a8c41f06bbf45d97ce23bf657a2fe61e0170b999d57"
+    },
+    {
+      "bytes": 490,
+      "path": "tools/comfyui/flux2/birefnet/logs/lifecycle_last.json",
+      "sha256": "c2f137c87f4fb313ae76fc529bb785cce3076fc3a6579d2f08be5f9b4d7a2a76"
+    },
+    {
+      "bytes": 1976,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/01_b01_seed_4041001/delivery/alpha_mask.png",
+      "sha256": "076a6f390a1a86c8d32f537a0b0a25fd92b1146a7e29f3b64460a1ad7cd3f99e"
+    },
+    {
+      "bytes": 1242,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/01_b01_seed_4041001/delivery/metrics.json",
+      "sha256": "455170939d806d4888a041a330ff5ed592d6f2a17c5bf53a475f5c4808879324"
+    },
+    {
+      "bytes": 7726,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/01_b01_seed_4041001/delivery/processed_sprite.png",
+      "sha256": "ae106184c3a3694342d26ce45e8de45b8a27ff50c3bdd4b4e14c470e67e8bdbd"
+    },
+    {
+      "bytes": 1186,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/01_b01_seed_4041001/manifest.json",
+      "sha256": "9ef481947e89893edcddd2b5965cf56d4166033bbffcf54efa44abffe3a089d6"
+    },
+    {
+      "bytes": 9970,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/01_b01_seed_4041001/mask.png",
+      "sha256": "b3d984e5a93edea37413978c5bb52de0b919c0a0160c714da81ff0c46a559655"
+    },
+    {
+      "bytes": 1285,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/01_b01_seed_4041001/request_workflow.json",
+      "sha256": "2316bc781673909cfb15cc01eddc22e12fc1dcccadbf123a1bfbc3c7f07407a6"
+    },
+    {
+      "bytes": 249530,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/01_b01_seed_4041001/rgba.png",
+      "sha256": "8bf7b9a51a2487960531ed6b464e68efdb74791b69ac2252737763c06b06cd19"
+    },
+    {
+      "bytes": 1940,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/02_b01_seed_4041002/delivery/alpha_mask.png",
+      "sha256": "6bd60922ccf6626abadb7ef2d34f8f3dc101f6e4a864879944766f19efab8203"
+    },
+    {
+      "bytes": 1241,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/02_b01_seed_4041002/delivery/metrics.json",
+      "sha256": "93e318e427abda03fe7c2dd2bfb684ebc8a53fee80f4edae0cb917b963ec2318"
+    },
+    {
+      "bytes": 8690,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/02_b01_seed_4041002/delivery/processed_sprite.png",
+      "sha256": "6e751ff1473832a689fe5df5cf9cb1587acc87b25078836672f06a68c96bdd7b"
+    },
+    {
+      "bytes": 1186,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/02_b01_seed_4041002/manifest.json",
+      "sha256": "5923045566b57d28e073a71fbdb23183bab6649c1734ced06940f8ccca18b5c5"
+    },
+    {
+      "bytes": 8290,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/02_b01_seed_4041002/mask.png",
+      "sha256": "8d650d488d46be3544368950381b3ed91d50e8642b11ff1933fa42e575f5ae7a"
+    },
+    {
+      "bytes": 1285,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/02_b01_seed_4041002/request_workflow.json",
+      "sha256": "146d36eb80a7ede210a5a113172db6d7bb4d5d6af9bc2a86592480aeeaa20de4"
+    },
+    {
+      "bytes": 268328,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/02_b01_seed_4041002/rgba.png",
+      "sha256": "8196a3c735ff445420a6b29c1df73cab86db9d8b778c37275faaf49223c18ab7"
+    },
+    {
+      "bytes": 2066,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/03_b02_seed_4041001/delivery/alpha_mask.png",
+      "sha256": "9d0637553191989707356aaecb3cc4a400d285ce88d38b507ee5cc13ad5f35de"
+    },
+    {
+      "bytes": 1242,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/03_b02_seed_4041001/delivery/metrics.json",
+      "sha256": "b999548ab246ae121df4e4c01355401a559790cb7cd2dbd0bbbfa28335f92f67"
+    },
+    {
+      "bytes": 9794,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/03_b02_seed_4041001/delivery/processed_sprite.png",
+      "sha256": "33c8f42549244e52e25510e31b87af5f69836e506b26075f13da59402a0863e6"
+    },
+    {
+      "bytes": 1186,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/03_b02_seed_4041001/manifest.json",
+      "sha256": "4702f1e1fb1e7a83a27fa329e53795c90b44e4f13e3aff5dbf8ac83cdc58c397"
+    },
+    {
+      "bytes": 10460,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/03_b02_seed_4041001/mask.png",
+      "sha256": "a374bf56adae4a606273702b2794e14b71ef127c63738f475f89cf0798231b3b"
+    },
+    {
+      "bytes": 1285,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/03_b02_seed_4041001/request_workflow.json",
+      "sha256": "d00e087d1e5e9fa64270d7bf9f097b1cb4c3db5d8852ae2d89c6027d58b30422"
+    },
+    {
+      "bytes": 290099,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/03_b02_seed_4041001/rgba.png",
+      "sha256": "2eb7ac6d6578e97bcec6d6b13f2cf2dc4f24ada279bf3d80876178a21e3adeac"
+    },
+    {
+      "bytes": 2064,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/04_b02_seed_4041002/delivery/alpha_mask.png",
+      "sha256": "23e6180cb968db543370a89fa5a4f871ecaf41ca9065c18c244a6c103ec7a72a"
+    },
+    {
+      "bytes": 1243,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/04_b02_seed_4041002/delivery/metrics.json",
+      "sha256": "6ade382939133ff57c74a98b5e1dd16586f161792ee6c96eef6e060d7758a729"
+    },
+    {
+      "bytes": 9704,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/04_b02_seed_4041002/delivery/processed_sprite.png",
+      "sha256": "11de83ea307205cab5af42a68cad71ca7a35796d629eeb6e3cbb0640148c2d6b"
+    },
+    {
+      "bytes": 1186,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/04_b02_seed_4041002/manifest.json",
+      "sha256": "6f667470a9d9baf2e4e0eee84cd7a491f16dfeabd901cc5c26298e9fb65da79d"
+    },
+    {
+      "bytes": 10459,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/04_b02_seed_4041002/mask.png",
+      "sha256": "50b9fbca6fd5b6cbceee3678c68423fcb00d207c3f02c56baa766455ec3679fc"
+    },
+    {
+      "bytes": 1285,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/04_b02_seed_4041002/request_workflow.json",
+      "sha256": "bbda2ccda620bc7fcb10c9abfede8fedd079ad04c1d1a9f27cc9b74f947eae3d"
+    },
+    {
+      "bytes": 349538,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/04_b02_seed_4041002/rgba.png",
+      "sha256": "41d39047706a9fbd65656e68e6eae5aeaf59c4afb77fc7bcafbd065e3aa8d611"
+    },
+    {
+      "bytes": 1212,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/05_b03_seed_4041001/delivery/alpha_mask.png",
+      "sha256": "d17fad651eb1252a45659a9f95bf200c3950a750e33cd53d4337405d812add60"
+    },
+    {
+      "bytes": 1243,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/05_b03_seed_4041001/delivery/metrics.json",
+      "sha256": "c757619ec87e153e5003cc0e74c69c2b3205469356a1c913038eeb63d9c6b592"
+    },
+    {
+      "bytes": 5957,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/05_b03_seed_4041001/delivery/processed_sprite.png",
+      "sha256": "6296af70974243266848022e8d2725cd5ace227451be2c5391a06ea422301793"
+    },
+    {
+      "bytes": 1186,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/05_b03_seed_4041001/manifest.json",
+      "sha256": "4cf4d7cebfa7ccc738c4ff64d9a51643c99d20a903861c16ec792bb22ac348d4"
+    },
+    {
+      "bytes": 5283,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/05_b03_seed_4041001/mask.png",
+      "sha256": "2b0dc2bbdff4ee5d1608b2a39bea4f0c569b2b1592a04c13cbe76550d846e623"
+    },
+    {
+      "bytes": 1285,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/05_b03_seed_4041001/request_workflow.json",
+      "sha256": "6a89f79843ced9bd0680f260a4f7539d4e01352fd26882933b8c9c4391291a54"
+    },
+    {
+      "bytes": 252825,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/05_b03_seed_4041001/rgba.png",
+      "sha256": "39fdff30c0e6183625605b8414c05dfdfc5915f34f5dc3d30d85030b02e5c0b6"
+    },
+    {
+      "bytes": 1298,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/06_b03_seed_4041002/delivery/alpha_mask.png",
+      "sha256": "3ec71769d29662ce66fbe781ca325755df8dc3d972e63b43a80dda8707517642"
+    },
+    {
+      "bytes": 1243,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/06_b03_seed_4041002/delivery/metrics.json",
+      "sha256": "5006b02bdf1107967fca765209d7367f9cdcd6e28c42addbff90fe94ae2785fc"
+    },
+    {
+      "bytes": 6171,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/06_b03_seed_4041002/delivery/processed_sprite.png",
+      "sha256": "d0a2390b0f853a453656a780c5ff52c3fdd82c9fbad7a9be55a5e692b75e8583"
+    },
+    {
+      "bytes": 1186,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/06_b03_seed_4041002/manifest.json",
+      "sha256": "f4f11eb7a6d4713d5843a701e7add087c794a269d3b8bc55c24efe0f98f8c98b"
+    },
+    {
+      "bytes": 5449,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/06_b03_seed_4041002/mask.png",
+      "sha256": "571662409669e969fe7a9c8dfc4b6c22745e320d69f2fab1dc85ea4bad323c4b"
+    },
+    {
+      "bytes": 1285,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/06_b03_seed_4041002/request_workflow.json",
+      "sha256": "276f69cbfcb3c8e371f7be6b28a0e04f482792e3bed01d4b23a030a9b30763bf"
+    },
+    {
+      "bytes": 277321,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/06_b03_seed_4041002/rgba.png",
+      "sha256": "854f0d24312554107020810481c98b0d296fda01f614494249857e4ef619442e"
+    },
+    {
+      "bytes": 1423,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/07_b04_seed_4041001/delivery/alpha_mask.png",
+      "sha256": "9fec564ae48ec8dfcce655fb9ebc89fb81df153414c4e6c2a86147cf2aee8b84"
+    },
+    {
+      "bytes": 1242,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/07_b04_seed_4041001/delivery/metrics.json",
+      "sha256": "cf30f76737ca6255a48a108ee853b233bf6f8ffb09370262bb3d27f546e67404"
+    },
+    {
+      "bytes": 5265,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/07_b04_seed_4041001/delivery/processed_sprite.png",
+      "sha256": "d993ad7833f0aad9bab20b1f5008266d504b7f7d4a1bd9cd86f5cca6391602b2"
+    },
+    {
+      "bytes": 1186,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/07_b04_seed_4041001/manifest.json",
+      "sha256": "0c6533518323858cf9ea8b66ac23dfac9a2a71f4a2124d0e8420240f77722a41"
+    },
+    {
+      "bytes": 6095,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/07_b04_seed_4041001/mask.png",
+      "sha256": "cf06fac83ec082e589344497e2d3684c342c944132ffe7a73f399575b49e96bd"
+    },
+    {
+      "bytes": 1285,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/07_b04_seed_4041001/request_workflow.json",
+      "sha256": "3b1a2c30a4569400abf84b79c4ee15ef7c02f918057f7f8fa30946a6af0fcca6"
+    },
+    {
+      "bytes": 229417,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/07_b04_seed_4041001/rgba.png",
+      "sha256": "ab7304d0cb7c69d7d4db196a5b5a8a594e456e05be798f132181446bd73f0316"
+    },
+    {
+      "bytes": 1344,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/08_b04_seed_4041002/delivery/alpha_mask.png",
+      "sha256": "de0c36381b00b87ecc961bb1c143a892be85d00d9b0424a4c956ec8603136071"
+    },
+    {
+      "bytes": 1242,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/08_b04_seed_4041002/delivery/metrics.json",
+      "sha256": "61fb06679f9caefb4268b6fc228a6aeb0a735603e38cf6ad57fdc26609250b1c"
+    },
+    {
+      "bytes": 4719,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/08_b04_seed_4041002/delivery/processed_sprite.png",
+      "sha256": "197cf2c08291454ef0bd1d9e2105b45913b25d72cff1465555da1d3e0a659e42"
+    },
+    {
+      "bytes": 1186,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/08_b04_seed_4041002/manifest.json",
+      "sha256": "bb6912de763546a2003e62d3b8bfdefb6e9b053c80caed7c68296b8c174d8bf9"
+    },
+    {
+      "bytes": 6188,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/08_b04_seed_4041002/mask.png",
+      "sha256": "75398aab8a4a845064bda9a8c0e7f8bb4e974be26fddbe0d197d8094e9ece3e2"
+    },
+    {
+      "bytes": 1285,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/08_b04_seed_4041002/request_workflow.json",
+      "sha256": "36a7d05d3cc6600663fbb4eecac511bfe6201999142925347e4f49f88443aca6"
+    },
+    {
+      "bytes": 257399,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/08_b04_seed_4041002/rgba.png",
+      "sha256": "797b960019096044937ac39c823c2be4a50786bb768f59e7e6f183fa3ec250b9"
+    },
+    {
+      "bytes": 3611,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/evidence_hashes.json",
+      "sha256": "44c7d78672629365c2101f75b08bef0d7ec98bf1beb3fd2e179d7f91c2bf396a"
+    },
+    {
+      "bytes": 10988,
+      "path": "tools/comfyui/flux2/birefnet/output/spike6-birefnet-20260803T135800Z/run_manifest.json",
+      "sha256": "e51cd9a9719ef294ee6a4eadef64447d5d2f6a3a27804f6d9df727b755d58704"
+    },
+    {
+      "bytes": 19288,
+      "path": "tools/comfyui/flux2/birefnet/process_birefnet_sprite.py",
+      "sha256": "8d34ba15d5f3e896741dc707355e78353a283fb4d46a87d7b544e0c8c3109b01"
+    },
+    {
+      "bytes": 1974,
+      "path": "tools/comfyui/flux2/birefnet/reports/model_download_manifest.json",
+      "sha256": "a08789af504b93b13caa227416934d92f59ae208602981f7e7875bd909dd128b"
+    },
+    {
+      "bytes": 2498,
+      "path": "tools/comfyui/flux2/birefnet/reports/official_source_manifest.json",
+      "sha256": "5f9dca46509be2d0203cd7ac633f58ea176e4cf7c9de455baa016a092cd6d27c"
+    },
+    {
+      "bytes": 15909,
+      "path": "tools/comfyui/flux2/birefnet/review_packets/spike6-birefnet-20260803T135800Z-verified/review_packet_manifest.json",
+      "sha256": "575f6f8705108342f36d17634c186c99aa89c1f83921dd025a3cfbaca2e08863"
+    },
+    {
+      "bytes": 6208,
+      "path": "tools/comfyui/flux2/birefnet/reviews/automated_test_results_verified.json",
+      "sha256": "bed104a5ab5c46c9040a4ccfd797e017f8b99d8f7c67ad0912d2299f35f4a20b"
+    },
+    {
+      "bytes": 2467,
+      "path": "tools/comfyui/flux2/birefnet/reviews/human_structure_review.csv",
+      "sha256": "2ecd600448efadf699d8aec023f5e72802adfe5edaf13981b7913cac6fa279e9"
+    },
+    {
+      "bytes": 2574,
+      "path": "tools/comfyui/flux2/birefnet/reviews/human_structure_review_rubric.json",
+      "sha256": "5b77215a8cb3b80def232ec1113038234f533cbaa9fe6616180cc98c98d40b7b"
+    },
+    {
+      "bytes": 2414,
+      "path": "tools/comfyui/flux2/birefnet/run_spike6_tests.py",
+      "sha256": "2dc07832f7e185f0902ee1d179331e7139379cd5994f2625a4b0b16f5b9913ef"
+    },
+    {
+      "bytes": 8506,
+      "path": "tools/comfyui/flux2/birefnet/scripts/start_birefnet_comfyui.ps1",
+      "sha256": "2bf25c65d18a433b5e16bf07ce807822fe2a40b63561f85bd57c0df2ed31104b"
+    },
+    {
+      "bytes": 3982,
+      "path": "tools/comfyui/flux2/birefnet/scripts/stop_birefnet_comfyui.ps1",
+      "sha256": "cbb2062f584e89df34986a6383caa5028cf8e7bba9cb0e601b00448e52c6b0f9"
+    },
+    {
+      "bytes": 23480,
+      "path": "tools/comfyui/flux2/birefnet/spike6_runner.py",
+      "sha256": "f89c969d7aaa4bdcf9a222706111acc6f34f3d963a12b2ff01d124c30a344a82"
+    },
+    {
+      "bytes": 9443,
+      "path": "tools/comfyui/flux2/birefnet/test_process_birefnet_sprite.py",
+      "sha256": "990a8e50b225d6491abf5df0f253515bdcaa543a4664d1c18c4f50975f70ce56"
+    },
+    {
+      "bytes": 14040,
+      "path": "tools/comfyui/flux2/birefnet/test_spike6_runner.py",
+      "sha256": "c16e84426b64193f3d307b93f881622b0cf520d91542a9019367b2da616af797"
+    },
+    {
+      "bytes": 9718,
+      "path": "tools/comfyui/flux2/birefnet/test_spike6_security.py",
+      "sha256": "4f5a9ad1a8d990d403632c586372c13fb5610f0d6520bc17cac96458485d7583"
+    },
+    {
+      "bytes": 212155,
+      "path": "tools/comfyui/flux2/output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/raw.png",
+      "sha256": "4e979b3a7b78a2ad701149235754f9359f0bad7e7a9e2d228fae5f94fecc54ae"
+    },
+    {
+      "bytes": 230790,
+      "path": "tools/comfyui/flux2/output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/raw.png",
+      "sha256": "624fce138360af6fc2aca7b9defc8d771c1355a6e8fc1ef432c59c156d315634"
+    },
+    {
+      "bytes": 248997,
+      "path": "tools/comfyui/flux2/output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/raw.png",
+      "sha256": "ccdb2d05d47e6c4cce851ca8c56b2efd779f447bb04b6556d1b563b8eb751684"
+    },
+    {
+      "bytes": 297058,
+      "path": "tools/comfyui/flux2/output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/raw.png",
+      "sha256": "3b45b29652521bd2b6d46b5b955569e9f7fab5f244ef2a94c950eed6b8322641"
+    },
+    {
+      "bytes": 222443,
+      "path": "tools/comfyui/flux2/output/flux2_matrix_20260803t130451548924z/b03/seed_4041001/raw.png",
+      "sha256": "dafbaa60f137526eea7fa47087c4af5339b99d08d6cccf384d7cc58c98ce791a"
+    },
+    {
+      "bytes": 240022,
+      "path": "tools/comfyui/flux2/output/flux2_matrix_20260803t130451548924z/b03/seed_4041002/raw.png",
+      "sha256": "8d97a66eef4fc84e88319c1e6b1397a81e1a5c10245dd915b131bb94484f71c2"
+    },
+    {
+      "bytes": 198142,
+      "path": "tools/comfyui/flux2/output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/raw.png",
+      "sha256": "08cfcb3823668d8732476ed6ffb0f5b95156476a4cc642b26ff142dd661d9b26"
+    },
+    {
+      "bytes": 222220,
+      "path": "tools/comfyui/flux2/output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/raw.png",
+      "sha256": "9af251d1a47725b117f1a4cc381523b3b24577218b5241da2e50a6925881d63a"
+    },
+    {
+      "bytes": 40239,
+      "path": "tools/comfyui/flux2/reports/evidence_hashes.json",
+      "sha256": "2fbb4d49d62e4544fb47c4d9b31998c6823fae7dc26b54b049d3cb335bbaf18d"
+    },
+    {
+      "bytes": 2846,
+      "path": "tools/comfyui/flux2/reports/flux2_matrix_summary.json",
+      "sha256": "45b198e47457ef51bb36e6037fc49ebac4e0caaf14fdd44ee423faa8cad2967f"
+    },
+    {
+      "bytes": 3586,
+      "path": "tools/comfyui/flux2/reports/human_visual_review.csv",
+      "sha256": "3bd7357f875f9639e4b1506260466a87ab2f20f3e12b63d8c19cee1386940557"
+    },
+    {
+      "bytes": 1392,
+      "path": "tools/comfyui/flux2/workflows/birefnet_remove_background_forge_api.json",
+      "sha256": "56d74936b840de2ce2d5e823b6ad1704b9e65dd7ddd8b7a0edbfb5d4d4cf19df"
+    },
+    {
+      "bytes": 10055,
+      "path": "tools/comfyui/flux2/workflows/birefnet_remove_background_official.json",
+      "sha256": "ab7bf67d91a17750222da4131790ca38f651d8078ff28213e15cf0ebd86b3354"
+    }
+  ],
+  "spike5_freeze_sha256": "57b1de80841d4c5f3da4c07b5cb0dee606a3a3dbfffbbb1ba387d617f59f7af8",
+  "spike5_frozen_file_count": 54
+}

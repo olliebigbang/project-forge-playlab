@@ -1,0 +1,63 @@
+{
+  "anchor_source": {
+    "GripPrimary": "manual_player_calibration",
+    "SpinPivot": "alpha_centroid_after_calibration",
+    "StrikePoint": "manual_player_calibration"
+  },
+  "auto_anchor_source": {
+    "GripPrimary": "AnchorResolver:alpha_local_search+profile",
+    "SpinPivot": "alpha_centroid",
+    "StrikePoint": "AnchorResolver:tip"
+  },
+  "auto_anchors": {
+    "GripPrimary": [
+      33.0,
+      65.0
+    ],
+    "SpinPivot": [
+      48.82,
+      42.74
+    ],
+    "StrikePoint": [
+      88.0,
+      19.0
+    ]
+  },
+  "auto_confidence": {
+    "GripPrimary": 0.88,
+    "SpinPivot": 0.96,
+    "StrikePoint": 0.58
+  },
+  "behavior_family": "returning_thrown",
+  "case_id": "case_b",
+  "confidence": {
+    "GripPrimary": 0.7,
+    "SpinPivot": 0.98,
+    "StrikePoint": 0.85
+  },
+  "corrected_anchors": {
+    "GripPrimary": [
+      71.0,
+      76.0
+    ],
+    "SpinPivot": [
+      48.82,
+      42.74
+    ],
+    "StrikePoint": [
+      88.0,
+      19.0
+    ]
+  },
+  "grip_profile": "center_shaft",
+  "required_anchor_types": [
+    "GripPrimary",
+    "SpinPivot",
+    "StrikePoint"
+  ],
+  "run_id": "seed_41001_s00",
+  "source_sprite": "res://tools/comfyui/output/case_b/seed_41001_s00/processed_sprite.png",
+  "training_transform": {
+    "flip_x": false
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "identity": {
+    "name_zh": "木制工具箱",
+    "name_en": "wooden toolbox",
+    "category": "toy",
+    "preserved_features": [
+      "hinged wooden lid",
+      "rectangular box body",
+      "metal corner reinforcements",
+      "carrying handle on top"
+    ],
+    "material_hints": [
+      "wood",
+      "rusted metal fittings"
+    ],
+    "silhouette_hints": [
+      "rectangular box with flat lid",
+      "compact carry-handle silhouette"
+    ]
+  },
+  "combat": {
+    "behavior_family": "sustained_ranged",
+    "delivery": "projectile_stream",
+    "impact_mode": "emitter_projectiles",
+    "effect_type": "normal",
+    "drawback": "overheat",
+    "cadence_hint": "continuous"
+  },
+  "visual": {
+    "prompt_en": "wooden toolbox, rectangular wooden box body with hinged lid, metal corner reinforcements, carrying handle on top, small functional emitter fitted into the front panel for launching rusted nails, one isolated object, side view, complete object visible, realistic worn wood texture, rusted nail details",
+    "negative_prompt_en": "not a gun, not a rifle, not a turret, not a machine gun, no futuristic weapon shape, no sword, no unrelated creature",
+    "must_preserve": [
+      "hinged wooden lid",
+      "rectangular box body",
+      "metal corner reinforcements",
+      "carrying handle on top"
+    ],
+    "must_not_replace_with": [
+      "gun",
+      "rifle",
+      "turret",
+      "machine gun",
+      "sword"
+    ]
+  },
+  "confidence": 0.82
+}

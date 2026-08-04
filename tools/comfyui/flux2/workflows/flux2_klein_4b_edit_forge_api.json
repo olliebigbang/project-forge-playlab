@@ -1,0 +1,165 @@
+{
+  "_forge": {
+    "version": 1,
+    "profile": "flux2_klein_4b",
+    "purpose": "Developer-only FLUX.2 Klein 4B Distilled FP8 single-reference edit API graph",
+    "official_template_sha256": "e0388a8870495802314d58fa61616ddcdb7064dac5f85a8787c9e08180b8a560",
+    "official_template_commit": "cebdebc9fc2febcb97a5db0dd291f59f5300b176",
+    "output_node_id": "19",
+    "capabilities": {
+      "single_reference": true,
+      "multi_reference": false,
+      "reference_strength": false,
+      "quality_gate_passed": false
+    },
+    "bindings": {
+      "positive_prompt": ["7", "inputs", "text"],
+      "negative_prompt": ["8", "inputs", "text"],
+      "optional_reference_image": ["4", "inputs", "image"],
+      "seed": ["14", "inputs", "noise_seed"],
+      "width": [["12", "inputs", "width"], ["13", "inputs", "width"]],
+      "height": [["12", "inputs", "height"], ["13", "inputs", "height"]],
+      "steps": ["13", "inputs", "steps"],
+      "guidance": ["16", "inputs", "cfg"],
+      "output_subfolder": ["19", "inputs", "filename_prefix"]
+    }
+  },
+  "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "flux-2-klein-4b-fp8.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "flux2",
+      "device": "default"
+    }
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    }
+  },
+  "4": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "forge_flux2_reference_placeholder.png"
+    }
+  },
+  "5": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+      "image": ["4", 0],
+      "upscale_method": "nearest-exact",
+      "megapixels": 0.25,
+      "resolution_steps": 16
+    }
+  },
+  "6": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": ["5", 0],
+      "vae": ["3", 0]
+    }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["2", 0],
+      "text": "preserve the reference object identity"
+    }
+  },
+  "8": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["2", 0],
+      "text": "person, hand, text, UI, multiple objects, cropped object"
+    }
+  },
+  "9": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+      "conditioning": ["8", 0]
+    }
+  },
+  "10": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+      "conditioning": ["7", 0],
+      "latent": ["6", 0]
+    }
+  },
+  "11": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+      "conditioning": ["9", 0],
+      "latent": ["6", 0]
+    }
+  },
+  "12": {
+    "class_type": "EmptyFlux2LatentImage",
+    "inputs": {
+      "width": 512,
+      "height": 512,
+      "batch_size": 1
+    }
+  },
+  "13": {
+    "class_type": "Flux2Scheduler",
+    "inputs": {
+      "steps": 4,
+      "width": 512,
+      "height": 512
+    }
+  },
+  "14": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 5050002
+    }
+  },
+  "15": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler"
+    }
+  },
+  "16": {
+    "class_type": "CFGGuider",
+    "inputs": {
+      "model": ["1", 0],
+      "positive": ["10", 0],
+      "negative": ["11", 0],
+      "cfg": 1.0
+    }
+  },
+  "17": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": ["14", 0],
+      "guider": ["16", 0],
+      "sampler": ["15", 0],
+      "sigmas": ["13", 0],
+      "latent_image": ["12", 0]
+    }
+  },
+  "18": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["17", 0],
+      "vae": ["3", 0]
+    }
+  },
+  "19": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["18", 0],
+      "filename_prefix": "ForgeFlux2Edit/placeholder/raw"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "contract": "forge-live-e2e-spike7-session-v1",
+  "session_id": "live-e2e-20260803t234041475z-a6d56b4e",
+  "run_id": "spike7-20260803t234041483z-82d0a3b3",
+  "started_at_utc": "2026-08-03T23:41:27.814Z",
+  "approved_case_order": [
+    "L01",
+    "L02",
+    "L03"
+  ],
+  "approved_model_id": "claude-sonnet-5",
+  "semantic_contract": "forge-semantic-v1.1",
+  "retry_limit": 0,
+  "mock_fallback": false,
+  "explicit_launch_required": true,
+  "preflight_file": "C:\\Users\\Eddie L\\Documents\\project-forge-playlab\\tools\\live_e2e\\runtime\\live-e2e-20260803t234041475z-a6d56b4e\\preflight.json",
+  "preflight_sha256": "4198895e454552dfd82692f86ce52fb1525b335c735fc7beaed224ce09dbf821"
+}

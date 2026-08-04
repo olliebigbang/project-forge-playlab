@@ -1,0 +1,54 @@
+{
+  "identity": {
+    "canonical_name_zh": "旅行箱",
+    "canonical_name_en": "suitcase",
+    "display_name_zh": "回旋红色旅行箱",
+    "display_name_en": "Returning Red Suitcase",
+    "category": "tool",
+    "required_identity_parts": [
+      "rectangular case body",
+      "carrying handle",
+      "hinged edges",
+      "corner reinforcements"
+    ],
+    "material_hints": [
+      "hard shell plastic",
+      "leather trim"
+    ],
+    "silhouette_hints": [
+      "boxy rectangular travel case outline",
+      "slightly rounded corners"
+    ],
+    "optional_decorations": [
+      "travel stickers",
+      "brass corner studs",
+      "luggage tag"
+    ]
+  },
+  "combat": {
+    "behavior_family": "returning_thrown",
+    "delivery": "whole_object_return",
+    "impact_mode": "whole_body_collision",
+    "effect_type": "normal",
+    "drawback": "weapon_absent_while_flying",
+    "cadence_hint": "single_commit"
+  },
+  "visual": {
+    "prompt_en": "A red hard-shell suitcase, rectangular boxy body with slightly rounded corners, sturdy carrying handle on top, visible hinged edges and reinforced metal corners, smooth glossy red plastic shell with leather trim accents, small functional grip fixture for throwing, isolated single object, side view, complete object fully visible, clean studio background",
+    "negative_prompt_en": "not a boomerang, not a shield, not a discus, not a frisbee, not a weapon blade, no text overlay, no multiple objects, no background clutter",
+    "must_preserve": [
+      "rectangular case body",
+      "carrying handle",
+      "hinged edges",
+      "corner reinforcements"
+    ],
+    "must_not_replace_with": [
+      "boomerang",
+      "shield",
+      "discus",
+      "frisbee",
+      "generic sword"
+    ]
+  },
+  "confidence": 0.9
+}

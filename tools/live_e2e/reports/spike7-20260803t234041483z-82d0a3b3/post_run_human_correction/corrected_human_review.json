@@ -1,0 +1,52 @@
+{
+  "contract": "forge-live-e2e-spike7-independent-human-correction-v1",
+  "run_id": "spike7-20260803t234041483z-82d0a3b3",
+  "recorded_at_utc": "2026-08-04T03:49:36.676Z",
+  "correction_scope": "L01 human visual review only",
+  "source_statement": "L1 也通过了 我没看到验证选项，没有问题",
+  "official_frozen_verdict": {
+    "classification": "TECHNICAL PASS / PRODUCT NEEDS WORK",
+    "technical_pass_count": 3,
+    "product_pass_count": 2,
+    "l01_product_success": false,
+    "preserved_without_overwrite": true
+  },
+  "independent_post_run_human_review": {
+    "classification": "LIVE END-TO-END PASS",
+    "technical_pass_count": 3,
+    "product_pass_count": 3,
+    "l01": {
+      "identity_recognizable": true,
+      "required_identity_parts": {
+        "fan_head": true,
+        "support_pole": true,
+        "base": true
+      },
+      "required_parts_preserved_count": 3,
+      "no_fixed_weapon_substitution": true,
+      "no_baked_dynamic_effect": true,
+      "behavior_family": "sustained_ranged",
+      "behavior_correct": true,
+      "anchor_complete": true,
+      "training_complete": true,
+      "product_success": true,
+      "review_source": "player_post_run_correction"
+    },
+    "l02_product_success": true,
+    "l03_product_success": true
+  },
+  "root_cause": {
+    "owner": "validation_ui",
+    "type": "review_option_discoverability",
+    "detail": "Unchecked controls were recorded as false although the player had not seen the review options; this was not a model, alpha, anchor, or training failure."
+  },
+  "execution_attestation": {
+    "api_calls_added": 0,
+    "comfyui_started": false,
+    "images_regenerated": false,
+    "original_results_modified": false,
+    "default_flow_promoted": false,
+    "combat_rooms_connected": false,
+    "v2_started": false
+  }
+}

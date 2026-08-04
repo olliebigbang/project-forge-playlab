@@ -1,0 +1,324 @@
+{
+  "anthropic_called": false,
+  "automatic_retry_count": 0,
+  "comfyui_started": false,
+  "gameplay_modified": false,
+  "gate": "Forge Gate B 4B - Offline Alpha Extraction Spike",
+  "gate_4a_modified": false,
+  "human_review_sha256": "194e6b4dc5c24bc6667d591ef6e420207a28ebb6b3b657e80cec00a8a807834a",
+  "images_regenerated": false,
+  "method_a": "opencv_chroma_grabcut",
+  "method_b": "UNAVAILABLE_OFFLINE",
+  "method_winner": "NO_HEAD_TO_HEAD_WINNER_METHOD_A_ONLY_EXECUTABLE",
+  "metrics": {
+    "background_ground_shadow_residual_count": 0,
+    "delivery_checks": {
+      "B01:4041001": {
+        "failure_reason": "",
+        "valid": true
+      },
+      "B01:4041002": {
+        "failure_reason": "",
+        "valid": true
+      },
+      "B02:4041001": {
+        "failure_reason": "",
+        "valid": true
+      },
+      "B02:4041002": {
+        "failure_reason": "",
+        "valid": true
+      },
+      "B03:4041001": {
+        "failure_reason": "",
+        "valid": true
+      },
+      "B03:4041002": {
+        "failure_reason": "",
+        "valid": true
+      },
+      "B04:4041001": {
+        "failure_reason": "",
+        "valid": true
+      },
+      "B04:4041002": {
+        "failure_reason": "",
+        "valid": true
+      }
+    },
+    "fake_transparent_count": 0,
+    "gates": {
+      "all_six_raw_identities_remain_recognizable_at_96": false,
+      "b01_hose_and_nozzle_preserved_both_seeds": false,
+      "b03_seed_4041001_remains_usable": true,
+      "b04_stem_and_base_preserved_both_seeds": false,
+      "background_ground_shadow_residual_zero": true,
+      "fake_transparent_zero": true,
+      "human_review_complete_8_of_8": true,
+      "raw_identity_baseline_is_6_of_8": true,
+      "serious_subject_missing_zero": false,
+      "usable_transparent_alpha_at_least_7_of_8": false
+    },
+    "intrinsic_identity_markings_present_count": 2,
+    "no_extraneous_text_or_watermark_count": 8,
+    "no_person_or_hand_count": 8,
+    "raw_identity_preserved_at_96_count": 5,
+    "raw_identity_recognizable_count": 6,
+    "serious_subject_missing_count": 4,
+    "status": "NEEDS WORK",
+    "technical_alpha_success_count": 8,
+    "usable_alpha_count": 4
+  },
+  "network_used": false,
+  "preexisting_gameplay_drift_count": 2,
+  "preflight": {
+    "gameplay": {
+      "added": [],
+      "added_count": 0,
+      "changed": [
+        {
+          "current_sha256": "3c4b23dd8a3db8e26f6690ef360ebe2eeeddaa1c67ddecd571fee10253825c48",
+          "current_size": 31470,
+          "expected_sha256": "691f5c171b707d557869be5d9ef0c17a9a6c91e06b1618476eefe213d58c1983",
+          "expected_size": 30888,
+          "path": "scripts/open_identity_spike.gd"
+        },
+        {
+          "current_sha256": "c91d3efadd8384b1b6926d8c3b14a47ac411e5cd798bf81176a2250f64218c23",
+          "current_size": 9298,
+          "expected_sha256": "876fc5cd7133eea1cd2d9ad72d29b9547249af19ac5dc0db401e09548140f48b",
+          "expected_size": 8523,
+          "path": "scripts/services/local_comfy_forge_visual_provider.gd"
+        }
+      ],
+      "changed_count": 2,
+      "frozen_file_count": 84,
+      "manifest_sha256": "27b1f9d643862adbd004a6c04326a680d386229ee064a2a46f1eb2a178fa2245",
+      "missing": [],
+      "missing_count": 0,
+      "status": "RECORDED_PREEXISTING_DRIFT"
+    },
+    "gate_4a": {
+      "frozen_changed_count": 0,
+      "frozen_missing_count": 0,
+      "frozen_tree_file_count": 78,
+      "manifest_sha256": "95b4e4141e241e723bffa9c8a0dc22cbd19b1780c7ef1f02e39c80ac0574709d",
+      "post_freeze_sidecar_count": 41,
+      "post_freeze_sidecars": [
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041001/input_sketch.png.import",
+          "sha256": "c7534eff15f5a5f88e7fd9dfa1ce61f5667d22dc980a708334bc62e4e623e103",
+          "size": 1029
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041001/raw.png.import",
+          "sha256": "96857f04cb7da5b6980e3e8e570e4fa55cd362cbcdfd04282fb3c11c6e276537",
+          "size": 1003
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041002/input_sketch.png.import",
+          "sha256": "fd8f3046d6fab731725aceaae8cb90adaf0c7592bfb5d66a5b66e53ed150e6b0",
+          "size": 1029
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041002/raw.png.import",
+          "sha256": "afa032636bfae4a132fa04fffe143e88e039939548f232d1c1122a843f9e81e8",
+          "size": 1003
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041001/input_sketch.png.import",
+          "sha256": "abe03f4914528126f7f9f58b5083d057b58dcf41f97f873d15823860df36ba00",
+          "size": 1029
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041001/raw.png.import",
+          "sha256": "93e6c5205b4a0d1c0348f129502565ea899d0f8dc4042c17893d2b1006443436",
+          "size": 1003
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041002/input_sketch.png.import",
+          "sha256": "d12eb3181393d6b9adfeee7e2a5f81875ea995b21d15c9b0f6a139322260ad0a",
+          "size": 1030
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041002/raw.png.import",
+          "sha256": "7415c71061086f561f3a07d7927ef84e08448c110b789d9543cb55b4a77c9088",
+          "size": 1003
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/alpha_mask.png.import",
+          "sha256": "325e20f64f96568548d4872eb0fc654c7ba5c5cd057d1210acea11a3641a9129",
+          "size": 1024
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/input_sketch.png.import",
+          "sha256": "3a651e0ad57cad99a0cad6e5189b6a10ee00c50574d774a1b258f44b3d770525",
+          "size": 1030
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/processed_sprite.png.import",
+          "sha256": "c202cad473a7ea1ef55f01a22bf4dd1a7d8df03d27d8b2e89153ca4eadfa64d0",
+          "size": 1042
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/raw.png.import",
+          "sha256": "ce8d54e907fdd18b27efcf611ee4c0aab3a94decb044f0df035f89f3fefce47b",
+          "size": 1003
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041002/input_sketch.png.import",
+          "sha256": "afe452cd37d7ba41974989fa63dbd2b235635efbac30cccbc6172c3dc18705c2",
+          "size": 1030
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041002/raw.png.import",
+          "sha256": "9dbad21091975e00dc399ec4dcb019d3793dd79332224ea2b4ef3dc56db75e19",
+          "size": 1003
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041001/input_sketch.png.import",
+          "sha256": "28d81382a723bb421af6b72f4441ed5c03e48c7681afb1eb91dd4d3d73b97c07",
+          "size": 1030
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041001/raw.png.import",
+          "sha256": "4a2ff57867026c184bb68588adaacff34e59a9230f9c3bbec9166a965914fc43",
+          "size": 1003
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041002/input_sketch.png.import",
+          "sha256": "9f6793f697d99bcb1c8723f3fde957015be87beb9aac4d658f02e924ed1e2929",
+          "size": 1030
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041002/raw.png.import",
+          "sha256": "1b3289011b176debd7cc87e253b8f020d2ae4dd8e4a4f6bd0d1d56efc67d7d2d",
+          "size": 1003
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/human_visual_review.alpha.translation",
+          "sha256": "c41d374b48d7a5d50098054285a2416002f919957bc18589e939bb0a39161003",
+          "size": 546
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/human_visual_review.csv.import",
+          "sha256": "0679f43d65e3f812f61311cd0258e494095faaf47f5d1e9b38f6bee05b378e77",
+          "size": 1405
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/human_visual_review.generation.translation",
+          "sha256": "5a9ee58d3b18be8545234992b43a33c0ab7b2b4d310bc899b1b649c69fa9293a",
+          "size": 555
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/human_visual_review.postprocess.translation",
+          "sha256": "d1eb86e95d8e23a64b6ef15af87e4b1d185cbfd2cb0a913603a31d463bfcf15d",
+          "size": 556
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/human_visual_review.seed.translation",
+          "sha256": "a9c0f8aad8ca887ded8d762e3ef974ce8453a4501e8bd54efcd2eea2289385bb",
+          "size": 557
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/raw_processed_comparison.png.import",
+          "sha256": "d80bf96fa4b18e3e2f8a9d657544e77e83a8980cb002e5ec809d2311bef369be",
+          "size": 1062
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/required_parts_review.png.import",
+          "sha256": "066aa33ccce4dd60d858e943efa519d30535d5b0cdb035bef13165cd4e1c8b3f",
+          "size": 1053
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/runtime/comfy_output/ForgeGateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041001/raw_00001_.png.import",
+          "sha256": "27ef7e6c8cf92d369d33ef4b1384a4d489fa77a71b9f8bef0f722a642a5cf0af",
+          "size": 1051
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/runtime/comfy_output/ForgeGateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041002/raw_00001_.png.import",
+          "sha256": "36ade99e68e02899a16e4e0edb33fcdfbac71d979b2a3c2bda0ed2b243f3a9a0",
+          "size": 1050
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/runtime/comfy_output/ForgeGateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041001/raw_00001_.png.import",
+          "sha256": "6f16649e6d59aae0f0e20b2256eaf0ef1788614b9c1bf4289fcec1b47c85d04b",
+          "size": 1051
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/runtime/comfy_output/ForgeGateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041002/raw_00001_.png.import",
+          "sha256": "7def186d0dd03294e24531a46becbef1f7de21bd956d690049d6e4c9c07fd54c",
+          "size": 1051
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/runtime/comfy_output/ForgeGateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001/raw_00001_.png.import",
+          "sha256": "7990ea7b67f9ebeff8d5045945ffd3869eb8c1a6b85febfd3faaf6b3d67710e8",
+          "size": 1051
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/runtime/comfy_output/ForgeGateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041002/raw_00001_.png.import",
+          "sha256": "c387b9e124aeee1b8da7f0c1329ee5610f4eac454576e54f94e51a9409acb825",
+          "size": 1051
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/runtime/comfy_output/ForgeGateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041001/raw_00001_.png.import",
+          "sha256": "5b0b7097a3214acc380f9075db9dc6dc045246406abaf2fe213934a018692e9b",
+          "size": 1051
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/runtime/comfy_output/ForgeGateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041002/raw_00001_.png.import",
+          "sha256": "9be87d2fb8de0348e7fa95e6bb490a5fdc2c53870366d7df19ff21dd34bfd85f",
+          "size": 1051
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/runtime/input/GateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041001.png.import",
+          "sha256": "4bae6c04a0ffb5e59f60c70828764963eb5b41f74645f8d26044aea2ecbe5f81",
+          "size": 1031
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/runtime/input/GateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B01/seed_4041002.png.import",
+          "sha256": "cb58164cca7ac114b7247664c8e85293bc4ddf94a472c867629fa876ceeab250",
+          "size": 1032
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/runtime/input/GateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041001.png.import",
+          "sha256": "b3c6848b747d1eb9b1f6642daabe81baf08d84ff79873a3790f542714b3b17b8",
+          "size": 1031
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/runtime/input/GateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B02/seed_4041002.png.import",
+          "sha256": "eb420732f8cfb670e5abddaec62aa2739f7893228247617849977ed74c7b1c90",
+          "size": 1032
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/runtime/input/GateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041001.png.import",
+          "sha256": "496158e26ad5e51d699cd41d8bee07da2de50e6e7a13eebb4168d2e4cee73679",
+          "size": 1032
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/runtime/input/GateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B03/seed_4041002.png.import",
+          "sha256": "1e2cf02455d0d466cbd6efae3b734d96c58aa1fdeb8e78ca759952c476249e69",
+          "size": 1032
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/runtime/input/GateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041001.png.import",
+          "sha256": "2660fd308914642280fbff7a048543946bc96357aca0b8b8d18c7a7a3e4840de",
+          "size": 1031
+        },
+        {
+          "path": "tools/comfyui/gate_b_4a/runtime/input/GateB4A/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041002.png.import",
+          "sha256": "8066425e4d5ac711f5e8ea568e7fb723728295d5e50d26075dfaf64e92dd4f37",
+          "size": 1032
+        }
+      ],
+      "source_formal_status": "NEEDS WORK",
+      "status": "PASS_FROZEN_BYTES_WITH_POST_FREEZE_GODOT_SIDECARS"
+    }
+  },
+  "processor_sha256": "0b348a0202877629258439dc483711e6a4b9143d58863e0cae72dfe7d0926fe7",
+  "ready_for_anchor_or_training_zone": false,
+  "realvisxl_recommendation": "TEMPORARY_RAW_GENERATOR_ONLY_NOT_CURRENT_SPRITE_CHAIN",
+  "run_id": "gate-b-4b-20260803T113856150162Z-602df44f",
+  "source_gate_4a_formal_status_preserved": "NEEDS WORK",
+  "status": "NEEDS WORK"
+}

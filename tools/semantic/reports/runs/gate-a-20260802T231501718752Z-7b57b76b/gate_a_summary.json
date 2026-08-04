@@ -1,0 +1,40 @@
+{
+  "status": "NEEDS WORK",
+  "provider": "anthropic",
+  "endpoint": "https://api.anthropic.com/v1/messages",
+  "model_id": "claude-sonnet-5",
+  "contract_version": "forge-semantic-v1",
+  "run_id": "gate-a-20260802T231501718752Z-7b57b76b",
+  "real_ai_calls_performed": true,
+  "call_count": 20,
+  "attested_anthropic_envelope_count": 0,
+  "unique_provider_response_id_count": 0,
+  "call_reservation_attested": true,
+  "delivered_result_attestation_count": 20,
+  "processable_results": 0,
+  "schema_valid_count": 0,
+  "identity_correct_count": 0,
+  "behavior_correct_count": 0,
+  "preserved_features_quality_2_count": 0,
+  "clarification_correct_count": 0,
+  "fixed_weapon_substitution_count": 0,
+  "automatic_retry_count": 0,
+  "secret_scan_passed": true,
+  "scope_hash_verified": true,
+  "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0
+  },
+  "cost": {
+    "status": "COST_NOT_CALCULATED — TOKEN_USAGE_ONLY",
+    "estimated_cost": null,
+    "currency": null
+  },
+  "gate_b_recommended": false,
+  "gate_b_executed": false,
+  "comfyui_started": false,
+  "v2_started": false,
+  "gameplay_or_rooms_modified": false
+}

@@ -1,0 +1,16 @@
+{
+  "contract": "forge-live-e2e-spike7-post-run-cleanup-v1",
+  "status": "PASS",
+  "run_id": "spike7-20260803t234041483z-82d0a3b3",
+  "session_id": "live-e2e-20260804t033352546z-e384be65",
+  "anthropic_environment_cleared": true,
+  "port_8190_closed": true,
+  "port_8188_closed": true,
+  "bridge_port_8767_closed": true,
+  "owned_process_residual_count": 0,
+  "historical_evidence_unchanged": true,
+  "formal_repositories_unchanged": true,
+  "secret_scan_pass": true,
+  "secret_findings": 0,
+  "verified_at_utc": "2026-08-04T03:45:34.371Z"
+}

@@ -1,0 +1,55 @@
+{
+  "contract": "forge-birefnet-official-source-audit-v1",
+  "status": "PASS",
+  "comfyui_repository": "https://github.com/Comfy-Org/ComfyUI.git",
+  "comfyui_tag": "v0.30.0",
+  "comfyui_commit": "b1693ecba9f5b65f8c80ab36b195ab963ec92413",
+  "official_model_repository": "Comfy-Org/BiRefNet",
+  "official_model_repository_url": "https://huggingface.co/Comfy-Org/BiRefNet",
+  "official_model_repository_commit": "8fdc9d315889de96cc0c6269eeecd333e2727889",
+  "official_template_model_url": "https://huggingface.co/Comfy-Org/BiRefNet/resolve/main/background_removal/birefnet.safetensors",
+  "pinned_model_url": "https://huggingface.co/Comfy-Org/BiRefNet/resolve/8fdc9d315889de96cc0c6269eeecd333e2727889/background_removal/birefnet.safetensors",
+  "model_filename": "birefnet.safetensors",
+  "model_bytes": 444473596,
+  "model_sha256": "9ab37426bf4de0567af6b5d21b16151357149139362e6e8992021b8ce356a154",
+  "model_xet_hash": "796e4ababf8368833ae155c9063ce8a6bce38bc1b3783682e62c87f789cddcbe",
+  "license_declared_by_model_card": "MIT",
+  "license_note": "The Comfy-Org model card declares MIT; the repository has no separate LICENSE file. Production legal provenance remains a separate validation item.",
+  "native_nodes": [
+    "LoadBackgroundRemovalModel",
+    "RemoveBackground",
+    "InvertMask",
+    "JoinImageWithAlpha",
+    "MaskToImage",
+    "SaveImage"
+  ],
+  "official_files": [
+    {
+      "path": "C:/AI/ComfyUI-ForgeFlux2/ComfyUI/blueprints/Remove Background (BiRefNet).json",
+      "bytes": 10055,
+      "sha256": "ab7bf67d91a17750222da4131790ca38f651d8078ff28213e15cf0ebd86b3354"
+    },
+    {
+      "path": "C:/AI/ComfyUI-ForgeFlux2/ComfyUI/comfy_extras/nodes_bg_removal.py",
+      "bytes": 2398,
+      "sha256": "501bcee5b6c7fcf889b400ce840500dcd3b9166d52014da3e8df0138c0cdb1fe"
+    },
+    {
+      "path": "C:/AI/ComfyUI-ForgeFlux2/ComfyUI/comfy/bg_removal_model.py",
+      "bytes": 3092,
+      "sha256": "7f1ad7f5cecc51c7dc07ee071e7c2145b55286b9d35a5ea0877090bfa602934c"
+    },
+    {
+      "path": "C:/AI/ComfyUI-ForgeFlux2/ComfyUI/comfy/background_removal/birefnet.py",
+      "bytes": 30361,
+      "sha256": "4275f59a66db50332f72bf4ad86f56d03328424ac56d5c4db0c9ff7c6fa62b3e"
+    },
+    {
+      "path": "C:/AI/ComfyUI-ForgeFlux2/ComfyUI/comfy/background_removal/birefnet.json",
+      "bytes": 165,
+      "sha256": "8e2e1cfe0872af4c35e34fd7aecd5bd9b664775b0489a4b84bbc4b1e7466193d"
+    }
+  ],
+  "third_party_custom_nodes_installed": false,
+  "other_background_models_downloaded": false
+}

@@ -1,0 +1,342 @@
+{
+  "purpose": "Prove Gate B 4B did not modify gameplay, rooms, anchors, tests, or project configuration.",
+  "file_count": 84,
+  "files": {
+    "export_presets.cfg": {
+      "size": 1027,
+      "sha256": "7d977085d1fb474ee1fccd9ce76d53ec7038aa37d780ce9fcf68aefb9860b843"
+    },
+    "project.godot": {
+      "size": 1563,
+      "sha256": "95aba105c1bb5c0f5204f25110ffd166150b03991891164c0830f7fc774f0a30"
+    },
+    "scenes/comfy_training_spike.tscn": {
+      "size": 201,
+      "sha256": "cab88d64bdb555c71e1137be59132afd341ac315ab83da9e16c4cd0082a540c0"
+    },
+    "scenes/main.tscn": {
+      "size": 178,
+      "sha256": "1b0ddf33eb70004bf071ca0e315399b3f341f2a5354286ad17e90b9823b6172d"
+    },
+    "scenes/open_identity_spike.tscn": {
+      "size": 207,
+      "sha256": "4404ceea154860d05d7f60bc8c210c232ba45b7565122348d7d5e4778372dbf4"
+    },
+    "scenes/semantic_anchor_spike.tscn": {
+      "size": 209,
+      "sha256": "77b510fad3ea9877eca0e9a6f230ee308bc26f7233546409f679de8735f31d63"
+    },
+    "scripts/build_web.ps1": {
+      "size": 536,
+      "sha256": "d91981cae30c8061ae96b8d8addd5ffea4f746b3ad6c8891f60577153cdd7899"
+    },
+    "scripts/build_web.sh": {
+      "size": 403,
+      "sha256": "ab3e46bf77dc539d55704a6375068731efb7909a50e7366d23a6a890538b5240"
+    },
+    "scripts/comfy_training_spike.gd": {
+      "size": 5843,
+      "sha256": "6445af05d6310b903492fec05cdc846cc7f79cc28451d5f51b1844c0ffc76fcf"
+    },
+    "scripts/comfy_training_spike.gd.uid": {
+      "size": 20,
+      "sha256": "ffb280fb29b3e62ee20ed9f6971435c219d2e73e14272e3fdc80f15e3ecc9d94"
+    },
+    "scripts/data/blueprint_delta.gd": {
+      "size": 890,
+      "sha256": "80deb595d7b73aa9a07aab805b5e32e06e4abfa2eaf28bbf506f11b91d04cfdb"
+    },
+    "scripts/data/blueprint_delta.gd.uid": {
+      "size": 19,
+      "sha256": "888a257f4a0ba1a37bf4ab0c1e96d373e38a986e12a35900a20eefdf34eea216"
+    },
+    "scripts/data/semantic_anchor_calibration.gd": {
+      "size": 6775,
+      "sha256": "0accc4b153016628274d17da89862be58115628db8c45fc07286d8d2ce330049"
+    },
+    "scripts/data/semantic_anchor_calibration.gd.uid": {
+      "size": 20,
+      "sha256": "61b821076bde3dfb5816e4f3717a1650e89ea7cf2615da92e415115f7bf4ffd6"
+    },
+    "scripts/data/weapon_blueprint.gd": {
+      "size": 7867,
+      "sha256": "fed2386245d2a533052c86cd6b7fb7a7b4223ee4487ce21d949bffc563ab6797"
+    },
+    "scripts/data/weapon_blueprint.gd.uid": {
+      "size": 19,
+      "sha256": "045436eb78e21b111e07b26860ca044c8601931d6c4581d27d9a38951cf4acc6"
+    },
+    "scripts/data/weapon_visual_asset.gd": {
+      "size": 849,
+      "sha256": "42bdbffbd468bcce2de9c0223f89f56a574464e9917be26f40b2a774d62f2422"
+    },
+    "scripts/data/weapon_visual_asset.gd.uid": {
+      "size": 20,
+      "sha256": "9bdd440f6086ca8609b710c9880236b3b976c5804cfe226a78adaebce87c4547"
+    },
+    "scripts/find_godot.ps1": {
+      "size": 1117,
+      "sha256": "8dc94ee2df6bc34fd780ec5ee128454a8d9ad29960e72b25ad029c251074c7f4"
+    },
+    "scripts/find_godot.sh": {
+      "size": 956,
+      "sha256": "1c44338444df4f4c3cd63e5daf0e4414d057255ea1279ede79d3573d9094d930"
+    },
+    "scripts/main.gd": {
+      "size": 32500,
+      "sha256": "1649e4b392358f35ac50770435cb8f2f0fb415af924a1c3e40d467b9d540c1fe"
+    },
+    "scripts/main.gd.uid": {
+      "size": 19,
+      "sha256": "d02cdca8c9b7039847aeb2f2fe48f2f245486a180b494e8e60d699e145702880"
+    },
+    "scripts/open_identity_spike.gd": {
+      "size": 30888,
+      "sha256": "691f5c171b707d557869be5d9ef0c17a9a6c91e06b1618476eefe213d58c1983"
+    },
+    "scripts/open_identity_spike.gd.uid": {
+      "size": 20,
+      "sha256": "137c011fec005ee45b77fe0f761f4bc559cac376c2b8d1e80862614a79831b0f"
+    },
+    "scripts/run_game.ps1": {
+      "size": 183,
+      "sha256": "1cff72e624a4c01670c902bdcebdc9bc3c6f131d53611bd2262eefb1632c1553"
+    },
+    "scripts/run_game.sh": {
+      "size": 191,
+      "sha256": "ef7e8e0797a4260dadc1cc4ee212cd3e2be89cb0953420d52383bea0b359bd16"
+    },
+    "scripts/semantic_anchor_spike.gd": {
+      "size": 12713,
+      "sha256": "1c7eed06d175a3822b73e1c0983dbcf5dfbe8c6307393169f2527db167b4b202"
+    },
+    "scripts/semantic_anchor_spike.gd.uid": {
+      "size": 20,
+      "sha256": "38b26ffb86cd89741ea7f9229fbbcefd82d014c12d1b27d765873b9ba5dd0215"
+    },
+    "scripts/serve_web.ps1": {
+      "size": 372,
+      "sha256": "ec421132fca76fde0695fd8325cdda878f642f1ba21c842307322990cb65e606"
+    },
+    "scripts/serve_web.sh": {
+      "size": 320,
+      "sha256": "aae8b451ccbce3dc261a5a6c0083daa93d36afc3b2097c5302f3b771ba0b9c56"
+    },
+    "scripts/services/forge_visual_provider.gd": {
+      "size": 591,
+      "sha256": "e1acd78859a6d901fa1e3243a6f0722983e785b401a9e3a6ffed8d7bd5753f6e"
+    },
+    "scripts/services/forge_visual_provider.gd.uid": {
+      "size": 20,
+      "sha256": "9709ff0b2898836cb1ad23d63c55d551a1a1168dc80bbe57fd9f1432d95d7a25"
+    },
+    "scripts/services/local_comfy_forge_visual_provider.gd": {
+      "size": 8523,
+      "sha256": "876fc5cd7133eea1cd2d9ad72d29b9547249af19ac5dc0db401e09548140f48b"
+    },
+    "scripts/services/local_comfy_forge_visual_provider.gd.uid": {
+      "size": 20,
+      "sha256": "9b0c2f89e8a64f3def3622b00df74905db39d938a12b3991e2aca09756536647"
+    },
+    "scripts/services/mock_forge_visual_provider.gd": {
+      "size": 945,
+      "sha256": "cf3388cfe7cfc27c8bbe6ed01bc5d6ce92009b321e0b57035c6d48002c0bab7e"
+    },
+    "scripts/services/mock_forge_visual_provider.gd.uid": {
+      "size": 20,
+      "sha256": "a422beb85ab4d0fcf96c79994650362a2ae43ae5e6408b9c7ee29c1ad10b5da7"
+    },
+    "scripts/services/mock_weapon_image_generator.gd": {
+      "size": 1003,
+      "sha256": "da2090e235985fe9b58506e310793e92aa5437e40f05675ba2e9e0ee9c5b5ef9"
+    },
+    "scripts/services/mock_weapon_image_generator.gd.uid": {
+      "size": 19,
+      "sha256": "6b0692487e69f6580b7ffb874636a5f8a7b22ce25081b4c96ed01e708e1ee862"
+    },
+    "scripts/services/mock_weapon_interpreter.gd": {
+      "size": 5870,
+      "sha256": "b510b4cda7ce9cceb3ad7068a0e59df97ad0951a8b7019bcf753befcce78547a"
+    },
+    "scripts/services/mock_weapon_interpreter.gd.uid": {
+      "size": 20,
+      "sha256": "07ef9840d47be6aef42b98c17436cb33bea07b8649ddaf14afb669ad70ac4870"
+    },
+    "scripts/services/open_identity_interpreter.gd": {
+      "size": 12710,
+      "sha256": "b0b0a93c45807e950e044367367a57261f8457ba9897d52606c750f9c3d0f30f"
+    },
+    "scripts/services/open_identity_interpreter.gd.uid": {
+      "size": 20,
+      "sha256": "9a985bb6e26e40d151741fe34e2ce771f20c81b45e26959c3c10573d99385143"
+    },
+    "scripts/services/open_identity_visual_prompt.gd": {
+      "size": 2572,
+      "sha256": "5bb641c1c8a12b6891a3aafc633fd462c8d43752bd50bb83809ed385d1df92cb"
+    },
+    "scripts/services/open_identity_visual_prompt.gd.uid": {
+      "size": 20,
+      "sha256": "5f6e0dc35e5f48db17367493a62307f9c412757c06c3f3996a5ca58bb412767e"
+    },
+    "scripts/services/weapon_image_generator.gd": {
+      "size": 315,
+      "sha256": "ad6317015aa5b7b359087c4a635ff36ec3dd1def9437c4cdfabe8b45f5870942"
+    },
+    "scripts/services/weapon_image_generator.gd.uid": {
+      "size": 19,
+      "sha256": "ac01bb648b04f791e14b60db11f2f07e44fda9e3ee8869233bd2f6ac5e0c251c"
+    },
+    "scripts/services/weapon_interpreter.gd": {
+      "size": 610,
+      "sha256": "a088ca523719cae00251c20c26c067f3a769f13dfea1619d872ce2a1782c0037"
+    },
+    "scripts/services/weapon_interpreter.gd.uid": {
+      "size": 19,
+      "sha256": "0d26d96844528531acd77a31cb42b97a177ed12ec95a7b9ca19872342ca02f20"
+    },
+    "scripts/systems/anchor_resolver.gd": {
+      "size": 4679,
+      "sha256": "6bc5ae5df01093aeea757c2d47817672df33fea9e7c4e145755ebaeaea0e8220"
+    },
+    "scripts/systems/anchor_resolver.gd.uid": {
+      "size": 20,
+      "sha256": "205dc68c18becd670e73a1c05713aef5f5529aaf0f9a75d94901a3c661143d6c"
+    },
+    "scripts/systems/combat_rules.gd": {
+      "size": 731,
+      "sha256": "c51e0c0a64d9b120fba59b0efa086b7b07c478e5a225a40dc1eef62569a2b456"
+    },
+    "scripts/systems/combat_rules.gd.uid": {
+      "size": 20,
+      "sha256": "54b0c305a35bf0ae29d2fe6a688dee37ae02baaf8820e1fd6613cf646436fcc7"
+    },
+    "scripts/systems/event_logger.gd": {
+      "size": 1729,
+      "sha256": "ca26879642f3aad4d208fd54a6398a48da99072188c1a9c547d8e93d175781a8"
+    },
+    "scripts/systems/event_logger.gd.uid": {
+      "size": 20,
+      "sha256": "3966cac08aca7537f0d3239055d22fabe2e22506b92d247047e358cbad52ad12"
+    },
+    "scripts/systems/flow_policy.gd": {
+      "size": 417,
+      "sha256": "19ea3a8bdf4bd3276b4b97671d2c16854c237e0a7d9cc60a15abce3616d77893"
+    },
+    "scripts/systems/flow_policy.gd.uid": {
+      "size": 20,
+      "sha256": "c77ed73beac4c33d708008693944badae0ec2941b0876f7350f42ce3a629d778"
+    },
+    "scripts/systems/gameplay_arena.gd": {
+      "size": 17403,
+      "sha256": "bd8e69146da63c0eb35ea0e4fb526c125dd30369504b05922c3e7e7244201531"
+    },
+    "scripts/systems/gameplay_arena.gd.uid": {
+      "size": 20,
+      "sha256": "0a0e5f532786024826f0ac937235a9d645d04a27fbc396969c9a784070e48da2"
+    },
+    "scripts/systems/open_identity_training_arena.gd": {
+      "size": 7991,
+      "sha256": "70ab02f78b23e03e627ba6599ca79eb784c47438e97403d6d7955de16d64a15e"
+    },
+    "scripts/systems/open_identity_training_arena.gd.uid": {
+      "size": 20,
+      "sha256": "37767917e09de412d55e3ef4d154742e496d7d35991beb8a4da38f62685a70bb"
+    },
+    "scripts/systems/procedural_weapon_renderer.gd": {
+      "size": 5232,
+      "sha256": "1b8b9745ad9e4b639f9f2d189d5eb7354be82ee40f8b837d139da699fe4ff193"
+    },
+    "scripts/systems/procedural_weapon_renderer.gd.uid": {
+      "size": 19,
+      "sha256": "55e6f83fb6bfa4ff53b6b2b8c960c5d8791097fa2103fd6a80c13401ea3f204b"
+    },
+    "scripts/systems/semantic_anchor_resolver.gd": {
+      "size": 4802,
+      "sha256": "0beb2504ab82a6026f8900931dacd3467dc2f8a55a9b499133aa2a9e3df263f2"
+    },
+    "scripts/systems/semantic_anchor_resolver.gd.uid": {
+      "size": 20,
+      "sha256": "c084f0969b27b1e1ee8d91d08282ea9274e30b3066943cdca4c0b525e292ba82"
+    },
+    "scripts/systems/weapon_rig.gd": {
+      "size": 1151,
+      "sha256": "893ebd82f9f35b71ee201f4688d091278f78cb68c93487fbb2cc725de01fe716"
+    },
+    "scripts/systems/weapon_rig.gd.uid": {
+      "size": 20,
+      "sha256": "6140158746f626b9c8fac92354d9f94535e72069b982f97bbb0b76fe1a334432"
+    },
+    "scripts/test.ps1": {
+      "size": 240,
+      "sha256": "dff3786d1488e8a5ad8c70e6f83e2a1e974e6728cd7bfe4e3ca8f3b8c30b803c"
+    },
+    "scripts/test.sh": {
+      "size": 238,
+      "sha256": "c7af29f769234ac82be66441592d11763be0b51bcfaa43fb2eb0d2b861b1a585"
+    },
+    "scripts/ui/forge_fixture_overlay.gd": {
+      "size": 2544,
+      "sha256": "f8b1f0ce00bd2a6bf1ae99d7cb99df2c572d45fbce224f6e626159f8775c3404"
+    },
+    "scripts/ui/forge_fixture_overlay.gd.uid": {
+      "size": 20,
+      "sha256": "56d363ac97b95115bf33e3606634b23ce595ef15a901b968cc492373aa2edc8f"
+    },
+    "scripts/ui/semantic_anchor_calibrator.gd": {
+      "size": 7553,
+      "sha256": "157b4ea5b69c5492d65d05ebb244907644ac52ffcf9b48bc27d18da11fff850a"
+    },
+    "scripts/ui/semantic_anchor_calibrator.gd.uid": {
+      "size": 20,
+      "sha256": "8f09beaae1f50cf11ee648cd775c3ad5acbe027f2f0f2b19c7689b785ce4db59"
+    },
+    "scripts/ui/sketch_canvas.gd": {
+      "size": 6335,
+      "sha256": "b6e64281961dda8f48c9d4568d73861744fb35b9af091a5cadc41b3fb4b1d12b"
+    },
+    "scripts/ui/sketch_canvas.gd.uid": {
+      "size": 20,
+      "sha256": "76bd9e242da84ba2e5694c0e009e19bf81f17601e3b370548eff358be31f398a"
+    },
+    "scripts/ui/touch_stick.gd": {
+      "size": 1495,
+      "sha256": "c5131fbbd1a835751233f411bb1a3c4921db57c7d2bde26a45aadaa450590422"
+    },
+    "scripts/ui/touch_stick.gd.uid": {
+      "size": 19,
+      "sha256": "943be9704f17dc26301d07b2add44132318b20a58ae3640903da57c61497cdf2"
+    },
+    "scripts/ui/weapon_preview.gd": {
+      "size": 3706,
+      "sha256": "5bccdc4a9572fb55b87d072717e0d1d6330ea0f3926361c365303e97f5a85519"
+    },
+    "scripts/ui/weapon_preview.gd.uid": {
+      "size": 20,
+      "sha256": "e9358f9ee12dab5bf44315f5001e4b8a63a67a880604a8a21e8f97c05b84c9c6"
+    },
+    "tests/run_tests.gd": {
+      "size": 28959,
+      "sha256": "1683c65fb25f68f459338213a064f34b7bdbebf1abc60c6aca9cd94dc8d23da0"
+    },
+    "tests/run_tests.gd.uid": {
+      "size": 20,
+      "sha256": "0c186cc6f281ea327d6f07df224eb925c4d7668d40bef410aae34d62280e9ca3"
+    },
+    "tests/test_open_identity_interpreter.gd": {
+      "size": 11627,
+      "sha256": "7f830545a068658538898030b9f02b56d0c58c99f0efa72c30dc5b7c6649b350"
+    },
+    "tests/test_open_identity_interpreter.gd.uid": {
+      "size": 20,
+      "sha256": "c4397d3a2390210c26d1b49087d1136e4387400088579caebf7f38ae48b02aa0"
+    },
+    "tests/test_open_identity_provider.gd": {
+      "size": 3752,
+      "sha256": "8f594ac379a2f4361a79ec9c17d29926704b9dc37f87b8d91f8359469cb12e0c"
+    },
+    "tests/test_open_identity_provider.gd.uid": {
+      "size": 20,
+      "sha256": "b185e0a62486e4d4accea202bfce9c82fffcbf570065e72d996cd69704430423"
+    }
+  }
+}

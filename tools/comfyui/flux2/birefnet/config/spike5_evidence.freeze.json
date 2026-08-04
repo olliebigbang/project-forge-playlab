@@ -1,0 +1,627 @@
+{
+  "contract": "forge-birefnet-spike6-source-freeze-v1",
+  "algorithm": "SHA-256",
+  "source_matrix_run_id": "flux2-matrix-20260803T130451548924Z",
+  "source_output_group": "flux2_matrix_20260803t130451548924z",
+  "case_order": [
+    "b01",
+    "b02",
+    "b03",
+    "b04"
+  ],
+  "job_count": 8,
+  "raw_png_count": 8,
+  "manifest_count": 8,
+  "current_processed_sprite_count": 6,
+  "current_alpha_mask_count": 6,
+  "semantic_blueprints_sha256": "4e97731a8b600ec2e6733c2a6ad5a0eabf5fd9f5b6c439046a2e905c9797b4bb",
+  "generation_workflow_sha256": [
+    "26b8f7c151a47835a1a08993f18430adf7f3120320747e6491cabd1d2c4ceae6"
+  ],
+  "generation_workflow_file": {
+    "path": "workflows/flux2_klein_4b_t2i_forge_api.json",
+    "bytes": 2911,
+    "sha256": "26b8f7c151a47835a1a08993f18430adf7f3120320747e6491cabd1d2c4ceae6"
+  },
+  "generation_model_sha256": {
+    "diffusion_model": "97ed34fe0567e436200f2faee3939b88f2b5d99f8af2a4dc16532c4245c0ccb6",
+    "text_encoder": "6c671498573ac2f7a5501502ccce8d2b08ea6ca2f661c458e708f36b36edfc5a",
+    "vae": "d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5"
+  },
+  "source_evidence_manifest_sha256": "2fbb4d49d62e4544fb47c4d9b31998c6823fae7dc26b54b049d3cb335bbaf18d",
+  "jobs": [
+    {
+      "ordinal": 1,
+      "case_id": "b01",
+      "seed_id": "seed_4041001",
+      "raw": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/raw.png",
+        "bytes": 212155,
+        "sha256": "4e979b3a7b78a2ad701149235754f9359f0bad7e7a9e2d228fae5f94fecc54ae"
+      },
+      "manifest": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/manifest.json",
+        "bytes": 5091,
+        "sha256": "133ba3ecedbd292195b54c86729b8dec2dcf2a79128f51dba066984ce9069e81"
+      },
+      "blueprint_projection": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/blueprint_projection.json",
+        "bytes": 1237,
+        "sha256": "1615b2bf011c6d1797ebf5d2415014712af82b5c2d6cd62dd990c487c30f6e20"
+      },
+      "request_workflow": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/request_workflow.json",
+        "bytes": 3945,
+        "sha256": "954cf698e2d69b03089e4e5130601c98d3bab923dd791705281c7a65046f13d6"
+      },
+      "current_alpha_outputs": {
+        "processed_sprite": {
+          "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/processed_sprite.png",
+          "bytes": 7399,
+          "sha256": "9ab1aa4666b7aa79f34735309b82e0dba0bac3c5472bbe77a5cb9e5e0f44203f"
+        },
+        "alpha_mask": {
+          "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/alpha_mask.png",
+          "bytes": 1767,
+          "sha256": "fa22041dcbf267372af210665710f1f9931162b20ac516dba652e14dc27f7a2c"
+        }
+      }
+    },
+    {
+      "ordinal": 2,
+      "case_id": "b01",
+      "seed_id": "seed_4041002",
+      "raw": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/raw.png",
+        "bytes": 230790,
+        "sha256": "624fce138360af6fc2aca7b9defc8d771c1355a6e8fc1ef432c59c156d315634"
+      },
+      "manifest": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/manifest.json",
+        "bytes": 5092,
+        "sha256": "9ca1b718a3bc994bf5ca4dc1334f03f18d4ddccbff2f43c972064fe33e9ee86b"
+      },
+      "blueprint_projection": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/blueprint_projection.json",
+        "bytes": 1237,
+        "sha256": "1615b2bf011c6d1797ebf5d2415014712af82b5c2d6cd62dd990c487c30f6e20"
+      },
+      "request_workflow": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/request_workflow.json",
+        "bytes": 3945,
+        "sha256": "eccce6d72c597162224fe122b58e45881e0e22feac19ac9e6c5ff38feb1daa9f"
+      },
+      "current_alpha_outputs": {
+        "processed_sprite": {
+          "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/processed_sprite.png",
+          "bytes": 6691,
+          "sha256": "677a35e3849f1655517ad3fd1727e9053445c2ac314a9341361002f08b798c8e"
+        },
+        "alpha_mask": {
+          "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/alpha_mask.png",
+          "bytes": 1712,
+          "sha256": "3a49ea1e4a9e5274cb06b08eaf6d7a0385864535543466e88657d357b0c7a9c7"
+        }
+      }
+    },
+    {
+      "ordinal": 3,
+      "case_id": "b02",
+      "seed_id": "seed_4041001",
+      "raw": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/raw.png",
+        "bytes": 248997,
+        "sha256": "ccdb2d05d47e6c4cce851ca8c56b2efd779f447bb04b6556d1b563b8eb751684"
+      },
+      "manifest": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/manifest.json",
+        "bytes": 5770,
+        "sha256": "fcc7495d7fbbd00ec9208ab4e37c5448b780b907211f8e5ef0613f7db61ad993"
+      },
+      "blueprint_projection": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/blueprint_projection.json",
+        "bytes": 1584,
+        "sha256": "2e23671de068947b8249be9adf5d26e79f4a80810d07d0737fd2a5cb07250eaa"
+      },
+      "request_workflow": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/request_workflow.json",
+        "bytes": 4271,
+        "sha256": "0727a63fc029ade6e2682608eacc38afc94acb1bd62f2e0f2dff4ab2dc3fe52b"
+      },
+      "current_alpha_outputs": {
+        "processed_sprite": {
+          "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/processed_sprite.png",
+          "bytes": 9463,
+          "sha256": "b892fc397dfc4cb57911843b1668c1fba4138c4a92eb96ccdfeca8bebeb292b4"
+        },
+        "alpha_mask": {
+          "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/alpha_mask.png",
+          "bytes": 1871,
+          "sha256": "1a2dffbb7ec38f6fe735cacf11ff1e9458c3538b7cbbf9da60f5572e6e941eed"
+        }
+      }
+    },
+    {
+      "ordinal": 4,
+      "case_id": "b02",
+      "seed_id": "seed_4041002",
+      "raw": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/raw.png",
+        "bytes": 297058,
+        "sha256": "3b45b29652521bd2b6d46b5b955569e9f7fab5f244ef2a94c950eed6b8322641"
+      },
+      "manifest": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/manifest.json",
+        "bytes": 5770,
+        "sha256": "34e12e33934b3d245970c8f40ac4d545b3c559a7a4d2f1129630e44da5b54b26"
+      },
+      "blueprint_projection": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/blueprint_projection.json",
+        "bytes": 1584,
+        "sha256": "2e23671de068947b8249be9adf5d26e79f4a80810d07d0737fd2a5cb07250eaa"
+      },
+      "request_workflow": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/request_workflow.json",
+        "bytes": 4271,
+        "sha256": "d3cb6dc76f7246cf1fccc708562486b3141124ba3c62e6805f1525617ca9a984"
+      },
+      "current_alpha_outputs": {
+        "processed_sprite": {
+          "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/processed_sprite.png",
+          "bytes": 9231,
+          "sha256": "ca40638ed3802fa1b1daee2752b29fac987ccc2b72a03de49585258e4aa43a44"
+        },
+        "alpha_mask": {
+          "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/alpha_mask.png",
+          "bytes": 1897,
+          "sha256": "48e042688576fb03f172b8af804e31f6ab26606a72d434ec25e918dcec9fa64c"
+        }
+      }
+    },
+    {
+      "ordinal": 5,
+      "case_id": "b03",
+      "seed_id": "seed_4041001",
+      "raw": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b03/seed_4041001/raw.png",
+        "bytes": 222443,
+        "sha256": "dafbaa60f137526eea7fa47087c4af5339b99d08d6cccf384d7cc58c98ce791a"
+      },
+      "manifest": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b03/seed_4041001/manifest.json",
+        "bytes": 5109,
+        "sha256": "f4cafe0f9492ad207408de7c0c91188396e781b63626df7189d327b7a1eba434"
+      },
+      "blueprint_projection": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b03/seed_4041001/blueprint_projection.json",
+        "bytes": 1352,
+        "sha256": "74355ad31c3221bf6298d73111d2682f899f40198ef326c5f4806a487898344c"
+      },
+      "request_workflow": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b03/seed_4041001/request_workflow.json",
+        "bytes": 4074,
+        "sha256": "9dfb3c16362cf32974264e4ba9d2786ef2a028b55845ac71bcd5ebe838a39c7a"
+      },
+      "current_alpha_outputs": {}
+    },
+    {
+      "ordinal": 6,
+      "case_id": "b03",
+      "seed_id": "seed_4041002",
+      "raw": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b03/seed_4041002/raw.png",
+        "bytes": 240022,
+        "sha256": "8d97a66eef4fc84e88319c1e6b1397a81e1a5c10245dd915b131bb94484f71c2"
+      },
+      "manifest": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b03/seed_4041002/manifest.json",
+        "bytes": 5109,
+        "sha256": "b1f2732fa31cba2f70a911b117d46b86ecb05ba6ae2853ea1cc7465676ab97d0"
+      },
+      "blueprint_projection": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b03/seed_4041002/blueprint_projection.json",
+        "bytes": 1352,
+        "sha256": "74355ad31c3221bf6298d73111d2682f899f40198ef326c5f4806a487898344c"
+      },
+      "request_workflow": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b03/seed_4041002/request_workflow.json",
+        "bytes": 4074,
+        "sha256": "ba91ddf2f373af575e25060a14dd50eb7a0bf6ea6faae12f9323daff53342f13"
+      },
+      "current_alpha_outputs": {}
+    },
+    {
+      "ordinal": 7,
+      "case_id": "b04",
+      "seed_id": "seed_4041001",
+      "raw": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/raw.png",
+        "bytes": 198142,
+        "sha256": "08cfcb3823668d8732476ed6ffb0f5b95156476a4cc642b26ff142dd661d9b26"
+      },
+      "manifest": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/manifest.json",
+        "bytes": 4980,
+        "sha256": "b7c8c65d3afde9bd281c9268d6966aebcfff46717861e99255649068fc2fbb82"
+      },
+      "blueprint_projection": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/blueprint_projection.json",
+        "bytes": 1176,
+        "sha256": "fc3a5198070940b54118df3c3c5c93758647ca7aba4ea52974f5bd1a7f7b663a"
+      },
+      "request_workflow": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/request_workflow.json",
+        "bytes": 3898,
+        "sha256": "c5cd4cb2183d44e7b3c2f0cb7e547d676dc9b2da180682ca3b92e0363241e73e"
+      },
+      "current_alpha_outputs": {
+        "processed_sprite": {
+          "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/processed_sprite.png",
+          "bytes": 5226,
+          "sha256": "ab63df3f2ad995e0918ceba9c8dc8d6c7b0b7d568c030912a3cc9fb62cdb8114"
+        },
+        "alpha_mask": {
+          "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/alpha_mask.png",
+          "bytes": 1407,
+          "sha256": "b3262d472046a738ff32be3e93c6118d51fb13743dfe4be84144b9786b3dc0ef"
+        }
+      }
+    },
+    {
+      "ordinal": 8,
+      "case_id": "b04",
+      "seed_id": "seed_4041002",
+      "raw": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/raw.png",
+        "bytes": 222220,
+        "sha256": "9af251d1a47725b117f1a4cc381523b3b24577218b5241da2e50a6925881d63a"
+      },
+      "manifest": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/manifest.json",
+        "bytes": 4980,
+        "sha256": "7076ddd9111d1e2fc5aae88be9701920375574890ff4e627a041c2a380081fd1"
+      },
+      "blueprint_projection": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/blueprint_projection.json",
+        "bytes": 1176,
+        "sha256": "fc3a5198070940b54118df3c3c5c93758647ca7aba4ea52974f5bd1a7f7b663a"
+      },
+      "request_workflow": {
+        "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/request_workflow.json",
+        "bytes": 3898,
+        "sha256": "cefe538bc4e941eb6a99ec3cc78b3fa42cf0abc26ce0823894c3ee1c4d0e3c43"
+      },
+      "current_alpha_outputs": {
+        "processed_sprite": {
+          "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/processed_sprite.png",
+          "bytes": 4894,
+          "sha256": "ad8462f008392c0a83cc785daab110d2a3f892f4cc8bbd6f31b1fe9dde35a438"
+        },
+        "alpha_mask": {
+          "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/alpha_mask.png",
+          "bytes": 1366,
+          "sha256": "b05bca4c3504561e32bf704281f8cff0b3f6748fe4c4dedc005312b65d892937"
+        }
+      }
+    }
+  ],
+  "report_files": {
+    "flux2_matrix_summary.json": {
+      "path": "reports/flux2_matrix_summary.json",
+      "bytes": 2846,
+      "sha256": "45b198e47457ef51bb36e6037fc49ebac4e0caaf14fdd44ee423faa8cad2967f"
+    },
+    "flux2_matrix_results.csv": {
+      "path": "reports/flux2_matrix_results.csv",
+      "bytes": 5813,
+      "sha256": "3f43f9e9bd8d4f9c20f05d59923b3b2e2986706302bc5ce373b8f736844e6ddb"
+    },
+    "human_visual_review.csv": {
+      "path": "reports/human_visual_review.csv",
+      "bytes": 3586,
+      "sha256": "3bd7357f875f9639e4b1506260466a87ab2f20f3e12b63d8c19cee1386940557"
+    },
+    "human_visual_review_rubric.json": {
+      "path": "reports/human_visual_review_rubric.json",
+      "bytes": 1878,
+      "sha256": "4d9a5eb54cb81bb0deaaea58fbbbd67c93c69ef455f101754dffada250a970b8"
+    },
+    "frozen_semantic_blueprints.json": {
+      "path": "reports/frozen_semantic_blueprints.json",
+      "bytes": 9118,
+      "sha256": "4e97731a8b600ec2e6733c2a6ad5a0eabf5fd9f5b6c439046a2e905c9797b4bb"
+    },
+    "workflow_sources.json": {
+      "path": "reports/workflow_sources.json",
+      "bytes": 792,
+      "sha256": "4b6021cb05035605ec83ba12eea6ac0858a428111cf15aae9014ac73c175c1c3"
+    },
+    "model_download_manifest.json": {
+      "path": "reports/model_download_manifest.json",
+      "bytes": 3852,
+      "sha256": "f46b7bed4e674a7d4c73601d63931c6fe2568e2bff01c62f7c1dc38e55df5243"
+    },
+    "runtime_install_manifest.json": {
+      "path": "reports/runtime_install_manifest.json",
+      "bytes": 3350,
+      "sha256": "0904382fb2bbf3818e6bf8f5f1ac10cb69b3d51eaeab516b28f11ae059e8e2fe"
+    },
+    "evidence_hashes.json": {
+      "path": "reports/evidence_hashes.json",
+      "bytes": 40239,
+      "sha256": "2fbb4d49d62e4544fb47c4d9b31998c6823fae7dc26b54b049d3cb335bbaf18d"
+    }
+  },
+  "files": {
+    "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/alpha_mask.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/alpha_mask.png",
+      "bytes": 1767,
+      "sha256": "fa22041dcbf267372af210665710f1f9931162b20ac516dba652e14dc27f7a2c"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/blueprint_projection.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/blueprint_projection.json",
+      "bytes": 1237,
+      "sha256": "1615b2bf011c6d1797ebf5d2415014712af82b5c2d6cd62dd990c487c30f6e20"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/manifest.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/manifest.json",
+      "bytes": 5091,
+      "sha256": "133ba3ecedbd292195b54c86729b8dec2dcf2a79128f51dba066984ce9069e81"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/processed_sprite.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/processed_sprite.png",
+      "bytes": 7399,
+      "sha256": "9ab1aa4666b7aa79f34735309b82e0dba0bac3c5472bbe77a5cb9e5e0f44203f"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/raw.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/raw.png",
+      "bytes": 212155,
+      "sha256": "4e979b3a7b78a2ad701149235754f9359f0bad7e7a9e2d228fae5f94fecc54ae"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/request_workflow.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/request_workflow.json",
+      "bytes": 3945,
+      "sha256": "954cf698e2d69b03089e4e5130601c98d3bab923dd791705281c7a65046f13d6"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/alpha_mask.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/alpha_mask.png",
+      "bytes": 1712,
+      "sha256": "3a49ea1e4a9e5274cb06b08eaf6d7a0385864535543466e88657d357b0c7a9c7"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/blueprint_projection.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/blueprint_projection.json",
+      "bytes": 1237,
+      "sha256": "1615b2bf011c6d1797ebf5d2415014712af82b5c2d6cd62dd990c487c30f6e20"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/manifest.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/manifest.json",
+      "bytes": 5092,
+      "sha256": "9ca1b718a3bc994bf5ca4dc1334f03f18d4ddccbff2f43c972064fe33e9ee86b"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/processed_sprite.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/processed_sprite.png",
+      "bytes": 6691,
+      "sha256": "677a35e3849f1655517ad3fd1727e9053445c2ac314a9341361002f08b798c8e"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/raw.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/raw.png",
+      "bytes": 230790,
+      "sha256": "624fce138360af6fc2aca7b9defc8d771c1355a6e8fc1ef432c59c156d315634"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/request_workflow.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/request_workflow.json",
+      "bytes": 3945,
+      "sha256": "eccce6d72c597162224fe122b58e45881e0e22feac19ac9e6c5ff38feb1daa9f"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/alpha_mask.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/alpha_mask.png",
+      "bytes": 1871,
+      "sha256": "1a2dffbb7ec38f6fe735cacf11ff1e9458c3538b7cbbf9da60f5572e6e941eed"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/blueprint_projection.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/blueprint_projection.json",
+      "bytes": 1584,
+      "sha256": "2e23671de068947b8249be9adf5d26e79f4a80810d07d0737fd2a5cb07250eaa"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/manifest.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/manifest.json",
+      "bytes": 5770,
+      "sha256": "fcc7495d7fbbd00ec9208ab4e37c5448b780b907211f8e5ef0613f7db61ad993"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/processed_sprite.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/processed_sprite.png",
+      "bytes": 9463,
+      "sha256": "b892fc397dfc4cb57911843b1668c1fba4138c4a92eb96ccdfeca8bebeb292b4"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/raw.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/raw.png",
+      "bytes": 248997,
+      "sha256": "ccdb2d05d47e6c4cce851ca8c56b2efd779f447bb04b6556d1b563b8eb751684"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/request_workflow.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/request_workflow.json",
+      "bytes": 4271,
+      "sha256": "0727a63fc029ade6e2682608eacc38afc94acb1bd62f2e0f2dff4ab2dc3fe52b"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/alpha_mask.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/alpha_mask.png",
+      "bytes": 1897,
+      "sha256": "48e042688576fb03f172b8af804e31f6ab26606a72d434ec25e918dcec9fa64c"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/blueprint_projection.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/blueprint_projection.json",
+      "bytes": 1584,
+      "sha256": "2e23671de068947b8249be9adf5d26e79f4a80810d07d0737fd2a5cb07250eaa"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/manifest.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/manifest.json",
+      "bytes": 5770,
+      "sha256": "34e12e33934b3d245970c8f40ac4d545b3c559a7a4d2f1129630e44da5b54b26"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/processed_sprite.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/processed_sprite.png",
+      "bytes": 9231,
+      "sha256": "ca40638ed3802fa1b1daee2752b29fac987ccc2b72a03de49585258e4aa43a44"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/raw.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/raw.png",
+      "bytes": 297058,
+      "sha256": "3b45b29652521bd2b6d46b5b955569e9f7fab5f244ef2a94c950eed6b8322641"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/request_workflow.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/request_workflow.json",
+      "bytes": 4271,
+      "sha256": "d3cb6dc76f7246cf1fccc708562486b3141124ba3c62e6805f1525617ca9a984"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b03/seed_4041001/blueprint_projection.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b03/seed_4041001/blueprint_projection.json",
+      "bytes": 1352,
+      "sha256": "74355ad31c3221bf6298d73111d2682f899f40198ef326c5f4806a487898344c"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b03/seed_4041001/manifest.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b03/seed_4041001/manifest.json",
+      "bytes": 5109,
+      "sha256": "f4cafe0f9492ad207408de7c0c91188396e781b63626df7189d327b7a1eba434"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b03/seed_4041001/raw.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b03/seed_4041001/raw.png",
+      "bytes": 222443,
+      "sha256": "dafbaa60f137526eea7fa47087c4af5339b99d08d6cccf384d7cc58c98ce791a"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b03/seed_4041001/request_workflow.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b03/seed_4041001/request_workflow.json",
+      "bytes": 4074,
+      "sha256": "9dfb3c16362cf32974264e4ba9d2786ef2a028b55845ac71bcd5ebe838a39c7a"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b03/seed_4041002/blueprint_projection.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b03/seed_4041002/blueprint_projection.json",
+      "bytes": 1352,
+      "sha256": "74355ad31c3221bf6298d73111d2682f899f40198ef326c5f4806a487898344c"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b03/seed_4041002/manifest.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b03/seed_4041002/manifest.json",
+      "bytes": 5109,
+      "sha256": "b1f2732fa31cba2f70a911b117d46b86ecb05ba6ae2853ea1cc7465676ab97d0"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b03/seed_4041002/raw.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b03/seed_4041002/raw.png",
+      "bytes": 240022,
+      "sha256": "8d97a66eef4fc84e88319c1e6b1397a81e1a5c10245dd915b131bb94484f71c2"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b03/seed_4041002/request_workflow.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b03/seed_4041002/request_workflow.json",
+      "bytes": 4074,
+      "sha256": "ba91ddf2f373af575e25060a14dd50eb7a0bf6ea6faae12f9323daff53342f13"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/alpha_mask.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/alpha_mask.png",
+      "bytes": 1407,
+      "sha256": "b3262d472046a738ff32be3e93c6118d51fb13743dfe4be84144b9786b3dc0ef"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/blueprint_projection.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/blueprint_projection.json",
+      "bytes": 1176,
+      "sha256": "fc3a5198070940b54118df3c3c5c93758647ca7aba4ea52974f5bd1a7f7b663a"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/manifest.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/manifest.json",
+      "bytes": 4980,
+      "sha256": "b7c8c65d3afde9bd281c9268d6966aebcfff46717861e99255649068fc2fbb82"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/processed_sprite.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/processed_sprite.png",
+      "bytes": 5226,
+      "sha256": "ab63df3f2ad995e0918ceba9c8dc8d6c7b0b7d568c030912a3cc9fb62cdb8114"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/raw.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/raw.png",
+      "bytes": 198142,
+      "sha256": "08cfcb3823668d8732476ed6ffb0f5b95156476a4cc642b26ff142dd661d9b26"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/request_workflow.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/request_workflow.json",
+      "bytes": 3898,
+      "sha256": "c5cd4cb2183d44e7b3c2f0cb7e547d676dc9b2da180682ca3b92e0363241e73e"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/alpha_mask.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/alpha_mask.png",
+      "bytes": 1366,
+      "sha256": "b05bca4c3504561e32bf704281f8cff0b3f6748fe4c4dedc005312b65d892937"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/blueprint_projection.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/blueprint_projection.json",
+      "bytes": 1176,
+      "sha256": "fc3a5198070940b54118df3c3c5c93758647ca7aba4ea52974f5bd1a7f7b663a"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/manifest.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/manifest.json",
+      "bytes": 4980,
+      "sha256": "7076ddd9111d1e2fc5aae88be9701920375574890ff4e627a041c2a380081fd1"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/processed_sprite.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/processed_sprite.png",
+      "bytes": 4894,
+      "sha256": "ad8462f008392c0a83cc785daab110d2a3f892f4cc8bbd6f31b1fe9dde35a438"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/raw.png": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/raw.png",
+      "bytes": 222220,
+      "sha256": "9af251d1a47725b117f1a4cc381523b3b24577218b5241da2e50a6925881d63a"
+    },
+    "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/request_workflow.json": {
+      "path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/request_workflow.json",
+      "bytes": 3898,
+      "sha256": "cefe538bc4e941eb6a99ec3cc78b3fa42cf0abc26ce0823894c3ee1c4d0e3c43"
+    },
+    "reports/evidence_hashes.json": {
+      "path": "reports/evidence_hashes.json",
+      "bytes": 40239,
+      "sha256": "2fbb4d49d62e4544fb47c4d9b31998c6823fae7dc26b54b049d3cb335bbaf18d"
+    },
+    "reports/flux2_matrix_results.csv": {
+      "path": "reports/flux2_matrix_results.csv",
+      "bytes": 5813,
+      "sha256": "3f43f9e9bd8d4f9c20f05d59923b3b2e2986706302bc5ce373b8f736844e6ddb"
+    },
+    "reports/flux2_matrix_summary.json": {
+      "path": "reports/flux2_matrix_summary.json",
+      "bytes": 2846,
+      "sha256": "45b198e47457ef51bb36e6037fc49ebac4e0caaf14fdd44ee423faa8cad2967f"
+    },
+    "reports/frozen_semantic_blueprints.json": {
+      "path": "reports/frozen_semantic_blueprints.json",
+      "bytes": 9118,
+      "sha256": "4e97731a8b600ec2e6733c2a6ad5a0eabf5fd9f5b6c439046a2e905c9797b4bb"
+    },
+    "reports/human_visual_review.csv": {
+      "path": "reports/human_visual_review.csv",
+      "bytes": 3586,
+      "sha256": "3bd7357f875f9639e4b1506260466a87ab2f20f3e12b63d8c19cee1386940557"
+    },
+    "reports/human_visual_review_rubric.json": {
+      "path": "reports/human_visual_review_rubric.json",
+      "bytes": 1878,
+      "sha256": "4d9a5eb54cb81bb0deaaea58fbbbd67c93c69ef455f101754dffada250a970b8"
+    },
+    "reports/model_download_manifest.json": {
+      "path": "reports/model_download_manifest.json",
+      "bytes": 3852,
+      "sha256": "f46b7bed4e674a7d4c73601d63931c6fe2568e2bff01c62f7c1dc38e55df5243"
+    },
+    "reports/runtime_install_manifest.json": {
+      "path": "reports/runtime_install_manifest.json",
+      "bytes": 3350,
+      "sha256": "0904382fb2bbf3818e6bf8f5f1ac10cb69b3d51eaeab516b28f11ae059e8e2fe"
+    },
+    "reports/workflow_sources.json": {
+      "path": "reports/workflow_sources.json",
+      "bytes": 792,
+      "sha256": "4b6021cb05035605ec83ba12eea6ac0858a428111cf15aae9014ac73c175c1c3"
+    },
+    "workflows/flux2_klein_4b_t2i_forge_api.json": {
+      "path": "workflows/flux2_klein_4b_t2i_forge_api.json",
+      "bytes": 2911,
+      "sha256": "26b8f7c151a47835a1a08993f18430adf7f3120320747e6491cabd1d2c4ceae6"
+    }
+  }
+}

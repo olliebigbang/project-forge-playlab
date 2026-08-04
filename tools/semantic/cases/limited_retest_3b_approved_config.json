@@ -1,0 +1,32 @@
+{
+  "contract_version": "forge-semantic-v1.1",
+  "algorithm": "SHA-256",
+  "runner_hash_normalization": "APPROVED_CONFIG_MANIFEST_SHA256 value replaced by 64 zeroes",
+  "source_run_id": "gate-a-20260802T232039017356Z-fddde20a",
+  "files": {
+    "prompts/semantic_compiler_system_prompt.md": "a2d42b808175988267cf51193f2a4e43b2cc258bc1647887fe5c238d006bed12",
+    "schema/forge_semantic_blueprint.schema.json": "9f404c7894b32a46c8f319ed1a95724fc3e623fa2fec384ce00375d0facb631d",
+    "schema/clarification_request.schema.json": "17d1cda61f298db0ec2f7cc8b2f3fe901c7e63bea37c13ce7825cb6a0871f1ee",
+    "schema/clarification_request.forensic_replay.schema.json": "4f19d6267996ada5416cedd81b4a8bdf01b4ed75b6d4d04af44a016eadfc279d",
+    "cases/gate_a_cases.json": "a77d4b6a7e039cf43bc47670de65211b8efcebad7b9fd6f66e88f53bc57b1bee",
+    "cases/limited_retest_3b_expected.json": "60d14c99b2a6a2cce67ecbd117bb7d9462fd473382e8a91907ee5cf3a68b2fb9",
+    "cases/limited_retest_3b_protected_hashes.json": "48f574664a1a08078c9205bbfe7b0112f32673a653c278bb6ba9df0d4863b8f3",
+    "reports/gate_a_scope_baseline.json": "b8d11615ac9eef399ba727884bc22992be4ee16fe523041f200fc29891b10319",
+    "bridge/anthropic_semantic_compiler.py": "1e4fd20fc3de8ff1815636038887ca37009450c842d294356c5e0a90a3eca1b8",
+    "bridge/atomic_output.py": "d2f17c11376ae9789c7a68509c444cde2d4af50f9ee7f88a971835a299c46fc7",
+    "bridge/gate_a_evaluator.py": "c27e63feb8d7e7ac072d1adc1a5c389601ffd65aee5a5acaa64f9098acb35d8e",
+    "bridge/scope_guard.py": "309cca24339ffa1ae308b056ca089dd272672bf94eca40bf23e9e28240695ca8",
+    "bridge/secret_scan.py": "5f36a1751e6f0e0fc6fb66ba85e0f349ea47825d120dd4c5102a908e74b5755d",
+    "bridge/semantic_contract.py": "38d571d86c7360ffe4a861eeaabc34a5563ecc3db30e3de38651501311ace756",
+    "bridge/limited_retest_3b_evaluator.py": "a8788f2704b24969a390a4bedd3c7356eb5dea7d92e6bc08af33b04230ac6304",
+    "bridge/limited_retest_3b_reporting.py": "4572b92beff0105de136d67a22ad2d35fc5abbec928552fa4fc27e7701b31c9f",
+    "bridge/limited_retest_3b_runner.py": "d1fa8e790c9882011a4e5c418416f4394f41ccf515ae4e4856dc2e3385829d9d",
+    "scripts/invoke_limited_retest_3b_core.ps1": "16c5e234ec2116cc57ba9b17825329bbf4e7be4a99c6bcad0a1c67b3324cd17a",
+    "scripts/run_limited_retest_3b_interactive.ps1": "654d537bc2562309c35235aa298f46d9af71c4d1bb215bff5034e3753dacda32",
+    "scripts/run_limited_retest_3b.ps1": "c3ed1d063b1ad52d7fdfcd43172132363406174dc886a846645647e66790e0fc",
+    "scripts/test_semantic.ps1": "d9c7ff225f01b1d5441c5ed222b66b7e46aa81c95d90e340130f59facb87b628",
+    "scripts/verify_no_secrets.ps1": "b08ec2805f5ecf95f186db49ea908649027008674d0020e6e6655d786f51a7aa",
+    "tests/run_offline_tests.py": "a92e710a03f0b01a7711058ba823e612805c96a12f613c755bbe048d5b5a2693",
+    "tests/test_limited_retest_3b.py": "a634aff9e9b573780e269c45d70a4d835bd646b10c786c8cc18a4172b57e38d8"
+  }
+}

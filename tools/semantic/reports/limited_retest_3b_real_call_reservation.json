@@ -1,0 +1,39 @@
+{
+  "run_id": "limited-retest-3b-20260803T040934865715Z-79738d1b",
+  "contract_version": "forge-semantic-v1.1",
+  "source_run_id": "gate-a-20260802T232039017356Z-fddde20a",
+  "source_evidence_sha256": "94a602bdf2d0571cf294287f3d188e830fe7fa968b148e8ca67af3387cd0b347",
+  "model_id": "claude-sonnet-5",
+  "endpoint": "https://api.anthropic.com/v1/messages",
+  "case_order": [
+    "10",
+    "13",
+    "17",
+    "18",
+    "04",
+    "01"
+  ],
+  "configuration_hashes": {
+    "system_prompt_sha256": "a2d42b808175988267cf51193f2a4e43b2cc258bc1647887fe5c238d006bed12",
+    "blueprint_schema_sha256": "9f404c7894b32a46c8f319ed1a95724fc3e623fa2fec384ce00375d0facb631d",
+    "clarification_schema_sha256": "17d1cda61f298db0ec2f7cc8b2f3fe901c7e63bea37c13ce7825cb6a0871f1ee",
+    "source_cases_file_sha256": "a77d4b6a7e039cf43bc47670de65211b8efcebad7b9fd6f66e88f53bc57b1bee",
+    "selected_cases_sha256": "4b8bcf558143939e6ae984f88cefa0bc914f5a6022cc37f35e55a52faa2dbd36",
+    "evaluator_expected_sha256": "60d14c99b2a6a2cce67ecbd117bb7d9462fd473382e8a91907ee5cf3a68b2fb9",
+    "approved_config_manifest_sha256": "ba32d21e0705cf3853376cfab99b1ad83c4b26102f72796f7726f335f332d10d"
+  },
+  "max_real_calls": 6,
+  "attempts_reserved": 6,
+  "actual_calls_observed": 6,
+  "attempted_case_ids": [
+    "10",
+    "13",
+    "17",
+    "18",
+    "04",
+    "01"
+  ],
+  "status": "closed",
+  "created_at": "2026-08-03T04:09:34.865Z",
+  "updated_at": "2026-08-03T04:10:09.848Z"
+}

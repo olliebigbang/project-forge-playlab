@@ -1,0 +1,200 @@
+{
+  "pending_package_version": "forge-semantic-blind-retest-3c-pending-v1",
+  "run_id": "blind-retest-3c-20260803T060715018997Z-4ddf8f31",
+  "case_order": [
+    "B01",
+    "B02",
+    "B03",
+    "B04"
+  ],
+  "expected_sha256": "0e75f04e1575383b9e531368db76ba62fe68fc57d61628ca21d78cec3a93cc7f",
+  "review_rubric_sha256": "e87023c408901b6946eff31db03782636e079b97b81c20e9c4827d95493c4773",
+  "blind_definition_sha256": "2254133a7131663fed41760b406e1e4a972f4b869f7248d3fd4a00de8e3bc182",
+  "cases": {
+    "B01": {
+      "review_packet_version": "forge-semantic-blind-retest-3c-review-packet-v1",
+      "case_id": "B01",
+      "status": "PENDING",
+      "tool_input_sha256": "fcdb2db4462e88f0ebf6d3df5df1483878cc4ddc732895afa2efa33cb7ffce10",
+      "expected_concepts_sha256": "c6f8911d4f7c8c4635dee0b0b97c02effe24c7e1918657dce5729a470c14257b",
+      "expected_concepts": [
+        {
+          "concept_id": "vacuum_body",
+          "label_zh": "吸尘器主体",
+          "label_en": "vacuum body"
+        },
+        {
+          "concept_id": "long_hose",
+          "label_zh": "长软管",
+          "label_en": "long hose"
+        },
+        {
+          "concept_id": "nozzle_or_suction_head",
+          "label_zh": "吸嘴或吸头",
+          "label_en": "nozzle or suction head"
+        }
+      ],
+      "actual_required_identity_parts": [
+        "long flexible hose",
+        "main canister body",
+        "nozzle end",
+        "wheels or base"
+      ],
+      "actual_must_preserve": [
+        "long flexible hose",
+        "main canister body",
+        "nozzle end",
+        "wheels or base"
+      ],
+      "minimum_confirmed_concepts_for_quality_2": 2,
+      "reviewer_instructions": [
+        "Use only the pre-frozen concept_id values for the case.",
+        "Quote model output exactly from actual_required_identity_parts and, when useful, actual_must_preserve; do not paraphrase it.",
+        "Judge whether each required_identity_parts quote expresses the same structural concept as the pre-frozen label; must_preserve quotes are optional propagation evidence.",
+        "A confirmed concept must be structural, not merely material, colour, effect, action, or decoration.",
+        "Do not add an alias, rename a concept, or change the expected concept list after any provider call.",
+        "Quality 2 requires at least two distinct confirmed concepts in required_identity_parts and no non-structural required_identity_parts."
+      ],
+      "not_reviewable_reason": ""
+    },
+    "B02": {
+      "review_packet_version": "forge-semantic-blind-retest-3c-review-packet-v1",
+      "case_id": "B02",
+      "status": "PENDING",
+      "tool_input_sha256": "87b7b6f3a479167e5918412862fc73888e855f9f325fc788fe09c1d3ba49e984",
+      "expected_concepts_sha256": "0e671e11bd7f98eb0290af2fe81aca0efea946f0bd2830953545f7f8618c3f36",
+      "expected_concepts": [
+        {
+          "concept_id": "clock_face",
+          "label_zh": "钟面",
+          "label_en": "clock face"
+        },
+        {
+          "concept_id": "twin_bells",
+          "label_zh": "双铃",
+          "label_en": "twin bells"
+        },
+        {
+          "concept_id": "clock_hands_or_body",
+          "label_zh": "指针或钟体",
+          "label_en": "hands or clock body"
+        }
+      ],
+      "actual_required_identity_parts": [
+        "twin bells on top",
+        "clock face with hands",
+        "bell striker arm",
+        "round clock body",
+        "support feet"
+      ],
+      "actual_must_preserve": [
+        "twin bells on top",
+        "clock face with hands",
+        "bell striker arm",
+        "round clock body",
+        "support feet"
+      ],
+      "minimum_confirmed_concepts_for_quality_2": 2,
+      "reviewer_instructions": [
+        "Use only the pre-frozen concept_id values for the case.",
+        "Quote model output exactly from actual_required_identity_parts and, when useful, actual_must_preserve; do not paraphrase it.",
+        "Judge whether each required_identity_parts quote expresses the same structural concept as the pre-frozen label; must_preserve quotes are optional propagation evidence.",
+        "A confirmed concept must be structural, not merely material, colour, effect, action, or decoration.",
+        "Do not add an alias, rename a concept, or change the expected concept list after any provider call.",
+        "Quality 2 requires at least two distinct confirmed concepts in required_identity_parts and no non-structural required_identity_parts."
+      ],
+      "not_reviewable_reason": ""
+    },
+    "B03": {
+      "review_packet_version": "forge-semantic-blind-retest-3c-review-packet-v1",
+      "case_id": "B03",
+      "status": "PENDING",
+      "tool_input_sha256": "3ba6093228f52321a49fffb9a9cebd31fb6ee33deac6d4ce7232979238df0b47",
+      "expected_concepts_sha256": "6f0cfe69d4bca4c69b322460ddde3e923481b1feeb071e0afb942840a5149904",
+      "expected_concepts": [
+        {
+          "concept_id": "stapler_upper_pressing_arm",
+          "label_zh": "上压臂",
+          "label_en": "upper pressing arm"
+        },
+        {
+          "concept_id": "stapler_base",
+          "label_zh": "底座",
+          "label_en": "base"
+        },
+        {
+          "concept_id": "stapler_rear_hinge",
+          "label_zh": "后部铰链",
+          "label_en": "rear hinge"
+        }
+      ],
+      "actual_required_identity_parts": [
+        "hinged top arm",
+        "base plate",
+        "spring-loaded press mechanism",
+        "staple magazine slot"
+      ],
+      "actual_must_preserve": [
+        "hinged top arm",
+        "base plate",
+        "spring-loaded press mechanism",
+        "staple magazine slot"
+      ],
+      "minimum_confirmed_concepts_for_quality_2": 2,
+      "reviewer_instructions": [
+        "Use only the pre-frozen concept_id values for the case.",
+        "Quote model output exactly from actual_required_identity_parts and, when useful, actual_must_preserve; do not paraphrase it.",
+        "Judge whether each required_identity_parts quote expresses the same structural concept as the pre-frozen label; must_preserve quotes are optional propagation evidence.",
+        "A confirmed concept must be structural, not merely material, colour, effect, action, or decoration.",
+        "Do not add an alias, rename a concept, or change the expected concept list after any provider call.",
+        "Quality 2 requires at least two distinct confirmed concepts in required_identity_parts and no non-structural required_identity_parts."
+      ],
+      "not_reviewable_reason": ""
+    },
+    "B04": {
+      "review_packet_version": "forge-semantic-blind-retest-3c-review-packet-v1",
+      "case_id": "B04",
+      "status": "PENDING",
+      "tool_input_sha256": "67e94c218c909a8809739b5c92f3450e82b9d301a74ee418056aa2350c14c2d5",
+      "expected_concepts_sha256": "87ff636b37221a3d5b27a414f5d8f3ed3a44acaedfc09dc313917750f866436c",
+      "expected_concepts": [
+        {
+          "concept_id": "goblet_cup_bowl",
+          "label_zh": "杯身",
+          "label_en": "cup bowl"
+        },
+        {
+          "concept_id": "goblet_narrow_stem",
+          "label_zh": "细长杯脚",
+          "label_en": "narrow stem"
+        },
+        {
+          "concept_id": "goblet_base",
+          "label_zh": "底座",
+          "label_en": "base"
+        }
+      ],
+      "actual_required_identity_parts": [
+        "cup bowl",
+        "stem",
+        "base foot"
+      ],
+      "actual_must_preserve": [
+        "cup bowl",
+        "stem",
+        "base foot",
+        "tall stemmed drinking vessel outline"
+      ],
+      "minimum_confirmed_concepts_for_quality_2": 2,
+      "reviewer_instructions": [
+        "Use only the pre-frozen concept_id values for the case.",
+        "Quote model output exactly from actual_required_identity_parts and, when useful, actual_must_preserve; do not paraphrase it.",
+        "Judge whether each required_identity_parts quote expresses the same structural concept as the pre-frozen label; must_preserve quotes are optional propagation evidence.",
+        "A confirmed concept must be structural, not merely material, colour, effect, action, or decoration.",
+        "Do not add an alias, rename a concept, or change the expected concept list after any provider call.",
+        "Quality 2 requires at least two distinct confirmed concepts in required_identity_parts and no non-structural required_identity_parts."
+      ],
+      "not_reviewable_reason": ""
+    }
+  }
+}

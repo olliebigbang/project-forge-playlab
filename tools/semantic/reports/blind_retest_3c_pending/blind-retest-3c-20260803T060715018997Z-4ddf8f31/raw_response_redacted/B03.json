@@ -1,0 +1,86 @@
+{
+  "model": "claude-sonnet-5",
+  "id": "msg_011CdfKCCV2yeMctYAiwWKAM",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    {
+      "type": "tool_use",
+      "id": "toolu_01W9hBCEPuWCKnupXQZuXHGS",
+      "name": "submit_forge_semantic_blueprint",
+      "input": {
+        "identity": {
+          "canonical_name_zh": "订书机",
+          "canonical_name_en": "stapler",
+          "display_name_zh": "巨型夹击订书机",
+          "display_name_en": "Giant Clamping Stapler",
+          "category": "tool",
+          "required_identity_parts": [
+            "hinged top arm",
+            "base plate",
+            "spring-loaded press mechanism",
+            "staple magazine slot"
+          ],
+          "material_hints": [
+            "heavy metal body",
+            "painted steel casing"
+          ],
+          "silhouette_hints": [
+            "elongated rectangular clamp shape with hinged top jaw"
+          ],
+          "optional_decorations": [
+            "worn paint scuffs",
+            "brand-style engraving"
+          ]
+        },
+        "combat": {
+          "behavior_family": "heavy_melee",
+          "delivery": "whole_object_strike",
+          "impact_mode": "whole_body_collision",
+          "effect_type": "fastener",
+          "drawback": "slow_movement",
+          "cadence_hint": "slow_heavy"
+        },
+        "visual": {
+          "prompt_en": "A giant oversized stapler shown as an isolated object, side view, complete object visible, heavy metal body with a hinged top arm and a solid base plate, spring-loaded press mechanism visible at the hinge, staple magazine slot along the body, thick painted steel casing, faint worn paint scuffs, slightly reinforced clamping edge for combat use, held like a massive melee clamp weapon, dramatic fantasy lighting, isolated on plain background",
+          "negative_prompt_en": "not a gun, not a sword, not scissors, not a bear trap, not a robotic claw, no unrelated weapon shapes, no background clutter, no multiple objects",
+          "must_preserve": [
+            "hinged top arm",
+            "base plate",
+            "spring-loaded press mechanism",
+            "staple magazine slot"
+          ],
+          "must_not_replace_with": [
+            "gun",
+            "sword",
+            "scissors",
+            "bear trap",
+            "robotic claw"
+          ]
+        },
+        "confidence": 0.9
+      },
+      "caller": {
+        "type": "direct"
+      }
+    }
+  ],
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "stop_details": null,
+  "usage": {
+    "input_tokens": 4711,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 716,
+    "output_tokens_details": {
+      "thinking_tokens": 0
+    },
+    "service_tier": "standard",
+    "inference_geo": "global"
+  }
+}

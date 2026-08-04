@@ -1,0 +1,150 @@
+{
+  "review_batch_version": "forge-semantic-blind-retest-3c-review-batch-v1",
+  "run_id": "blind-retest-3c-20260803T060715018997Z-4ddf8f31",
+  "pending_evidence_sha256": "REPLACE_FROM_PENDING_COMPLETE",
+  "expected_sha256": "0e75f04e1575383b9e531368db76ba62fe68fc57d61628ca21d78cec3a93cc7f",
+  "review_rubric_sha256": "e87023c408901b6946eff31db03782636e079b97b81c20e9c4827d95493c4773",
+  "reviewer": "REPLACE_WITH_HUMAN_REVIEWER",
+  "cases": {
+    "B01": {
+      "review_submission_version": "forge-semantic-blind-retest-3c-review-submission-v1",
+      "case_id": "B01",
+      "tool_input_sha256": "fcdb2db4462e88f0ebf6d3df5df1483878cc4ddc732895afa2efa33cb7ffce10",
+      "expected_concepts_sha256": "c6f8911d4f7c8c4635dee0b0b97c02effe24c7e1918657dce5729a470c14257b",
+      "concept_reviews": [
+        {
+          "concept_id": "vacuum_body",
+          "required_identity_part_quotes": [],
+          "must_preserve_quotes": [],
+          "same_structure_concept": null,
+          "structural_not_material_or_decoration": null,
+          "notes": ""
+        },
+        {
+          "concept_id": "long_hose",
+          "required_identity_part_quotes": [],
+          "must_preserve_quotes": [],
+          "same_structure_concept": null,
+          "structural_not_material_or_decoration": null,
+          "notes": ""
+        },
+        {
+          "concept_id": "nozzle_or_suction_head",
+          "required_identity_part_quotes": [],
+          "must_preserve_quotes": [],
+          "same_structure_concept": null,
+          "structural_not_material_or_decoration": null,
+          "notes": ""
+        }
+      ],
+      "all_required_parts_are_structural": null,
+      "non_structural_required_identity_part_quotes": [],
+      "reviewer_reason": ""
+    },
+    "B02": {
+      "review_submission_version": "forge-semantic-blind-retest-3c-review-submission-v1",
+      "case_id": "B02",
+      "tool_input_sha256": "87b7b6f3a479167e5918412862fc73888e855f9f325fc788fe09c1d3ba49e984",
+      "expected_concepts_sha256": "0e671e11bd7f98eb0290af2fe81aca0efea946f0bd2830953545f7f8618c3f36",
+      "concept_reviews": [
+        {
+          "concept_id": "clock_face",
+          "required_identity_part_quotes": [],
+          "must_preserve_quotes": [],
+          "same_structure_concept": null,
+          "structural_not_material_or_decoration": null,
+          "notes": ""
+        },
+        {
+          "concept_id": "twin_bells",
+          "required_identity_part_quotes": [],
+          "must_preserve_quotes": [],
+          "same_structure_concept": null,
+          "structural_not_material_or_decoration": null,
+          "notes": ""
+        },
+        {
+          "concept_id": "clock_hands_or_body",
+          "required_identity_part_quotes": [],
+          "must_preserve_quotes": [],
+          "same_structure_concept": null,
+          "structural_not_material_or_decoration": null,
+          "notes": ""
+        }
+      ],
+      "all_required_parts_are_structural": null,
+      "non_structural_required_identity_part_quotes": [],
+      "reviewer_reason": ""
+    },
+    "B03": {
+      "review_submission_version": "forge-semantic-blind-retest-3c-review-submission-v1",
+      "case_id": "B03",
+      "tool_input_sha256": "3ba6093228f52321a49fffb9a9cebd31fb6ee33deac6d4ce7232979238df0b47",
+      "expected_concepts_sha256": "6f0cfe69d4bca4c69b322460ddde3e923481b1feeb071e0afb942840a5149904",
+      "concept_reviews": [
+        {
+          "concept_id": "stapler_upper_pressing_arm",
+          "required_identity_part_quotes": [],
+          "must_preserve_quotes": [],
+          "same_structure_concept": null,
+          "structural_not_material_or_decoration": null,
+          "notes": ""
+        },
+        {
+          "concept_id": "stapler_base",
+          "required_identity_part_quotes": [],
+          "must_preserve_quotes": [],
+          "same_structure_concept": null,
+          "structural_not_material_or_decoration": null,
+          "notes": ""
+        },
+        {
+          "concept_id": "stapler_rear_hinge",
+          "required_identity_part_quotes": [],
+          "must_preserve_quotes": [],
+          "same_structure_concept": null,
+          "structural_not_material_or_decoration": null,
+          "notes": ""
+        }
+      ],
+      "all_required_parts_are_structural": null,
+      "non_structural_required_identity_part_quotes": [],
+      "reviewer_reason": ""
+    },
+    "B04": {
+      "review_submission_version": "forge-semantic-blind-retest-3c-review-submission-v1",
+      "case_id": "B04",
+      "tool_input_sha256": "67e94c218c909a8809739b5c92f3450e82b9d301a74ee418056aa2350c14c2d5",
+      "expected_concepts_sha256": "87ff636b37221a3d5b27a414f5d8f3ed3a44acaedfc09dc313917750f866436c",
+      "concept_reviews": [
+        {
+          "concept_id": "goblet_cup_bowl",
+          "required_identity_part_quotes": [],
+          "must_preserve_quotes": [],
+          "same_structure_concept": null,
+          "structural_not_material_or_decoration": null,
+          "notes": ""
+        },
+        {
+          "concept_id": "goblet_narrow_stem",
+          "required_identity_part_quotes": [],
+          "must_preserve_quotes": [],
+          "same_structure_concept": null,
+          "structural_not_material_or_decoration": null,
+          "notes": ""
+        },
+        {
+          "concept_id": "goblet_base",
+          "required_identity_part_quotes": [],
+          "must_preserve_quotes": [],
+          "same_structure_concept": null,
+          "structural_not_material_or_decoration": null,
+          "notes": ""
+        }
+      ],
+      "all_required_parts_are_structural": null,
+      "non_structural_required_identity_part_quotes": [],
+      "reviewer_reason": ""
+    }
+  }
+}

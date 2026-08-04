@@ -1,0 +1,46 @@
+{
+  "case_id": "case_e",
+  "prompt": "一只会喷出高温蒸汽、可以被当成武器使用的旧茶壶。",
+  "seed": 41001,
+  "workflow_file": "forge_object_sprite_v0.json",
+  "workflow_hash": "507095e0e1cbe0556d1bcac7cff8d28e93af65d843f69cc54de836ff267398a5",
+  "selected_comfyui_install": "ai_series_tools/ComfyUI",
+  "checkpoint": "RealVisXL_V5.0_fp16.safetensors",
+  "control_type": "none",
+  "control_strength": 0.0,
+  "generation_seconds": 2.031,
+  "postprocess_seconds": 0.037,
+  "raw_dimensions": [
+    512,
+    512
+  ],
+  "processed_dimensions": [
+    96,
+    96
+  ],
+  "alpha_coverage": 0.267,
+  "opaque_bounds": [
+    7,
+    16,
+    82,
+    63
+  ],
+  "status": "success",
+  "failure_reason": "",
+  "prompt_id": "c7f5fda6-26c0-4b0c-8a3d-b335cb0c4412",
+  "run_id": "seed_41001_s00",
+  "request_id": "972840778ed249ba8241c4317dfa85f3",
+  "generation_size": [
+    512,
+    512
+  ],
+  "img2img_denoise": 1.0,
+  "background_border_rgb": [
+    214.0,
+    82.0,
+    155.0
+  ],
+  "background_expected_match": 0.9036,
+  "palette_limit": 32,
+  "outline": true
+}

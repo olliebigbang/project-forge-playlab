@@ -1,0 +1,28 @@
+{
+  "contract": "forge-birefnet-spike6-job-v1",
+  "ordinal": 1,
+  "case_id": "b01",
+  "seed_id": "seed_4041001",
+  "source_raw_path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/raw.png",
+  "source_raw_sha256": "4e979b3a7b78a2ad701149235754f9359f0bad7e7a9e2d228fae5f94fecc54ae",
+  "workflow_sha256": "56d74936b840de2ce2d5e823b6ad1704b9e65dd7ddd8b7a0edbfb5d4d4cf19df",
+  "prompt_id": "fddf7b0a-ae54-4fc6-81a0-b3a10496fb34",
+  "retry_count": 0,
+  "rgba_file": "rgba.png",
+  "rgba_sha256": "8bf7b9a51a2487960531ed6b464e68efdb74791b69ac2252737763c06b06cd19",
+  "rgba_comfy_descriptor": {
+    "filename": "rgba_00001_.png",
+    "subfolder": "ForgeSpike6\\spike6-birefnet-20260803T135800Z\\01_b01_seed_4041001",
+    "type": "output"
+  },
+  "mask_file": "mask.png",
+  "mask_sha256": "b3d984e5a93edea37413978c5bb52de0b919c0a0160c714da81ff0c46a559655",
+  "mask_download_sha256": "8f886f099adba755c51aba6a909eb5bcdb97e7259b40e2c57a081f5e7bb88e01",
+  "mask_comfy_descriptor": {
+    "filename": "mask_00001_.png",
+    "subfolder": "ForgeSpike6\\spike6-birefnet-20260803T135800Z\\01_b01_seed_4041001",
+    "type": "output"
+  },
+  "mask_representation": "L",
+  "status": "success"
+}

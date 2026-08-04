@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "name": "Forge Semantic Anchor Calibration Spike 1 corpus",
+  "description": "Declarative inventory of the 11 existing successful transparent Spike 0 sprites. It does not generate images and contains no object-specific runtime behavior.",
+  "source_policy": {
+    "existing_spike0_outputs_only": true,
+    "comfyui_rerun_required": false,
+    "source_files_are_read_only": true,
+    "expected_dimensions": [96, 96]
+  },
+  "runs": [
+    {
+      "case_id": "case_a",
+      "run_id": "seed_41001_s45",
+      "sprite_path": "res://tools/comfyui/output/case_a/seed_41001_s45/processed_sprite.png",
+      "behavior_family": "sustained_ranged",
+      "grip_profile": "two_hand_rear",
+      "required_anchor_types": ["GripPrimary", "GripSecondary", "EffectOrigin"]
+    },
+    {
+      "case_id": "case_a",
+      "run_id": "seed_41002_s70",
+      "sprite_path": "res://tools/comfyui/output/case_a/seed_41002_s70/processed_sprite.png",
+      "behavior_family": "sustained_ranged",
+      "grip_profile": "two_hand_rear",
+      "required_anchor_types": ["GripPrimary", "GripSecondary", "EffectOrigin"]
+    },
+    {
+      "case_id": "case_a",
+      "run_id": "seed_41003_s45",
+      "sprite_path": "res://tools/comfyui/output/case_a/seed_41003_s45/processed_sprite.png",
+      "behavior_family": "sustained_ranged",
+      "grip_profile": "two_hand_rear",
+      "required_anchor_types": ["GripPrimary", "GripSecondary", "EffectOrigin"]
+    },
+    {
+      "case_id": "case_b",
+      "run_id": "seed_41001_s00",
+      "sprite_path": "res://tools/comfyui/output/case_b/seed_41001_s00/processed_sprite.png",
+      "behavior_family": "returning_thrown",
+      "grip_profile": "center_shaft",
+      "required_anchor_types": ["GripPrimary", "StrikePoint", "SpinPivot"]
+    },
+    {
+      "case_id": "case_b",
+      "run_id": "seed_41003_s00",
+      "sprite_path": "res://tools/comfyui/output/case_b/seed_41003_s00/processed_sprite.png",
+      "behavior_family": "returning_thrown",
+      "grip_profile": "center_shaft",
+      "required_anchor_types": ["GripPrimary", "StrikePoint", "SpinPivot"]
+    },
+    {
+      "case_id": "case_c",
+      "run_id": "seed_41001_s45",
+      "sprite_path": "res://tools/comfyui/output/case_c/seed_41001_s45/processed_sprite.png",
+      "behavior_family": "heavy_melee",
+      "grip_profile": "two_hand_rear",
+      "required_anchor_types": ["GripPrimary", "GripSecondary", "StrikePoint"]
+    },
+    {
+      "case_id": "case_c",
+      "run_id": "seed_41002_s70",
+      "sprite_path": "res://tools/comfyui/output/case_c/seed_41002_s70/processed_sprite.png",
+      "behavior_family": "heavy_melee",
+      "grip_profile": "two_hand_rear",
+      "required_anchor_types": ["GripPrimary", "GripSecondary", "StrikePoint"]
+    },
+    {
+      "case_id": "case_c",
+      "run_id": "seed_41003_s45",
+      "sprite_path": "res://tools/comfyui/output/case_c/seed_41003_s45/processed_sprite.png",
+      "behavior_family": "heavy_melee",
+      "grip_profile": "two_hand_rear",
+      "required_anchor_types": ["GripPrimary", "GripSecondary", "StrikePoint"]
+    },
+    {
+      "case_id": "case_d",
+      "run_id": "seed_41002_s70",
+      "sprite_path": "res://tools/comfyui/output/case_d/seed_41002_s70/processed_sprite.png",
+      "behavior_family": "sustained_ranged",
+      "grip_profile": "bottom_handle",
+      "required_anchor_types": ["GripPrimary", "EffectOrigin"]
+    },
+    {
+      "case_id": "case_d",
+      "run_id": "seed_41003_s45",
+      "sprite_path": "res://tools/comfyui/output/case_d/seed_41003_s45/processed_sprite.png",
+      "behavior_family": "sustained_ranged",
+      "grip_profile": "bottom_handle",
+      "required_anchor_types": ["GripPrimary", "EffectOrigin"]
+    },
+    {
+      "case_id": "case_e",
+      "run_id": "seed_41001_s00",
+      "sprite_path": "res://tools/comfyui/output/case_e/seed_41001_s00/processed_sprite.png",
+      "behavior_family": "sustained_ranged",
+      "grip_profile": "bottom_handle",
+      "required_anchor_types": ["GripPrimary", "EffectOrigin"]
+    }
+  ]
+}

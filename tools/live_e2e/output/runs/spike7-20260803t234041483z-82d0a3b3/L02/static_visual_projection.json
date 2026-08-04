@@ -1,0 +1,24 @@
+{
+  "contract": "forge-live-static-visual-projection-v1",
+  "semantic_blueprint_modified": false,
+  "source_fields": [
+    "identity.canonical_name_en",
+    "identity.required_identity_parts",
+    "identity.material_hints",
+    "identity.silhouette_hints",
+    "identity.optional_decorations",
+    "visual.prompt_en",
+    "visual.negative_prompt_en",
+    "visual.must_preserve",
+    "visual.must_not_replace_with",
+    "combat.effect_type"
+  ],
+  "source_visual_prompt": "A red hard-shell suitcase, rectangular boxy body with slightly rounded corners, sturdy carrying handle on top, visible hinged edges and reinforced metal corners, smooth glossy red plastic shell with leather trim accents, small functional grip fixture for throwing, isolated single object, side view, complete object fully visible, clean studio background",
+  "effect_type": "normal",
+  "physical_fixture_terms": [
+    "a small neutral forge functional fixture"
+  ],
+  "static_prompt_en": "canonical object identity: suitcase; identity-critical physical parts: rectangular case body, carrying handle, hinged edges, corner reinforcements; physical material cues: hard shell plastic, leather trim; silhouette cues: boxy rectangular travel case outline, slightly rounded corners; optional small forge decorations only: travel stickers, brass corner studs, luggage tag; solid effect fixture: a small neutral forge functional fixture; one isolated handcrafted fantasy game prop; complete object visible; single subject; side view or slight three-quarter side view; facing right; readable silhouette; clear holdable region; clear solid functional fixture; flat high-contrast magenta studio background; object centered with generous empty margin; no crop",
+  "static_negative_prompt_en": "person, human, face, hand, character holding object, text, label, logo, watermark, UI, inventory grid, weapon sheet, multiple views, multiple objects, scenery, room, floor, ground shadow, cropped object, gun substitution, gatling substitution, sword substitution, greatsword substitution, umbrella substitution, boomerang substitution, dynamic trail, fire trail, electric trail, steam cloud, floating mist, acid stream, projectile, bullet, blood energy, return trail, motion blur, large glowing smoke; not a boomerang, not a shield, not a discus, not a frisbee, not a weapon blade, no text overlay, no multiple objects, no background clutter; do not replace with: boomerang, shield, discus, frisbee, generic sword",
+  "dynamic_term_scan": "PASS"
+}

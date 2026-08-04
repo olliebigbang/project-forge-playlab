@@ -1,0 +1,8 @@
+{
+  "type": "error",
+  "error": {
+    "type": "invalid_request_error",
+    "message": "`temperature` is deprecated for this model."
+  },
+  "request_id": "req_011CdemjQJL5M1TVUYe8F3G8"
+}

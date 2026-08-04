@@ -1,0 +1,89 @@
+{
+  "contract": "forge-flux2-generation-v1",
+  "profile_id": "flux2_klein_4b",
+  "workflow_contract_version": "forge-flux2-klein-4b-v1",
+  "prompt_policy_version": "forge-flux2-static-identity-v1",
+  "case_id": "l02",
+  "run_id": "spike7-20260803t234041483z-82d0a3b3-l02",
+  "output_group": "live_e2e_stage",
+  "mode": "t2i",
+  "seed": 7071002,
+  "positive_prompt": "canonical object identity: suitcase; identity-critical physical parts: rectangular case body, carrying handle, hinged edges, corner reinforcements; physical material cues: hard shell plastic, leather trim; silhouette cues: boxy rectangular travel case outline, slightly rounded corners; optional small forge decorations only: travel stickers, brass corner studs, luggage tag; solid effect fixture: a small neutral forge functional fixture; one isolated handcrafted fantasy game prop; complete object visible; single subject; side view or slight three-quarter side view; facing right; readable silhouette; clear holdable region; clear solid functional fixture; flat high-contrast magenta studio background; object centered with generous empty margin; no crop. canonical object identity: suitcase. required physical identity structures: rectangular case body; carrying handle; hinged edges; corner reinforcements. material cues: hard shell plastic; leather trim. silhouette cues: boxy rectangular travel case outline; slightly rounded corners. subtle optional forge decorations: travel stickers; brass corner studs; luggage tag. identity-preservation cues: rectangular case body; carrying handle; hinged edges; corner reinforcements. one isolated physical fantasy game prop, side view or slight three-quarter side view, facing right, complete object fully visible, centered with generous empty margin, flat high-contrast solid chroma key magenta background, readable silhouette, handcrafted fantasy toy aesthetic.",
+  "negative_prompt": "person, human, face, hand, character holding object, text, label, logo, watermark, UI, inventory grid, weapon sheet, multiple views, multiple objects, scenery, room, floor, ground shadow, cropped object, gun substitution, gatling substitution, sword substitution, greatsword substitution, umbrella substitution, boomerang substitution, dynamic trail, fire trail, electric trail, steam cloud, floating mist, acid stream, projectile, bullet, blood energy, return trail, motion blur, large glowing smoke; not a boomerang, not a shield, not a discus, not a frisbee, not a weapon blade, no text overlay, no multiple objects, no background clutter; do not replace with: boomerang, shield, discus, frisbee, generic sword. forbidden substitutions: boomerang; shield; discus; frisbee; generic sword. portrait, human, person, face, hand, hands, fingers, character holding object, text, label, logo, watermark, user interface, inventory grid, weapon sheet, multiple views, multiple objects, scenery, room, environment, pedestal, cropped object, cut off object.",
+  "positive_prompt_sha256": "79f0d6095629d6e056cb592c6340bcd285fe5c17d132608f76dcbe41b5e0f238",
+  "negative_prompt_sha256": "82f195193ba1526e0f801b710572366aede30712a93600733b1093dd4117bae4",
+  "blueprint_projection": {
+    "canonical_name_en": "suitcase",
+    "required_identity_parts": [
+      "rectangular case body",
+      "carrying handle",
+      "hinged edges",
+      "corner reinforcements"
+    ],
+    "material_hints": [
+      "hard shell plastic",
+      "leather trim"
+    ],
+    "silhouette_hints": [
+      "boxy rectangular travel case outline",
+      "slightly rounded corners"
+    ],
+    "optional_decorations": [
+      "travel stickers",
+      "brass corner studs",
+      "luggage tag"
+    ],
+    "visual_prompt_en": "canonical object identity: suitcase; identity-critical physical parts: rectangular case body, carrying handle, hinged edges, corner reinforcements; physical material cues: hard shell plastic, leather trim; silhouette cues: boxy rectangular travel case outline, slightly rounded corners; optional small forge decorations only: travel stickers, brass corner studs, luggage tag; solid effect fixture: a small neutral forge functional fixture; one isolated handcrafted fantasy game prop; complete object visible; single subject; side view or slight three-quarter side view; facing right; readable silhouette; clear holdable region; clear solid functional fixture; flat high-contrast magenta studio background; object centered with generous empty margin; no crop",
+    "visual_negative_prompt_en": "person, human, face, hand, character holding object, text, label, logo, watermark, UI, inventory grid, weapon sheet, multiple views, multiple objects, scenery, room, floor, ground shadow, cropped object, gun substitution, gatling substitution, sword substitution, greatsword substitution, umbrella substitution, boomerang substitution, dynamic trail, fire trail, electric trail, steam cloud, floating mist, acid stream, projectile, bullet, blood energy, return trail, motion blur, large glowing smoke; not a boomerang, not a shield, not a discus, not a frisbee, not a weapon blade, no text overlay, no multiple objects, no background clutter; do not replace with: boomerang, shield, discus, frisbee, generic sword",
+    "must_preserve": [
+      "rectangular case body",
+      "carrying handle",
+      "hinged edges",
+      "corner reinforcements"
+    ],
+    "must_not_replace_with": [
+      "boomerang",
+      "shield",
+      "discus",
+      "frisbee",
+      "generic sword"
+    ]
+  },
+  "workflow_file": "flux2_klein_4b_t2i_forge_api.json",
+  "workflow_sha256": "26b8f7c151a47835a1a08993f18430adf7f3120320747e6491cabd1d2c4ceae6",
+  "models": {
+    "diffusion_model": "flux-2-klein-4b-fp8.safetensors",
+    "text_encoder": "qwen_3_4b.safetensors",
+    "vae": "flux2-vae.safetensors"
+  },
+  "model_sha256": {
+    "diffusion_model": "97ed34fe0567e436200f2faee3939b88f2b5d99f8af2a4dc16532c4245c0ccb6",
+    "text_encoder": "6c671498573ac2f7a5501502ccce8d2b08ea6ca2f661c458e708f36b36edfc5a",
+    "vae": "d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5"
+  },
+  "selected_install_label": "forge-flux2-isolated-v0.30.0",
+  "comfyui_commit": "b1693ecba9f5b65f8c80ab36b195ab963ec92413",
+  "postprocessor_file": "process_sprite.py",
+  "postprocessor_sha256": "f748c8e61dfd022d351d84c57c2d68b50b3dc39685403c7af20cc0402eebc0e9",
+  "width": 512,
+  "height": 512,
+  "batch_size": 1,
+  "steps": 4,
+  "guidance": 1.0,
+  "sampler": "euler",
+  "retry_count": 0,
+  "prompt_id": "8048023a-9c01-43b5-a84a-e0ec7260ff31",
+  "generation_seconds": 6.673,
+  "total_wall_seconds": 6.694,
+  "postprocess_seconds": 0.0,
+  "peak_vram_mb": 11708.0,
+  "peak_ram_mb": 0.0,
+  "raw_dimensions": [
+    512,
+    512
+  ],
+  "processed_dimensions": [],
+  "alpha_valid": false,
+  "status": "raw_success",
+  "failure_reason": ""
+}

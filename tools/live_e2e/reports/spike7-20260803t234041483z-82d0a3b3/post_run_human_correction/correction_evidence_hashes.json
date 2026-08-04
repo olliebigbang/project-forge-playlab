@@ -1,0 +1,20 @@
+{
+  "algorithm": "SHA-256",
+  "correction_files": {
+    "corrected_human_review.json": "0e79a21d69f6fe8141334ddc3eae84c18cee0fc58eef4c6cf58d6f04a1ae2b06",
+    "HUMAN_REVIEW_CORRECTION.md": "58ffe477c468dce6685c187d98fd15d91e34a1373fd75d75ea4d090290c091b3",
+    "independent_results.csv": "baba69aa3e548f100d0f5e916b28dfe8784b594356349f2c4f96c05072283e22"
+  },
+  "frozen_original_files": {
+    "LIVE_E2E_REPORT.md": "d00866609d4788498295cd3b26e72ff7036a296fdea4aae1c6ddaef568d0d46c",
+    "live_e2e_summary.json": "1e92745ec7dcd783ba4c224b41c1d69b516939b28b5fff75e51cb28623c9d259",
+    "live_e2e_results.csv": "932cbe2c84e27fb341c2ebbfa3ea14d6fdcc2daab9fbddf0505cbc003e1fbe21",
+    "evidence_hashes.json": "8a49dce28f1379e9e3a122dccfda0e3ab0ff7dc9df52617607a35ef8aee37d93"
+  },
+  "l01_visual_evidence": {
+    "flux_raw.png": "037be1b55af413fa24af20d9d43021c7be7bb94d01b257da4e10124f657cc627",
+    "processed_sprite.png": "9e16508cd96a6108327a6edd535a9183dcb141bdf69a4b25c5840dbf97666b9d",
+    "forge_confirmation.png": "ca25b0688adca75e96d7b5396d8abc696dca7a4cd64f7706d838dcc018e75478",
+    "result_manifest.json": "15fc9692a0f4b3dcc65697c872b0ccd9b2431a659b498fdff1bd6543a36a2bc8"
+  }
+}

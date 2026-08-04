@@ -1,0 +1,11 @@
+{
+  "gate": "GATE_B_4A",
+  "run_id": "gate-b-4a-20260803T094025408228Z-e25bf1f7",
+  "created_at": "2026-08-03T09:40:25.408Z",
+  "frozen_handoff_sha256": "cb084add3587889f1bcb00651b2f25458c03c5ef73bc5f44e436264f65c52083",
+  "config_sha256": "b9d52205a1cb812ba747594d49d6de69f0ae1c7e5a3d3787c289f28b3bac40fb",
+  "runner_sha256": "f2afcffd05aee56c34b4d594dbdbde5223c13f4e518b14cb1219a523f93bb0e2",
+  "maximum_submissions": 8,
+  "automatic_retry_allowed": false,
+  "third_seed_allowed": false
+}

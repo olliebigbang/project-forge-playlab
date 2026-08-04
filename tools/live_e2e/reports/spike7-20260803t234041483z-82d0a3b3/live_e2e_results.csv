@@ -1,0 +1,4 @@
+﻿case_id,technical_success,product_success,behavior_family,behavior_correct,identity_recognizable,required_parts_preserved_count,anchor_complete,moved,attacked,dodged,failure_stage,failure_reason
+L01,True,False,sustained_ranged,True,True,0,True,True,True,True,,
+L02,True,True,returning_thrown,True,True,3,True,True,True,True,,
+L03,True,True,heavy_melee,True,True,3,True,True,True,True,,

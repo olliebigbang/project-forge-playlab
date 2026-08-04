@@ -1,0 +1,13 @@
+case_id,concept_id,expected_concept,actual_required_identity_part_quote,same_structure_concept,structural_not_material_or_decoration,confirmed,notes
+B01,vacuum_body,"vacuum body / 吸尘器主体",main canister body,true,true,true,Direct body-structure equivalent
+B01,long_hose,"long hose / 长软管",long flexible hose,true,true,true,Flexible is a non-conflicting modifier
+B01,nozzle_or_suction_head,"nozzle or suction head / 吸嘴或吸头",nozzle end,true,true,true,Direct nozzle structure
+B02,clock_face,"clock face / 钟面",clock face with hands,true,true,true,Clock face is explicitly present
+B02,twin_bells,"twin bells / 双铃",twin bells on top,true,true,true,Twin bells are explicitly present
+B02,clock_hands_or_body,"hands or clock body / 指针或钟体",round clock body,true,true,true,Matches the clock-body alternative
+B03,stapler_upper_pressing_arm,"upper pressing arm / 上压臂",hinged top arm,true,true,true,Direct top-arm structure
+B03,stapler_base,"base / 底座",base plate,true,true,true,Direct base structure
+B03,stapler_rear_hinge,"rear hinge / 后部铰链",,false,true,false,Rear hinge was not independently and explicitly expressed
+B04,goblet_cup_bowl,"cup bowl / 杯身",cup bowl,true,true,true,Exact structural phrase
+B04,goblet_narrow_stem,"narrow stem / 细长杯脚",stem,true,true,true,Stem is the part; slender is separately expressed as silhouette
+B04,goblet_base,"base / 底座",base foot,true,true,true,Direct base structure

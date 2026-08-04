@@ -1,0 +1,50 @@
+{
+  "identity": {
+    "name_zh": "红色工具箱",
+    "name_en": "Red Toolbox",
+    "category": "tool",
+    "preserved_features": [
+      "矩形箱体轮廓",
+      "顶部提手",
+      "箱体铰链与卡扣",
+      "红色喷漆外壳",
+      "前侧金属钉出口"
+    ],
+    "material_hints": [
+      "红色喷涂金属",
+      "钢制卡扣与铰链"
+    ],
+    "silhouette_hints": [
+      "矩形手提工具箱轮廓",
+      "顶部弧形提手",
+      "箱体前侧带有小型出口开口"
+    ]
+  },
+  "combat": {
+    "behavior_family": "sustained_ranged",
+    "delivery": "projectile_stream",
+    "impact_mode": "emitter_projectiles",
+    "effect_type": "fastener",
+    "drawback": "overheat",
+    "cadence_hint": "continuous"
+  },
+  "visual": {
+    "prompt_en": "Red Toolbox, a rectangular metal toolbox with a red painted shell, a curved top carry handle, side hinges and latches, and a small reinforced nail-emitting fixture built into its front panel, isolated single object, side view, complete object fully visible, clean studio lighting",
+    "negative_prompt_en": "do not depict a gun, do not depict a Gatling gun, do not depict a rifle, do not depict a turret, do not replace the toolbox with a weapon silhouette, no human figures, no background clutter",
+    "must_preserve": [
+      "矩形箱体轮廓",
+      "顶部提手",
+      "箱体铰链与卡扣",
+      "红色喷漆外壳",
+      "前侧金属钉出口"
+    ],
+    "must_not_replace_with": [
+      "gun",
+      "Gatling gun",
+      "rifle",
+      "turret",
+      "generic firearm"
+    ]
+  },
+  "confidence": 0.85
+}

@@ -1,0 +1,173 @@
+{
+  "contract": "forge-live-e2e-spike7-summary-v1",
+  "run_id": "spike7-20260803t234041483z-82d0a3b3",
+  "classification": "TECHNICAL PASS / PRODUCT NEEDS WORK",
+  "technical_pass_count": 3,
+  "product_pass_count": 2,
+  "semantic_calls": 3,
+  "flux_calls": 3,
+  "birefnet_calls": 3,
+  "retry_count": 0,
+  "mock_fallback_count": 0,
+  "stale_request_commit_count": 0,
+  "median_total_forge_seconds": 18.346,
+  "slowest_total_forge_seconds": 19.114,
+  "player_wait_was_material": true,
+  "slowest_aggregate_stage": "semantic_seconds",
+  "slowest_aggregate_stage_seconds": 24.562,
+  "default_flow_promoted": false,
+  "combat_rooms_connected": false,
+  "v2_started": false,
+  "scope_attestation": {
+    "historical_evidence_unchanged": true,
+    "formal_repositories_unchanged": true,
+    "default_player_mode": "MOCK",
+    "secret_scan_pass": true,
+    "secret_findings": 0
+  },
+  "post_run_cleanup_status": "PASS",
+  "offline_tests": {
+    "status": "PASS",
+    "passed": 40,
+    "failed": 0
+  },
+  "completed_at_utc": "2026-08-04T03:45:04.134Z",
+  "cases": [
+    {
+      "contract": "forge-live-e2e-spike7-case-result-v1",
+      "case_id": "L01",
+      "revision": 1,
+      "seed": 7071001,
+      "status": "completed",
+      "technical_success": true,
+      "product_success": false,
+      "semantic_success": true,
+      "blueprint_valid": true,
+      "behavior_family": "sustained_ranged",
+      "behavior_expected": "sustained_ranged",
+      "behavior_correct": true,
+      "identity_review": {
+        "identity_recognizable": true,
+        "required_parts_preserved": [
+          false,
+          false,
+          false
+        ],
+        "required_parts_preserved_count": 0,
+        "no_fixed_weapon_substitution": false,
+        "no_baked_dynamic_effect": false,
+        "confirmation_seconds": 1.926
+      },
+      "anchor_complete": true,
+      "training": {
+        "moved": true,
+        "attacked": true,
+        "dodged": true,
+        "behavior_family_observed": true,
+        "training_load_seconds": 0.012
+      },
+      "failure_stage": "",
+      "failure_reason": "",
+      "retry_count": 0,
+      "mock_fallback": false,
+      "stale_request_committed": false,
+      "completed_at_utc": "2026-08-04T03:45:04.134Z"
+    },
+    {
+      "contract": "forge-live-e2e-spike7-case-result-v1",
+      "case_id": "L02",
+      "revision": 2,
+      "seed": 7071002,
+      "status": "completed",
+      "technical_success": true,
+      "product_success": true,
+      "semantic_success": true,
+      "blueprint_valid": true,
+      "behavior_family": "returning_thrown",
+      "behavior_expected": "returning_thrown",
+      "behavior_correct": true,
+      "identity_review": {
+        "identity_recognizable": true,
+        "required_parts_preserved": [
+          true,
+          true,
+          true
+        ],
+        "required_parts_preserved_count": 3,
+        "no_fixed_weapon_substitution": true,
+        "no_baked_dynamic_effect": true,
+        "confirmation_seconds": 13.989
+      },
+      "anchor_complete": true,
+      "training": {
+        "moved": true,
+        "attacked": true,
+        "dodged": true,
+        "behavior_family_observed": true,
+        "training_load_seconds": 0.012
+      },
+      "failure_stage": "",
+      "failure_reason": "",
+      "retry_count": 0,
+      "mock_fallback": false,
+      "stale_request_committed": false,
+      "completed_at_utc": "2026-08-04T03:45:04.134Z"
+    },
+    {
+      "contract": "forge-live-e2e-spike7-case-result-v1",
+      "case_id": "L03",
+      "revision": 3,
+      "seed": 7071003,
+      "status": "completed",
+      "technical_success": true,
+      "product_success": true,
+      "semantic_success": true,
+      "blueprint_valid": true,
+      "behavior_family": "heavy_melee",
+      "behavior_expected": "heavy_melee",
+      "behavior_correct": true,
+      "identity_review": {
+        "identity_recognizable": true,
+        "required_parts_preserved": [
+          true,
+          true,
+          true
+        ],
+        "required_parts_preserved_count": 3,
+        "no_fixed_weapon_substitution": true,
+        "no_baked_dynamic_effect": true,
+        "confirmation_seconds": 7.989
+      },
+      "anchor_complete": true,
+      "training": {
+        "moved": true,
+        "attacked": true,
+        "dodged": true,
+        "behavior_family_observed": true,
+        "training_load_seconds": 0.012
+      },
+      "failure_stage": "",
+      "failure_reason": "",
+      "retry_count": 0,
+      "mock_fallback": false,
+      "stale_request_committed": false,
+      "completed_at_utc": "2026-08-04T03:45:04.134Z"
+    }
+  ],
+  "post_run_cleanup": {
+    "contract": "forge-live-e2e-spike7-post-run-cleanup-v1",
+    "status": "PASS",
+    "run_id": "spike7-20260803t234041483z-82d0a3b3",
+    "session_id": "live-e2e-20260804t033352546z-e384be65",
+    "anthropic_environment_cleared": true,
+    "port_8190_closed": true,
+    "port_8188_closed": true,
+    "bridge_port_8767_closed": true,
+    "owned_process_residual_count": 0,
+    "historical_evidence_unchanged": true,
+    "formal_repositories_unchanged": true,
+    "secret_scan_pass": true,
+    "secret_findings": 0,
+    "verified_at_utc": "2026-08-04T03:45:34.371Z"
+  }
+}

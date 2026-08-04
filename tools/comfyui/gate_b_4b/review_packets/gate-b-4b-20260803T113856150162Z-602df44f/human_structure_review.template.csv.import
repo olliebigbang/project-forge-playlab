@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://bpm5an5knjrj2"
+
+[deps]
+
+files=["res://tools/comfyui/gate_b_4b/review_packets/gate-b-4b-20260803T113856150162Z-602df44f/human_structure_review.template.seed.translation", "res://tools/comfyui/gate_b_4b/review_packets/gate-b-4b-20260803T113856150162Z-602df44f/human_structure_review.template.part.translation", "res://tools/comfyui/gate_b_4b/review_packets/gate-b-4b-20260803T113856150162Z-602df44f/human_structure_review.template.part.translation", "res://tools/comfyui/gate_b_4b/review_packets/gate-b-4b-20260803T113856150162Z-602df44f/human_structure_review.template.part.translation"]
+
+source_file="res://tools/comfyui/gate_b_4b/review_packets/gate-b-4b-20260803T113856150162Z-602df44f/human_structure_review.template.csv"
+dest_files=["res://tools/comfyui/gate_b_4b/review_packets/gate-b-4b-20260803T113856150162Z-602df44f/human_structure_review.template.seed.translation", "res://tools/comfyui/gate_b_4b/review_packets/gate-b-4b-20260803T113856150162Z-602df44f/human_structure_review.template.part.translation", "res://tools/comfyui/gate_b_4b/review_packets/gate-b-4b-20260803T113856150162Z-602df44f/human_structure_review.template.part.translation", "res://tools/comfyui/gate_b_4b/review_packets/gate-b-4b-20260803T113856150162Z-602df44f/human_structure_review.template.part.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

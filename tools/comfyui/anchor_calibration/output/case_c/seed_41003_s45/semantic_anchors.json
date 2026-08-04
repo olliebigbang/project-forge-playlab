@@ -1,0 +1,63 @@
+{
+  "anchor_source": {
+    "GripPrimary": "manual_player_calibration",
+    "GripSecondary": "derived_after_primary_calibration",
+    "StrikePoint": "manual_player_calibration"
+  },
+  "auto_anchor_source": {
+    "GripPrimary": "AnchorResolver:alpha_local_search+profile",
+    "GripSecondary": "alpha_centroid_from_primary",
+    "StrikePoint": "AnchorResolver:tip"
+  },
+  "auto_anchors": {
+    "GripPrimary": [
+      16.0,
+      56.0
+    ],
+    "GripSecondary": [
+      34.0,
+      52.0
+    ],
+    "StrikePoint": [
+      88.0,
+      45.0
+    ]
+  },
+  "auto_confidence": {
+    "GripPrimary": 0.88,
+    "GripSecondary": 0.76,
+    "StrikePoint": 0.58
+  },
+  "behavior_family": "heavy_melee",
+  "case_id": "case_c",
+  "confidence": {
+    "GripPrimary": 0.95,
+    "GripSecondary": 0.9,
+    "StrikePoint": 0.95
+  },
+  "corrected_anchors": {
+    "GripPrimary": [
+      79.0,
+      46.0
+    ],
+    "GripSecondary": [
+      67.0,
+      47.0
+    ],
+    "StrikePoint": [
+      7.0,
+      55.0
+    ]
+  },
+  "grip_profile": "two_hand_rear",
+  "required_anchor_types": [
+    "GripPrimary",
+    "GripSecondary",
+    "StrikePoint"
+  ],
+  "run_id": "seed_41003_s45",
+  "source_sprite": "res://tools/comfyui/output/case_c/seed_41003_s45/processed_sprite.png",
+  "training_transform": {
+    "flip_x": true
+  }
+}

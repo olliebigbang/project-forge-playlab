@@ -1,0 +1,8 @@
+﻿{
+    "action":  "stopped",
+    "gate":  "GATE_B_4A",
+    "pid":  3404,
+    "api_base":  "http://127.0.0.1:8188",
+    "stopped_at_utc":  "2026-08-03T09:41:06.2431886Z",
+    "port_8188_closed":  true
+}

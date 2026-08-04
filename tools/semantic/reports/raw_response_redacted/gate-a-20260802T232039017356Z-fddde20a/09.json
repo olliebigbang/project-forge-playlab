@@ -1,0 +1,80 @@
+{
+  "model": "claude-sonnet-5",
+  "id": "msg_011CdenEEXmBPdL7Y5gmRiY5",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    {
+      "type": "tool_use",
+      "id": "toolu_01Xz6149ka2rCvWy2oopDp6r",
+      "name": "submit_forge_semantic_blueprint",
+      "input": {
+        "identity": {
+          "name_zh": "纸飞机",
+          "name_en": "paper airplane",
+          "category": "toy",
+          "preserved_features": [
+            "folded paper wing structure",
+            "creased triangular nose",
+            "flat thin paper body",
+            "visible fold lines"
+          ],
+          "material_hints": [
+            "paper",
+            "folded creases"
+          ],
+          "silhouette_hints": [
+            "classic dart-style folded paper airplane silhouette"
+          ]
+        },
+        "combat": {
+          "behavior_family": "returning_thrown",
+          "delivery": "whole_object_return",
+          "impact_mode": "whole_body_collision",
+          "effect_type": "other",
+          "drawback": "weapon_absent_while_flying",
+          "cadence_hint": "single_commit"
+        },
+        "visual": {
+          "prompt_en": "A paper airplane, classic folded dart-style silhouette, made of thin creased paper with visible fold lines and a sharp triangular nose, small functional holdable fitting near the body for throwing, one isolated object, side view, complete object visible",
+          "negative_prompt_en": "not a real airplane, not metal aircraft, not a jet, not a sword, not a gun, no engines, no cockpit windows, no realistic aviation textures",
+          "must_preserve": [
+            "folded paper wing structure",
+            "creased triangular nose",
+            "flat thin paper body",
+            "visible fold lines"
+          ],
+          "must_not_replace_with": [
+            "real metal airplane",
+            "jet fighter",
+            "generic weapon",
+            "sword",
+            "gun"
+          ]
+        },
+        "confidence": 0.72
+      },
+      "caller": {
+        "type": "direct"
+      }
+    }
+  ],
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "stop_details": null,
+  "usage": {
+    "input_tokens": 3934,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 565,
+    "output_tokens_details": {
+      "thinking_tokens": 0
+    },
+    "service_tier": "standard",
+    "inference_geo": "global"
+  }
+}

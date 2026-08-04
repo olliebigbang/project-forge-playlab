@@ -1,0 +1,13 @@
+{
+  "contract": "forge-birefnet-spike6-runner-config-v1",
+  "api_base": "http://127.0.0.1:8190",
+  "refuse_if_port_8188_open": true,
+  "timeout_seconds": 120,
+  "poll_interval_seconds": 0.5,
+  "source_freeze_file": "spike5_evidence.freeze.json",
+  "source_freeze_sha256": "57b1de80841d4c5f3da4c07b5cb0dee606a3a3dbfffbbb1ba387d617f59f7af8",
+  "workflow_file": "../../workflows/birefnet_remove_background_forge_api.json",
+  "workflow_sha256": "56d74936b840de2ce2d5e823b6ad1704b9e65dd7ddd8b7a0edbfb5d4d4cf19df",
+  "workflow_audit_status": "APPROVED",
+  "output_root": "../output"
+}

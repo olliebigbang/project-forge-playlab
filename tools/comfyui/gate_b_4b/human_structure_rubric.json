@@ -1,0 +1,43 @@
+{
+  "gate": "Forge Gate B 4B - Offline Alpha Extraction Spike",
+  "review_basis": "Judge the frozen raw.png beside the actual v2 96x96 transparent result. Never infer a part from the prompt alone.",
+  "frozen_raw_identity_baseline": {
+    "passed": 6,
+    "total": 8,
+    "source": "User-approved Gate B 4B contract; this does not alter the pending Gate B 4A review file."
+  },
+  "boolean_fields": [
+    "raw_identity_recognizable",
+    "canonical_identity_recognizable_96x96",
+    "no_person_or_hand",
+    "no_extraneous_text_or_watermark",
+    "intrinsic_identity_markings_present",
+    "subject_severely_missing",
+    "background_ground_or_shadow_residual"
+  ],
+  "part_review_rule": "For each part, record whether it is visible in raw and, when visible in raw, whether v2 preserves the same visible structure. A missing raw part is not an alpha-extraction success or failure.",
+  "text_rule": "Clock-face numerals and hands are intrinsic identity markings, not extraneous text or a watermark.",
+  "cases": {
+    "B01": {
+      "identity": "old vacuum cleaner",
+      "parts": ["vacuum body", "long flexible hose", "nozzle or suction head"],
+      "gate_specific_rule": "Both seeds must preserve the visible hose and nozzle or suction head."
+    },
+    "B02": {
+      "identity": "twin-bell mechanical alarm clock",
+      "parts": ["clock face", "twin bells", "clock body or hands"],
+      "gate_specific_rule": "Twin bells are explicitly expected on seed 4041001; clock-face numerals are intrinsic markings."
+    },
+    "B03": {
+      "identity": "stapler",
+      "parts": ["upper pressing arm", "base", "rear hinge"],
+      "gate_specific_rule": "Seed 4041001 must remain a successful usable alpha delivery."
+    },
+    "B04": {
+      "identity": "green wine goblet",
+      "parts": ["cup bowl", "thin stem", "base"],
+      "gate_specific_rule": "Both seeds must preserve the visible thin stem and base."
+    }
+  },
+  "reviewer_policy": "The final human_structure_review.csv must record an explicit human reviewer. Automated image or prompt inspection cannot be labelled human review."
+}

@@ -1,0 +1,32 @@
+{
+  "postmortem_version": "forge-semantic-evaluator-postmortem-3c-v1",
+  "algorithm": "SHA-256",
+  "source_run_id": "blind-retest-3c-20260803T060715018997Z-4ddf8f31",
+  "source_pending_evidence_sha256": "650c0de04ebe417c822a19d542528908170897047daacefd5e79e589efe74f29",
+  "files": {
+    "tools/semantic/reports/blind_retest_3c_pending/blind-retest-3c-20260803T060715018997Z-4ddf8f31/PENDING_COMPLETE.json": "881ded15dc48059d4e0da2453f226f55868b394c318dd5627167cec560e2fc75",
+    "tools/semantic/reports/blind_retest_3c_pending/blind-retest-3c-20260803T060715018997Z-4ddf8f31/pending_evidence_hashes.json": "650c0de04ebe417c822a19d542528908170897047daacefd5e79e589efe74f29",
+    "tools/semantic/reports/blind_retest_3c_pending/blind-retest-3c-20260803T060715018997Z-4ddf8f31/pending_summary.json": "9870f90ddcca61f62cde6100ef42a597135f18f3a977cacd866aaa4210f21e23",
+    "tools/semantic/reports/blind_retest_3c_pending/blind-retest-3c-20260803T060715018997Z-4ddf8f31/automatic_scores.json": "159cfce0cdf32102fa148d5bc0a2fa72b65e5ad5cc12a76b94ae9bffa5c2e215",
+    "tools/semantic/reports/blind_retest_3c_pending/blind-retest-3c-20260803T060715018997Z-4ddf8f31/review_packet.json": "41da36ef57e68d21ecb7b4e4b6fee53b4e729097d5e724b28a64dcdc5a91bf81",
+    "tools/semantic/reports/blind_retest_3c_real_call_reservation.json": "19cf5c08582c6635ec4239ea52aa7375cd4392f12acf1a4d298c0d06e4525eb2",
+    "tools/semantic/output/blind_retest_3c/blind-retest-3c-20260803T060715018997Z-4ddf8f31/B01/result.json": "5eb529c9f817b5ef8d2061f3068af3fda61c57fa1485174afc60e244bc48a918",
+    "tools/semantic/output/blind_retest_3c/blind-retest-3c-20260803T060715018997Z-4ddf8f31/B02/result.json": "8255ec89850c145ecc707bacac2dafd97d502ce7e021b0593e42ac5cb2cb0ed6",
+    "tools/semantic/output/blind_retest_3c/blind-retest-3c-20260803T060715018997Z-4ddf8f31/B03/result.json": "116f6bae56d34927d088ad544ec40fad7ed17b2a6d3dda20cf4c874e9ce6b4aa",
+    "tools/semantic/output/blind_retest_3c/blind-retest-3c-20260803T060715018997Z-4ddf8f31/B04/result.json": "bcc65d2408980f32cf1c9eab037c67af6e562402c4ea39a3159ebb195cb48983",
+    "tools/semantic/cases/blind_retest_3c_expected.json": "0e75f04e1575383b9e531368db76ba62fe68fc57d61628ca21d78cec3a93cc7f",
+    "tools/semantic/cases/blind_retest_3c_review_rubric.json": "e87023c408901b6946eff31db03782636e079b97b81c20e9c4827d95493c4773",
+    "tools/semantic/cases/blind_retest_3c_approved_config.json": "276c32b5663dfffb11f740b1deb8b8bc3ed4e481e15957e29842dc92fafc01a0",
+    "tools/semantic/bridge/blind_retest_3c_evaluator.py": "92956a121bd9c1c0449760de864c9cd00c48700d5b3283cf5df2bf9136a0c04c",
+    "tools/semantic/bridge/semantic_contract.py": "38d571d86c7360ffe4a861eeaabc34a5563ecc3db30e3de38651501311ace756",
+    "tools/semantic/prompts/semantic_compiler_system_prompt.md": "a2d42b808175988267cf51193f2a4e43b2cc258bc1647887fe5c238d006bed12",
+    "tools/semantic/schema/forge_semantic_blueprint.schema.json": "9f404c7894b32a46c8f319ed1a95724fc3e623fa2fec384ce00375d0facb631d"
+  },
+  "scope": {
+    "external_api_calls_performed_by_postmortem": 0,
+    "comfyui_started": false,
+    "gate_b_started": false,
+    "v2_started": false,
+    "official_3c_files_modified": false
+  }
+}

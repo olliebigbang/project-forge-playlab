@@ -1,0 +1,48 @@
+{
+  "identity": {
+    "name_zh": "铁云团",
+    "name_en": "Iron Cloud Mass",
+    "category": "abstract_fantasy",
+    "preserved_features": [
+      "柔软蓬松的云朵外形",
+      "浓密卷曲的云团轮廓",
+      "坚硬如铁的质感暗示",
+      "表面带有金属光泽的边缘"
+    ],
+    "material_hints": [
+      "cloud-like fluffy exterior",
+      "iron-hard core",
+      "metallic sheen"
+    ],
+    "silhouette_hints": [
+      "round puffy cloud silhouette",
+      "irregular billowing cloud edges"
+    ]
+  },
+  "combat": {
+    "behavior_family": "heavy_melee",
+    "delivery": "whole_object_strike",
+    "impact_mode": "whole_body_collision",
+    "effect_type": "other",
+    "drawback": "slow_movement",
+    "cadence_hint": "slow_heavy"
+  },
+  "visual": {
+    "prompt_en": "Iron Cloud Mass, a puffy round cloud-shaped object with billowing soft cloud silhouette but rendered with a hard metallic iron surface texture, subtle metallic sheen along the cloud's curved edges, small reinforced holdable grip fitted into its underside for Forge adaptation, isolated single object, side view, complete object fully visible",
+    "negative_prompt_en": "not a hammer, not a mace, not a boulder, not a wrecking ball, not a regular soft cotton cloud, no weapon handle replacing the cloud shape, no sword, no gun",
+    "must_preserve": [
+      "柔软蓬松的云朵外形",
+      "浓密卷曲的云团轮廓",
+      "坚硬如铁的质感暗示",
+      "表面带有金属光泽的边缘"
+    ],
+    "must_not_replace_with": [
+      "hammer",
+      "mace",
+      "boulder",
+      "wrecking ball",
+      "ordinary soft cotton cloud"
+    ]
+  },
+  "confidence": 0.75
+}

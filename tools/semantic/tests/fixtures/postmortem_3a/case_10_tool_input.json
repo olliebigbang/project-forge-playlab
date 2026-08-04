@@ -1,0 +1,53 @@
+{
+  "$FUNCTION_NAME2": {
+    "identity": {
+      "name_zh": "旧铜钟",
+      "name_en": "Old Bronze Bell",
+      "category": "instrument",
+      "preserved_features": [
+        "圆钟形主体",
+        "钟顶悬挂钮",
+        "钟口边缘外扩",
+        "古旧氧化铜绿色表面",
+        "厚重钟壁"
+      ],
+      "material_hints": [
+        "oxidized bronze",
+        "aged copper-green patina",
+        "heavy cast metal"
+      ],
+      "silhouette_hints": [
+        "classic temple bell silhouette",
+        "wide flared rim",
+        "domed top with hanging loop"
+      ]
+    },
+    "combat": {
+      "behavior_family": "sustained_ranged",
+      "delivery": "continuous_emission",
+      "impact_mode": "continuous_stream",
+      "effect_type": "sound",
+      "drawback": "overheat",
+      "cadence_hint": "continuous"
+    },
+    "visual": {
+      "prompt_en": "Old Bronze Bell, a heavy aged bronze temple bell with oxidized green patina, domed top with a hanging loop, wide flared rim, thick cast bell walls, side view, small functional sound-emission fixture subtly integrated near the rim, isolated single object, complete object fully visible, detailed metal texture",
+      "negative_prompt_en": "do not depict as a gun, cannon, speaker, sword, umbrella, or any generic weapon; do not add barrels, triggers, or firearm parts; avoid multiple objects, avoid background scenery",
+      "must_preserve": [
+        "圆钟形主体",
+        "钟顶悬挂钮",
+        "钟口边缘外扩",
+        "古旧氧化铜绿色表面",
+        "厚重钟壁"
+      ],
+      "must_not_replace_with": [
+        "gun",
+        "cannon",
+        "speaker system",
+        "sword",
+        "umbrella"
+      ]
+    },
+    "confidence": 0.85
+  }
+}

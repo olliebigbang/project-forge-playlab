@@ -1,0 +1,46 @@
+{
+  "identity": {
+    "name_zh": "平底锅",
+    "name_en": "frying pan",
+    "category": "household_object",
+    "preserved_features": [
+      "flat circular cooking surface",
+      "long straight handle",
+      "shallow raised rim",
+      "riveted handle joint"
+    ],
+    "material_hints": [
+      "cast iron",
+      "metal handle"
+    ],
+    "silhouette_hints": [
+      "round flat pan head with long handle silhouette"
+    ]
+  },
+  "combat": {
+    "behavior_family": "returning_thrown",
+    "delivery": "whole_object_return",
+    "impact_mode": "whole_body_collision",
+    "effect_type": "normal",
+    "drawback": "weapon_absent_while_flying",
+    "cadence_hint": "single_commit"
+  },
+  "visual": {
+    "prompt_en": "A frying pan, cast iron flat circular cooking surface with shallow raised rim, long straight metal handle with riveted joint, small reinforced grip fitting for throwing, isolated single object, side view, complete object fully visible",
+    "negative_prompt_en": "do not depict a gun, sword, shield, umbrella, or any weapon replacing the pan; no multiple objects; no hands; no background scene",
+    "must_preserve": [
+      "flat circular cooking surface",
+      "long straight handle",
+      "shallow raised rim",
+      "riveted handle joint"
+    ],
+    "must_not_replace_with": [
+      "sword",
+      "shield",
+      "gun",
+      "umbrella",
+      "generic melee weapon"
+    ]
+  },
+  "confidence": 0.9
+}

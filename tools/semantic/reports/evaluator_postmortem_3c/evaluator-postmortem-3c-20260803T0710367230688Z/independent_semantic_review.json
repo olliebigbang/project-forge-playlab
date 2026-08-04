@@ -1,0 +1,198 @@
+{
+  "record_type": "independent_semantic_review",
+  "review_version": "forge-semantic-evaluator-postmortem-3c-review-v1",
+  "source_run_id": "blind-retest-3c-20260803T060715018997Z-4ddf8f31",
+  "review_authority": "user_explicit_contract_semantics_2026-08-03",
+  "review_method": "offline_human_semantic_equivalence_review",
+  "second_model_scoring_used": false,
+  "official_automatic_verdict_unchanged": true,
+  "official_automatic_verdict_superseded": false,
+  "runtime_object_mapping_added": false,
+  "identity_policy": {
+    "canonical_rule": "canonical_name names the base object identity",
+    "qualifier_rule": "size, colour, age, material, silhouette and combat/effect qualifiers need not be repeated in canonical_name when they are faithfully preserved in their typed presentation or visual fields",
+    "combat_effects_forbidden_in_canonical": true
+  },
+  "cases": {
+    "B01": {
+      "actual_canonical_name_zh": "旧吸尘器",
+      "actual_canonical_name_en": "old vacuum cleaner",
+      "identity_correct": true,
+      "actual_behavior_family": "sustained_ranged",
+      "behavior_correct": true,
+      "all_required_identity_parts_are_structural": true,
+      "structure_quality": 2,
+      "confirmed_structure_count": 3,
+      "structure_reviews": [
+        {
+          "concept_id": "vacuum_body",
+          "expected_concept": "vacuum body / 吸尘器主体",
+          "actual_required_identity_part_quote": "main canister body",
+          "same_structure_concept": true,
+          "structural_not_material_or_decoration": true
+        },
+        {
+          "concept_id": "long_hose",
+          "expected_concept": "long hose / 长软管",
+          "actual_required_identity_part_quote": "long flexible hose",
+          "same_structure_concept": true,
+          "structural_not_material_or_decoration": true
+        },
+        {
+          "concept_id": "nozzle_or_suction_head",
+          "expected_concept": "nozzle or suction head / 吸嘴或吸头",
+          "actual_required_identity_part_quote": "nozzle end",
+          "same_structure_concept": true,
+          "structural_not_material_or_decoration": true
+        }
+      ]
+    },
+    "B02": {
+      "actual_canonical_name_zh": "双铃机械闹钟",
+      "actual_canonical_name_en": "double bell mechanical alarm clock",
+      "identity_correct": true,
+      "actual_behavior_family": "returning_thrown",
+      "behavior_correct": true,
+      "all_required_identity_parts_are_structural": true,
+      "structure_quality": 2,
+      "confirmed_structure_count": 3,
+      "structure_reviews": [
+        {
+          "concept_id": "clock_face",
+          "expected_concept": "clock face / 钟面",
+          "actual_required_identity_part_quote": "clock face with hands",
+          "same_structure_concept": true,
+          "structural_not_material_or_decoration": true
+        },
+        {
+          "concept_id": "twin_bells",
+          "expected_concept": "twin bells / 双铃",
+          "actual_required_identity_part_quote": "twin bells on top",
+          "same_structure_concept": true,
+          "structural_not_material_or_decoration": true
+        },
+        {
+          "concept_id": "clock_hands_or_body",
+          "expected_concept": "hands or clock body / 指针或钟体",
+          "actual_required_identity_part_quote": "round clock body",
+          "same_structure_concept": true,
+          "matched_alternative": "clock body / 钟体",
+          "structural_not_material_or_decoration": true
+        }
+      ]
+    },
+    "B03": {
+      "actual_canonical_name_zh": "订书机",
+      "actual_canonical_name_en": "stapler",
+      "actual_display_name_zh": "巨型夹击订书机",
+      "actual_display_name_en": "Giant Clamping Stapler",
+      "actual_visual_size_evidence": "A giant oversized stapler",
+      "identity_correct": true,
+      "official_automatic_identity_correct": false,
+      "actual_behavior_family": "heavy_melee",
+      "behavior_correct": true,
+      "all_required_identity_parts_are_structural": true,
+      "structure_quality": 2,
+      "confirmed_structure_count": 2,
+      "structure_reviews": [
+        {
+          "concept_id": "stapler_upper_pressing_arm",
+          "expected_concept": "upper pressing arm / 上压臂",
+          "actual_required_identity_part_quote": "hinged top arm",
+          "same_structure_concept": true,
+          "structural_not_material_or_decoration": true
+        },
+        {
+          "concept_id": "stapler_base",
+          "expected_concept": "base / 底座",
+          "actual_required_identity_part_quote": "base plate",
+          "same_structure_concept": true,
+          "structural_not_material_or_decoration": true
+        },
+        {
+          "concept_id": "stapler_rear_hinge",
+          "expected_concept": "rear hinge / 后部铰链",
+          "actual_required_identity_part_quote": null,
+          "same_structure_concept": false,
+          "structural_not_material_or_decoration": true,
+          "reason": "The rear hinge was not independently and explicitly expressed."
+        }
+      ],
+      "identity_failure_root_cause": {
+        "classification": "evaluator_false_negative",
+        "owner": "frozen_evaluator_expected_identity_policy",
+        "model_semantic_error": false,
+        "schema_error": false,
+        "parser_error": false,
+        "reason": "The frozen B03 alias list required giant/oversized/large inside canonical_name, while the v1.1 field separation permits size to be preserved in display or visual fields. The model retained giant in display_name and visual.prompt_en."
+      }
+    },
+    "B04": {
+      "actual_canonical_name_zh": "高脚杯",
+      "actual_canonical_name_en": "goblet",
+      "identity_correct": true,
+      "actual_behavior_family": "sustained_ranged",
+      "behavior_correct": true,
+      "all_required_identity_parts_are_structural": true,
+      "structure_quality": 2,
+      "confirmed_structure_count": 3,
+      "structure_reviews": [
+        {
+          "concept_id": "goblet_cup_bowl",
+          "expected_concept": "cup bowl / 杯身",
+          "actual_required_identity_part_quote": "cup bowl",
+          "same_structure_concept": true,
+          "structural_not_material_or_decoration": true
+        },
+        {
+          "concept_id": "goblet_narrow_stem",
+          "expected_concept": "narrow stem / 细长杯脚",
+          "actual_required_identity_part_quote": "stem",
+          "same_structure_concept": true,
+          "structural_not_material_or_decoration": true,
+          "silhouette_evidence": "wide bowl narrowing to slender stem widening to round base",
+          "reason": "Stem names the identity-bearing goblet part; slender is a silhouette modifier and need not be repeated in required_identity_parts."
+        },
+        {
+          "concept_id": "goblet_base",
+          "expected_concept": "base / 底座",
+          "actual_required_identity_part_quote": "base foot",
+          "same_structure_concept": true,
+          "structural_not_material_or_decoration": true
+        }
+      ],
+      "prior_manual_interpretation_root_cause": {
+        "classification": "manual_review_too_strict",
+        "owner": "prior_proposed_manual_interpretation",
+        "model_semantic_error": false,
+        "official_automatic_evaluator_error": false
+      }
+    }
+  },
+  "independent_metrics": {
+    "identity_correct_count": 4,
+    "behavior_correct_count": 4,
+    "cases_with_at_least_two_confirmed_structures": 4,
+    "structure_quality_2_count": 4,
+    "confirmed_structure_concept_count": 11,
+    "reviewed_structure_concept_count": 12,
+    "fixed_weapon_substitution_count": 0
+  },
+  "responsibility_summary": {
+    "model_error_count_for_disputed_findings": 0,
+    "evaluator_policy_error_count": 1,
+    "prior_manual_interpretation_error_count": 1
+  },
+  "gate_b_recommendation": {
+    "criteria_confirmed": true,
+    "recommend_semantic_layer_enter_gate_b": true,
+    "gate_b_executed": false,
+    "requires_separate_user_approval": true
+  },
+  "scope": {
+    "external_api_calls_performed": 0,
+    "comfyui_started": false,
+    "official_3c_finalizer_executed": false,
+    "official_3c_artifacts_modified": false
+  }
+}

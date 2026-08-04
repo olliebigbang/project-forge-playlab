@@ -1,0 +1,4 @@
+﻿case_id,semantic_seconds,semantic_input_tokens,semantic_output_tokens,flux_queue_seconds,flux_generation_seconds,flux_peak_vram_mb,flux_peak_ram_mb,birefnet_seconds,sprite_postprocess_seconds,identity_confirmation_seconds,anchor_confirmation_seconds,total_forge_seconds,training_load_seconds
+L01,8.194,4707,702,0.004,8.067,11595.0,25501.5,2.57,0.101,1.926,13.237,19.114,0.012
+L02,8.801,4712,678,0.028,6.644,11708.0,28083.9,2.628,0.079,13.989,18.911,18.346,0.012
+L03,7.567,4709,666,0.003,6.284,11724.0,28194.9,2.12,0.059,7.989,5.035,16.277,0.012

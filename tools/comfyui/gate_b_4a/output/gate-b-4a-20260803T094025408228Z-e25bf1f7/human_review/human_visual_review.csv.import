@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://dcnu2jqn653nj"
+
+[deps]
+
+files=["res://tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/human_visual_review.seed.translation", "res://tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/human_visual_review.alpha.translation", "res://tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/human_visual_review.generation.translation", "res://tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/human_visual_review.postprocess.translation"]
+
+source_file="res://tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/human_visual_review.csv"
+dest_files=["res://tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/human_visual_review.seed.translation", "res://tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/human_visual_review.alpha.translation", "res://tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/human_visual_review.generation.translation", "res://tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/human_review/human_visual_review.postprocess.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

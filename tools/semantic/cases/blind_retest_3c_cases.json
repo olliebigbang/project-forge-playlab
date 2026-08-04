@@ -1,0 +1,22 @@
+{
+  "contract_version": "forge-semantic-blind-retest-3c-cases-v1",
+  "case_order": ["B01", "B02", "B03", "B04"],
+  "cases": [
+    {
+      "case_id": "B01",
+      "input_text": "一台带长软管的旧吸尘器，会持续喷射灼热沙子。"
+    },
+    {
+      "case_id": "B02",
+      "input_text": "一个双铃机械闹钟，扔出去转一圈后会飞回手中。"
+    },
+    {
+      "case_id": "B03",
+      "input_text": "一个巨大订书机，我要拿它在近距离夹击敌人。"
+    },
+    {
+      "case_id": "B04",
+      "input_text": "一个会从杯口持续喷出酸液的绿色高脚杯。"
+    }
+  ]
+}

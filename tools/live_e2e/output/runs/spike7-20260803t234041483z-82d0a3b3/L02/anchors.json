@@ -1,0 +1,63 @@
+{
+  "anchor_source": {
+    "GripPrimary": "player_confirmed_live_e2e",
+    "SpinPivot": "player_confirmed_live_e2e",
+    "StrikePoint": "AnchorResolver:tip"
+  },
+  "auto_anchor_source": {
+    "GripPrimary": "AnchorResolver:alpha_local_search+profile",
+    "SpinPivot": "alpha_centroid",
+    "StrikePoint": "AnchorResolver:tip"
+  },
+  "auto_anchors": {
+    "GripPrimary": [
+      48.0,
+      48.0
+    ],
+    "SpinPivot": [
+      47.6,
+      48.29
+    ],
+    "StrikePoint": [
+      80.0,
+      20.0
+    ]
+  },
+  "auto_confidence": {
+    "GripPrimary": 0.88,
+    "SpinPivot": 0.96,
+    "StrikePoint": 0.58
+  },
+  "behavior_family": "returning_thrown",
+  "case_id": "L02",
+  "confidence": {
+    "GripPrimary": 0.95,
+    "SpinPivot": 0.95,
+    "StrikePoint": 0.58
+  },
+  "corrected_anchors": {
+    "GripPrimary": [
+      34.96,
+      51.2
+    ],
+    "SpinPivot": [
+      79.7,
+      19.82
+    ],
+    "StrikePoint": [
+      80.0,
+      20.0
+    ]
+  },
+  "grip_profile": "throwable_center",
+  "required_anchor_types": [
+    "GripPrimary",
+    "SpinPivot",
+    "StrikePoint"
+  ],
+  "run_id": "spike7-20260803t234041483z-82d0a3b3",
+  "source_sprite": "processed_sprite.png",
+  "training_transform": {
+    "flip_x": false
+  }
+}

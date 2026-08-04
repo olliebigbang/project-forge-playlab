@@ -1,0 +1,85 @@
+{
+  "contract_version": "forge-semantic-gate-a-cases-v1",
+  "cases": [
+    {
+      "case_id": "01",
+      "input_text": "会飞出去撞敌人再返回的老木桌"
+    },
+    {
+      "case_id": "02",
+      "input_text": "会连续发射螺丝的木椅"
+    },
+    {
+      "case_id": "03",
+      "input_text": "喷射高温蒸汽的旧茶壶"
+    },
+    {
+      "case_id": "04",
+      "input_text": "一只会吸血的巨大鸡腿，我要拿着它近身砸敌人"
+    },
+    {
+      "case_id": "05",
+      "input_text": "一把扔出去后会带着电流飞回来的机械雨伞"
+    },
+    {
+      "case_id": "06",
+      "input_text": "一个会持续喷出冰雾的破旧衣柜"
+    },
+    {
+      "case_id": "07",
+      "input_text": "一根会咬人的巨型法棍，我想拿它在近距离砸敌人"
+    },
+    {
+      "case_id": "08",
+      "input_text": "一个会连续发射钉子的红色工具箱"
+    },
+    {
+      "case_id": "09",
+      "input_text": "一架飞出去会分裂，返回时重新合拢的纸飞机"
+    },
+    {
+      "case_id": "10",
+      "input_text": "一口会不断发出冲击音波的旧铜钟"
+    },
+    {
+      "case_id": "11",
+      "input_text": "一把整件飞出去绕一圈再回来的折叠木梯"
+    },
+    {
+      "case_id": "12",
+      "input_text": "一只会连续吐出毒泡泡的橡皮鸭"
+    },
+    {
+      "case_id": "13",
+      "input_text": "一柄会从枪尖持续喷出冰雾的古老长枪"
+    },
+    {
+      "case_id": "14",
+      "input_text": "一口扔出去砸中敌人后会飞回手里的平底锅"
+    },
+    {
+      "case_id": "15",
+      "input_text": "一台会连续发出致盲闪光的老式照相机"
+    },
+    {
+      "case_id": "16",
+      "input_text": "一把用琴弓像锯子一样近距离割人的旧小提琴"
+    },
+    {
+      "case_id": "17",
+      "input_text": "一个红色的东西，要非常快"
+    },
+    {
+      "case_id": "18",
+      "input_text": "一件一直拿在手里持续喷火，同时整件飞出去撞人再回来"
+    },
+    {
+      "case_id": "19",
+      "input_text": "a wooden toolbox，会连续发射生锈的钉子"
+    },
+    {
+      "case_id": "20",
+      "input_text": "一团看起来像云但摸起来像铁的东西，我想拿它砸人"
+    }
+  ]
+}

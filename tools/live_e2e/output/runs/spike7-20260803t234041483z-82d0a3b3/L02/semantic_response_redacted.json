@@ -1,0 +1,67 @@
+{
+  "tool_name": "submit_forge_semantic_blueprint",
+  "tool_input": {
+    "identity": {
+      "canonical_name_zh": "旅行箱",
+      "canonical_name_en": "suitcase",
+      "display_name_zh": "回旋红色旅行箱",
+      "display_name_en": "Returning Red Suitcase",
+      "category": "tool",
+      "required_identity_parts": [
+        "rectangular case body",
+        "carrying handle",
+        "hinged edges",
+        "corner reinforcements"
+      ],
+      "material_hints": [
+        "hard shell plastic",
+        "leather trim"
+      ],
+      "silhouette_hints": [
+        "boxy rectangular travel case outline",
+        "slightly rounded corners"
+      ],
+      "optional_decorations": [
+        "travel stickers",
+        "brass corner studs",
+        "luggage tag"
+      ]
+    },
+    "combat": {
+      "behavior_family": "returning_thrown",
+      "delivery": "whole_object_return",
+      "impact_mode": "whole_body_collision",
+      "effect_type": "normal",
+      "drawback": "weapon_absent_while_flying",
+      "cadence_hint": "single_commit"
+    },
+    "visual": {
+      "prompt_en": "A red hard-shell suitcase, rectangular boxy body with slightly rounded corners, sturdy carrying handle on top, visible hinged edges and reinforced metal corners, smooth glossy red plastic shell with leather trim accents, small functional grip fixture for throwing, isolated single object, side view, complete object fully visible, clean studio background",
+      "negative_prompt_en": "not a boomerang, not a shield, not a discus, not a frisbee, not a weapon blade, no text overlay, no multiple objects, no background clutter",
+      "must_preserve": [
+        "rectangular case body",
+        "carrying handle",
+        "hinged edges",
+        "corner reinforcements"
+      ],
+      "must_not_replace_with": [
+        "boomerang",
+        "shield",
+        "discus",
+        "frisbee",
+        "generic sword"
+      ]
+    },
+    "confidence": 0.9
+  },
+  "request_id": "msg_011Cdh1QHwhfJTGoosDZfwqR",
+  "model_id": "claude-sonnet-5",
+  "usage": {
+    "input_tokens": 4712,
+    "output_tokens": 678,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0
+  },
+  "stop_reason": "tool_use",
+  "raw_response_redacted": "{\"model\":\"claude-sonnet-5\",\"id\":\"msg_011Cdh1QHwhfJTGoosDZfwqR\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_013jxmmTz4efeqagXo4KJSV2\",\"name\":\"submit_forge_semantic_blueprint\",\"input\":{\"identity\":{\"canonical_name_zh\":\"旅行箱\",\"canonical_name_en\":\"suitcase\",\"display_name_zh\":\"回旋红色旅行箱\",\"display_name_en\":\"Returning Red Suitcase\",\"category\":\"tool\",\"required_identity_parts\":[\"rectangular case body\",\"carrying handle\",\"hinged edges\",\"corner reinforcements\"],\"material_hints\":[\"hard shell plastic\",\"leather trim\"],\"silhouette_hints\":[\"boxy rectangular travel case outline\",\"slightly rounded corners\"],\"optional_decorations\":[\"travel stickers\",\"brass corner studs\",\"luggage tag\"]},\"combat\":{\"behavior_family\":\"returning_thrown\",\"delivery\":\"whole_object_return\",\"impact_mode\":\"whole_body_collision\",\"effect_type\":\"normal\",\"drawback\":\"weapon_absent_while_flying\",\"cadence_hint\":\"single_commit\"},\"visual\":{\"prompt_en\":\"A red hard-shell suitcase, rectangular boxy body with slightly rounded corners, sturdy carrying handle on top, visible hinged edges and reinforced metal corners, smooth glossy red plastic shell with leather trim accents, small functional grip fixture for throwing, isolated single object, side view, complete object fully visible, clean studio background\",\"negative_prompt_en\":\"not a boomerang, not a shield, not a discus, not a frisbee, not a weapon blade, no text overlay, no multiple objects, no background clutter\",\"must_preserve\":[\"rectangular case body\",\"carrying handle\",\"hinged edges\",\"corner reinforcements\"],\"must_not_replace_with\":[\"boomerang\",\"shield\",\"discus\",\"frisbee\",\"generic sword\"]},\"confidence\":0.9},\"caller\":{\"type\":\"direct\"}}],\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":4712,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":678,\"output_tokens_details\":{\"thinking_tokens\":0},\"service_tier\":\"standard\",\"inference_geo\":\"global\"}}"
+}

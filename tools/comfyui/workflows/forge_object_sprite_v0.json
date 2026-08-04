@@ -1,0 +1,86 @@
+{
+  "_forge": {
+    "version": 0,
+    "purpose": "Generic isolated object sprite source generation",
+    "inputs": [
+      "positive_prompt",
+      "negative_prompt",
+      "optional_sketch_png",
+      "seed",
+      "control_strength",
+      "output_subfolder"
+    ],
+    "control_note": "No compatible Scribble, Lineart, or Canny ControlNet was present during Spike 0. Rough sketches use core-node img2img and are labelled as such.",
+    "bindings": {
+      "checkpoint": ["1", "inputs", "ckpt_name"],
+      "positive_prompt": ["4", "inputs", "text"],
+      "negative_prompt": ["5", "inputs", "text"],
+      "optional_sketch_png": ["2", "inputs", "image"],
+      "seed": ["6", "inputs", "seed"],
+      "denoise": ["6", "inputs", "denoise"],
+      "output_subfolder": ["8", "inputs", "filename_prefix"]
+    }
+  },
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "RealVisXL_V5.0_fp16.safetensors"
+    }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "forge_placeholder.png"
+    }
+  },
+  "3": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": ["2", 0],
+      "vae": ["1", 2]
+    }
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["1", 1],
+      "text": "one isolated fantasy game prop"
+    }
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["1", 1],
+      "text": "portrait, human, text"
+    }
+  },
+  "6": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": ["1", 0],
+      "positive": ["4", 0],
+      "negative": ["5", 0],
+      "latent_image": ["3", 0],
+      "seed": 1,
+      "steps": 26,
+      "cfg": 6.5,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 1.0
+    }
+  },
+  "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["6", 0],
+      "vae": ["1", 2]
+    }
+  },
+  "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["7", 0],
+      "filename_prefix": "ForgeSpike/forge_object"
+    }
+  }
+}

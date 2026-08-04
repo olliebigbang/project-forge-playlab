@@ -1,0 +1,17 @@
+{
+  "algorithm": "SHA-256",
+  "gate_a_source_run_id": "gate-a-20260802T232039017356Z-fddde20a",
+  "gate_a_source_evidence_sha256": "94a602bdf2d0571cf294287f3d188e830fe7fa968b148e8ca67af3387cd0b347",
+  "limited_retest_3b_run_id": "limited-retest-3b-20260803T040934865715Z-79738d1b",
+  "limited_retest_3b_evidence_sha256": "5b1900083853005b3ac8c1059f22a865d05c382bd5489c0621769ad6aff8fa28",
+  "files": {
+    "tools/semantic/cases/limited_retest_3b_protected_hashes.json": "48f574664a1a08078c9205bbfe7b0112f32673a653c278bb6ba9df0d4863b8f3",
+    "tools/semantic/cases/limited_retest_3b_approved_config.json": "ba32d21e0705cf3853376cfab99b1ad83c4b26102f72796f7726f335f332d10d",
+    "tools/semantic/reports/limited_retest_3b/limited-retest-3b-20260803T040934865715Z-79738d1b/COMPLETE.json": "5ee00d32fa75e688176c6daed8e8e00289a565d12ed06ac001c8810c68eb67b1",
+    "tools/semantic/reports/limited_retest_3b/limited-retest-3b-20260803T040934865715Z-79738d1b/evidence_hashes.json": "5b1900083853005b3ac8c1059f22a865d05c382bd5489c0621769ad6aff8fa28",
+    "tools/semantic/reports/limited_retest_3b_real_call_reservation.json": "9ae93429e0e323b67b11bbe87aa90a237362e6033495096f263d970a9578ab37",
+    "tools/semantic/reports/LIMITED_RETEST_3B_REPORT.md": "a91d19528976f1d59b58b8e0354b39d263323dafdaf3a015e2a798783a15367d",
+    "tools/semantic/reports/limited_retest_3b_results.csv": "bd3b114321c04eda403020983670f6f85c28b193ca308950e0ef9179ecac238b",
+    "tools/semantic/reports/limited_retest_3b_summary.json": "78492cdf32ed850fe7bebe2bd89b0a88269b5e48e309ca939da5510f241c9553"
+  }
+}

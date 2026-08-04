@@ -1,0 +1,88 @@
+{
+  "model": "claude-sonnet-5",
+  "id": "msg_011CdfKAUhJnKZP1uxq7T8iu",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    {
+      "type": "tool_use",
+      "id": "toolu_01EHxXJkpvBkyaPUNGzHJAqb",
+      "name": "submit_forge_semantic_blueprint",
+      "input": {
+        "identity": {
+          "canonical_name_zh": "旧吸尘器",
+          "canonical_name_en": "old vacuum cleaner",
+          "display_name_zh": "喷灼热沙的旧吸尘器",
+          "display_name_en": "Old Vacuum Cleaner Spewing Scorching Sand",
+          "category": "household_object",
+          "required_identity_parts": [
+            "long flexible hose",
+            "main canister body",
+            "nozzle end",
+            "wheels or base"
+          ],
+          "material_hints": [
+            "worn metal",
+            "scuffed plastic",
+            "rubber hose"
+          ],
+          "silhouette_hints": [
+            "bulky rounded canister with a long curling hose extending from the front"
+          ],
+          "optional_decorations": [
+            "rust patches",
+            "scorch marks",
+            "dented casing"
+          ]
+        },
+        "combat": {
+          "behavior_family": "sustained_ranged",
+          "delivery": "continuous_emission",
+          "impact_mode": "continuous_stream",
+          "effect_type": "fire",
+          "drawback": "overheat",
+          "cadence_hint": "continuous"
+        },
+        "visual": {
+          "prompt_en": "An old vacuum cleaner with a bulky rounded canister body and a long flexible hose, worn metal and scuffed plastic casing, rubber hose with rust patches and scorch marks, a small reinforced nozzle fixture emitting a stream of scorching hot sand, isolated object, side view, complete object fully visible",
+          "negative_prompt_en": "not a gun, not a flamethrower weapon, not a rifle, no human figure, no background scene, not a hose without a vacuum body",
+          "must_preserve": [
+            "long flexible hose",
+            "main canister body",
+            "nozzle end",
+            "wheels or base"
+          ],
+          "must_not_replace_with": [
+            "gun",
+            "flamethrower weapon",
+            "rifle",
+            "generic hose without vacuum body",
+            "sword"
+          ]
+        },
+        "confidence": 0.87
+      },
+      "caller": {
+        "type": "direct"
+      }
+    }
+  ],
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "stop_details": null,
+  "usage": {
+    "input_tokens": 4714,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 684,
+    "output_tokens_details": {
+      "thinking_tokens": 0
+    },
+    "service_tier": "standard",
+    "inference_geo": "global"
+  }
+}

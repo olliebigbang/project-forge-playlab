@@ -1,0 +1,50 @@
+{
+  "identity": {
+    "name_zh": "破旧衣柜",
+    "name_en": "battered old wardrobe",
+    "category": "furniture",
+    "preserved_features": [
+      "tall rectangular cabinet body",
+      "double wooden doors",
+      "worn and weathered surface",
+      "aged metal hinges and handles",
+      "wooden panel construction"
+    ],
+    "material_hints": [
+      "weathered wood",
+      "old aged timber",
+      "rusted metal fittings"
+    ],
+    "silhouette_hints": [
+      "tall standing rectangular wardrobe silhouette",
+      "double door front with vertical seam"
+    ]
+  },
+  "combat": {
+    "behavior_family": "sustained_ranged",
+    "delivery": "continuous_emission",
+    "impact_mode": "continuous_stream",
+    "effect_type": "ice",
+    "drawback": "overheat",
+    "cadence_hint": "continuous"
+  },
+  "visual": {
+    "prompt_en": "battered old wardrobe, tall rectangular wooden cabinet body with double doors, worn and weathered wood surface, aged rusted metal hinges and handles, a small functional fog-emitting vent fixture mounted on the front near the base, isolated single object, side view, complete object fully visible",
+    "negative_prompt_en": "not a gun, not a Gatling gun, not a sword, not a generic weapon, not a machine, no human figures, no background scene",
+    "must_preserve": [
+      "tall rectangular cabinet body",
+      "double wooden doors",
+      "worn weathered surface",
+      "aged metal hinges and handles",
+      "wooden panel construction"
+    ],
+    "must_not_replace_with": [
+      "gun",
+      "Gatling gun",
+      "sword",
+      "generic weapon",
+      "ice cannon machine"
+    ]
+  },
+  "confidence": 0.86
+}

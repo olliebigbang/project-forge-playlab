@@ -1,0 +1,9 @@
+﻿case_id,seed,raw_identity_recognizable,canonical_identity_recognizable_96x96,no_person_or_hand,no_extraneous_text_or_watermark,intrinsic_identity_markings_present,subject_severely_missing,background_ground_or_shadow_residual,part_1,part_1_visible_raw,part_1_preserved_v2,part_2,part_2_visible_raw,part_2_preserved_v2,part_3,part_3_visible_raw,part_3_preserved_v2,required_parts_visible_raw_count,required_parts_preserved_v2_count,reviewer,notes
+B01,4041001,,,,,,,,vacuum body,,,long flexible hose,,,nozzle or suction head,,,,,,
+B01,4041002,,,,,,,,vacuum body,,,long flexible hose,,,nozzle or suction head,,,,,,
+B02,4041001,,,,,,,,clock face,,,twin bells,,,clock body or hands,,,,,,
+B02,4041002,,,,,,,,clock face,,,twin bells,,,clock body or hands,,,,,,
+B03,4041001,,,,,,,,upper pressing arm,,,base,,,rear hinge,,,,,,
+B03,4041002,,,,,,,,upper pressing arm,,,base,,,rear hinge,,,,,,
+B04,4041001,,,,,,,,cup bowl,,,thin stem,,,base,,,,,,
+B04,4041002,,,,,,,,cup bowl,,,thin stem,,,base,,,,,,

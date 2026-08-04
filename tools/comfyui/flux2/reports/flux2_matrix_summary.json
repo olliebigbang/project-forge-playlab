@@ -1,0 +1,114 @@
+{
+  "alpha_status": "NEEDS WORK",
+  "contract": "forge-flux2-spike-5-evidence-summary-v1",
+  "formal_classification": "MODEL PASS / ALPHA NEEDS WORK",
+  "formal_gates": {
+    "background_residual": {
+      "actual": 6,
+      "maximum": 0,
+      "passed": false
+    },
+    "complete_not_cropped": {
+      "actual": 8,
+      "passed": true,
+      "required": 7
+    },
+    "correct_raw_identity": {
+      "actual": 8,
+      "passed": true,
+      "required": 7
+    },
+    "fixed_weapon_substitution": {
+      "actual": 0,
+      "maximum": 0,
+      "passed": true
+    },
+    "formal_matrix_retry_count": {
+      "actual": 0,
+      "maximum": 0,
+      "passed": true
+    },
+    "generation_completed": {
+      "actual": 8,
+      "passed": true,
+      "required": 8
+    },
+    "identity_recognizable_96": {
+      "actual": 6,
+      "passed": true,
+      "required": 6
+    },
+    "no_person_or_hand": {
+      "actual": 8,
+      "passed": true,
+      "required": 8
+    },
+    "required_parts_visible": {
+      "actual": 24,
+      "passed": true,
+      "required": 21,
+      "total": 24
+    },
+    "serious_structure_loss_96": {
+      "actual": 0,
+      "maximum": 0,
+      "passed": true
+    },
+    "shadow_residual": {
+      "actual": 4,
+      "maximum": 0,
+      "passed": false
+    },
+    "single_complete_object": {
+      "actual": 8,
+      "passed": true,
+      "required": 8
+    },
+    "sprite_delivered": {
+      "actual": 6,
+      "passed": false,
+      "required": 8
+    }
+  },
+  "frozen_blueprints_sha256": "4e97731a8b600ec2e6733c2a6ad5a0eabf5fd9f5b6c439046a2e905c9797b4bb",
+  "matrix_output_group": "flux2_matrix_20260803t130451548924z",
+  "matrix_run_id": "flux2-matrix-20260803T130451548924Z",
+  "model_identity_status": "PASS",
+  "performance": {
+    "generation_seconds_max": 2.527,
+    "generation_seconds_mean": 1.609,
+    "generation_seconds_median": 1.536,
+    "generation_seconds_min": 1.007,
+    "peak_ram_mb_max": 14189.6,
+    "peak_vram_mb_max": 11641.0,
+    "postprocess_seconds_mean": 0.044,
+    "total_wall_seconds_mean": 1.675,
+    "total_wall_seconds_total": 13.401
+  },
+  "realvisxl_4a_frozen_baseline": {
+    "evidence_hashes_unchanged": true,
+    "formal_status": "NEEDS WORK",
+    "raw_identity": {
+      "passed": 6,
+      "total": 8
+    },
+    "v1_alpha_delivery": {
+      "passed": 1,
+      "total": 8
+    }
+  },
+  "review_status": "COMPLETE",
+  "review_warning": "Human fields were loaded from the independent review CSV and were not inferred from prompts.",
+  "source_completed_at": "2026-08-03T13:05:05.037791+00:00",
+  "technical_results": {
+    "alpha_failed_count": 2,
+    "alpha_failure_reasons": {
+      "OBJECT_TOUCHES_RAW_EDGE": 2
+    },
+    "attempted_generation_count": 8,
+    "automatic_retry_count": 0,
+    "planned_generation_count": 8,
+    "raw_delivered_count": 8,
+    "sprite_delivered_count": 6
+  }
+}

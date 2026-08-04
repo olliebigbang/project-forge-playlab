@@ -1,0 +1,17 @@
+{
+  "postmortem_id": "evaluator-postmortem-3c-20260803T0710367230688Z",
+  "source_run_id": "blind-retest-3c-20260803T060715018997Z-4ddf8f31",
+  "status": "complete",
+  "result": "INDEPENDENT_SEMANTIC_REVIEW_CONFIRMS_GATE_B_RECOMMENDATION",
+  "official_automatic_verdict_unchanged": true,
+  "official_automatic_status": "NEEDS WORK",
+  "independent_identity_correct_count": 4,
+  "independent_behavior_correct_count": 4,
+  "independent_structure_quality_2_count": 4,
+  "evidence_sha256": "c8f4ab1d1fafabbb8e83410a59722bfb4d532b17e1ec7fd93e7f4502f7152239",
+  "external_api_calls_performed": 0,
+  "comfyui_started": false,
+  "gate_b_executed": false,
+  "v2_started": false,
+  "next_step": "STOP_AND_WAIT_FOR_SEPARATE_GATE_B_APPROVAL"
+}

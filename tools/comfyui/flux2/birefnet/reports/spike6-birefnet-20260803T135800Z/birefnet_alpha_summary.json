@@ -1,0 +1,330 @@
+{
+  "alpha_status": "PASS",
+  "automated_tests": {
+    "errors": 0,
+    "failures": 0,
+    "status": "PASS",
+    "tests_run": 31
+  },
+  "contract": "forge-birefnet-spike6-alpha-summary-v1",
+  "default_player_flow_promotion": "NOT_PROMOTED_PENDING_LIVE_END_TO_END_APPROVAL",
+  "exception_classification": {
+    "birefnet_structure_loss": false,
+    "case_id": "B01",
+    "effect": "Rejected as usable under the no-magenta rule; all three identity structures remain preserved.",
+    "issue": "CHROMA_AMBIGUOUS_EMISSION_PLUME",
+    "owner": "SOURCE_FOREGROUND_BACKGROUND_FUSION",
+    "postprocess_structure_loss": false,
+    "seed": "4041001"
+  },
+  "formal_classification": "MODEL PASS / ALPHA PASS",
+  "formal_gates": {
+    "automatic_retry": {
+      "actual": 0,
+      "maximum": 0,
+      "passed": true
+    },
+    "b01_both_hose_and_nozzle": {
+      "actual": 2,
+      "passed": true,
+      "required": 2
+    },
+    "b03_both_subjects_complete": {
+      "actual": 2,
+      "passed": true,
+      "required": 2
+    },
+    "b04_both_stem_and_base": {
+      "actual": 2,
+      "passed": true,
+      "required": 2
+    },
+    "background_residual": {
+      "actual": 0,
+      "maximum": 0,
+      "passed": true
+    },
+    "case_specific_correction": {
+      "actual": 0,
+      "maximum": 0,
+      "passed": true
+    },
+    "identity_recognizable_96": {
+      "actual": 8,
+      "passed": true,
+      "required": 7
+    },
+    "rgba_and_mask": {
+      "actual": 8,
+      "passed": true,
+      "required": 8
+    },
+    "serious_structure_loss": {
+      "actual": 0,
+      "maximum": 0,
+      "passed": true
+    },
+    "shadow_residual": {
+      "actual": 0,
+      "maximum": 0,
+      "passed": true
+    },
+    "usable_sprite": {
+      "actual": 7,
+      "passed": true,
+      "required": 7
+    }
+  },
+  "formal_status_before_spike6": "MODEL PASS / ALPHA NEEDS WORK",
+  "human_results": {
+    "background_residual_count": 0,
+    "identity_recognizable_96_count": 8,
+    "magenta_contamination_count": 1,
+    "required_parts_preserved_count": 8,
+    "review_rows": [
+      {
+        "case_id": "B01",
+        "edge_quality": "ACCEPTABLE",
+        "foreground_complete": true,
+        "identity_recognizable_96": true,
+        "no_background_residual": true,
+        "no_magenta_contamination": false,
+        "no_shadow_residual": true,
+        "notes": "Hot-sand emission is preserved but its pink-magenta plume is chroma-ambiguous and is conservatively rejected for ready use",
+        "ordinal": 1,
+        "part_1": "vacuum body",
+        "part_1_preserved": true,
+        "part_2": "long flexible hose",
+        "part_2_preserved": true,
+        "part_3": "nozzle or suction head",
+        "part_3_preserved": true,
+        "required_parts_preserved": true,
+        "required_parts_visible_count": 3,
+        "review_basis": "actual raw RGBA mask and 96 sprite",
+        "reviewer": "Codex independent visual inspection",
+        "seed": "4041001",
+        "serious_structure_loss": false,
+        "usable_sprite": false
+      },
+      {
+        "case_id": "B01",
+        "edge_quality": "GOOD",
+        "foreground_complete": true,
+        "identity_recognizable_96": true,
+        "no_background_residual": true,
+        "no_magenta_contamination": true,
+        "no_shadow_residual": true,
+        "notes": "Body hose and nozzle remain complete with no visible ground shadow",
+        "ordinal": 2,
+        "part_1": "vacuum body",
+        "part_1_preserved": true,
+        "part_2": "long flexible hose",
+        "part_2_preserved": true,
+        "part_3": "nozzle or suction head",
+        "part_3_preserved": true,
+        "required_parts_preserved": true,
+        "required_parts_visible_count": 3,
+        "review_basis": "actual raw RGBA mask and 96 sprite",
+        "reviewer": "Codex independent visual inspection",
+        "seed": "4041002",
+        "serious_structure_loss": false,
+        "usable_sprite": true
+      },
+      {
+        "case_id": "B02",
+        "edge_quality": "GOOD",
+        "foreground_complete": true,
+        "identity_recognizable_96": true,
+        "no_background_residual": true,
+        "no_magenta_contamination": true,
+        "no_shadow_residual": true,
+        "notes": "Clock face twin bells handle and small feet remain readable",
+        "ordinal": 3,
+        "part_1": "clock face",
+        "part_1_preserved": true,
+        "part_2": "twin bells or actual clock structure",
+        "part_2_preserved": true,
+        "part_3": "small feet and top structure",
+        "part_3_preserved": true,
+        "required_parts_preserved": true,
+        "required_parts_visible_count": 3,
+        "review_basis": "actual raw RGBA mask and 96 sprite",
+        "reviewer": "Codex independent visual inspection",
+        "seed": "4041001",
+        "serious_structure_loss": false,
+        "usable_sprite": true
+      },
+      {
+        "case_id": "B02",
+        "edge_quality": "GOOD",
+        "foreground_complete": true,
+        "identity_recognizable_96": true,
+        "no_background_residual": true,
+        "no_magenta_contamination": true,
+        "no_shadow_residual": true,
+        "notes": "Clock body bells handle and feet remain intact at 96 pixels",
+        "ordinal": 4,
+        "part_1": "clock face",
+        "part_1_preserved": true,
+        "part_2": "twin bells or actual clock structure",
+        "part_2_preserved": true,
+        "part_3": "small feet and top structure",
+        "part_3_preserved": true,
+        "required_parts_preserved": true,
+        "required_parts_visible_count": 3,
+        "review_basis": "actual raw RGBA mask and 96 sprite",
+        "reviewer": "Codex independent visual inspection",
+        "seed": "4041002",
+        "serious_structure_loss": false,
+        "usable_sprite": true
+      },
+      {
+        "case_id": "B03",
+        "edge_quality": "GOOD",
+        "foreground_complete": true,
+        "identity_recognizable_96": true,
+        "no_background_residual": true,
+        "no_magenta_contamination": true,
+        "no_shadow_residual": true,
+        "notes": "Upper arm base and rear hinge-support connection remain complete",
+        "ordinal": 5,
+        "part_1": "upper pressing arm",
+        "part_1_preserved": true,
+        "part_2": "base",
+        "part_2_preserved": true,
+        "part_3": "rear hinge",
+        "part_3_preserved": true,
+        "required_parts_preserved": true,
+        "required_parts_visible_count": 3,
+        "review_basis": "actual raw RGBA mask and 96 sprite",
+        "reviewer": "Codex independent visual inspection",
+        "seed": "4041001",
+        "serious_structure_loss": false,
+        "usable_sprite": true
+      },
+      {
+        "case_id": "B03",
+        "edge_quality": "GOOD",
+        "foreground_complete": true,
+        "identity_recognizable_96": true,
+        "no_background_residual": true,
+        "no_magenta_contamination": true,
+        "no_shadow_residual": true,
+        "notes": "Upper arm base and rear hinge-support connection remain complete",
+        "ordinal": 6,
+        "part_1": "upper pressing arm",
+        "part_1_preserved": true,
+        "part_2": "base",
+        "part_2_preserved": true,
+        "part_3": "rear hinge",
+        "part_3_preserved": true,
+        "required_parts_preserved": true,
+        "required_parts_visible_count": 3,
+        "review_basis": "actual raw RGBA mask and 96 sprite",
+        "reviewer": "Codex independent visual inspection",
+        "seed": "4041002",
+        "serious_structure_loss": false,
+        "usable_sprite": true
+      },
+      {
+        "case_id": "B04",
+        "edge_quality": "GOOD",
+        "foreground_complete": true,
+        "identity_recognizable_96": true,
+        "no_background_residual": true,
+        "no_magenta_contamination": true,
+        "no_shadow_residual": true,
+        "notes": "Bowl thin stem and base remain continuous and recognizable",
+        "ordinal": 7,
+        "part_1": "cup bowl",
+        "part_1_preserved": true,
+        "part_2": "thin stem",
+        "part_2_preserved": true,
+        "part_3": "base",
+        "part_3_preserved": true,
+        "required_parts_preserved": true,
+        "required_parts_visible_count": 3,
+        "review_basis": "actual raw RGBA mask and 96 sprite",
+        "reviewer": "Codex independent visual inspection",
+        "seed": "4041001",
+        "serious_structure_loss": false,
+        "usable_sprite": true
+      },
+      {
+        "case_id": "B04",
+        "edge_quality": "GOOD",
+        "foreground_complete": true,
+        "identity_recognizable_96": true,
+        "no_background_residual": true,
+        "no_magenta_contamination": true,
+        "no_shadow_residual": true,
+        "notes": "Bowl thin stem and base remain continuous and recognizable",
+        "ordinal": 8,
+        "part_1": "cup bowl",
+        "part_1_preserved": true,
+        "part_2": "thin stem",
+        "part_2_preserved": true,
+        "part_3": "base",
+        "part_3_preserved": true,
+        "required_parts_preserved": true,
+        "required_parts_visible_count": 3,
+        "review_basis": "actual raw RGBA mask and 96 sprite",
+        "reviewer": "Codex independent visual inspection",
+        "seed": "4041002",
+        "serious_structure_loss": false,
+        "usable_sprite": true
+      }
+    ],
+    "reviewer": "Codex independent visual inspection",
+    "serious_structure_loss_count": 0,
+    "shadow_residual_count": 0,
+    "usable_sprite_count": 7
+  },
+  "model_identity_status": "PASS",
+  "official_birefnet": {
+    "forge_api_workflow_sha256": "56d74936b840de2ce2d5e823b6ad1704b9e65dd7ddd8b7a0edbfb5d4d4cf19df",
+    "license_caveat": "The local model repository has no separate LICENSE copy; production legal provenance remains a later validation item.",
+    "license_declared_by_model_card": "MIT",
+    "model_bytes": 444473596,
+    "model_sha256": "9ab37426bf4de0567af6b5d21b16151357149139362e6e8992021b8ce356a154",
+    "official_workflow_sha256": "ab7bf67d91a17750222da4131790ca38f651d8078ff28213e15cf0ebd86b3354"
+  },
+  "old_chroma_comparison": {
+    "background_residual_count": 6,
+    "formal_alpha_status": "NEEDS WORK",
+    "identity_recognizable_96": {
+      "actual": 6,
+      "passed": true,
+      "required": 6
+    },
+    "shadow_residual_count": 4,
+    "technical_sprite_delivery": {
+      "passed": 6,
+      "total": 8
+    }
+  },
+  "run_id": "spike6-birefnet-20260803T135800Z",
+  "runtime_shutdown": {
+    "port_8188_closed": true,
+    "port_8190_closed": true,
+    "status": "PASS",
+    "stopped_at_utc": "2026-08-03T13:57:01.8601640Z"
+  },
+  "source_integrity": {
+    "spike5_evidence_unchanged": true,
+    "spike5_freeze_sha256": "57b1de80841d4c5f3da4c07b5cb0dee606a3a3dbfffbbb1ba387d617f59f7af8",
+    "spike5_frozen_file_count": 54,
+    "verified_review_input_file_count": 64,
+    "verified_review_packet_manifest_sha256": "575f6f8705108342f36d17634c186c99aa89c1f83921dd025a3cfbaca2e08863"
+  },
+  "source_matrix_run_id": "flux2-matrix-20260803T130451548924Z",
+  "technical_results": {
+    "anthropic_calls": 0,
+    "automatic_retry_count": 0,
+    "case_specific_correction_count": 0,
+    "processed_sprite_delivered": 8,
+    "rgba_and_mask_delivered": 8,
+    "serial_execution": true,
+    "workflow_contains_flux_sampler": false
+  }
+}

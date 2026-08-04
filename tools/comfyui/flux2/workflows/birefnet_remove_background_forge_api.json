@@ -1,0 +1,46 @@
+{
+  "_forge": {
+    "contract": "forge-birefnet-remove-background-api-v1",
+    "audit_status": "APPROVED",
+    "runnable": true,
+    "source": "Project-owned API graph transcribed from the read-only audit of the installed native ComfyUI BiRefNet blueprint; the official workflow file is not modified.",
+    "model_filename": "birefnet.safetensors",
+    "input_image_binding": ["1", "inputs", "image"],
+    "rgba_output_prefix_binding": ["7", "inputs", "filename_prefix"],
+    "mask_output_prefix_binding": ["8", "inputs", "filename_prefix"],
+    "rgba_output_node_id": "7",
+    "mask_output_node_id": "8"
+  },
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {"image": ""}
+  },
+  "2": {
+    "class_type": "LoadBackgroundRemovalModel",
+    "inputs": {"bg_removal_name": "birefnet.safetensors"}
+  },
+  "3": {
+    "class_type": "RemoveBackground",
+    "inputs": {"bg_removal_model": ["2", 0], "image": ["1", 0]}
+  },
+  "4": {
+    "class_type": "MaskToImage",
+    "inputs": {"mask": ["3", 0]}
+  },
+  "5": {
+    "class_type": "InvertMask",
+    "inputs": {"mask": ["3", 0]}
+  },
+  "6": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {"image": ["1", 0], "alpha": ["5", 0]}
+  },
+  "7": {
+    "class_type": "SaveImage",
+    "inputs": {"images": ["6", 0], "filename_prefix": ""}
+  },
+  "8": {
+    "class_type": "SaveImage",
+    "inputs": {"images": ["4", 0], "filename_prefix": ""}
+  }
+}

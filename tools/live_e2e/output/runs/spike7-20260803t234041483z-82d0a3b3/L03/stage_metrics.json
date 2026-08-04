@@ -1,0 +1,15 @@
+{
+  "semantic_seconds": 7.567,
+  "semantic_input_tokens": 4709,
+  "semantic_output_tokens": 666,
+  "flux_queue_seconds": 0.003,
+  "flux_generation_seconds": 6.284,
+  "flux_peak_vram_mb": 11724.0,
+  "flux_peak_ram_mb": 28194.9,
+  "birefnet_seconds": 2.12,
+  "sprite_postprocess_seconds": 0.059,
+  "total_forge_seconds": 16.277,
+  "training_load_seconds": 0.012,
+  "identity_confirmation_seconds": 7.989,
+  "anchor_confirmation_seconds": 5.035
+}

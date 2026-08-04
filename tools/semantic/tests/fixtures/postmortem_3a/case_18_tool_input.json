@@ -1,0 +1,10 @@
+{
+  "question_zh": "这件武器是持续握在手中喷火，还是整体飞出去撞击后返回?这两种行为冲突,请问以哪种为主?",
+  "ambiguity_type": "behavior_conflict",
+  "known_identity_hint": "未指明具体物体，仅描述了攻击行为",
+  "known_action_hints": [
+    "持续喷火",
+    "整件飞出去撞人",
+    "撞后返回"
+  ]
+}

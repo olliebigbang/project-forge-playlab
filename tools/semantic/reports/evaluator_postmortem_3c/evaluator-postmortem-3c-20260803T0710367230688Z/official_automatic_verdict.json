@@ -1,0 +1,51 @@
+{
+  "record_type": "official_automatic_verdict_snapshot",
+  "source_run_id": "blind-retest-3c-20260803T060715018997Z-4ddf8f31",
+  "source_status": "PENDING_HUMAN_REVIEW",
+  "source_automatic_status": "NEEDS WORK",
+  "source_automatic_scores_sha256": "159cfce0cdf32102fa148d5bc0a2fa72b65e5ad5cc12a76b94ae9bffa5c2e215",
+  "source_pending_evidence_sha256": "650c0de04ebe417c822a19d542528908170897047daacefd5e79e589efe74f29",
+  "official_verdict_unchanged": true,
+  "superseded": false,
+  "recalculated": false,
+  "metrics": {
+    "api_success_count": 4,
+    "exactly_one_legal_tool_use_count": 4,
+    "schema_and_cross_field_valid_count": 4,
+    "base_identity_correct_count": 3,
+    "behavior_correct_count": 4,
+    "fixed_weapon_substitution_count": 0,
+    "automatic_retry_count": 0,
+    "extra_root_wrapper_count": 0,
+    "repair_count": 0,
+    "unwrap_count": 0,
+    "coercion_count": 0,
+    "default_count": 0,
+    "manual_structure_review_complete_count": 0,
+    "manual_structure_review_pending_count": 4,
+    "automatic_thresholds_passed": false
+  },
+  "cases": {
+    "B01": {
+      "base_identity_correct": true,
+      "behavior_correct": true,
+      "manual_structure_review_status": "PENDING"
+    },
+    "B02": {
+      "base_identity_correct": true,
+      "behavior_correct": true,
+      "manual_structure_review_status": "PENDING"
+    },
+    "B03": {
+      "base_identity_correct": false,
+      "behavior_correct": true,
+      "manual_structure_review_status": "PENDING"
+    },
+    "B04": {
+      "base_identity_correct": true,
+      "behavior_correct": true,
+      "manual_structure_review_status": "PENDING"
+    }
+  },
+  "notice": "This snapshot preserves the frozen official automatic verdict. The independent semantic review is a separate postmortem record and does not rewrite or supersede it."
+}

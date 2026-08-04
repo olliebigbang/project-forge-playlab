@@ -1,0 +1,41 @@
+{
+  "contract": "forge-flux2-godot-training-delivery-v1",
+  "status": "PASS",
+  "verified_at_utc": "2026-08-03T13:19:21.9722755Z",
+  "godot_version": "4.7.1.stable.official.a13da4feb",
+  "visual_provider": "LOCAL_COMFYUI",
+  "comfy_profile": "flux2_klein_4b",
+  "profile_api_base": "http://127.0.0.1:8190",
+  "profile_contacted_during_delivery_check": false,
+  "comfyui_started_during_delivery_check": false,
+  "new_generation_performed": false,
+  "mock_fallback_used": false,
+  "source_case": "B01",
+  "source_seed": 4041001,
+  "source_result_directory": "tools/comfyui/flux2/output/flux2_matrix_20260803t130451548924z/b01/seed_4041001",
+  "source_manifest_sha256": "133ba3ecedbd292195b54c86729b8dec2dcf2a79128f51dba066984ce9069e81",
+  "processed_sprite_sha256": "9ab1aa4666b7aa79f34735309b82e0dba0bac3c5472bbe77a5cb9e5e0f44203f",
+  "processed_sprite_bytes": 7399,
+  "processed_dimensions": [96, 96],
+  "alpha_valid": true,
+  "delivery_path": [
+    "LocalComfyForgeVisualProvider.configure",
+    "LocalComfyForgeVisualProvider.load_atomic_result",
+    "WeaponVisualAsset",
+    "training-only viewport"
+  ],
+  "screenshot": {
+    "path": "tools/comfyui/flux2/reports/godot_training_holding.png",
+    "sha256": "671335e88f7b6a8d7d84e1df7e8531409a62b98395f5958bdb93d392df6efdaa",
+    "dimensions": [1280, 720],
+    "contains_debug_text": false
+  },
+  "negative_checks": {
+    "missing_explicit_provider_rejected": true,
+    "raw_only_alpha_failure_rejected": true,
+    "temporary_result_rejected": true,
+    "combat_room_route_present": false,
+    "anchor_debug_overlay_present": false
+  },
+  "scope_note": "This check validates atomic delivery of an already-generated frozen visual result. It does not submit a ninth matrix request, evaluate combat behavior, or claim live semantic compiler integration."
+}

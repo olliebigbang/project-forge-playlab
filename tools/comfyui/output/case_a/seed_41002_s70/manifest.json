@@ -1,0 +1,46 @@
+{
+  "case_id": "case_a",
+  "prompt": "一把冒蓝火、会连续射击的重型多管物件。",
+  "seed": 41002,
+  "workflow_file": "forge_object_sprite_v0.json",
+  "workflow_hash": "507095e0e1cbe0556d1bcac7cff8d28e93af65d843f69cc54de836ff267398a5",
+  "selected_comfyui_install": "ai_series_tools/ComfyUI",
+  "checkpoint": "RealVisXL_V5.0_fp16.safetensors",
+  "control_type": "img2img_sketch_fallback",
+  "control_strength": 0.7,
+  "generation_seconds": 2.033,
+  "postprocess_seconds": 0.037,
+  "raw_dimensions": [
+    512,
+    512
+  ],
+  "processed_dimensions": [
+    96,
+    96
+  ],
+  "alpha_coverage": 0.2563,
+  "opaque_bounds": [
+    7,
+    26,
+    83,
+    44
+  ],
+  "status": "success",
+  "failure_reason": "",
+  "prompt_id": "93af1fcf-e27b-4c53-805f-4542d2e33646",
+  "run_id": "seed_41002_s70",
+  "request_id": "f1594887b9ca4f37bb7c36e3827bebbc",
+  "generation_size": [
+    512,
+    512
+  ],
+  "img2img_denoise": 0.566,
+  "background_border_rgb": [
+    236.0,
+    45.0,
+    234.0
+  ],
+  "background_expected_match": 1.0,
+  "palette_limit": 32,
+  "outline": true
+}

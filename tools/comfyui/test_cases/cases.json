@@ -1,0 +1,51 @@
+{
+  "seeds": [41001, 41002, 41003],
+  "strengths": [0.45, 0.70, 0.45],
+  "cases": [
+    {
+      "case_id": "case_a",
+      "prompt": "一把冒蓝火、会连续射击的重型多管物件。",
+      "generation_prompt": "a heavy multi-barrel fantasy contraption that continuously fires, blue furnace flames, obvious rear handles and a functional barrel front",
+      "sketch": "sketches/case_a.png",
+      "expected_identity": "heavy multi-barrel object",
+      "grip_profile": "two_hand_rear",
+      "behavior_family": "sustained_ranged"
+    },
+    {
+      "case_id": "case_b",
+      "prompt": "会飞出去再返回的机械闪电伞。",
+      "generation_prompt": "a mechanical lightning umbrella designed to fly out and return, recognizable umbrella canopy and central handle",
+      "sketch": "",
+      "expected_identity": "mechanical umbrella",
+      "grip_profile": "center_shaft",
+      "behavior_family": "returning_thrown"
+    },
+    {
+      "case_id": "case_c",
+      "prompt": "一把会吸血的链锯大剑。",
+      "generation_prompt": "a blood-draining chainsaw greatsword, long toothed blade, clear two-handed rear grip",
+      "sketch": "sketches/case_c.png",
+      "expected_identity": "chainsaw greatsword",
+      "grip_profile": "two_hand_rear",
+      "behavior_family": "heavy_melee"
+    },
+    {
+      "case_id": "case_d",
+      "prompt": "一把冒蓝火、会连续发射螺丝的木质椅子。",
+      "generation_prompt": "a recognizable old wooden chair modified as a fantasy prop, blue flames and a mechanism that continuously launches metal screws, retain chair legs, seat and backrest",
+      "sketch": "sketches/case_d.png",
+      "expected_identity": "wooden chair",
+      "grip_profile": "bottom_handle",
+      "behavior_family": "sustained_ranged"
+    },
+    {
+      "case_id": "case_e",
+      "prompt": "一只会喷出高温蒸汽、可以被当成武器使用的旧茶壶。",
+      "generation_prompt": "a recognizable old metal teapot used as a fantasy prop, clear handle, spout emitting high-temperature steam",
+      "sketch": "",
+      "expected_identity": "old teapot",
+      "grip_profile": "bottom_handle",
+      "behavior_family": "sustained_ranged"
+    }
+  ]
+}

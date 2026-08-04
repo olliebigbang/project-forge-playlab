@@ -1,0 +1,19 @@
+{
+  "repository": "https://github.com/Comfy-Org/workflow_templates.git",
+  "commit": "cebdebc9fc2febcb97a5db0dd291f59f5300b176",
+  "comfyui_workflow_templates_package": "0.11.27",
+  "templates": [
+    {
+      "kind": "text_to_image",
+      "source_path": "templates/image_flux2_klein_text_to_image.json",
+      "project_path": "tools/comfyui/flux2/workflows/flux2_klein_4b_t2i_official.json",
+      "sha256": "f5b2e75448e1ef44ab3d08da00900000f0258f8f963934370c6a1c329d1328c2"
+    },
+    {
+      "kind": "image_edit_distilled",
+      "source_path": "templates/image_flux2_klein_image_edit_4b_distilled.json",
+      "project_path": "tools/comfyui/flux2/workflows/flux2_klein_4b_edit_official.json",
+      "sha256": "e0388a8870495802314d58fa61616ddcdb7064dac5f85a8787c9e08180b8a560"
+    }
+  ]
+}

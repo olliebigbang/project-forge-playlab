@@ -1,0 +1,100 @@
+{
+  "status": "V1_POSTMORTEM_COMPLETE",
+  "source_frozen_4a_evidence_sha256": "95b4e4141e241e723bffa9c8a0dc22cbd19b1780c7ef1f02e39c80ac0574709d",
+  "result_count": 8,
+  "failure_reason_counts": {
+    "": 1,
+    "BACKGROUND_NOT_HIGH_CONTRAST_CHROMA": 1,
+    "OBJECT_TOUCHES_RAW_EDGE": 6
+  },
+  "results": [
+    {
+      "ordinal": 1,
+      "case_id": "B01",
+      "seed": 4041001,
+      "recorded_v1_status": "failed",
+      "recorded_v1_failure_reason": "OBJECT_TOUCHES_RAW_EDGE",
+      "expected_background_match_ratio": 0.960861,
+      "candidate_foreground_coverage": 0.295208,
+      "largest_component_coverage": 0.2873,
+      "rejected_edge_pixel_count": 98
+    },
+    {
+      "ordinal": 2,
+      "case_id": "B01",
+      "seed": 4041002,
+      "recorded_v1_status": "failed",
+      "recorded_v1_failure_reason": "OBJECT_TOUCHES_RAW_EDGE",
+      "expected_background_match_ratio": 0.78229,
+      "candidate_foreground_coverage": 0.410679,
+      "largest_component_coverage": 0.412319,
+      "rejected_edge_pixel_count": 946
+    },
+    {
+      "ordinal": 3,
+      "case_id": "B02",
+      "seed": 4041001,
+      "recorded_v1_status": "failed",
+      "recorded_v1_failure_reason": "OBJECT_TOUCHES_RAW_EDGE",
+      "expected_background_match_ratio": 0.987769,
+      "candidate_foreground_coverage": 0.266945,
+      "largest_component_coverage": 0.268253,
+      "rejected_edge_pixel_count": 92
+    },
+    {
+      "ordinal": 4,
+      "case_id": "B02",
+      "seed": 4041002,
+      "recorded_v1_status": "failed",
+      "recorded_v1_failure_reason": "OBJECT_TOUCHES_RAW_EDGE",
+      "expected_background_match_ratio": 0.975049,
+      "candidate_foreground_coverage": 0.293968,
+      "largest_component_coverage": 0.296116,
+      "rejected_edge_pixel_count": 102
+    },
+    {
+      "ordinal": 5,
+      "case_id": "B03",
+      "seed": 4041001,
+      "recorded_v1_status": "success",
+      "recorded_v1_failure_reason": "",
+      "expected_background_match_ratio": 0.706458,
+      "candidate_foreground_coverage": 0.302753,
+      "largest_component_coverage": 0.241779,
+      "rejected_edge_pixel_count": 0
+    },
+    {
+      "ordinal": 6,
+      "case_id": "B03",
+      "seed": 4041002,
+      "recorded_v1_status": "failed",
+      "recorded_v1_failure_reason": "OBJECT_TOUCHES_RAW_EDGE",
+      "expected_background_match_ratio": 0.973092,
+      "candidate_foreground_coverage": 0.240864,
+      "largest_component_coverage": 0.242947,
+      "rejected_edge_pixel_count": 78
+    },
+    {
+      "ordinal": 7,
+      "case_id": "B04",
+      "seed": 4041001,
+      "recorded_v1_status": "failed",
+      "recorded_v1_failure_reason": "OBJECT_TOUCHES_RAW_EDGE",
+      "expected_background_match_ratio": 0.815068,
+      "candidate_foreground_coverage": 0.279873,
+      "largest_component_coverage": 0.194149,
+      "rejected_edge_pixel_count": 68
+    },
+    {
+      "ordinal": 8,
+      "case_id": "B04",
+      "seed": 4041002,
+      "recorded_v1_status": "failed",
+      "recorded_v1_failure_reason": "BACKGROUND_NOT_HIGH_CONTRAST_CHROMA",
+      "expected_background_match_ratio": 0.167808,
+      "candidate_foreground_coverage": 0.34922,
+      "largest_component_coverage": 0.350124,
+      "rejected_edge_pixel_count": 1598
+    }
+  ]
+}

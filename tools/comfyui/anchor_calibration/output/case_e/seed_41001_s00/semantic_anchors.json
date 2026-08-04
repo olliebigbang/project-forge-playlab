@@ -1,0 +1,50 @@
+{
+  "anchor_source": {
+    "EffectOrigin": "manual_player_calibration",
+    "GripPrimary": "manual_player_calibration"
+  },
+  "auto_anchor_source": {
+    "EffectOrigin": "AnchorResolver:muzzle",
+    "GripPrimary": "AnchorResolver:alpha_local_search+profile"
+  },
+  "auto_anchors": {
+    "EffectOrigin": [
+      90.0,
+      51.0
+    ],
+    "GripPrimary": [
+      17.0,
+      74.0
+    ]
+  },
+  "auto_confidence": {
+    "EffectOrigin": 0.58,
+    "GripPrimary": 0.88
+  },
+  "behavior_family": "sustained_ranged",
+  "case_id": "case_e",
+  "confidence": {
+    "EffectOrigin": 0.95,
+    "GripPrimary": 0.9
+  },
+  "corrected_anchors": {
+    "EffectOrigin": [
+      6.0,
+      48.0
+    ],
+    "GripPrimary": [
+      52.0,
+      23.0
+    ]
+  },
+  "grip_profile": "bottom_handle",
+  "required_anchor_types": [
+    "GripPrimary",
+    "EffectOrigin"
+  ],
+  "run_id": "seed_41001_s00",
+  "source_sprite": "res://tools/comfyui/output/case_e/seed_41001_s00/processed_sprite.png",
+  "training_transform": {
+    "flip_x": true
+  }
+}

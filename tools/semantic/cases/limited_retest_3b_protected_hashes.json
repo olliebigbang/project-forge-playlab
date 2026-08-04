@@ -1,0 +1,21 @@
+{
+  "algorithm": "SHA-256",
+  "source_run_id": "gate-a-20260802T232039017356Z-fddde20a",
+  "source_evidence_sha256": "94a602bdf2d0571cf294287f3d188e830fe7fa968b148e8ca67af3387cd0b347",
+  "files": {
+    "tools/semantic/cases/gate_a_cases.json": "a77d4b6a7e039cf43bc47670de65211b8efcebad7b9fd6f66e88f53bc57b1bee",
+    "tools/semantic/reports/CONTRACT_POSTMORTEM_3A.md": "1c23c4c37d1e3a70f669f96190ec662cfb4655a97d4e5cfb19ef694013ecf15a",
+    "tools/semantic/reports/GATE_A_REPORT.md": "4630d69526ab9448d5fecac7d5f16542f28018e8ac5c2d2ff82fdcfa375ae826",
+    "tools/semantic/reports/gate_a_results.csv": "344d2d8857dfdb4671acf21dacdcbb1ede7261c3f97cc28ca05171b886dadcf1",
+    "tools/semantic/reports/gate_a_summary.json": "51a99feec8e048ad1f9c4dbb14985d68429371bc881dcf70e6446e8e4362770a",
+    "tools/semantic/reports/runs/gate-a-20260802T232039017356Z-fddde20a/GATE_A_REPORT.md": "4630d69526ab9448d5fecac7d5f16542f28018e8ac5c2d2ff82fdcfa375ae826",
+    "tools/semantic/reports/runs/gate-a-20260802T232039017356Z-fddde20a/gate_a_results.csv": "344d2d8857dfdb4671acf21dacdcbb1ede7261c3f97cc28ca05171b886dadcf1",
+    "tools/semantic/reports/runs/gate-a-20260802T232039017356Z-fddde20a/gate_a_summary.json": "51a99feec8e048ad1f9c4dbb14985d68429371bc881dcf70e6446e8e4362770a",
+    "tools/semantic/reports/runs/gate-a-20260802T232039017356Z-fddde20a/evidence_hashes.json": "94a602bdf2d0571cf294287f3d188e830fe7fa968b148e8ca67af3387cd0b347",
+    "tools/semantic/tests/fixtures/postmortem_3a/case_10_tool_input.json": "72fcfeb5c66eb8c27dff7f63b202b2d9a42c7c159f1f4c110eb9af6a4f2546da",
+    "tools/semantic/tests/fixtures/postmortem_3a/case_13_tool_input.json": "bbf8bbd0087610aa0c40b164b67284a61c20a1f0123ce2bf7dd348f7f6bc6548",
+    "tools/semantic/tests/fixtures/postmortem_3a/case_17_tool_input.json": "42aff8a9b2d7f6c5ae3c99241574a8fee384194243eefc8c09151c7252691f32",
+    "tools/semantic/tests/fixtures/postmortem_3a/case_18_tool_input.json": "b333d560575da7e239e05f303f601a97f31d57054084203df893ad2f28650abf",
+    "tools/semantic/tests/fixtures/postmortem_3a/manifest.json": "d35442fbab799f4c9e5eaa6ad341520833d8fcc8a1bf288f0ad42b2ff9af9dc7"
+  }
+}

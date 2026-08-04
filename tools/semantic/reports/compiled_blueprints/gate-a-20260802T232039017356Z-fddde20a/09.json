@@ -1,0 +1,46 @@
+{
+  "identity": {
+    "name_zh": "纸飞机",
+    "name_en": "paper airplane",
+    "category": "toy",
+    "preserved_features": [
+      "folded paper wing structure",
+      "creased triangular nose",
+      "flat thin paper body",
+      "visible fold lines"
+    ],
+    "material_hints": [
+      "paper",
+      "folded creases"
+    ],
+    "silhouette_hints": [
+      "classic dart-style folded paper airplane silhouette"
+    ]
+  },
+  "combat": {
+    "behavior_family": "returning_thrown",
+    "delivery": "whole_object_return",
+    "impact_mode": "whole_body_collision",
+    "effect_type": "other",
+    "drawback": "weapon_absent_while_flying",
+    "cadence_hint": "single_commit"
+  },
+  "visual": {
+    "prompt_en": "A paper airplane, classic folded dart-style silhouette, made of thin creased paper with visible fold lines and a sharp triangular nose, small functional holdable fitting near the body for throwing, one isolated object, side view, complete object visible",
+    "negative_prompt_en": "not a real airplane, not metal aircraft, not a jet, not a sword, not a gun, no engines, no cockpit windows, no realistic aviation textures",
+    "must_preserve": [
+      "folded paper wing structure",
+      "creased triangular nose",
+      "flat thin paper body",
+      "visible fold lines"
+    ],
+    "must_not_replace_with": [
+      "real metal airplane",
+      "jet fighter",
+      "generic weapon",
+      "sword",
+      "gun"
+    ]
+  },
+  "confidence": 0.72
+}

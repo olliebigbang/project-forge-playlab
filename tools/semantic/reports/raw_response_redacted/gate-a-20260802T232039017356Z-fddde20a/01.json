@@ -1,0 +1,81 @@
+{
+  "model": "claude-sonnet-5",
+  "id": "msg_011CdenADX8QTW53NH8PpdnR",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    {
+      "type": "tool_use",
+      "id": "toolu_01HkESaxuJxf24cHrYWXTT5b",
+      "name": "submit_forge_semantic_blueprint",
+      "input": {
+        "identity": {
+          "name_zh": "老木桌",
+          "name_en": "old wooden table",
+          "category": "furniture",
+          "preserved_features": [
+            "four sturdy wooden legs",
+            "flat rectangular tabletop",
+            "aged worn wood grain surface",
+            "visible joints and corners"
+          ],
+          "material_hints": [
+            "old worn wood",
+            "weathered surface finish"
+          ],
+          "silhouette_hints": [
+            "rectangular tabletop with four legs",
+            "classic table silhouette viewed from the side"
+          ]
+        },
+        "combat": {
+          "behavior_family": "returning_thrown",
+          "delivery": "whole_object_return",
+          "impact_mode": "whole_body_collision",
+          "effect_type": "normal",
+          "drawback": "weapon_absent_while_flying",
+          "cadence_hint": "single_commit"
+        },
+        "visual": {
+          "prompt_en": "An old wooden table, full body visible, side view, isolated on a plain background, showing four sturdy wooden legs, a flat rectangular tabletop with aged worn wood grain, visible joints and corners, with a small reinforced holdable fitting added underneath for throwing, complete object clearly visible as a single isolated item",
+          "negative_prompt_en": "do not depict a gun, do not depict a sword, do not depict an umbrella, do not depict a generic weapon, no humans, no multiple objects, not a shield",
+          "must_preserve": [
+            "four sturdy wooden legs",
+            "flat rectangular tabletop",
+            "aged worn wood grain surface",
+            "visible joints and corners"
+          ],
+          "must_not_replace_with": [
+            "gun",
+            "sword",
+            "shield",
+            "umbrella",
+            "generic melee weapon"
+          ]
+        },
+        "confidence": 0.9
+      },
+      "caller": {
+        "type": "direct"
+      }
+    }
+  ],
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "stop_details": null,
+  "usage": {
+    "input_tokens": 3927,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 624,
+    "output_tokens_details": {
+      "thinking_tokens": 0
+    },
+    "service_tier": "standard",
+    "inference_geo": "global"
+  }
+}

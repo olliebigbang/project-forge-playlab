@@ -1,0 +1,12 @@
+{
+  "case_id": "18",
+  "local_request_id": "8c5c0efb-1338-4ad5-9a4d-e048ac37aabe",
+  "provider_request_id": "msg_011CdfADHRBMhxFPR1LFQdSi",
+  "endpoint": "https://api.anthropic.com/v1/messages",
+  "model_id": "claude-sonnet-5",
+  "contract_version": "forge-semantic-v1.1",
+  "request_body_sha256": "f11644ca90d29c8bb69a055a785f6f0167e9b64ed8f9a202c6c254f1368cc274",
+  "tool_input_sha256": "e9928e1c6add4c39325c2a1c3c56e8b8a24ea75c5f56c84901ac3a01b1077803",
+  "api_status": 200,
+  "retry_count": 0
+}

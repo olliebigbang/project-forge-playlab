@@ -1,0 +1,6 @@
+{
+  "question_zh": "请问这个红色的东西具体是什么物品？（例如家具、工具、玩具等）",
+  "ambiguity_type": "identity_unclear",
+  "known_identity_hint": "红色的东西",
+  "known_action_hints": "非常快"
+}

@@ -1,0 +1,23 @@
+{
+  "profile_id": "realvisxl",
+  "profile_contract": "forge-comfy-profile-v1",
+  "api_base": "http://127.0.0.1:8188",
+  "t2i_workflow": "../../workflows/forge_object_sprite_v0.json",
+  "edit_workflow": "../../workflows/forge_object_sprite_v0.json",
+  "model_filenames": {
+    "checkpoint": "RealVisXL_V5.0.safetensors"
+  },
+  "generation": {
+    "width": 512,
+    "height": 512,
+    "batch_size": 1,
+    "steps": 20,
+    "guidance": 5.0,
+    "concurrency": 1
+  },
+  "timeout_seconds": 120,
+  "output_root": "../../output",
+  "selected_install_label": "historical-realvisxl-read-only",
+  "workflow_contract_version": "forge-object-sprite-v0",
+  "postprocessor": "../../postprocess/process_sprite.py"
+}

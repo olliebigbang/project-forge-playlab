@@ -1,0 +1,52 @@
+{
+  "identity": {
+    "canonical_name_zh": "旧铜钟",
+    "canonical_name_en": "Old Bronze Bell",
+    "display_name_zh": "音波旧铜钟",
+    "display_name_en": "Old Bronze Bell of Sonic Waves",
+    "category": "instrument",
+    "required_identity_parts": [
+      "bell body",
+      "flared rim",
+      "hanging loop or crown"
+    ],
+    "material_hints": [
+      "bronze",
+      "aged patina"
+    ],
+    "silhouette_hints": [
+      "wide-mouthed inverted cup shape tapering to a crown",
+      "curved bell profile with flared bottom edge"
+    ],
+    "optional_decorations": [
+      "engraved patterns",
+      "verdigris streaks",
+      "small cracks from age"
+    ]
+  },
+  "combat": {
+    "behavior_family": "sustained_ranged",
+    "delivery": "continuous_emission",
+    "impact_mode": "continuous_stream",
+    "effect_type": "sound",
+    "drawback": "overheat",
+    "cadence_hint": "continuous"
+  },
+  "visual": {
+    "prompt_en": "An Old Bronze Bell with a wide flared rim, curved bell-shaped body, and a hanging loop at its crown, covered in aged bronze patina and verdigris streaks, adapted with a small resonant emitter fixture at its mouth to project sonic shockwaves, isolated on plain background, side view, complete object fully visible",
+    "negative_prompt_en": "not a gun, not a speaker, not a cannon, not a sword, no human figures, no unrelated weapon shapes",
+    "must_preserve": [
+      "bell body",
+      "flared rim",
+      "hanging loop or crown"
+    ],
+    "must_not_replace_with": [
+      "gun",
+      "cannon",
+      "speaker",
+      "sword",
+      "generic weapon"
+    ]
+  },
+  "confidence": 0.9
+}

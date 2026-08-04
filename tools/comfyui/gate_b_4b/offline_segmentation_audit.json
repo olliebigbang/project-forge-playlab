@@ -1,0 +1,87 @@
+{
+  "audit_scope": "Read-only local inventory for Forge Gate B 4B",
+  "network_used": false,
+  "comfyui_started": false,
+  "anthropic_called": false,
+  "selected_python": {
+    "path": "C:/Users/Eddie L/Documents/ai漫剧/tools/envs/comfy-faceid/python.exe",
+    "version": "3.11.15",
+    "available_support_libraries": {
+      "onnx": "1.22.0",
+      "onnxruntime-gpu": "1.27.0",
+      "torch": "2.6.0+cu124",
+      "torchvision": "0.21.0+cu124",
+      "transformers": "5.12.1",
+      "opencv-python": "4.13.0.92",
+      "opencv-python-headless": "4.13.0.92",
+      "scikit-image": "0.26.0",
+      "Pillow": "12.2.0"
+    }
+  },
+  "selected_comfyui": {
+    "path": "C:/Users/Eddie L/Documents/ai漫剧/tools/ComfyUI",
+    "version": "0.25.0",
+    "git_commit": "e00b55631a7d89125ed0e4689d14e16e835a3ed5",
+    "license": {
+      "identifier": "GPL-3.0",
+      "local_file": "C:/Users/Eddie L/Documents/ai漫剧/tools/ComfyUI/LICENSE"
+    }
+  },
+  "candidate_b": {
+    "status": "UNAVAILABLE_OFFLINE",
+    "executed": false,
+    "reason": "Background-removal node source exists, but no required learned segmentation weights are installed locally.",
+    "installed_package_findings": {
+      "rembg": false,
+      "transparent-background": false,
+      "backgroundremover": false,
+      "carvekit": false,
+      "standalone_birefnet": false,
+      "standalone_rmbg": false,
+      "standalone_u2net": false,
+      "segment_anything_or_sam2": false
+    },
+    "native_birefnet_source": {
+      "loader_node": "C:/Users/Eddie L/Documents/ai漫剧/tools/ComfyUI/comfy_extras/nodes_bg_removal.py",
+      "model_loader": "C:/Users/Eddie L/Documents/ai漫剧/tools/ComfyUI/comfy/bg_removal_model.py",
+      "implementation": "C:/Users/Eddie L/Documents/ai漫剧/tools/ComfyUI/comfy/background_removal/birefnet.py",
+      "expected_weight": "C:/Users/Eddie L/Documents/ai漫剧/tools/ComfyUI/models/background_removal/birefnet.safetensors",
+      "weight_present": false,
+      "directory_placeholder": "C:/Users/Eddie L/Documents/ai漫剧/tools/ComfyUI/models/background_removal/put_background_removal_models_here",
+      "local_weight_license_evidence": "NONE_BECAUSE_WEIGHT_IS_ABSENT",
+      "fully_offline_callable": false
+    },
+    "native_sam3_source": {
+      "node": "C:/Users/Eddie L/Documents/ai漫剧/tools/ComfyUI/comfy_extras/nodes_sam3.py",
+      "expected_weight": "C:/Users/Eddie L/Documents/ai漫剧/tools/ComfyUI/models/checkpoints/sam3.1_multiplex_fp16.safetensors",
+      "weight_present": false,
+      "fully_offline_callable": false
+    },
+    "bria_rmbg_node": {
+      "node": "C:/Users/Eddie L/Documents/ai漫剧/tools/ComfyUI/comfy_api_nodes/nodes_bria.py",
+      "is_offline": false,
+      "requires_api_key_and_upload": true,
+      "used": false
+    },
+    "standard_model_cache_findings": {
+      "u2net_cache_present": false,
+      "matching_huggingface_model_cache_present": false,
+      "selected_environment_weight_present": false
+    }
+  },
+  "eligible_methods": [
+    {
+      "name": "OpenCV Chroma + GrabCut",
+      "kind": "classical_offline",
+      "fully_offline_callable": true,
+      "selected_for_execution": true
+    }
+  ],
+  "method_comparison_policy": "Candidate B was audited but not executed because doing so would require a forbidden model download or paid/upload API. Candidate A is the only eligible executable method; this is not a head-to-head quality comparison.",
+  "process_state": {
+    "comfyui_listener_8188_at_audit_start": false,
+    "comfyui_listener_8188_at_audit_end": false,
+    "comfyui_or_python_process_found": false,
+    "gate_b_pid_file_found": false
+  }
+}

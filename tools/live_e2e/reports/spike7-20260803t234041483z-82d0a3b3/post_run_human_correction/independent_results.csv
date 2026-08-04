@@ -1,0 +1,4 @@
+case_id,official_product_success,independent_product_success,identity_recognizable,required_parts_preserved_count,behavior_correct,anchor_complete,training_complete,correction_reason
+L01,False,True,True,3,True,True,True,review_options_not_seen
+L02,True,True,True,3,True,True,True,unchanged
+L03,True,True,True,3,True,True,True,unchanged

@@ -1,0 +1,234 @@
+{
+  "gate": "Forge Visual Identity Gate B - Semantic Prompt Handoff 4A",
+  "contract": "frozen-3c-seven-field-handoff",
+  "source_run": "tools/semantic/output/blind_retest_3c/blind-retest-3c-20260803T060715018997Z-4ddf8f31",
+  "case_order": [
+    "B01",
+    "B02",
+    "B03",
+    "B04"
+  ],
+  "seeds": [
+    4041001,
+    4041002
+  ],
+  "planned_submission_count": 8,
+  "allowed_source_fields": [
+    "/identity/canonical_name_en",
+    "/identity/required_identity_parts",
+    "/identity/material_hints",
+    "/identity/silhouette_hints",
+    "/identity/optional_decorations",
+    "/visual/prompt_en",
+    "/visual/negative_prompt_en"
+  ],
+  "generic_positive_prompt": "one isolated fantasy game prop, side view, facing right, complete object visible, clear handle or holdable region, clear functional front or effect-emission region, no person, no hand, no character, no text, no watermark, no UI, no environment scene, flat high-contrast solid chroma key magenta background, readable silhouette, handcrafted fantasy toy aesthetic, centered object, generous empty margin",
+  "generic_negative_prompt": "portrait, human, face, hands, fingers, character holding object, person, weapon sheet, multiple views, multiple objects, inventory grid, text, label, letters, logo, watermark, UI, scenery, room, landscape, environment, pedestal, cropped object, cut off, border",
+  "generic_positive_prompt_sha256": "e8c33e8ea07d27511015c052ea4dd439c9bcf429cb4fb2e5836ec8c8c96cbf78",
+  "generic_negative_prompt_sha256": "52712cfd2b5df07b49a03dc44d283db45d1a04f48e816466c6b3661af2ff1df4",
+  "workflow_sha256": "507095e0e1cbe0556d1bcac7cff8d28e93af65d843f69cc54de836ff267398a5",
+  "postprocess_sha256": "f748c8e61dfd022d351d84c57c2d68b50b3dc39685403c7af20cc0402eebc0e9",
+  "checkpoint_sha256": "6a35a7855770ae9820a3c931d4964c3817b6d9e3c6f9c4dabb5b3a94e5643b80",
+  "cases": {
+    "B01": {
+      "source_file": "tools/semantic/output/blind_retest_3c/blind-retest-3c-20260803T060715018997Z-4ddf8f31/B01/result.json",
+      "source_result_sha256": "5eb529c9f817b5ef8d2061f3068af3fda61c57fa1485174afc60e244bc48a918",
+      "source_tool_input_sha256": "d7fdfc05e968a69711e1d8588703e3157156ef69f352fd4bee278be1cec5031e",
+      "handoff_sha256": "625b600f54ce062e522cff2811265b6c40d7fc1aabb0d4557a1530f8f5d7bfba",
+      "handoff": {
+        "identity": {
+          "canonical_name_en": "old vacuum cleaner",
+          "required_identity_parts": [
+            "long flexible hose",
+            "main canister body",
+            "nozzle end",
+            "wheels or base"
+          ],
+          "material_hints": [
+            "worn metal",
+            "scuffed plastic",
+            "rubber hose"
+          ],
+          "silhouette_hints": [
+            "bulky rounded canister with a long curling hose extending from the front"
+          ],
+          "optional_decorations": [
+            "rust patches",
+            "scorch marks",
+            "dented casing"
+          ]
+        },
+        "visual": {
+          "prompt_en": "An old vacuum cleaner with a bulky rounded canister body and a long flexible hose, worn metal and scuffed plastic casing, rubber hose with rust patches and scorch marks, a small reinforced nozzle fixture emitting a stream of scorching hot sand, isolated object, side view, complete object fully visible",
+          "negative_prompt_en": "not a gun, not a flamethrower weapon, not a rifle, no human figure, no background scene, not a hose without a vacuum body"
+        }
+      },
+      "effective_positive_prompt": "canonical object identity: old vacuum cleaner. required identity parts: long flexible hose; main canister body; nozzle end; wheels or base. material hints: worn metal; scuffed plastic; rubber hose. silhouette hints: bulky rounded canister with a long curling hose extending from the front. optional decorations: rust patches; scorch marks; dented casing. frozen visual description: An old vacuum cleaner with a bulky rounded canister body and a long flexible hose, worn metal and scuffed plastic casing, rubber hose with rust patches and scorch marks, a small reinforced nozzle fixture emitting a stream of scorching hot sand, isolated object, side view, complete object fully visible. one isolated fantasy game prop, side view, facing right, complete object visible, clear handle or holdable region, clear functional front or effect-emission region, no person, no hand, no character, no text, no watermark, no UI, no environment scene, flat high-contrast solid chroma key magenta background, readable silhouette, handcrafted fantasy toy aesthetic, centered object, generous empty margin.",
+      "effective_negative_prompt": "not a gun, not a flamethrower weapon, not a rifle, no human figure, no background scene, not a hose without a vacuum body. portrait, human, face, hands, fingers, character holding object, person, weapon sheet, multiple views, multiple objects, inventory grid, text, label, letters, logo, watermark, UI, scenery, room, landscape, environment, pedestal, cropped object, cut off, border.",
+      "effective_positive_prompt_sha256": "d3ffa6c63efa17417bb7bd3781706a840e70a25946bd973dd69128f9e67da335",
+      "effective_negative_prompt_sha256": "6c09e286a58a52696439c6645ae66748ac2c891ca09fa5c974b748afb9ef8bae"
+    },
+    "B02": {
+      "source_file": "tools/semantic/output/blind_retest_3c/blind-retest-3c-20260803T060715018997Z-4ddf8f31/B02/result.json",
+      "source_result_sha256": "8255ec89850c145ecc707bacac2dafd97d502ce7e021b0593e42ac5cb2cb0ed6",
+      "source_tool_input_sha256": "ee9d4308c471681f164934e81f9f2336d3310ee7f4e5edaf3a8cc840bd04006b",
+      "handoff_sha256": "63933f45b3bc9cf817e8594f20ba163d929cc175354ea76ca74ef4cddcbca3f1",
+      "handoff": {
+        "identity": {
+          "canonical_name_en": "double bell mechanical alarm clock",
+          "required_identity_parts": [
+            "twin bells on top",
+            "clock face with hands",
+            "bell striker arm",
+            "round clock body",
+            "support feet"
+          ],
+          "material_hints": [
+            "metal casing",
+            "brass bells",
+            "glass clock face cover"
+          ],
+          "silhouette_hints": [
+            "round-bodied clock with two dome bells mounted on top like ears",
+            "classic vintage alarm clock outline"
+          ],
+          "optional_decorations": [
+            "small wind-up key on back",
+            "aged metallic patina",
+            "tick marks on clock face"
+          ]
+        },
+        "visual": {
+          "prompt_en": "A double bell mechanical alarm clock, isolated single object, side view, complete object fully visible, round metal clock body with a glass-covered clock face and hands, two dome-shaped brass bells mounted on top like ears with a small striker arm between them, support feet at the base, aged metallic casing with a small wind-up key on the back, vintage industrial look with a faint Forge reinforced rim for durability during throwing, clean neutral background",
+          "negative_prompt_en": "do not depict a gun, sword, shuriken, boomerang, generic weapon, disc, or any object other than an alarm clock; avoid multiple clocks, cartoon distortion, or missing bells"
+        }
+      },
+      "effective_positive_prompt": "canonical object identity: double bell mechanical alarm clock. required identity parts: twin bells on top; clock face with hands; bell striker arm; round clock body; support feet. material hints: metal casing; brass bells; glass clock face cover. silhouette hints: round-bodied clock with two dome bells mounted on top like ears; classic vintage alarm clock outline. optional decorations: small wind-up key on back; aged metallic patina; tick marks on clock face. frozen visual description: A double bell mechanical alarm clock, isolated single object, side view, complete object fully visible, round metal clock body with a glass-covered clock face and hands, two dome-shaped brass bells mounted on top like ears with a small striker arm between them, support feet at the base, aged metallic casing with a small wind-up key on the back, vintage industrial look with a faint Forge reinforced rim for durability during throwing, clean neutral background. one isolated fantasy game prop, side view, facing right, complete object visible, clear handle or holdable region, clear functional front or effect-emission region, no person, no hand, no character, no text, no watermark, no UI, no environment scene, flat high-contrast solid chroma key magenta background, readable silhouette, handcrafted fantasy toy aesthetic, centered object, generous empty margin.",
+      "effective_negative_prompt": "do not depict a gun, sword, shuriken, boomerang, generic weapon, disc, or any object other than an alarm clock; avoid multiple clocks, cartoon distortion, or missing bells. portrait, human, face, hands, fingers, character holding object, person, weapon sheet, multiple views, multiple objects, inventory grid, text, label, letters, logo, watermark, UI, scenery, room, landscape, environment, pedestal, cropped object, cut off, border.",
+      "effective_positive_prompt_sha256": "52e85482e9a2bc97046f68cdc48bbfcad652c1834dd6569a11393d5eceff3d03",
+      "effective_negative_prompt_sha256": "46f35b7273f338df641499674893d1690036eff6172e76d15e655203306d003f"
+    },
+    "B03": {
+      "source_file": "tools/semantic/output/blind_retest_3c/blind-retest-3c-20260803T060715018997Z-4ddf8f31/B03/result.json",
+      "source_result_sha256": "116f6bae56d34927d088ad544ec40fad7ed17b2a6d3dda20cf4c874e9ce6b4aa",
+      "source_tool_input_sha256": "9678c5cf7b33e6d7e60ac4ca1aa219608a0edbd6047110c06d6b4e72f766af0e",
+      "handoff_sha256": "1cf2baaaad26308d99cc5e886703095901dc5e5163beb314c30515f6ce1aa446",
+      "handoff": {
+        "identity": {
+          "canonical_name_en": "stapler",
+          "required_identity_parts": [
+            "hinged top arm",
+            "base plate",
+            "spring-loaded press mechanism",
+            "staple magazine slot"
+          ],
+          "material_hints": [
+            "heavy metal body",
+            "painted steel casing"
+          ],
+          "silhouette_hints": [
+            "elongated rectangular clamp shape with hinged top jaw"
+          ],
+          "optional_decorations": [
+            "worn paint scuffs",
+            "brand-style engraving"
+          ]
+        },
+        "visual": {
+          "prompt_en": "A giant oversized stapler shown as an isolated object, side view, complete object visible, heavy metal body with a hinged top arm and a solid base plate, spring-loaded press mechanism visible at the hinge, staple magazine slot along the body, thick painted steel casing, faint worn paint scuffs, slightly reinforced clamping edge for combat use, held like a massive melee clamp weapon, dramatic fantasy lighting, isolated on plain background",
+          "negative_prompt_en": "not a gun, not a sword, not scissors, not a bear trap, not a robotic claw, no unrelated weapon shapes, no background clutter, no multiple objects"
+        }
+      },
+      "effective_positive_prompt": "canonical object identity: stapler. required identity parts: hinged top arm; base plate; spring-loaded press mechanism; staple magazine slot. material hints: heavy metal body; painted steel casing. silhouette hints: elongated rectangular clamp shape with hinged top jaw. optional decorations: worn paint scuffs; brand-style engraving. frozen visual description: A giant oversized stapler shown as an isolated object, side view, complete object visible, heavy metal body with a hinged top arm and a solid base plate, spring-loaded press mechanism visible at the hinge, staple magazine slot along the body, thick painted steel casing, faint worn paint scuffs, slightly reinforced clamping edge for combat use, held like a massive melee clamp weapon, dramatic fantasy lighting, isolated on plain background. one isolated fantasy game prop, side view, facing right, complete object visible, clear handle or holdable region, clear functional front or effect-emission region, no person, no hand, no character, no text, no watermark, no UI, no environment scene, flat high-contrast solid chroma key magenta background, readable silhouette, handcrafted fantasy toy aesthetic, centered object, generous empty margin.",
+      "effective_negative_prompt": "not a gun, not a sword, not scissors, not a bear trap, not a robotic claw, no unrelated weapon shapes, no background clutter, no multiple objects. portrait, human, face, hands, fingers, character holding object, person, weapon sheet, multiple views, multiple objects, inventory grid, text, label, letters, logo, watermark, UI, scenery, room, landscape, environment, pedestal, cropped object, cut off, border.",
+      "effective_positive_prompt_sha256": "b76cd670bbacb1bdd9f4e4afdc177fa49c6e8e0937da0ee43460a553fda75f76",
+      "effective_negative_prompt_sha256": "d126b70b9c5628ddb988dee19d4de25db32303cbc7a8fe365da4103558dc2031"
+    },
+    "B04": {
+      "source_file": "tools/semantic/output/blind_retest_3c/blind-retest-3c-20260803T060715018997Z-4ddf8f31/B04/result.json",
+      "source_result_sha256": "bcc65d2408980f32cf1c9eab037c67af6e562402c4ea39a3159ebb195cb48983",
+      "source_tool_input_sha256": "6914315979b4e94f21dfe381e2d2c2b6deb2af597ec852515775bff99124efaf",
+      "handoff_sha256": "33df2fff63abbd414357b54c22cd518b5b7e0c475d62176bb15fb6325beff96d",
+      "handoff": {
+        "identity": {
+          "canonical_name_en": "goblet",
+          "required_identity_parts": [
+            "cup bowl",
+            "stem",
+            "base foot"
+          ],
+          "material_hints": [
+            "glass",
+            "green tinted glass"
+          ],
+          "silhouette_hints": [
+            "tall stemmed drinking vessel outline",
+            "wide bowl narrowing to slender stem widening to round base"
+          ],
+          "optional_decorations": [
+            "ornate rim engraving",
+            "faint acidic glow at rim"
+          ]
+        },
+        "visual": {
+          "prompt_en": "A green stemmed goblet, isolated single object, side view, complete object visible, wide cup bowl, slender stem, round base foot, translucent green tinted glass material, faint acidic green liquid glowing near the rim as a small functional emitter detail at the cup mouth, ornate rim engraving, fantasy game asset style, clean background",
+          "negative_prompt_en": "not a gun, not a cannon, not a hose nozzle weapon, not a sword, not an umbrella, no human hands, no full body character"
+        }
+      },
+      "effective_positive_prompt": "canonical object identity: goblet. required identity parts: cup bowl; stem; base foot. material hints: glass; green tinted glass. silhouette hints: tall stemmed drinking vessel outline; wide bowl narrowing to slender stem widening to round base. optional decorations: ornate rim engraving; faint acidic glow at rim. frozen visual description: A green stemmed goblet, isolated single object, side view, complete object visible, wide cup bowl, slender stem, round base foot, translucent green tinted glass material, faint acidic green liquid glowing near the rim as a small functional emitter detail at the cup mouth, ornate rim engraving, fantasy game asset style, clean background. one isolated fantasy game prop, side view, facing right, complete object visible, clear handle or holdable region, clear functional front or effect-emission region, no person, no hand, no character, no text, no watermark, no UI, no environment scene, flat high-contrast solid chroma key magenta background, readable silhouette, handcrafted fantasy toy aesthetic, centered object, generous empty margin.",
+      "effective_negative_prompt": "not a gun, not a cannon, not a hose nozzle weapon, not a sword, not an umbrella, no human hands, no full body character. portrait, human, face, hands, fingers, character holding object, person, weapon sheet, multiple views, multiple objects, inventory grid, text, label, letters, logo, watermark, UI, scenery, room, landscape, environment, pedestal, cropped object, cut off, border.",
+      "effective_positive_prompt_sha256": "05e63d615ac73cacea35f0e332bfdad51d3f7445f7566b643a94bb5e9c998f58",
+      "effective_negative_prompt_sha256": "780f2723acb747955ac22e91fdc2922910d1eca4dbdaa29185a64c6e47ca8a72"
+    }
+  },
+  "ordered_plan": [
+    {
+      "ordinal": 1,
+      "case_id": "B01",
+      "seed": 4041001,
+      "run_label": "seed_4041001"
+    },
+    {
+      "ordinal": 2,
+      "case_id": "B01",
+      "seed": 4041002,
+      "run_label": "seed_4041002"
+    },
+    {
+      "ordinal": 3,
+      "case_id": "B02",
+      "seed": 4041001,
+      "run_label": "seed_4041001"
+    },
+    {
+      "ordinal": 4,
+      "case_id": "B02",
+      "seed": 4041002,
+      "run_label": "seed_4041002"
+    },
+    {
+      "ordinal": 5,
+      "case_id": "B03",
+      "seed": 4041001,
+      "run_label": "seed_4041001"
+    },
+    {
+      "ordinal": 6,
+      "case_id": "B03",
+      "seed": 4041002,
+      "run_label": "seed_4041002"
+    },
+    {
+      "ordinal": 7,
+      "case_id": "B04",
+      "seed": 4041001,
+      "run_label": "seed_4041001"
+    },
+    {
+      "ordinal": 8,
+      "case_id": "B04",
+      "seed": 4041002,
+      "run_label": "seed_4041002"
+    }
+  ]
+}

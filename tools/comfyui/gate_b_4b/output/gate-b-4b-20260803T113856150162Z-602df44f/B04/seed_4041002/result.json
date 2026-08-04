@@ -1,0 +1,146 @@
+{
+  "artifact_hashes": {
+    "B04/seed_4041002/alpha_mask.png": {
+      "sha256": "15d113c2152f42feb2aaee1fadc926a1e5300fffef54fd1fc95cd338ba348048",
+      "size": 1571
+    },
+    "B04/seed_4041002/debug/01_border_estimate.png": {
+      "sha256": "2d0b6e7dbba96632ef1bc4f6ad644ff467bb5e1026b2fbdbbc9f4c050246bf20",
+      "size": 1492
+    },
+    "B04/seed_4041002/debug/02_chroma_distance.png": {
+      "sha256": "05297709b063559e423063b72a8be76d2aaf3be6842c68a9d9493a628b9e51e3",
+      "size": 67958
+    },
+    "B04/seed_4041002/debug/03_flood_bg.png": {
+      "sha256": "d8944efc79e364346c415ece0a65e2c0c0b9e75bae07f0558c917e4bac30d33d",
+      "size": 2155
+    },
+    "B04/seed_4041002/debug/04_largest_component.png": {
+      "sha256": "d11cc380a7d0e686d0236e172f0abf0dbca473cd393c43bee9d8943a23b7acb6",
+      "size": 1180
+    },
+    "B04/seed_4041002/debug/05_candidate_fg.png": {
+      "sha256": "559912dfd1745b50eb9415d2f8de0ab9a8e368bd2cd68f3ae1563364d1ddcd87",
+      "size": 2390
+    },
+    "B04/seed_4041002/debug/06_rejected_edge_pixels.png": {
+      "sha256": "d010a5148a069e5922e482e09b66ec3f52ee1b155a30b28c5de1d32f23911383",
+      "size": 1248
+    },
+    "B04/seed_4041002/debug/07_final_failure_region.png": {
+      "sha256": "1540c8bfebd977266ba9dd5709844d2c6d689b9f30d520e2fba6097dc3894748",
+      "size": 1684
+    },
+    "B04/seed_4041002/debug/08_kept_components.png": {
+      "sha256": "d11cc380a7d0e686d0236e172f0abf0dbca473cd393c43bee9d8943a23b7acb6",
+      "size": 1180
+    },
+    "B04/seed_4041002/debug/09_removed_components.png": {
+      "sha256": "ccf9fea0daa9333b23780d16a81b98b9f863d98dfe1be9e5925ab1149ad399f4",
+      "size": 1184
+    },
+    "B04/seed_4041002/debug/10_sure_bg.png": {
+      "sha256": "f659555c21d6c9a162e963f1c09edb1e4739cc07ef97cd2077dfb5e0a846c0d2",
+      "size": 2349
+    },
+    "B04/seed_4041002/debug/11_sure_fg.png": {
+      "sha256": "7f59959e62328e94515741d10bb361a3d62b4b5f0a17d969658608e9e997e9a6",
+      "size": 2495
+    },
+    "B04/seed_4041002/debug/12_grabcut_foreground.png": {
+      "sha256": "efe4e1d7647dae0b394617240d51ce607a70bd5685427d93f9fef85be02e6b95",
+      "size": 1995
+    },
+    "B04/seed_4041002/debug/13_shadow_likelihood.png": {
+      "sha256": "3eade1e9ffc2c262dba26920399d3b7cc12b4ecb57bc61d65c91836ddfa60158",
+      "size": 40945
+    },
+    "B04/seed_4041002/debug/14_soft_alpha.png": {
+      "sha256": "92222bc1854df85cc7ce532a10d8ac9e6356f0c971f8cb7394947abb610d3539",
+      "size": 1506
+    },
+    "B04/seed_4041002/metrics.json": {
+      "sha256": "1d63aa4099749f687d7684c5b670a4718b8f3dfaad0e5bead0bd5d471da7838c",
+      "size": 983
+    },
+    "B04/seed_4041002/processed_sprite.png": {
+      "sha256": "0efcf8baf011618a57d493309480592a8fcaa431873c3b085f35a472da2cb9b1",
+      "size": 6060
+    },
+    "B04/seed_4041002/raw.png": {
+      "sha256": "344af8aa9c75dde57b702fbde2d9e9f87044896cbaa4c34edd6ef9272a068a02",
+      "size": 255297
+    }
+  },
+  "case_id": "B04",
+  "copied_raw": {
+    "path": "B04/seed_4041002/raw.png",
+    "sha256": "344af8aa9c75dde57b702fbde2d9e9f87044896cbaa4c34edd6ef9272a068a02",
+    "size": 255297
+  },
+  "ordinal": 8,
+  "seed": 4041002,
+  "source_raw": {
+    "path": "tools/comfyui/gate_b_4a/output/gate-b-4a-20260803T094025408228Z-e25bf1f7/B04/seed_4041002/raw.png",
+    "sha256": "344af8aa9c75dde57b702fbde2d9e9f87044896cbaa4c34edd6ef9272a068a02",
+    "size": 255297
+  },
+  "v1": {
+    "alpha_mask": null,
+    "failure_reason": "BACKGROUND_NOT_HIGH_CONTRAST_CHROMA",
+    "processed_sprite": null,
+    "status": "failed"
+  },
+  "v2": {
+    "failure_reason": "",
+    "method": "opencv_chroma_grabcut",
+    "metrics": {
+      "background_border_coherence": 0.594532,
+      "background_border_rgb": [
+        138.0,
+        21.0,
+        99.0
+      ],
+      "background_expected_match": 0.052207,
+      "background_key_direction_similarity": 0.979272,
+      "background_residual_ratio": 0.000377,
+      "component_count": 1,
+      "edge_contact_ratio": 0.0,
+      "foreground_coverage": 0.091145,
+      "internal_hole_ratio": 0.037737,
+      "kept_component_count": 1,
+      "object_bbox": [
+        181,
+        59,
+        156,
+        259
+      ],
+      "outline": true,
+      "output_alpha_coverage": 0.303385,
+      "palette_limit": 32,
+      "postprocess_seconds": 1.15,
+      "processed_dimensions": [
+        96,
+        96
+      ],
+      "raw_dimensions": [
+        512,
+        512
+      ],
+      "removed_area": 57201,
+      "removed_component_count": 48,
+      "segmentation_confidence": 0.952025,
+      "shadow_residual_score": 0.005705,
+      "smallest_kept_component_area": 23893,
+      "soft_edge_pixel_ratio": 0.436102,
+      "sprite_size": 96,
+      "status": "success",
+      "visible_color_count": 32
+    },
+    "processor_invocation_count": 1,
+    "processor_sha256": "0b348a0202877629258439dc483711e6a4b9143d58863e0cae72dfe7d0926fe7",
+    "runner_observed_seconds": 1.152,
+    "status": "success"
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "attempts": 5,
+  "succeeded": 5,
+  "failed": 0,
+  "elapsed_seconds": 10.946,
+  "results": [
+    {
+      "case_id": "spike2_case_01",
+      "status": "success",
+      "output_directory": "tools/comfyui/open_identity/output/spike2_case_01/seed_52002_policy1",
+      "generation_seconds": 2.531,
+      "postprocess_seconds": 0.053,
+      "generation_prompt_sha256": "98339b89ba4bafe551bdc1de2f1a7f1a9462af0ce680dbd3fa34539e58343a62"
+    },
+    {
+      "case_id": "spike2_case_02",
+      "status": "success",
+      "output_directory": "tools/comfyui/open_identity/output/spike2_case_02/seed_52002_policy1",
+      "generation_seconds": 2.035,
+      "postprocess_seconds": 0.037,
+      "generation_prompt_sha256": "4e18f596e1c866fea0f12463caf95f4e1b711aac1bc11d4e2ba556cf21c54f3c"
+    },
+    {
+      "case_id": "spike2_case_03",
+      "status": "success",
+      "output_directory": "tools/comfyui/open_identity/output/spike2_case_03/seed_52002_policy1",
+      "generation_seconds": 2.042,
+      "postprocess_seconds": 0.038,
+      "generation_prompt_sha256": "a296356ef07306c80ae476794e947bb8f28efe085464384beee7e3324d1d2640"
+    },
+    {
+      "case_id": "spike2_case_04",
+      "status": "success",
+      "output_directory": "tools/comfyui/open_identity/output/spike2_case_04/seed_52002_policy1",
+      "generation_seconds": 2.014,
+      "postprocess_seconds": 0.039,
+      "generation_prompt_sha256": "0e06cf6204ba4c8274a3088993ac9859feee4cff319dfeb3b62656d93664f6dc"
+    },
+    {
+      "case_id": "spike2_case_05",
+      "status": "success",
+      "output_directory": "tools/comfyui/open_identity/output/spike2_case_05/seed_52002_policy1",
+      "generation_seconds": 2.03,
+      "postprocess_seconds": 0.04,
+      "generation_prompt_sha256": "d8920d5114335fdb25b324024aa4d502df6e2e147fe7074de3d73276974d934d"
+    },
+    {
+      "case_id": "spike2_case_06",
+      "status": "clarification_expected",
+      "question": "你画的是什么？"
+    }
+  ]
+}

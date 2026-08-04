@@ -1,0 +1,50 @@
+{
+  "identity": {
+    "canonical_name_zh": "长枪",
+    "canonical_name_en": "spear",
+    "display_name_zh": "喷冰古老长枪",
+    "display_name_en": "Ancient Frost-Mist Spear",
+    "category": "traditional_weapon",
+    "required_identity_parts": [
+      "long wooden shaft",
+      "spear tip/blade",
+      "spearhead socket"
+    ],
+    "material_hints": [
+      "aged wood",
+      "weathered metal"
+    ],
+    "silhouette_hints": [
+      "long slender pole with pointed head at one end"
+    ],
+    "optional_decorations": [
+      "worn leather wrapping on shaft",
+      "faded engravings near spearhead"
+    ]
+  },
+  "combat": {
+    "behavior_family": "sustained_ranged",
+    "delivery": "continuous_emission",
+    "impact_mode": "continuous_stream",
+    "effect_type": "ice",
+    "drawback": "overheat",
+    "cadence_hint": "continuous"
+  },
+  "visual": {
+    "prompt_en": "An ancient spear with a long weathered wooden shaft and a metal spear tip, aged and worn with subtle engravings near the head, a small functional frost emitter fitted just behind the spearhead, faint icy mist curling from the tip, isolated single object, side view, complete object visible from shaft end to tip",
+    "negative_prompt_en": "not a gun, not a rifle, not a staff without a blade, not a wand, no futuristic weapon, no firearm parts, no barrel",
+    "must_preserve": [
+      "long wooden shaft",
+      "spear tip/blade",
+      "spearhead socket"
+    ],
+    "must_not_replace_with": [
+      "gun",
+      "rifle",
+      "wand",
+      "staff without blade",
+      "cannon"
+    ]
+  },
+  "confidence": 0.9
+}

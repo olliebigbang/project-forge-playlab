@@ -1,0 +1,55 @@
+{
+  "contract": "forge-flux2-human-visual-review-rubric-v1",
+  "frozen_before_generation": true,
+  "review_basis": "Inspect each actual raw.png and, when delivered, processed_sprite.png. Prompt text alone cannot receive credit.",
+  "raw_boolean_fields": [
+    "correct_raw_identity",
+    "single_complete_object",
+    "no_person_or_hand",
+    "no_extraneous_text_or_watermark",
+    "side_or_three_quarter_view",
+    "complete_not_cropped",
+    "fixed_weapon_substitution",
+    "unwanted_scene_or_pedestal",
+    "intrinsic_identity_markings_present"
+  ],
+  "sprite_boolean_fields": [
+    "sprite_delivered",
+    "alpha_valid",
+    "identity_recognizable_96",
+    "required_parts_preserved_96",
+    "outline_readable",
+    "background_residual",
+    "shadow_residual"
+  ],
+  "forbidden_fixed_weapon_substitutions": ["gun", "sword", "umbrella"],
+  "cases": {
+    "B01": {
+      "expected_identity": "old vacuum cleaner",
+      "identity_structures": ["vacuum body", "long flexible hose", "nozzle or suction head"]
+    },
+    "B02": {
+      "expected_identity": "twin-bell mechanical alarm clock",
+      "identity_structures": ["clock face", "twin bells", "clock body or hands"]
+    },
+    "B03": {
+      "expected_identity": "giant stapler (canonical identity: stapler)",
+      "identity_structures": ["upper pressing arm", "base", "rear hinge"]
+    },
+    "B04": {
+      "expected_identity": "green wine goblet (canonical identity: goblet)",
+      "identity_structures": ["cup bowl", "stem", "base"]
+    }
+  },
+  "thresholds": {
+    "raw_identity_correct_min": 7,
+    "required_parts_visible_min_of_24": 21,
+    "single_complete_object_required": 8,
+    "no_person_or_hand_required": 8,
+    "fixed_weapon_substitution_max": 0,
+    "complete_not_cropped_min": 7,
+    "identity_recognizable_96_min": 6,
+    "generation_completed_required": 8,
+    "formal_matrix_retry_max": 0
+  }
+}

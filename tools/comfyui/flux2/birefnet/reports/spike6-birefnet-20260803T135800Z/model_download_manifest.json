@@ -1,0 +1,31 @@
+{
+    "contract":  "forge-birefnet-official-model-download-v1",
+    "status":  "PASS",
+    "downloaded_this_run":  true,
+    "official_repository":  "Comfy-Org/BiRefNet",
+    "official_repository_commit":  "8fdc9d315889de96cc0c6269eeecd333e2727889",
+    "official_template_url":  "https://huggingface.co/Comfy-Org/BiRefNet/resolve/main/background_removal/birefnet.safetensors",
+    "resolved_download_url":  "https://huggingface.co/Comfy-Org/BiRefNet/resolve/8fdc9d315889de96cc0c6269eeecd333e2727889/background_removal/birefnet.safetensors",
+    "expected_bytes_from_official_head":  444473596,
+    "expected_sha256_from_official_lfs_etag":  "9ab37426bf4de0567af6b5d21b16151357149139362e6e8992021b8ce356a154",
+    "license":  "MIT",
+    "license_evidence":  [
+                             "https://huggingface.co/api/models/Comfy-Org/BiRefNet",
+                             "https://huggingface.co/Comfy-Org/BiRefNet/raw/8fdc9d315889de96cc0c6269eeecd333e2727889/README.md"
+                         ],
+    "model":  {
+                  "filename":  "birefnet.safetensors",
+                  "destination":  "C:\\AI\\ComfyUI-ForgeFlux2\\ComfyUI\\models\\background_removal\\birefnet.safetensors",
+                  "bytes":  444473596,
+                  "sha256":  "9ab37426bf4de0567af6b5d21b16151357149139362e6e8992021b8ce356a154",
+                  "safetensors_header":  {
+                                             "valid":  true,
+                                             "header_length":  86776,
+                                             "required_tensor_key":  "bb.layers.1.blocks.0.attn.relative_position_index"
+                                         }
+              },
+    "partial_path":  "C:\\AI\\ComfyUI-ForgeFlux2\\ComfyUI\\models\\background_removal\\birefnet.safetensors.partial",
+    "partial_exists_after_success":  false,
+    "custom_nodes_installed":  false,
+    "completed_at_utc":  "2026-08-03T13:52:30.8772080Z"
+}

@@ -1,0 +1,31 @@
+{
+  "gate": "Forge Visual Identity Gate B - Semantic Prompt Handoff 4A",
+  "approval_version": "gate-b-4a-approved-v1",
+  "source_contract": "frozen 3C result seven-field English handoff",
+  "case_order": ["B01", "B02", "B03", "B04"],
+  "seeds": [4041001, 4041002],
+  "planned_submission_count": 8,
+  "automatic_retry_allowed": false,
+  "third_seed_allowed": false,
+  "anthropic_api_allowed": false,
+  "comfyui_api_base": "http://127.0.0.1:8188",
+  "checkpoint": "RealVisXL_V5.0_fp16.safetensors",
+  "sampler": {
+    "steps": 26,
+    "cfg": 6.5,
+    "sampler_name": "dpmpp_2m",
+    "scheduler": "karras",
+    "denoise": 1.0
+  },
+  "hashes": {
+    "frozen_handoff_sha256": "cb084add3587889f1bcb00651b2f25458c03c5ef73bc5f44e436264f65c52083",
+    "protected_history_sha256": "3fb1fa19652500993aa400bcea1b609a486782bfbffaa996591f998c80b763eb",
+    "human_review_rubric_sha256": "3d567ca55615a0151f81598db4fcb105361362d8f4c7be7e1646be68863783b0",
+    "local_config_sha256": "b9d52205a1cb812ba747594d49d6de69f0ae1c7e5a3d3787c289f28b3bac40fb",
+    "workflow_sha256": "507095e0e1cbe0556d1bcac7cff8d28e93af65d843f69cc54de836ff267398a5",
+    "postprocess_sha256": "f748c8e61dfd022d351d84c57c2d68b50b3dc39685403c7af20cc0402eebc0e9",
+    "checkpoint_sha256": "6a35a7855770ae9820a3c931d4964c3817b6d9e3c6f9c4dabb5b3a94e5643b80"
+  },
+  "review_rubric_is_generation_input": false,
+  "expected_answers_are_generation_input": false
+}

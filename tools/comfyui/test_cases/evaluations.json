@@ -1,0 +1,125 @@
+{
+  "evaluation_method": "Manual visual review of raw_processed_comparison.png and alpha_anchor_debug.png; conservative scoring; no retries.",
+  "runs": [
+    {
+      "case_id": "case_a", "run_id": "seed_41001_s45", "single_subject": true, "no_people_hands_text": true,
+      "complete_uncropped": true, "facing_consistent": true, "identity_recognizable": true, "sketch_influence": true,
+      "description_influence": true, "background_alpha_success": true, "recognizable_at_96": false,
+      "holdable_region_exists": false, "grip_primary_reasonable": false, "effect_anchor_reasonable": true,
+      "seed_variation_acceptable": false, "generation_seconds": 2.091, "retry_count": 0, "status": "success",
+      "notes": "Blue effect and long profile survived, but the result reads more like a rocket canister than a multi-barrel prop at 96px."
+    },
+    {
+      "case_id": "case_a", "run_id": "seed_41002_s70", "single_subject": true, "no_people_hands_text": true,
+      "complete_uncropped": true, "facing_consistent": true, "identity_recognizable": true, "sketch_influence": true,
+      "description_influence": true, "background_alpha_success": true, "recognizable_at_96": true,
+      "holdable_region_exists": true, "grip_primary_reasonable": true, "effect_anchor_reasonable": true,
+      "seed_variation_acceptable": false, "generation_seconds": 2.033, "retry_count": 0, "status": "success",
+      "notes": "Best Case A result; barrel front and bottom support provide readable functional regions."
+    },
+    {
+      "case_id": "case_a", "run_id": "seed_41003_s45", "single_subject": false, "no_people_hands_text": true,
+      "complete_uncropped": false, "facing_consistent": false, "identity_recognizable": false, "sketch_influence": false,
+      "description_influence": false, "background_alpha_success": true, "recognizable_at_96": false,
+      "holdable_region_exists": true, "grip_primary_reasonable": true, "effect_anchor_reasonable": true,
+      "seed_variation_acceptable": false, "generation_seconds": 2.019, "retry_count": 0, "status": "success",
+      "notes": "Raw image is a repeated multi-object strip; largest-component cleanup hides the violation but does not make generation compliant."
+    },
+    {
+      "case_id": "case_b", "run_id": "seed_41001_s00", "single_subject": true, "no_people_hands_text": true,
+      "complete_uncropped": true, "facing_consistent": false, "identity_recognizable": true, "sketch_influence": "not_applicable",
+      "description_influence": false, "background_alpha_success": true, "recognizable_at_96": true,
+      "holdable_region_exists": true, "grip_primary_reasonable": true, "effect_anchor_reasonable": true,
+      "seed_variation_acceptable": true, "generation_seconds": 2.039, "retry_count": 0, "status": "success",
+      "notes": "Umbrella identity and handle are clear; lightning/mechanical return semantics are not visible."
+    },
+    {
+      "case_id": "case_b", "run_id": "seed_41002_s00", "single_subject": true, "no_people_hands_text": true,
+      "complete_uncropped": true, "facing_consistent": false, "identity_recognizable": true, "sketch_influence": "not_applicable",
+      "description_influence": false, "background_alpha_success": false, "recognizable_at_96": false,
+      "holdable_region_exists": true, "grip_primary_reasonable": false, "effect_anchor_reasonable": false,
+      "seed_variation_acceptable": true, "generation_seconds": 2.045, "retry_count": 0, "status": "failed",
+      "notes": "Background segmentation connected an edge artifact to the subject and rejected the run as OBJECT_TOUCHES_RAW_EDGE."
+    },
+    {
+      "case_id": "case_b", "run_id": "seed_41003_s00", "single_subject": true, "no_people_hands_text": true,
+      "complete_uncropped": true, "facing_consistent": false, "identity_recognizable": true, "sketch_influence": "not_applicable",
+      "description_influence": false, "background_alpha_success": true, "recognizable_at_96": true,
+      "holdable_region_exists": true, "grip_primary_reasonable": true, "effect_anchor_reasonable": true,
+      "seed_variation_acceptable": true, "generation_seconds": 2.044, "retry_count": 0, "status": "success",
+      "notes": "Readable umbrella and shaft, but it resembles a patio umbrella and has no attack-facing cue."
+    },
+    {
+      "case_id": "case_c", "run_id": "seed_41001_s45", "single_subject": true, "no_people_hands_text": true,
+      "complete_uncropped": true, "facing_consistent": false, "identity_recognizable": true, "sketch_influence": true,
+      "description_influence": true, "background_alpha_success": true, "recognizable_at_96": true,
+      "holdable_region_exists": true, "grip_primary_reasonable": false, "effect_anchor_reasonable": false,
+      "seed_variation_acceptable": true, "generation_seconds": 2.061, "retry_count": 0, "status": "success",
+      "notes": "Recognizable chainsaw blade, but it faces left; rear-profile search places GripPrimary on the blade tip."
+    },
+    {
+      "case_id": "case_c", "run_id": "seed_41002_s70", "single_subject": true, "no_people_hands_text": true,
+      "complete_uncropped": true, "facing_consistent": false, "identity_recognizable": true, "sketch_influence": true,
+      "description_influence": true, "background_alpha_success": true, "recognizable_at_96": true,
+      "holdable_region_exists": true, "grip_primary_reasonable": false, "effect_anchor_reasonable": false,
+      "seed_variation_acceptable": true, "generation_seconds": 2.036, "retry_count": 0, "status": "success",
+      "notes": "Strong silhouette preservation at 0.70, but the orientation and derived anchors are reversed."
+    },
+    {
+      "case_id": "case_c", "run_id": "seed_41003_s45", "single_subject": true, "no_people_hands_text": true,
+      "complete_uncropped": true, "facing_consistent": false, "identity_recognizable": true, "sketch_influence": true,
+      "description_influence": true, "background_alpha_success": true, "recognizable_at_96": true,
+      "holdable_region_exists": true, "grip_primary_reasonable": false, "effect_anchor_reasonable": false,
+      "seed_variation_acceptable": true, "generation_seconds": 2.044, "retry_count": 0, "status": "success",
+      "notes": "Clear blade and handle, but again points left and defeats the current forward-edge assumption."
+    },
+    {
+      "case_id": "case_d", "run_id": "seed_41001_s45", "single_subject": true, "no_people_hands_text": true,
+      "complete_uncropped": true, "facing_consistent": false, "identity_recognizable": true, "sketch_influence": true,
+      "description_influence": false, "background_alpha_success": false, "recognizable_at_96": false,
+      "holdable_region_exists": false, "grip_primary_reasonable": false, "effect_anchor_reasonable": false,
+      "seed_variation_acceptable": false, "generation_seconds": 2.054, "retry_count": 0, "status": "failed",
+      "notes": "Chair identity is preserved, but background removal rejects an edge-connected artifact."
+    },
+    {
+      "case_id": "case_d", "run_id": "seed_41002_s70", "single_subject": true, "no_people_hands_text": true,
+      "complete_uncropped": true, "facing_consistent": true, "identity_recognizable": true, "sketch_influence": true,
+      "description_influence": true, "background_alpha_success": true, "recognizable_at_96": true,
+      "holdable_region_exists": true, "grip_primary_reasonable": false, "effect_anchor_reasonable": true,
+      "seed_variation_acceptable": false, "generation_seconds": 2.053, "retry_count": 0, "status": "success",
+      "notes": "Chair survives at 96px and has a right-side functional protrusion; automatic grip remains on a leg."
+    },
+    {
+      "case_id": "case_d", "run_id": "seed_41003_s45", "single_subject": true, "no_people_hands_text": true,
+      "complete_uncropped": true, "facing_consistent": false, "identity_recognizable": true, "sketch_influence": true,
+      "description_influence": false, "background_alpha_success": true, "recognizable_at_96": true,
+      "holdable_region_exists": false, "grip_primary_reasonable": false, "effect_anchor_reasonable": false,
+      "seed_variation_acceptable": false, "generation_seconds": 2.078, "retry_count": 0, "status": "success",
+      "notes": "Very readable chair, but it has no weapon-facing cue and no believable handhold."
+    },
+    {
+      "case_id": "case_e", "run_id": "seed_41001_s00", "single_subject": true, "no_people_hands_text": true,
+      "complete_uncropped": true, "facing_consistent": false, "identity_recognizable": true, "sketch_influence": "not_applicable",
+      "description_influence": false, "background_alpha_success": true, "recognizable_at_96": true,
+      "holdable_region_exists": true, "grip_primary_reasonable": false, "effect_anchor_reasonable": false,
+      "seed_variation_acceptable": true, "generation_seconds": 2.031, "retry_count": 0, "status": "success",
+      "notes": "Teapot and handle are clear, but the spout points left while Muzzle and GripPrimary are resolved on the wrong regions."
+    },
+    {
+      "case_id": "case_e", "run_id": "seed_41002_s00", "single_subject": true, "no_people_hands_text": true,
+      "complete_uncropped": true, "facing_consistent": false, "identity_recognizable": true, "sketch_influence": "not_applicable",
+      "description_influence": false, "background_alpha_success": false, "recognizable_at_96": false,
+      "holdable_region_exists": true, "grip_primary_reasonable": false, "effect_anchor_reasonable": false,
+      "seed_variation_acceptable": true, "generation_seconds": 2.043, "retry_count": 0, "status": "failed",
+      "notes": "Readable raw teapot, rejected by conservative edge-connected background validation."
+    },
+    {
+      "case_id": "case_e", "run_id": "seed_41003_s00", "single_subject": true, "no_people_hands_text": true,
+      "complete_uncropped": true, "facing_consistent": false, "identity_recognizable": true, "sketch_influence": "not_applicable",
+      "description_influence": false, "background_alpha_success": false, "recognizable_at_96": false,
+      "holdable_region_exists": true, "grip_primary_reasonable": false, "effect_anchor_reasonable": false,
+      "seed_variation_acceptable": true, "generation_seconds": 2.060, "retry_count": 0, "status": "failed",
+      "notes": "Readable raw teapot, rejected by conservative edge-connected background validation."
+    }
+  ]
+}

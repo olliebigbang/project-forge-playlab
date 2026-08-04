@@ -1,0 +1,19 @@
+{
+  "contract": "forge-open-playtest-mode-v1",
+  "mode": "OPEN PLAYTEST MODE",
+  "default_player_mode": "MOCK",
+  "explicit_launch_argument": "--forge-open-playtest",
+  "approved_model_id": "claude-sonnet-5",
+  "semantic_contract": "forge-semantic-v1.1",
+  "providers": ["Claude", "FLUX.2 Klein 4B", "BiRefNet"],
+  "bridge_base": "http://127.0.0.1:8771",
+  "comfyui_base": "http://127.0.0.1:8190",
+  "recent_limit": 10,
+  "history_limit": 200,
+  "session_call_limit": 20,
+  "input_max_characters": 500,
+  "retry_limit": 0,
+  "mock_fallback": false,
+  "training_only": true,
+  "sketch_enabled": false
+}

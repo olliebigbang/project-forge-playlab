@@ -1,81 +1,106 @@
 # Forge Playlab V1
 
-Forge Playlab is a disposable, standalone gameplay experiment. It validates whether a player can express a weapon fantasy with one Chinese sentence, a rough sketch, or both, then receive a coherent pixel weapon that can be held, tested, fought with, and modified once between two combat rooms.
+Forge Playlab is a disposable, standalone gameplay experiment. The current active entry is **Forge Open Identity Interpretation Spike 2**. It tests whether a player's arbitrary object identity can remain independent from three limited combat behavior families.
 
-This repository is not the Project Forge product line. Do not merge it directly into `olliebigbang/project-forge` or `olliebigbang/project-forge-claude`. Those repositories were not copied or modified to create this experiment.
+This repository is not the Project Forge product line. It does not copy into or modify `project-forge` or `project-forge-claude`.
 
-## What runs offline
+## Current active scope
 
-V1 defaults to `MockWeaponInterpreter`, `MockWeaponImageGenerator`, and a deterministic procedural 96×96 pixel-weapon renderer. It requires no network, API key, paid call, account, or cloud service. Player-facing Chinese copy never exposes internal behavior enums.
+The active flow is:
 
-The three supported behavior families are represented by:
+```text
+player text + optional rough sketch
+→ identity passthrough
+→ deterministic action-only behavior compiler
+→ local ComfyUI visual request
+→ validated transparent sprite
+→ existing training area
+```
 
-- 幽蓝炉心加特林: hold to spin up and fire, burn, overheat, heavy movement;
-- 雷鸣回旋伞: throw, outbound and return hits, electric chain, no rethrow before return;
-- 血齿链锯大剑: slow heavy melee, lifesteal, reduced mobility during startup.
+Only these behavior families remain:
+
+- `sustained_ranged`
+- `returning_thrown`
+- `heavy_melee`
+
+They decide how an object attacks, never its name or appearance. The active scene does not enter either combat room. No V2, enemy, room, behavior-family, balance, survey, or anchor-calibration expansion is part of Spike 2.
+
+The machine audit found no installed, callable local text LLM or VLM. Spike 2 therefore labels itself accurately as **player text passthrough + local rule behavior compiler**. It does not claim AI semantic understanding. A sketch without text asks exactly `你画的是什么？` once and cannot default to a fixed weapon.
+
+## Important result
+
+The architecture and safety boundary are implemented, but the real visual semantic gate failed.
+
+- Blueprint identity passthrough: 5/5.
+- Behavior classification: 5/5.
+- Real ComfyUI/Alpha delivery: 5/5.
+- Visual identity preservation from raw Chinese text: **2/5**.
+- AI semantic interpretation: **not used**.
+
+RealVisXL preserved the teapot and umbrella, but changed the table into a person and the chair/chicken leg into ornate staffs. Do not describe this as arbitrary identity understanding or promote it beyond the isolated desktop Spike.
+
+Those images are immutable prompt-policy-v1 evidence. The active policy-v2 prompt additionally carries the generic action contract, but was not visually rerun because ComfyUI was deliberately left stopped; it has no claimed image score.
+
+See [the full Spike 2 report](tools/comfyui/open_identity/reports/SPIKE2_REPORT.md) and [visual comparison](tools/comfyui/open_identity/reports/identity_raw_processed_comparison.png).
 
 ## Requirements
 
-- Godot 4.7.1 exactly;
-- Windows PowerShell is the primary script environment;
-- Python 3 only for the local Web server.
+- Godot 4.7.1 exactly.
+- Windows PowerShell for the primary scripts.
+- The already configured local ComfyUI install for real visual generation.
 
-The scripts look for Godot in this order: repository `.tools`, `godot4`/`godot` on PATH, then known local Godot 4.7.1 candidates. They do not change system configuration.
+No script downloads models, installs custom nodes, invokes a paid API, exposes a provider key, or listens beyond `127.0.0.1`.
 
-The Chinese UI bundles `NotoSansCJKsc-Regular.otf` from the official Noto CJK distribution. It is covered by the included SIL Open Font License in `assets/fonts/OFL.txt`.
+## Run Spike 2
 
-## Run
+Start local-loopback ComfyUI, then launch the active scene:
 
 ```powershell
-./scripts/run_game.ps1
+.\tools\comfyui\scripts\start_comfyui.ps1 `
+  -ConfigPath .\tools\comfyui\open_identity\config\forge_open_identity_config.local.json
+.\scripts\run_game.ps1 -- --visual-provider=LOCAL_COMFYUI
 ```
 
-Desktop controls:
+Stop ComfyUI afterward:
 
-- WASD or arrow keys: move;
-- Space or J: attack;
-- Shift or K: dodge;
-- F3: show combat anchor markers.
+```powershell
+.\tools\comfyui\scripts\stop_comfyui.ps1
+```
 
-Touch provides a left virtual stick, one attack button, and one dodge button.
+If the ignored local Spike 2 config does not exist, copy [the example config](tools/comfyui/open_identity/config/forge_open_identity_config.example.json) to `forge_open_identity_config.local.json` and set the two local runtime paths. Paths and the loopback endpoint remain configuration, not business-code constants.
+
+Mock can be selected only as an explicit fixed regression sample:
+
+```powershell
+.\scripts\run_game.ps1 -- --visual-provider=MOCK
+```
+
+Mock submission of arbitrary player identity fails with `MOCK_CANNOT_RENDER_ARBITRARY_PLAYER_IDENTITY`. It never silently equips a fixed weapon.
+
+Desktop controls in training:
+
+- WASD or arrow keys: move.
+- Space or J: attack.
+- Shift or K: dodge.
+- F3: show the existing anchor debug markers.
 
 ## Test
 
 ```powershell
-./scripts/test.ps1
+.\scripts\test.ps1
+$godot = & .\scripts\find_godot.ps1
+& $godot --headless --path . --script .\tests\test_open_identity_interpreter.gd
+& $godot --headless --path . --script .\tools\comfyui\open_identity\verify_training_handoff.gd
 ```
 
-Equivalent Godot command:
+The suites cover schema parity, identity/behavior separation, five verbatim identities, three identities in one behavior family, exact sketch clarification, no object-noun behavior selection, Mock isolation, local prompt evidence, timeout/Alpha/atomic delivery, and training-only scope.
 
-```powershell
-godot --headless --path . --script tests/run_tests.gd
-```
+## Previous isolated Spikes
 
-The focused suite covers schema repair, fixed blueprints, alpha-mask anchors, no-alpha failure, muzzle/tip placement, tradeoff-preserving deltas, the weapon/enemy damage matrix, forge locks, one intermission change, JSONL logging, and Web startup resources.
+- `tools/comfyui/` contains Forge Object Sprite Generation Spike 0 and its 15-run report.
+- `tools/comfyui/anchor_calibration/` contains Forge Semantic Anchor Calibration Spike 1 over the 11 existing successful sprites. Spike 2 does not continue or modify anchor calibration.
+- The former `scenes/main.tscn` fixed-weapon flow remains only as legacy regression/capture code. `project.godot` now starts `scenes/open_identity_spike.tscn`.
 
-## Build and serve Web
+## Out of scope
 
-```powershell
-./scripts/build_web.ps1
-./scripts/serve_web.ps1
-```
-
-Then open `http://localhost:8060`. Web export requires the Godot 4.7.1 Web templates; the build script fails explicitly if they are absent.
-
-Bash equivalents are provided in `scripts/*.sh`.
-
-## Mock and future approved models
-
-Mock mode is the only implemented V1 mode and is enabled by construction in `scripts/main.gd`. The replaceable boundaries are `WeaponInterpreter` and `WeaponImageGenerator`. A future approved model implementation must be injected behind those interfaces and return the same structured data. It must not emit executable game code or determine damage, cooldowns, collision, enemy rules, victory, or final anchors.
-
-No provider, model, endpoint, budget, or secret location is guessed here. Do not add a real adapter without explicit approval, a separate security review, and a failure-preserving local fallback. Never copy keys from another repository.
-
-## Local data
-
-Events are appended to `user://playlab/events.jsonl`. The logger stores event categories, timings, aggregate geometry, combat metrics, and response lengths. It removes raw descriptions, raw strokes, sketch PNG bytes, and free-form survey text from log payloads. Generated procedural assets and optional manual anchor overrides remain local under `user://playlab/`.
-
-## Not V1
-
-Accounts, cloud saves, stores, payments, narrative, bosses, inventories, multi-weapon switching, progression trees, infinite chat, long-term memory, production deployment, a fourth behavior family, AI-generated code, and a universal rig/anchor solver are deliberately excluded.
-
-See [V1 scope](docs/V1_SCOPE.md), [architecture](docs/ARCHITECTURE.md), [playtest script](docs/PLAYTEST_SCRIPT.md), [results template](docs/PLAYTEST_RESULTS_TEMPLATE.md), and [known limitations](docs/KNOWN_LIMITATIONS.md).
+V2, new gameplay content, accounts, cloud saves, stores, payments, narrative, bosses, inventories, extra behavior families, production deployment, automatic paid/model fallback, and AI-generated gameplay code remain excluded.

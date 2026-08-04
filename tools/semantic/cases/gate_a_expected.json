@@ -1,0 +1,325 @@
+{
+  "contract_version": "forge-semantic-gate-a-expected-v1",
+  "evaluator_policy": "typed-identity-evidence-and-curated-structural-synonyms-v1.1",
+  "cases": [
+    {
+      "case_id": "01",
+      "result_type": "compiled",
+      "tool_name": "submit_forge_semantic_blueprint",
+      "identity": {
+        "name_zh": "老木桌",
+        "name_en": "old wooden table",
+        "name_zh_aliases": ["老木桌", "老旧木桌", "旧木桌", "古老木桌"],
+        "name_en_aliases": ["old wooden table", "old wood table", "aged wooden table", "weathered wooden table"]
+      },
+      "behavior_family": "returning_thrown",
+      "core_features": [
+        {"label": "桌面 / tabletop", "aliases": ["桌面", "台面", "tabletop", "table top"]},
+        {"label": "桌腿 / table legs", "aliases": ["桌腿", "桌脚", "table legs", "table leg"]},
+        {"label": "旧木材 / aged wood", "aliases": ["旧木材", "老木", "旧木", "风化木", "aged wood", "old wood", "weathered wood", "worn wood"]}
+      ]
+    },
+    {
+      "case_id": "02",
+      "result_type": "compiled",
+      "tool_name": "submit_forge_semantic_blueprint",
+      "identity": {
+        "name_zh": "木椅",
+        "name_en": "wooden chair",
+        "name_zh_aliases": ["木椅", "木质椅子", "木制椅子"],
+        "name_en_aliases": ["wooden chair", "wood chair"]
+      },
+      "behavior_family": "sustained_ranged",
+      "core_features": [
+        {"label": "座面 / seat", "aliases": ["座面", "椅座", "座板", "seat", "chair seat"]},
+        {"label": "椅背 / chair back", "aliases": ["椅背", "靠背", "backrest", "chair back"]},
+        {"label": "椅腿 / chair legs", "aliases": ["椅腿", "椅脚", "chair legs", "chair leg"]},
+        {"label": "木材 / wood", "aliases": ["木材", "木质", "木制", "wood", "wooden"]}
+      ]
+    },
+    {
+      "case_id": "03",
+      "result_type": "compiled",
+      "tool_name": "submit_forge_semantic_blueprint",
+      "identity": {
+        "name_zh": "旧茶壶",
+        "name_en": "old teapot",
+        "name_zh_aliases": ["旧茶壶", "老茶壶", "古旧茶壶", "古老茶壶"],
+        "name_en_aliases": ["old teapot", "vintage teapot", "aged teapot", "antique teapot"]
+      },
+      "behavior_family": "sustained_ranged",
+      "core_features": [
+        {"label": "壶身 / teapot body", "aliases": ["壶身", "壶体", "teapot body", "kettle body"]},
+        {"label": "壶嘴 / spout", "aliases": ["壶嘴", "出水嘴", "spout"]},
+        {"label": "把手 / handle", "aliases": ["把手", "壶把", "手柄", "handle"]}
+      ]
+    },
+    {
+      "case_id": "04",
+      "result_type": "compiled",
+      "tool_name": "submit_forge_semantic_blueprint",
+      "identity": {
+        "name_zh": "巨大鸡腿",
+        "name_en": "giant chicken leg",
+        "name_zh_aliases": ["巨大鸡腿", "巨大的鸡腿", "巨型鸡腿", "大鸡腿"],
+        "name_en_aliases": ["giant chicken leg", "giant chicken drumstick", "giant drumstick", "oversized chicken leg", "oversized drumstick"]
+      },
+      "behavior_family": "heavy_melee",
+      "core_features": [
+        {"label": "鸡腿骨 / chicken leg bone", "aliases": ["鸡腿骨", "腿骨", "骨头", "chicken leg bone", "drumstick bone", "exposed bone"]},
+        {"label": "肉块 / meat", "aliases": ["肉块", "鸡肉", "肉质", "meat", "meaty", "chicken meat"]},
+        {"label": "鸡腿轮廓 / drumstick silhouette", "aliases": ["鸡腿轮廓", "鸡腿形状", "drumstick silhouette", "drumstick shape", "chicken leg shape"]}
+      ]
+    },
+    {
+      "case_id": "05",
+      "result_type": "compiled",
+      "tool_name": "submit_forge_semantic_blueprint",
+      "identity": {
+        "name_zh": "机械雨伞",
+        "name_en": "mechanical umbrella",
+        "name_zh_aliases": ["机械雨伞", "机械伞"],
+        "name_en_aliases": ["mechanical umbrella", "mechanical parasol"]
+      },
+      "behavior_family": "returning_thrown",
+      "allowed_fixed_weapon_terms": ["umbrella", "parasol", "雨伞", "机械伞"],
+      "core_features": [
+        {"label": "伞面 / canopy", "aliases": ["伞面", "伞蓬", "canopy", "umbrella canopy"]},
+        {"label": "伞骨 / ribs", "aliases": ["伞骨", "支撑骨", "umbrella ribs", "ribs", "spokes"]},
+        {"label": "伞柄 / shaft and handle", "aliases": ["伞柄", "伞杆", "手柄", "umbrella shaft", "umbrella handle", "shaft", "handle"]}
+      ]
+    },
+    {
+      "case_id": "06",
+      "result_type": "compiled",
+      "tool_name": "submit_forge_semantic_blueprint",
+      "identity": {
+        "name_zh": "破旧衣柜",
+        "name_en": "worn wardrobe",
+        "name_zh_aliases": ["破旧衣柜", "旧衣柜", "老衣柜", "古旧衣柜"],
+        "name_en_aliases": ["worn wardrobe", "old wardrobe", "weathered wardrobe", "aged wardrobe"]
+      },
+      "behavior_family": "sustained_ranged",
+      "core_features": [
+        {"label": "柜门 / wardrobe doors", "aliases": ["柜门", "衣柜门", "wardrobe doors", "cabinet doors", "doors"]},
+        {"label": "柜体 / wardrobe body", "aliases": ["柜体", "柜身", "wardrobe body", "cabinet body", "tall cabinet"]},
+        {"label": "木质结构 / wooden construction", "aliases": ["木质结构", "木结构", "木材", "wooden construction", "wood structure", "wooden", "wood"]}
+      ]
+    },
+    {
+      "case_id": "07",
+      "result_type": "compiled",
+      "tool_name": "submit_forge_semantic_blueprint",
+      "identity": {
+        "name_zh": "巨型法棍",
+        "name_en": "giant baguette",
+        "name_zh_aliases": ["巨型法棍", "巨大法棍", "大法棍"],
+        "name_en_aliases": ["giant baguette", "large baguette", "oversized baguette"]
+      },
+      "behavior_family": "heavy_melee",
+      "core_features": [
+        {"label": "面包轮廓 / bread silhouette", "aliases": ["面包轮廓", "法棍轮廓", "长条面包", "bread silhouette", "baguette silhouette", "long loaf"]},
+        {"label": "烘烤表皮 / baked crust", "aliases": ["烘烤表皮", "烤制外皮", "面包皮", "baked crust", "bread crust", "golden crust"]},
+        {"label": "表皮刻痕 / scored crust", "aliases": ["表皮刻痕", "面包割纹", "刻痕", "scored crust", "scored slashes", "bread scoring"]}
+      ]
+    },
+    {
+      "case_id": "08",
+      "result_type": "compiled",
+      "tool_name": "submit_forge_semantic_blueprint",
+      "identity": {
+        "name_zh": "红色工具箱",
+        "name_en": "red toolbox",
+        "name_zh_aliases": ["红色工具箱", "红工具箱"],
+        "name_en_aliases": ["red toolbox", "red tool box"]
+      },
+      "behavior_family": "sustained_ranged",
+      "core_features": [
+        {"label": "箱体 / box body", "aliases": ["箱体", "箱身", "box body", "toolbox body", "rectangular box"]},
+        {"label": "提手 / carrying handle", "aliases": ["提手", "把手", "手柄", "carrying handle", "top handle", "handle"]},
+        {"label": "铰链或卡扣 / hinge or latch", "aliases": ["铰链", "卡扣", "搭扣", "hinge", "hinged", "latch", "clasp"]}
+      ]
+    },
+    {
+      "case_id": "09",
+      "result_type": "compiled",
+      "tool_name": "submit_forge_semantic_blueprint",
+      "identity": {
+        "name_zh": "纸飞机",
+        "name_en": "paper airplane",
+        "name_zh_aliases": ["纸飞机", "折纸飞机"],
+        "name_en_aliases": ["paper airplane", "paper aeroplane", "origami airplane", "origami aeroplane"]
+      },
+      "behavior_family": "returning_thrown",
+      "core_features": [
+        {"label": "折纸结构 / folded-paper construction", "aliases": ["折纸结构", "纸张折叠", "折叠结构", "folded paper", "paper folds", "origami construction"]},
+        {"label": "机翼 / wings", "aliases": ["机翼", "翼面", "wings", "paper wings"]},
+        {"label": "纸张材质 / paper material", "aliases": ["纸张材质", "纸质", "纸张", "paper material", "paper sheet", "paper"]}
+      ]
+    },
+    {
+      "case_id": "10",
+      "result_type": "compiled",
+      "tool_name": "submit_forge_semantic_blueprint",
+      "identity": {
+        "name_zh": "旧铜钟",
+        "name_en": "old bronze bell",
+        "name_zh_aliases": ["旧铜钟", "老铜钟", "古旧铜钟", "古老青铜钟", "旧青铜钟"],
+        "name_en_aliases": ["old bronze bell", "aged bronze bell", "antique bronze bell", "vintage bronze bell"]
+      },
+      "behavior_family": "sustained_ranged",
+      "core_features": [
+        {"label": "钟体 / bell body", "aliases": ["钟体", "钟身", "bell body", "bell-shaped body"]},
+        {"label": "钟口 / bell opening", "aliases": ["钟口", "钟沿", "bell opening", "bell mouth", "flared opening"]},
+        {"label": "青铜材质 / bronze", "aliases": ["青铜", "铜质", "bronze", "bronze material"]}
+      ]
+    },
+    {
+      "case_id": "11",
+      "result_type": "compiled",
+      "tool_name": "submit_forge_semantic_blueprint",
+      "identity": {
+        "name_zh": "折叠木梯",
+        "name_en": "folding wooden ladder",
+        "name_zh_aliases": ["折叠木梯", "木制折叠梯", "木质折叠梯", "木折梯"],
+        "name_en_aliases": ["folding wooden ladder", "wooden folding ladder", "folding wood ladder"]
+      },
+      "behavior_family": "returning_thrown",
+      "core_features": [
+        {"label": "梯级 / rungs", "aliases": ["梯级", "梯阶", "横档", "rungs", "ladder rungs", "steps"]},
+        {"label": "两侧长杆 / side rails", "aliases": ["两侧长杆", "侧杆", "梯梁", "side rails", "two long rails", "ladder rails"]},
+        {"label": "木材 / wood", "aliases": ["木材", "木质", "木制", "wood", "wooden"]}
+      ]
+    },
+    {
+      "case_id": "12",
+      "result_type": "compiled",
+      "tool_name": "submit_forge_semantic_blueprint",
+      "identity": {
+        "name_zh": "橡皮鸭",
+        "name_en": "rubber duck",
+        "name_zh_aliases": ["橡皮鸭", "橡胶鸭", "橡胶玩具鸭"],
+        "name_en_aliases": ["rubber duck", "rubber duck toy", "toy rubber duck"]
+      },
+      "behavior_family": "sustained_ranged",
+      "core_features": [
+        {"label": "鸭子轮廓 / duck silhouette", "aliases": ["鸭子轮廓", "鸭形", "duck silhouette", "duck-shaped body"]},
+        {"label": "鸭嘴 / beak", "aliases": ["鸭嘴", "鸟喙", "beak", "duck bill", "bill"]},
+        {"label": "圆润鸭身 / rounded duck body", "aliases": ["圆润鸭身", "圆形鸭身", "圆润身体", "rounded duck body", "rounded body", "compact duck body"]}
+      ]
+    },
+    {
+      "case_id": "13",
+      "result_type": "compiled",
+      "tool_name": "submit_forge_semantic_blueprint",
+      "identity": {
+        "name_zh": "古老长枪",
+        "name_en": "ancient spear",
+        "name_zh_aliases": ["古老长枪", "古代长枪", "旧长枪", "古老长矛", "古代长矛"],
+        "name_en_aliases": ["ancient spear", "old spear", "aged spear", "antique spear"]
+      },
+      "behavior_family": "sustained_ranged",
+      "core_features": [
+        {"label": "长杆 / long shaft", "aliases": ["长杆", "枪杆", "矛杆", "long shaft", "long pole", "spear shaft"]},
+        {"label": "枪尖 / spearhead", "aliases": ["枪尖", "矛尖", "尖刃", "spearhead", "spear tip", "pointed head"]}
+      ]
+    },
+    {
+      "case_id": "14",
+      "result_type": "compiled",
+      "tool_name": "submit_forge_semantic_blueprint",
+      "identity": {
+        "name_zh": "平底锅",
+        "name_en": "frying pan",
+        "name_zh_aliases": ["平底锅", "煎锅"],
+        "name_en_aliases": ["frying pan", "fry pan", "skillet"]
+      },
+      "behavior_family": "returning_thrown",
+      "core_features": [
+        {"label": "锅身 / pan body", "aliases": ["锅身", "锅体", "锅底", "pan body", "shallow pan", "round pan"]},
+        {"label": "长柄 / long handle", "aliases": ["长柄", "锅柄", "long handle", "pan handle"]},
+        {"label": "浅锅沿 / shallow raised rim", "aliases": ["浅锅沿", "锅沿", "锅边", "shallow rim", "raised rim", "pan rim"]}
+      ]
+    },
+    {
+      "case_id": "15",
+      "result_type": "compiled",
+      "tool_name": "submit_forge_semantic_blueprint",
+      "identity": {
+        "name_zh": "老式照相机",
+        "name_en": "vintage camera",
+        "name_zh_aliases": ["老式照相机", "旧照相机", "复古照相机", "老式相机"],
+        "name_en_aliases": ["vintage camera", "old camera", "antique camera", "retro camera"]
+      },
+      "behavior_family": "sustained_ranged",
+      "core_features": [
+        {"label": "镜头 / lens", "aliases": ["镜头", "相机镜头", "lens", "camera lens"]},
+        {"label": "机身 / camera body", "aliases": ["机身", "相机机身", "camera body", "camera housing"]},
+        {"label": "取景结构 / viewfinder", "aliases": ["取景结构", "取景器", "观景窗", "viewfinder", "viewing window"]}
+      ]
+    },
+    {
+      "case_id": "16",
+      "result_type": "compiled",
+      "tool_name": "submit_forge_semantic_blueprint",
+      "identity": {
+        "name_zh": "旧小提琴",
+        "name_en": "old violin",
+        "name_zh_aliases": ["旧小提琴", "老小提琴", "古旧小提琴", "古老小提琴"],
+        "name_en_aliases": ["old violin", "vintage violin", "aged violin", "antique violin"]
+      },
+      "behavior_family": "heavy_melee",
+      "core_features": [
+        {"label": "琴身 / violin body", "aliases": ["琴身", "共鸣箱", "violin body", "resonant body", "sound box"]},
+        {"label": "琴颈 / neck", "aliases": ["琴颈", "指板", "violin neck", "neck", "fingerboard"]},
+        {"label": "琴弦或琴弓 / strings or bow", "aliases": ["琴弦", "琴弓", "弓毛", "strings", "violin strings", "bow", "violin bow"]}
+      ]
+    },
+    {
+      "case_id": "17",
+      "result_type": "needs_clarification",
+      "tool_name": "request_forge_clarification",
+      "ambiguity_type": "identity_unclear"
+    },
+    {
+      "case_id": "18",
+      "result_type": "needs_clarification",
+      "tool_name": "request_forge_clarification",
+      "ambiguity_type": "behavior_conflict"
+    },
+    {
+      "case_id": "19",
+      "result_type": "compiled",
+      "tool_name": "submit_forge_semantic_blueprint",
+      "identity": {
+        "name_zh": "木质工具箱",
+        "name_en": "wooden toolbox",
+        "name_zh_aliases": ["木质工具箱", "木制工具箱", "木工具箱"],
+        "name_en_aliases": ["wooden toolbox", "wooden tool box", "wood toolbox"]
+      },
+      "behavior_family": "sustained_ranged",
+      "core_features": [
+        {"label": "木箱 / wooden box", "aliases": ["木箱", "木制箱体", "木质箱体", "wooden box", "wood box", "wooden body"]},
+        {"label": "提手 / carrying handle", "aliases": ["提手", "把手", "手柄", "carrying handle", "top handle", "handle"]},
+        {"label": "铰链箱盖 / hinged lid", "aliases": ["铰链箱盖", "木箱盖", "箱盖", "hinged lid", "wooden lid", "toolbox lid"]}
+      ]
+    },
+    {
+      "case_id": "20",
+      "result_type": "compiled",
+      "tool_name": "submit_forge_semantic_blueprint",
+      "identity": {
+        "name_zh": "铁云",
+        "name_en": "iron cloud",
+        "name_zh_aliases": ["铁云", "铁制云", "金属云", "云状铁块"],
+        "name_en_aliases": ["iron cloud", "metal cloud", "metallic cloud", "cloud of iron"]
+      },
+      "behavior_family": "heavy_melee",
+      "core_features": [
+        {"label": "云状轮廓 / cloud silhouette", "aliases": ["云状轮廓", "云朵轮廓", "云形", "cloud silhouette", "cloud-shaped", "cloud form"]},
+        {"label": "金属材质 / metal material", "aliases": ["金属材质", "铁质", "铁制", "metal material", "metallic", "iron", "metal"]},
+        {"label": "翻涌云边 / billowing cloud edges", "aliases": ["翻涌云边", "卷曲云边", "云团边缘", "billowing cloud edges", "irregular cloud edges", "curled cloud edges"]}
+      ]
+    }
+  ]
+}

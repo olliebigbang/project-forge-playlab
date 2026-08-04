@@ -1,0 +1,50 @@
+{
+  "anchor_source": {
+    "EffectOrigin": "player_confirmed_live_e2e",
+    "GripPrimary": "player_confirmed_live_e2e"
+  },
+  "auto_anchor_source": {
+    "EffectOrigin": "AnchorResolver:muzzle",
+    "GripPrimary": "AnchorResolver:alpha_local_search+profile"
+  },
+  "auto_anchors": {
+    "EffectOrigin": [
+      65.0,
+      37.0
+    ],
+    "GripPrimary": [
+      43.0,
+      65.0
+    ]
+  },
+  "auto_confidence": {
+    "EffectOrigin": 0.58,
+    "GripPrimary": 0.88
+  },
+  "behavior_family": "sustained_ranged",
+  "case_id": "L01",
+  "confidence": {
+    "EffectOrigin": 0.95,
+    "GripPrimary": 0.95
+  },
+  "corrected_anchors": {
+    "EffectOrigin": [
+      72.0,
+      27.33
+    ],
+    "GripPrimary": [
+      46.44,
+      53.11
+    ]
+  },
+  "grip_profile": "center_shaft",
+  "required_anchor_types": [
+    "GripPrimary",
+    "EffectOrigin"
+  ],
+  "run_id": "spike7-20260803t234041483z-82d0a3b3",
+  "source_sprite": "processed_sprite.png",
+  "training_transform": {
+    "flip_x": false
+  }
+}

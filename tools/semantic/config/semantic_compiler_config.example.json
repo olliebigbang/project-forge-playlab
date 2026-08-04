@@ -1,0 +1,12 @@
+{
+  "provider": "anthropic",
+  "api_base": "https://api.anthropic.com",
+  "messages_endpoint": "https://api.anthropic.com/v1/messages",
+  "api_key_source": "ANTHROPIC_API_KEY",
+  "model_source": "FORGE_SEMANTIC_MODEL",
+  "contract_version": "forge-semantic-v1.1",
+  "timeout_seconds": 60,
+  "max_tokens": 1200,
+  "max_calls": 20,
+  "automatic_retries": 0
+}

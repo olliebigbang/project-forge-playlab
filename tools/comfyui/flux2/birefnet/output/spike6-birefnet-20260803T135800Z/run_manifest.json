@@ -1,0 +1,240 @@
+{
+  "contract": "forge-birefnet-spike6-run-v1",
+  "run_id": "spike6-birefnet-20260803T135800Z",
+  "api_base": "http://127.0.0.1:8190",
+  "source_freeze_file": "birefnet/config/spike5_evidence.freeze.json",
+  "source_freeze_sha256": "57b1de80841d4c5f3da4c07b5cb0dee606a3a3dbfffbbb1ba387d617f59f7af8",
+  "source_matrix_run_id": "flux2-matrix-20260803T130451548924Z",
+  "workflow_sha256": "56d74936b840de2ce2d5e823b6ad1704b9e65dd7ddd8b7a0edbfb5d4d4cf19df",
+  "planned_job_count": 8,
+  "completed_job_count": 8,
+  "retry_count": 0,
+  "serial_execution": true,
+  "jobs": [
+    {
+      "contract": "forge-birefnet-spike6-job-v1",
+      "ordinal": 1,
+      "case_id": "b01",
+      "seed_id": "seed_4041001",
+      "source_raw_path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041001/raw.png",
+      "source_raw_sha256": "4e979b3a7b78a2ad701149235754f9359f0bad7e7a9e2d228fae5f94fecc54ae",
+      "workflow_sha256": "56d74936b840de2ce2d5e823b6ad1704b9e65dd7ddd8b7a0edbfb5d4d4cf19df",
+      "prompt_id": "fddf7b0a-ae54-4fc6-81a0-b3a10496fb34",
+      "retry_count": 0,
+      "rgba_file": "rgba.png",
+      "rgba_sha256": "8bf7b9a51a2487960531ed6b464e68efdb74791b69ac2252737763c06b06cd19",
+      "rgba_comfy_descriptor": {
+        "filename": "rgba_00001_.png",
+        "subfolder": "ForgeSpike6\\spike6-birefnet-20260803T135800Z\\01_b01_seed_4041001",
+        "type": "output"
+      },
+      "mask_file": "mask.png",
+      "mask_sha256": "b3d984e5a93edea37413978c5bb52de0b919c0a0160c714da81ff0c46a559655",
+      "mask_download_sha256": "8f886f099adba755c51aba6a909eb5bcdb97e7259b40e2c57a081f5e7bb88e01",
+      "mask_comfy_descriptor": {
+        "filename": "mask_00001_.png",
+        "subfolder": "ForgeSpike6\\spike6-birefnet-20260803T135800Z\\01_b01_seed_4041001",
+        "type": "output"
+      },
+      "mask_representation": "L",
+      "status": "success"
+    },
+    {
+      "contract": "forge-birefnet-spike6-job-v1",
+      "ordinal": 2,
+      "case_id": "b01",
+      "seed_id": "seed_4041002",
+      "source_raw_path": "output/flux2_matrix_20260803t130451548924z/b01/seed_4041002/raw.png",
+      "source_raw_sha256": "624fce138360af6fc2aca7b9defc8d771c1355a6e8fc1ef432c59c156d315634",
+      "workflow_sha256": "56d74936b840de2ce2d5e823b6ad1704b9e65dd7ddd8b7a0edbfb5d4d4cf19df",
+      "prompt_id": "8c0383ca-21aa-4396-9fc1-22309bc2d50a",
+      "retry_count": 0,
+      "rgba_file": "rgba.png",
+      "rgba_sha256": "8196a3c735ff445420a6b29c1df73cab86db9d8b778c37275faaf49223c18ab7",
+      "rgba_comfy_descriptor": {
+        "filename": "rgba_00001_.png",
+        "subfolder": "ForgeSpike6\\spike6-birefnet-20260803T135800Z\\02_b01_seed_4041002",
+        "type": "output"
+      },
+      "mask_file": "mask.png",
+      "mask_sha256": "8d650d488d46be3544368950381b3ed91d50e8642b11ff1933fa42e575f5ae7a",
+      "mask_download_sha256": "77efde163fb9ccd902c51476a1f835343ecbe1f1d832446d412afc1d0a0fef7b",
+      "mask_comfy_descriptor": {
+        "filename": "mask_00001_.png",
+        "subfolder": "ForgeSpike6\\spike6-birefnet-20260803T135800Z\\02_b01_seed_4041002",
+        "type": "output"
+      },
+      "mask_representation": "L",
+      "status": "success"
+    },
+    {
+      "contract": "forge-birefnet-spike6-job-v1",
+      "ordinal": 3,
+      "case_id": "b02",
+      "seed_id": "seed_4041001",
+      "source_raw_path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041001/raw.png",
+      "source_raw_sha256": "ccdb2d05d47e6c4cce851ca8c56b2efd779f447bb04b6556d1b563b8eb751684",
+      "workflow_sha256": "56d74936b840de2ce2d5e823b6ad1704b9e65dd7ddd8b7a0edbfb5d4d4cf19df",
+      "prompt_id": "16e6a28b-41b8-4ffd-8bbe-02619cf4cf24",
+      "retry_count": 0,
+      "rgba_file": "rgba.png",
+      "rgba_sha256": "2eb7ac6d6578e97bcec6d6b13f2cf2dc4f24ada279bf3d80876178a21e3adeac",
+      "rgba_comfy_descriptor": {
+        "filename": "rgba_00001_.png",
+        "subfolder": "ForgeSpike6\\spike6-birefnet-20260803T135800Z\\03_b02_seed_4041001",
+        "type": "output"
+      },
+      "mask_file": "mask.png",
+      "mask_sha256": "a374bf56adae4a606273702b2794e14b71ef127c63738f475f89cf0798231b3b",
+      "mask_download_sha256": "ea464570e98604203f3b18cf759eee68130f9a79b06daf6fce69845d4f283613",
+      "mask_comfy_descriptor": {
+        "filename": "mask_00001_.png",
+        "subfolder": "ForgeSpike6\\spike6-birefnet-20260803T135800Z\\03_b02_seed_4041001",
+        "type": "output"
+      },
+      "mask_representation": "L",
+      "status": "success"
+    },
+    {
+      "contract": "forge-birefnet-spike6-job-v1",
+      "ordinal": 4,
+      "case_id": "b02",
+      "seed_id": "seed_4041002",
+      "source_raw_path": "output/flux2_matrix_20260803t130451548924z/b02/seed_4041002/raw.png",
+      "source_raw_sha256": "3b45b29652521bd2b6d46b5b955569e9f7fab5f244ef2a94c950eed6b8322641",
+      "workflow_sha256": "56d74936b840de2ce2d5e823b6ad1704b9e65dd7ddd8b7a0edbfb5d4d4cf19df",
+      "prompt_id": "4608c6a0-0402-480d-ae8e-47e68f1337e3",
+      "retry_count": 0,
+      "rgba_file": "rgba.png",
+      "rgba_sha256": "41d39047706a9fbd65656e68e6eae5aeaf59c4afb77fc7bcafbd065e3aa8d611",
+      "rgba_comfy_descriptor": {
+        "filename": "rgba_00001_.png",
+        "subfolder": "ForgeSpike6\\spike6-birefnet-20260803T135800Z\\04_b02_seed_4041002",
+        "type": "output"
+      },
+      "mask_file": "mask.png",
+      "mask_sha256": "50b9fbca6fd5b6cbceee3678c68423fcb00d207c3f02c56baa766455ec3679fc",
+      "mask_download_sha256": "e0c81b0f6c82c986ee6d9af776038369accae7defeb12338a0e7d7ef0ef35a29",
+      "mask_comfy_descriptor": {
+        "filename": "mask_00001_.png",
+        "subfolder": "ForgeSpike6\\spike6-birefnet-20260803T135800Z\\04_b02_seed_4041002",
+        "type": "output"
+      },
+      "mask_representation": "L",
+      "status": "success"
+    },
+    {
+      "contract": "forge-birefnet-spike6-job-v1",
+      "ordinal": 5,
+      "case_id": "b03",
+      "seed_id": "seed_4041001",
+      "source_raw_path": "output/flux2_matrix_20260803t130451548924z/b03/seed_4041001/raw.png",
+      "source_raw_sha256": "dafbaa60f137526eea7fa47087c4af5339b99d08d6cccf384d7cc58c98ce791a",
+      "workflow_sha256": "56d74936b840de2ce2d5e823b6ad1704b9e65dd7ddd8b7a0edbfb5d4d4cf19df",
+      "prompt_id": "a137d541-e461-408d-923f-d4b190262a96",
+      "retry_count": 0,
+      "rgba_file": "rgba.png",
+      "rgba_sha256": "39fdff30c0e6183625605b8414c05dfdfc5915f34f5dc3d30d85030b02e5c0b6",
+      "rgba_comfy_descriptor": {
+        "filename": "rgba_00001_.png",
+        "subfolder": "ForgeSpike6\\spike6-birefnet-20260803T135800Z\\05_b03_seed_4041001",
+        "type": "output"
+      },
+      "mask_file": "mask.png",
+      "mask_sha256": "2b0dc2bbdff4ee5d1608b2a39bea4f0c569b2b1592a04c13cbe76550d846e623",
+      "mask_download_sha256": "cf91d75f1584b7470cf8544783a0937af13857ebc8df7f88e776276f66c58b05",
+      "mask_comfy_descriptor": {
+        "filename": "mask_00001_.png",
+        "subfolder": "ForgeSpike6\\spike6-birefnet-20260803T135800Z\\05_b03_seed_4041001",
+        "type": "output"
+      },
+      "mask_representation": "L",
+      "status": "success"
+    },
+    {
+      "contract": "forge-birefnet-spike6-job-v1",
+      "ordinal": 6,
+      "case_id": "b03",
+      "seed_id": "seed_4041002",
+      "source_raw_path": "output/flux2_matrix_20260803t130451548924z/b03/seed_4041002/raw.png",
+      "source_raw_sha256": "8d97a66eef4fc84e88319c1e6b1397a81e1a5c10245dd915b131bb94484f71c2",
+      "workflow_sha256": "56d74936b840de2ce2d5e823b6ad1704b9e65dd7ddd8b7a0edbfb5d4d4cf19df",
+      "prompt_id": "9c9f8dcf-303e-4f8d-8817-b6523064b7ba",
+      "retry_count": 0,
+      "rgba_file": "rgba.png",
+      "rgba_sha256": "854f0d24312554107020810481c98b0d296fda01f614494249857e4ef619442e",
+      "rgba_comfy_descriptor": {
+        "filename": "rgba_00001_.png",
+        "subfolder": "ForgeSpike6\\spike6-birefnet-20260803T135800Z\\06_b03_seed_4041002",
+        "type": "output"
+      },
+      "mask_file": "mask.png",
+      "mask_sha256": "571662409669e969fe7a9c8dfc4b6c22745e320d69f2fab1dc85ea4bad323c4b",
+      "mask_download_sha256": "19725f747cfdb49a2668348a808c74031402dd09462b054ee9a58a0cf3d817ea",
+      "mask_comfy_descriptor": {
+        "filename": "mask_00001_.png",
+        "subfolder": "ForgeSpike6\\spike6-birefnet-20260803T135800Z\\06_b03_seed_4041002",
+        "type": "output"
+      },
+      "mask_representation": "L",
+      "status": "success"
+    },
+    {
+      "contract": "forge-birefnet-spike6-job-v1",
+      "ordinal": 7,
+      "case_id": "b04",
+      "seed_id": "seed_4041001",
+      "source_raw_path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041001/raw.png",
+      "source_raw_sha256": "08cfcb3823668d8732476ed6ffb0f5b95156476a4cc642b26ff142dd661d9b26",
+      "workflow_sha256": "56d74936b840de2ce2d5e823b6ad1704b9e65dd7ddd8b7a0edbfb5d4d4cf19df",
+      "prompt_id": "8d921e9b-af27-4c69-9dfe-692b87d7d743",
+      "retry_count": 0,
+      "rgba_file": "rgba.png",
+      "rgba_sha256": "ab7304d0cb7c69d7d4db196a5b5a8a594e456e05be798f132181446bd73f0316",
+      "rgba_comfy_descriptor": {
+        "filename": "rgba_00001_.png",
+        "subfolder": "ForgeSpike6\\spike6-birefnet-20260803T135800Z\\07_b04_seed_4041001",
+        "type": "output"
+      },
+      "mask_file": "mask.png",
+      "mask_sha256": "cf06fac83ec082e589344497e2d3684c342c944132ffe7a73f399575b49e96bd",
+      "mask_download_sha256": "7604b3a2a5a63bed03e63f8b206e7cd7e61ef09782421979206c2c73b1af8c52",
+      "mask_comfy_descriptor": {
+        "filename": "mask_00001_.png",
+        "subfolder": "ForgeSpike6\\spike6-birefnet-20260803T135800Z\\07_b04_seed_4041001",
+        "type": "output"
+      },
+      "mask_representation": "L",
+      "status": "success"
+    },
+    {
+      "contract": "forge-birefnet-spike6-job-v1",
+      "ordinal": 8,
+      "case_id": "b04",
+      "seed_id": "seed_4041002",
+      "source_raw_path": "output/flux2_matrix_20260803t130451548924z/b04/seed_4041002/raw.png",
+      "source_raw_sha256": "9af251d1a47725b117f1a4cc381523b3b24577218b5241da2e50a6925881d63a",
+      "workflow_sha256": "56d74936b840de2ce2d5e823b6ad1704b9e65dd7ddd8b7a0edbfb5d4d4cf19df",
+      "prompt_id": "7f3614a4-bfaa-4de0-b925-f0630e5c6ea2",
+      "retry_count": 0,
+      "rgba_file": "rgba.png",
+      "rgba_sha256": "797b960019096044937ac39c823c2be4a50786bb768f59e7e6f183fa3ec250b9",
+      "rgba_comfy_descriptor": {
+        "filename": "rgba_00001_.png",
+        "subfolder": "ForgeSpike6\\spike6-birefnet-20260803T135800Z\\08_b04_seed_4041002",
+        "type": "output"
+      },
+      "mask_file": "mask.png",
+      "mask_sha256": "75398aab8a4a845064bda9a8c0e7f8bb4e974be26fddbe0d197d8094e9ece3e2",
+      "mask_download_sha256": "ca5a3e0b84ab45c9a21ffa225a52b4da932e72de8d938d505499446e49b929aa",
+      "mask_comfy_descriptor": {
+        "filename": "mask_00001_.png",
+        "subfolder": "ForgeSpike6\\spike6-birefnet-20260803T135800Z\\08_b04_seed_4041002",
+        "type": "output"
+      },
+      "mask_representation": "L",
+      "status": "success"
+    }
+  ],
+  "status": "success"
+}

@@ -1,0 +1,49 @@
+{
+  "identity": {
+    "name_zh": "喷射高温蒸汽的旧茶壶",
+    "name_en": "Old Teapot Spouting High-Temperature Steam",
+    "category": "household_object",
+    "preserved_features": [
+      "curved teapot body",
+      "spout",
+      "handle",
+      "lid",
+      "aged worn surface texture"
+    ],
+    "material_hints": [
+      "old metal or ceramic",
+      "weathered patina",
+      "worn surface"
+    ],
+    "silhouette_hints": [
+      "classic rounded teapot silhouette with spout and handle"
+    ]
+  },
+  "combat": {
+    "behavior_family": "sustained_ranged",
+    "delivery": "continuous_emission",
+    "impact_mode": "continuous_stream",
+    "effect_type": "steam",
+    "drawback": "overheat",
+    "cadence_hint": "continuous"
+  },
+  "visual": {
+    "prompt_en": "Old Teapot Spouting High-Temperature Steam, a weathered vintage teapot with rounded body, curved spout, and looped handle, aged metal or ceramic surface with patina, small reinforced nozzle fitting at the spout tip for steam emission, isolated single object, side view, complete object fully visible",
+    "negative_prompt_en": "do not depict a gun, do not depict a Gatling gun, do not depict a sword, do not depict a generic weapon, do not replace the teapot shape, no human figures, no background scenery",
+    "must_preserve": [
+      "curved teapot body",
+      "spout",
+      "handle",
+      "lid",
+      "aged worn surface texture"
+    ],
+    "must_not_replace_with": [
+      "gun",
+      "Gatling gun",
+      "sword",
+      "generic firearm",
+      "umbrella"
+    ]
+  },
+  "confidence": 0.85
+}
