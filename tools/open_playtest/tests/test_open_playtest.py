@@ -239,6 +239,28 @@ class OpenPlaytestTests(unittest.TestCase):
         self.assertIn("inverse_lerp(0.34, 0.08, melee_timer)", arena)
         self.assertIn("rotation = lerpf(-1.12, 1.18, strike)", arena)
 
+    def test_training_preview_and_combat_feel_are_explicitly_distinguished(self) -> None:
+        ui = (OPEN_ROOT / "godot" / "open_playtest.gd").read_text(encoding="utf-8")
+        for phrase in (
+            "基础训练预览（非完整战斗动作）",
+            "这里只验证握持、基础挥动和锚点",
+            "这里不提供完整三段连击或正式打击感",
+            "基础挥动预览",
+            "完整三段攻击仅在 Combat Feel Slice 中测试",
+            "当前只是基础预览。完整三连和打击感请进入近战手感测试。",
+        ):
+            self.assertIn(phrase, ui)
+
+    def test_heavy_melee_identity_prompt_and_primary_handoff_use_real_round(self) -> None:
+        ui = (OPEN_ROOT / "godot" / "open_playtest.gd").read_text(encoding="utf-8")
+        self.assertIn("该武器支持完整近战手感测试", ui)
+        self.assertIn('dialog.ok_button_text = "进入近战手感测试"', ui)
+        self.assertIn('dialog.cancel_button_text = "稍后"', ui)
+        self.assertIn('primary_action.call_deferred("grab_focus")', ui)
+        self.assertIn('"--open-playtest-round=%s" % round_output_path', ui)
+        self.assertIn("and training_asset != null", ui)
+        self.assertNotIn("--fixture=", ui)
+
     def test_save_is_local_and_requires_terminal_round(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

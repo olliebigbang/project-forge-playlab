@@ -22,8 +22,16 @@ Anthropic Key 每个试玩窗口最多输入一次，不是每个点子输入一
 3. 对照 FLUX 原图和 96×96 透明 Sprite，回答“仍然能认出这是原物件吗？”
 4. 选择“否”会记录备注并结束本轮；不会进入训练区。
 5. 选择“是”后依次确认 `GripPrimary` 与当前行为所需的 `EffectOrigin`、`SpinPivot` 或 `StrikePoint`。
-6. 训练区支持左右移动、攻击和闪避，只验证既有三类基础行为。
-7. 结束训练后可评分、标记是否保留点子，并执行 `SAVE THIS RESULT`、`RETRY THIS IDEA` 或 `FORGE NEW IDEA`。
+6. `Open Playtest` 训练区是基础预览区，只验证握持、锚点和一次基础攻击预览；它不代表完整三段连击或正式打击感。
+7. `heavy_melee` 在身份确认后会明确询问是否进入完整近战手感测试。选择进入时，先确认真实锚点，随后把当前生成资产直接交给 `Combat Feel Slice`；选择稍后则继续基础训练预览。
+8. 结束基础训练后可评分、标记是否保留点子，并执行 `SAVE THIS RESULT`、`RETRY THIS IDEA` 或 `FORGE NEW IDEA`。对于已确认的 `heavy_melee`，完成页的首要操作是 **进入近战手感测试**。
+
+## 基础预览与近战手感测试
+
+- **Open Playtest 基础训练预览**：握持、基础挥动、锚点、是否保留点子。
+- **Combat Feel Slice**：三段连击、蓄力重击、闪避后攻击、敌人、hitstop 和命中反馈。
+
+训练区的基础挥动不用于判断不同 `heavy_melee` 武器的最终动作差异。进入 Combat Feel Slice 时只传递本轮真实生成目录和玩家确认锚点；不存在 developer fixture 回退。
 
 同一窗口最多进行 20 次真实语义调用。每轮只调用一次 Claude、一次 FLUX、一次 BiRefNet；没有自动重试，没有 Mock 回退，也没有固定武器替换。若 Claude 要求澄清，界面会把它作为语义阶段的单一澄清问题显示在失败原因中；编辑原输入后可显式重新 Forge。
 

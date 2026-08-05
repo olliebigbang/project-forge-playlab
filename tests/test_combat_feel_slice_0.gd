@@ -247,8 +247,9 @@ func _test_32_open_playtest_round_direct_handoff() -> void:
 func _test_33_open_playtest_ui_exposes_heavy_only_launch() -> void:
 	var godot_source := _text("res://tools/open_playtest/godot/open_playtest.gd")
 	var server_source := _text("res://tools/open_playtest/bridge/open_playtest_session.py")
-	var ok: bool = godot_source.contains("TEST HEAVY MELEE FEEL") and godot_source.contains("behavior_family") and godot_source.contains("--open-playtest-round=")
-	ok = ok and server_source.contains("round_output_path") and not godot_source.contains("sustained_ranged\")):\n\t\tactions.add_child(_button(\"TEST HEAVY")
+	var ok: bool = godot_source.contains("进入近战手感测试") and godot_source.contains("_can_launch_current_heavy_melee") and godot_source.contains("--open-playtest-round=")
+	ok = ok and godot_source.contains('behavior_family", "")) == "heavy_melee"') and godot_source.contains("and training_asset != null")
+	ok = ok and server_source.contains("round_output_path") and not godot_source.contains("--fixture=")
 	_check(ok, "33 Open Playtest exposes direct handoff only for heavy melee")
 
 func _controller() -> Variant:

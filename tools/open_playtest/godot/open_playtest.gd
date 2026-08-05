@@ -34,6 +34,8 @@ var current_input := ""
 var current_response: Dictionary = {}
 var current_stage := ""
 var request_in_flight := false
+var identity_confirmed_for_round := false
+var launch_combat_after_anchors := false
 
 var canvas_layer: CanvasLayer
 var screen_root: Control
@@ -63,6 +65,9 @@ var moved_once := false
 var attacked_once := false
 var dodged_once := false
 var training_status: Label
+var training_preview_tip: Label
+var training_preview_tip_shown := false
+var combat_launch_status: Label
 
 
 func _ready() -> void:
@@ -102,6 +107,10 @@ func _process(_delta: float) -> void:
 		dodged_once = true
 	if arena.live_attack_visible():
 		attacked_once = true
+		if blueprint.behavior_family == "heavy_melee" and not training_preview_tip_shown:
+			training_preview_tip_shown = true
+			if training_preview_tip != null:
+				training_preview_tip.text = "当前只是基础预览。完整三连和打击感请进入近战手感测试。"
 	if training_status != null:
 		training_status.text = "移动：%s　攻击：%s　闪避：%s" % [
 			_yes_no(moved_once), _yes_no(attacked_once), _yes_no(dodged_once)
@@ -197,6 +206,11 @@ func _start_forge() -> void:
 	if current_input.length() > 500:
 		status_label.text = "输入超过 500 字；本轮未提交。"
 		return
+	identity_confirmed_for_round = false
+	launch_combat_after_anchors = false
+	training_asset = null
+	calibration = null
+	blueprint = null
 	request_in_flight = true
 	input_edit.editable = false
 	status_label.text = "正在创建唯一请求；旧请求不能覆盖新请求。"
@@ -319,10 +333,36 @@ func _submit_identity(confirmed: bool) -> void:
 	if not bool(result.get("ok", false)):
 		_show_failure(str(result.get("failure_stage", "identity_confirmation")), str(result.get("failure_reason", "UNKNOWN")))
 		return
+	identity_confirmed_for_round = confirmed
 	if confirmed:
-		_show_anchor_confirmation()
+		if str(current_response.get("behavior_family", "")) == "heavy_melee":
+			_show_heavy_melee_entry_prompt()
+		else:
+			_show_anchor_confirmation()
 	else:
 		_show_round_complete("你已判定物件身份不正确；本轮未进入锚点或训练区。")
+
+
+func _show_heavy_melee_entry_prompt() -> void:
+	launch_combat_after_anchors = false
+	var dialog := ConfirmationDialog.new()
+	dialog.title = "完整近战手感测试"
+	dialog.dialog_text = "该武器支持完整近战手感测试。\n训练区只提供基础挥动预览。\n是否现在进入近战手感测试？\n\n选择进入后，先确认握持点与作用点，再直接载入当前真实生成武器。"
+	dialog.ok_button_text = "进入近战手感测试"
+	dialog.cancel_button_text = "稍后"
+	dialog.custom_minimum_size = Vector2(760, 280)
+	dialog.exclusive = true
+	screen_root.add_child(dialog)
+	dialog.confirmed.connect(func() -> void:
+		launch_combat_after_anchors = true
+		_show_anchor_confirmation()
+	)
+	dialog.canceled.connect(func() -> void:
+		launch_combat_after_anchors = false
+		_show_anchor_confirmation()
+	)
+	dialog.popup_centered()
+	dialog.get_ok_button().call_deferred("grab_focus")
 
 
 func _show_anchor_confirmation() -> void:
@@ -408,7 +448,23 @@ func _submit_anchors() -> void:
 	if training_asset == null:
 		_show_failure("anchor_delivery", "TRAINING_ASSET_INVALID")
 		return
+	if launch_combat_after_anchors:
+		launch_combat_after_anchors = false
+		_show_combat_feel_handoff()
+		_launch_combat_feel()
+		return
 	_enter_training()
+
+
+func _show_combat_feel_handoff() -> void:
+	_clear_screen()
+	var box := _vbox(_panel(), 170, 115, 1110, 600)
+	box.add_child(_title("正在进入近战手感测试"))
+	box.add_child(_label("将载入当前真实生成的 heavy_melee 武器、玩家确认锚点和通用 motion profile。", 22, Color("67e8f9")))
+	box.add_child(_label("Combat Feel Slice 才包含三段连击、蓄力重击、闪避后攻击、敌人、hitstop 与命中反馈。\n不会使用 developer fixture，也不会回退固定武器。", 20, Color("fbbf24")))
+	combat_launch_status = _label("正在打开独立近战手感测试窗口……", 20, Color("cbd5e1"))
+	box.add_child(combat_launch_status)
+	box.add_child(_button("稍后返回基础训练预览", func() -> void: _enter_training()))
 
 
 func _enter_training() -> void:
@@ -421,18 +477,25 @@ func _enter_training() -> void:
 	moved_once = false
 	attacked_once = false
 	dodged_once = false
+	training_preview_tip_shown = false
 	var overlay := PanelContainer.new()
 	overlay.position = Vector2(28, 18)
-	overlay.size = Vector2(1224, 174)
+	overlay.size = Vector2(1224, 242)
 	screen_root.add_child(overlay)
 	var box := VBoxContainer.new()
 	overlay.add_child(box)
-	box.add_child(_label("OPEN PLAYTEST · 训练区（不接入战斗房间）", 21, Color("67e8f9")))
+	box.add_child(_label("OPEN PLAYTEST · 基础训练预览（非完整战斗动作）", 23, Color("fbbf24")))
+	if blueprint.behavior_family == "heavy_melee":
+		box.add_child(_label("当前为基础训练预览：这里只验证握持、基础挥动和锚点。\n这里不提供完整三段连击或正式打击感。\n如需测试近战手感，请点击“进入近战手感测试（TEST HEAVY MELEE FEEL）”。", 18, Color("fb923c")))
+	else:
+		box.add_child(_label("当前只验证握持、基础攻击预览和锚点；这里不是完整战斗测试。", 18, Color("fb923c")))
 	box.add_child(_label("键盘：WASD/方向键移动　空格/J攻击　K/Shift闪避", 17))
 	if blueprint.behavior_family == "heavy_melee":
-		box.add_child(_label("近战提示：先靠近蓝色圆靶到一个武器长度内再攻击；“攻击：是”只表示输入已触发。", 16, Color("fde68a")))
+		box.add_child(_label("近战提示：先靠近蓝色圆靶到一个武器长度内再预览挥动；“攻击：是”只表示输入已触发。完整三段攻击仅在 Combat Feel Slice 中测试。", 16, Color("fde68a")))
 	training_status = _label("移动：否　攻击：否　闪避：否", 17, Color("fbbf24"))
 	box.add_child(training_status)
+	training_preview_tip = _label("", 16, Color("67e8f9"))
+	box.add_child(training_preview_tip)
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 10)
 	box.add_child(actions)
@@ -444,7 +507,10 @@ func _enter_training() -> void:
 	right_button.button_down.connect(func() -> void: arena.set_touch_vector(Vector2.RIGHT))
 	right_button.button_up.connect(func() -> void: arena.set_touch_vector(Vector2.ZERO))
 	actions.add_child(right_button)
-	var attack_button := _button("攻击", Callable())
+	var attack_text := "基础挥动预览" if blueprint.behavior_family == "heavy_melee" else "基础攻击预览"
+	var attack_button := _button(attack_text, Callable())
+	if blueprint.behavior_family == "heavy_melee":
+		attack_button.tooltip_text = "非完整战斗动作；完整三段攻击仅在 Combat Feel Slice 中测试。"
 	if blueprint.behavior_family in ["heavy_melee", "returning_thrown"]:
 		attack_button.pressed.connect(func() -> void: arena.request_touch_attack())
 	else:
@@ -471,7 +537,7 @@ func _finish_training() -> void:
 	if not bool(result.get("ok", false)):
 		_show_failure(str(result.get("failure_stage", "training")), str(result.get("failure_reason", "UNKNOWN")))
 		return
-	_show_round_complete("已进入训练区。可记录评分并保存到本机试玩日志。")
+	_show_round_complete("基础训练预览已完成。可记录评分并保存到本机试玩日志。")
 
 
 func _show_round_complete(message: String) -> void:
@@ -501,22 +567,27 @@ func _show_round_complete(message: String) -> void:
 	feedback_notes.placeholder_text = "试玩备注（可选）"
 	feedback_notes.add_theme_font_size_override("font_size", 18)
 	box.add_child(feedback_notes)
+	if _can_launch_current_heavy_melee():
+		box.add_child(_label("完整近战手感请在 Combat Feel Slice 中判断；上面的基础训练预览不代表最终动作差异。", 18, Color("fbbf24")))
+		var primary_action := _primary_button("进入近战手感测试", func() -> void: _launch_combat_feel())
+		box.add_child(primary_action)
+		primary_action.call_deferred("grab_focus")
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 10)
 	box.add_child(actions)
 	actions.add_child(_button("SAVE THIS RESULT", func() -> void: _save_result()))
-	if str(current_response.get("behavior_family", "")) == "heavy_melee":
-		actions.add_child(_button("TEST HEAVY MELEE FEEL", func() -> void: _launch_combat_feel()))
 	actions.add_child(_button("RETRY THIS IDEA", func() -> void: _show_forge_screen(false)))
 	actions.add_child(_button("FORGE NEW IDEA", func() -> void: _show_forge_screen(true)))
 	actions.add_child(_button("SUMMARY", func() -> void: _show_summary()))
 
 
 func _launch_combat_feel() -> void:
+	if not _can_launch_current_heavy_melee():
+		_set_combat_launch_status("无法启动：仅已确认身份和锚点的真实 heavy_melee 结果可以进入；不会回退 fixture。", true)
+		return
 	var round_output_path := str(current_response.get("round_output_path", ""))
 	if round_output_path.is_empty():
-		var error_label := _label("无法启动：本轮最终资产目录缺失。输入和当前结果仍保留。", 18, Color("fb7185"))
-		feedback_notes.get_parent().add_child(error_label)
+		_set_combat_launch_status("无法启动：本轮最终资产目录缺失。输入和当前结果仍保留。", true)
 		return
 	var arguments := PackedStringArray([
 		"--path", ProjectSettings.globalize_path("res://"), COMBAT_FEEL_SCENE,
@@ -524,8 +595,28 @@ func _launch_combat_feel() -> void:
 	])
 	var process_id := OS.create_process(OS.get_executable_path(), arguments)
 	if process_id <= 0:
-		var launch_error := _label("无法启动 Combat Feel Slice；本轮结果未被修改。", 18, Color("fb7185"))
-		feedback_notes.get_parent().add_child(launch_error)
+		_set_combat_launch_status("无法启动 Combat Feel Slice；本轮结果未被修改。", true)
+		return
+	_set_combat_launch_status("已打开 Combat Feel Slice：当前真实生成武器已直接交付。", false)
+
+
+func _can_launch_current_heavy_melee() -> bool:
+	return (
+		identity_confirmed_for_round
+		and str(current_response.get("behavior_family", "")) == "heavy_melee"
+		and training_asset != null
+		and calibration != null
+	)
+
+
+func _set_combat_launch_status(message: String, is_error: bool) -> void:
+	var color := Color("fb7185") if is_error else Color("5eead4")
+	if combat_launch_status != null and is_instance_valid(combat_launch_status):
+		combat_launch_status.text = message
+		combat_launch_status.add_theme_color_override("font_color", color)
+		return
+	if feedback_notes != null and is_instance_valid(feedback_notes):
+		feedback_notes.get_parent().add_child(_label(message, 18, color))
 
 
 func _save_result() -> void:
@@ -671,6 +762,7 @@ func _http_json(route: String, method: int, body: Dictionary) -> Dictionary:
 
 func _cleanup_training() -> void:
 	training_active = false
+	training_preview_tip = null
 	if arena != null:
 		arena.stop()
 		arena.queue_free()
@@ -720,6 +812,16 @@ func _button(text: String, callback: Callable, color: Color = Color("164e63")) -
 	button.modulate = color.lightened(0.55)
 	if callback.is_valid():
 		button.pressed.connect(callback)
+	return button
+
+
+func _primary_button(text: String, callback: Callable) -> Button:
+	var button := _button(text, callback, Color("0f766e"))
+	button.custom_minimum_size.y = 72
+	button.add_theme_font_size_override("font_size", 24)
+	button.add_theme_color_override("font_focus_color", Color("ffffff"))
+	button.add_theme_color_override("font_hover_color", Color("ffffff"))
+	button.tooltip_text = "载入当前真实生成武器；不使用 fixture。"
 	return button
 
 
