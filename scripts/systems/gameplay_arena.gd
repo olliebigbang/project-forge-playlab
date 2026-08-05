@@ -20,6 +20,7 @@ var active := false
 var debug_anchors := false
 var touch_vector := Vector2.ZERO
 var touch_attack := false
+var touch_attack_requested := false
 var touch_dodge_requested := false
 var attack_was_down := false
 var attack_charge := 0.0
@@ -47,6 +48,9 @@ func start_stage(next_stage: String, next_blueprint: WeaponBlueprint, next_asset
 	overheat = 0.0
 	overheat_lock = 0.0
 	melee_timer = 0.0
+	touch_attack = false
+	touch_attack_requested = false
+	attack_was_down = false
 	dodge_timer = 0.0
 	stage_elapsed = 0.0
 	completion_delay = -1.0
@@ -65,6 +69,11 @@ func set_touch_vector(value: Vector2) -> void:
 
 func set_touch_attack(value: bool) -> void:
 	touch_attack = value
+
+func request_touch_attack() -> void:
+	# Latch tap-style melee/throw inputs until the next gameplay frame. A fast
+	# UI click can otherwise send button_down and button_up between two frames.
+	touch_attack_requested = true
 
 func request_touch_dodge() -> void:
 	touch_dodge_requested = true
@@ -110,7 +119,8 @@ func _update_player(delta: float) -> void:
 
 func _update_attacks(delta: float) -> void:
 	var attack_down := Input.is_action_pressed("attack") or touch_attack
-	var just_pressed := attack_down and not attack_was_down
+	var just_pressed := touch_attack_requested or (attack_down and not attack_was_down)
+	touch_attack_requested = false
 	attack_was_down = attack_down
 	match blueprint.behavior_family:
 		"returning_thrown": _update_returning_attack(just_pressed, delta)
@@ -398,4 +408,3 @@ func _draw_enemies() -> void:
 		var ratio := clampf(float(enemy["hp"]) / maxf(1.0, max_hp), 0.0, 1.0)
 		draw_rect(Rect2(position + Vector2(-24, -40), Vector2(48, 5)), Color("0f172a"), true)
 		draw_rect(Rect2(position + Vector2(-24, -40), Vector2(48 * ratio, 5)), Color("4ade80"), true)
-

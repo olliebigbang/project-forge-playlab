@@ -222,6 +222,15 @@ class OpenPlaytestTests(unittest.TestCase):
             self.assertEqual(value.state.stage, "completed")
             self.assertTrue(value.state.training["entered_training"])
 
+    def test_melee_touch_attack_is_latched_and_range_is_explained(self) -> None:
+        arena = (PLAYLAB / "scripts" / "systems" / "gameplay_arena.gd").read_text(encoding="utf-8")
+        ui = (OPEN_ROOT / "godot" / "open_playtest.gd").read_text(encoding="utf-8")
+        self.assertIn("touch_attack_requested", arena)
+        self.assertIn("request_touch_attack", arena)
+        self.assertIn("arena.request_touch_attack()", ui)
+        self.assertIn("一个武器长度内", ui)
+        self.assertIn("只表示输入已触发", ui)
+
     def test_save_is_local_and_requires_terminal_round(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

@@ -429,6 +429,8 @@ func _enter_training() -> void:
 	overlay.add_child(box)
 	box.add_child(_label("OPEN PLAYTEST · 训练区（不接入战斗房间）", 21, Color("67e8f9")))
 	box.add_child(_label("键盘：WASD/方向键移动　空格/J攻击　K/Shift闪避", 17))
+	if blueprint.behavior_family == "heavy_melee":
+		box.add_child(_label("近战提示：先靠近蓝色圆靶到一个武器长度内再攻击；“攻击：是”只表示输入已触发。", 16, Color("fde68a")))
 	training_status = _label("移动：否　攻击：否　闪避：否", 17, Color("fbbf24"))
 	box.add_child(training_status)
 	var actions := HBoxContainer.new()
@@ -443,8 +445,11 @@ func _enter_training() -> void:
 	right_button.button_up.connect(func() -> void: arena.set_touch_vector(Vector2.ZERO))
 	actions.add_child(right_button)
 	var attack_button := _button("攻击", Callable())
-	attack_button.button_down.connect(func() -> void: arena.set_touch_attack(true))
-	attack_button.button_up.connect(func() -> void: arena.set_touch_attack(false))
+	if blueprint.behavior_family in ["heavy_melee", "returning_thrown"]:
+		attack_button.pressed.connect(func() -> void: arena.request_touch_attack())
+	else:
+		attack_button.button_down.connect(func() -> void: arena.set_touch_attack(true))
+		attack_button.button_up.connect(func() -> void: arena.set_touch_attack(false))
 	actions.add_child(attack_button)
 	actions.add_child(_button("闪避", func() -> void: arena.request_touch_dodge()))
 	actions.add_child(_button("结束训练并评价", func() -> void: _finish_training()))
