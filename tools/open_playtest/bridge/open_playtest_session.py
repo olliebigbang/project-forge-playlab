@@ -604,6 +604,7 @@ class OpenPlaytestSession(live.LiveSession):
             "sprite_png_base64": base64.b64encode((state.technical_dir / "processed_sprite.png").read_bytes()).decode("ascii"),
             "stage_timings": copy.deepcopy(open_round.stage_timings),
             "total_forge_seconds": state.metrics.get("total_forge_seconds"),
+            "round_output_path": str(open_round.output_dir.resolve()) if open_round.output_dir else "",
         }
 
     def _publish_technical(self, open_round: OpenRound) -> None:

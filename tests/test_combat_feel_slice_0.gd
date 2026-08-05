@@ -37,6 +37,16 @@ func _run() -> void:
 	_test_21_no_model_calls()
 	_test_22_formal_repositories_out_of_scope()
 	_test_23_no_v2_entry()
+	_test_24_default_is_real_live_asset()
+	_test_25_live_asset_integrity_and_anchor()
+	_test_26_shape_driven_weapon_distinction()
+	_test_27_feedback_has_four_clear_tiers()
+	_test_28_enemy_recoil_and_launch_input()
+	_test_29_whiff_hit_heavy_audio_are_distinct()
+	_test_30_no_implicit_fixture_fallback()
+	_test_31_missing_real_assets_are_not_misrepresented()
+	_test_32_open_playtest_round_direct_handoff()
+	_test_33_open_playtest_ui_exposes_heavy_only_launch()
 	print("COMBAT_FEEL_SLICE_0_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -46,15 +56,17 @@ func _test_01_profile_enums() -> void:
 func _test_02_impact_mapping() -> void:
 	var loader: Variant = LOADER.new()
 	var compiler: Variant = COMPILER.new()
-	var expected := {"strike_edge": "sweep", "whole_body_collision": "slam", "strike_point": "thrust"}
-	var ok := true
-	for impact: String in expected:
-		var loaded: Dictionary = loader.load_fixture("M01")
-		var blueprint := loaded["blueprint"] as WeaponBlueprint
-		blueprint.impact_mode = impact
-		var profile: Variant = compiler.compile(blueprint, loaded["asset"] as WeaponVisualAsset)
-		ok = ok and profile.motion_family == expected[impact]
-	_check(ok, "02 impact_mode mapping")
+	var broad: Dictionary = loader.load_fixture("M01")
+	var broad_blueprint := broad["blueprint"] as WeaponBlueprint
+	broad_blueprint.impact_mode = "strike_edge"
+	var edge_profile: Variant = compiler.compile(broad_blueprint, broad["asset"] as WeaponVisualAsset)
+	broad_blueprint.impact_mode = "whole_body_collision"
+	var body_profile: Variant = compiler.compile(broad_blueprint, broad["asset"] as WeaponVisualAsset)
+	var narrow: Dictionary = loader.load_fixture("THRUST")
+	var narrow_blueprint := narrow["blueprint"] as WeaponBlueprint
+	narrow_blueprint.impact_mode = "strike_point"
+	var point_profile: Variant = compiler.compile(narrow_blueprint, narrow["asset"] as WeaponVisualAsset)
+	_check(edge_profile.motion_family == "sweep" and body_profile.motion_family == "slam" and point_profile.motion_family == "thrust", "02 impact plus alpha contact mapping")
 
 func _test_03_reach_bounded() -> void:
 	var loader: Variant = LOADER.new(); var compiler: Variant = COMPILER.new(); var ok := true
@@ -170,6 +182,74 @@ func _test_22_formal_repositories_out_of_scope() -> void:
 func _test_23_no_v2_entry() -> void:
 	var combined := _combat_source().to_lower()
 	_check(not combined.contains("--mode=v2") and not combined.contains("start_v2") and not combined.contains("combat_feel_slice_1"), "23 no V2 entry")
+
+func _test_24_default_is_real_live_asset() -> void:
+	var loaded: Dictionary = LOADER.new().load_default_live()
+	_check(bool(loaded.get("ok", false)) and not bool(loaded.get("fixture", true)) and str(loaded.get("asset_id", "")) == "giant_wooden_spoon" and str(loaded.get("notice", "")).contains("REAL LIVE FORGE"), "24 default is frozen real Live Forge asset")
+
+func _test_25_live_asset_integrity_and_anchor() -> void:
+	var loaded: Dictionary = LOADER.new().load_frozen_live("giant_wooden_spoon")
+	var live_asset := loaded.get("asset") as WeaponVisualAsset
+	var live_blueprint := loaded.get("blueprint") as WeaponBlueprint
+	var ok: bool = bool(loaded.get("ok", false)) and live_asset != null and live_blueprint != null
+	if ok:
+		ok = live_asset.canvas_size == Vector2i(96, 96) and live_asset.anchor_source == "live_player_confirmed" and live_asset.grip_primary.is_equal_approx(Vector2(17, 64)) and live_asset.tip.is_equal_approx(Vector2(88, 25)) and live_blueprint.behavior_family == "heavy_melee"
+	_check(ok, "25 real sprite hash alpha blueprint and confirmed anchor")
+
+func _test_26_shape_driven_weapon_distinction() -> void:
+	var loader: Variant = LOADER.new(); var compiler: Variant = COMPILER.new()
+	var profiles: Array = []
+	for id: String in ["M01", "M02", "M03"]:
+		var loaded: Dictionary = loader.load_fixture(id)
+		profiles.append(compiler.compile(loaded["blueprint"] as WeaponBlueprint, loaded["asset"] as WeaponVisualAsset))
+	var ok: bool = profiles[0].reach_class == "long" and profiles[0].tempo == "committed"
+	ok = ok and profiles[1].reach_class == "short" and profiles[1].tempo == "rapid" and profiles[1].motion_family == "slam"
+	ok = ok and profiles[2].reach_class == "long" and profiles[2].tempo == "balanced" and profiles[2].motion_family == "sweep"
+	ok = ok and profiles[2].control_strength > profiles[1].control_strength
+	_check(ok, "26 generic alpha anchor motion profiles distinguish long heavy compact crisp and long control")
+
+func _test_27_feedback_has_four_clear_tiers() -> void:
+	var profile: Variant = _profile()
+	var first: Variant = FEEDBACK.for_attack(profile, "normal", 1)
+	var second: Variant = FEEDBACK.for_attack(profile, "normal", 2)
+	var third: Variant = FEEDBACK.for_attack(profile, "normal", 3)
+	var charge: Variant = FEEDBACK.for_attack(profile, "charge", 0)
+	_check(first.hitstop_seconds < second.hitstop_seconds and second.hitstop_seconds < third.hitstop_seconds and third.hitstop_seconds < charge.hitstop_seconds and third.ring_count >= 2 and charge.launch_strength > third.launch_strength, "27 first second third charge feedback tiers")
+
+func _test_28_enemy_recoil_and_launch_input() -> void:
+	var enemy: Node2D = ENEMY.new(); enemy.setup(ENEMY.PUPPET, 9, Vector2(500, 400))
+	var applied: bool = enemy.apply_hit(10.0, Vector2(220, -88), 1.2, 17.0)
+	_check(applied and enemy.stagger_time >= 0.82 and absf(enemy.recoil_tilt) > 0.1 and enemy.velocity.y < 0.0, "28 enemy recoil stagger knockback and launch")
+	enemy.free()
+
+func _test_29_whiff_hit_heavy_audio_are_distinct() -> void:
+	var source := _text("res://scripts/combat_feel/combat_feel_slice_0.gd")
+	_check(source.contains("\"whiff\"") and source.contains("\"hit\"") and source.contains("\"heavy_hit\"") and source.contains("_on_attack_phase_changed"), "29 whiff hit heavy-hit audio paths")
+
+func _test_30_no_implicit_fixture_fallback() -> void:
+	var scene_source := _text("res://scripts/combat_feel/combat_feel_slice_0.gd")
+	var runner_source := _text("res://scripts/run_combat_feel_slice.ps1")
+	_check(not scene_source.contains("_argument_value(\"--fixture=\"") and scene_source.contains("load_default_live") and runner_source.contains("--live-weapon") and runner_source.contains("--developer-fixture"), "30 no implicit developer fixture fallback")
+
+func _test_31_missing_real_assets_are_not_misrepresented() -> void:
+	var index_text := _text("res://data/combat_feel/live_assets/revision_a/index.json")
+	var parsed: Variant = JSON.parse_string(index_text)
+	var index: Dictionary = parsed if parsed is Dictionary else {}
+	var missing: Array = index.get("missing_required_verification_assets", [])
+	_check(missing.size() == 2 and index_text.contains("NO_FROZEN_REAL_OPEN_PLAYTEST_RESULT_FOUND") and not index_text.contains("developer_fixture"), "31 absent frying pan and mop stay explicit rather than fake Live assets")
+
+func _test_32_open_playtest_round_direct_handoff() -> void:
+	var round_directory := ProjectSettings.globalize_path("res://data/combat_feel/live_assets/revision_a/giant_wooden_spoon")
+	var loaded: Dictionary = LOADER.new().load_open_playtest_round(round_directory)
+	var loaded_blueprint := loaded.get("blueprint") as WeaponBlueprint
+	_check(bool(loaded.get("ok", false)) and not bool(loaded.get("fixture", true)) and loaded_blueprint != null and loaded_blueprint.behavior_family == "heavy_melee", "32 finalized Open Playtest directory loads directly")
+
+func _test_33_open_playtest_ui_exposes_heavy_only_launch() -> void:
+	var godot_source := _text("res://tools/open_playtest/godot/open_playtest.gd")
+	var server_source := _text("res://tools/open_playtest/bridge/open_playtest_session.py")
+	var ok: bool = godot_source.contains("TEST HEAVY MELEE FEEL") and godot_source.contains("behavior_family") and godot_source.contains("--open-playtest-round=")
+	ok = ok and server_source.contains("round_output_path") and not godot_source.contains("sustained_ranged\")):\n\t\tactions.add_child(_button(\"TEST HEAVY")
+	_check(ok, "33 Open Playtest exposes direct handoff only for heavy melee")
 
 func _controller() -> Variant:
 	var controller: Variant = CONTROLLER.new(); controller.configure(_profile()); return controller

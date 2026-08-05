@@ -15,7 +15,9 @@ var blueprint: WeaponBlueprint
 var asset: WeaponVisualAsset
 var motion_profile: Variant
 var source_notice := ""
-var fixture_id := "M01"
+var weapon_id := "giant_wooden_spoon"
+var is_developer_fixture := false
+var launched_from_open_playtest := false
 
 var player_position := Vector2(285, 420)
 var player_facing := 1.0
@@ -34,8 +36,10 @@ var particles: Array[Dictionary] = []
 var comparison_assets: Array[WeaponVisualAsset] = []
 var comparison_profiles: Array[Resource] = []
 var shake_strength := 0.0
+var camera_kick := Vector2.ZERO
 var last_hit_target := "none"
 var current_knockback := 0.0
+var attack_connected := false
 var capture_comparison := false
 var capture_caption := ""
 
@@ -62,6 +66,7 @@ func _ready() -> void:
 	compiler = MOTION_COMPILER.new()
 	controller = CONTROLLER.new()
 	controller.attack_started.connect(_on_attack_started)
+	controller.phase_changed.connect(_on_attack_phase_changed)
 	_build_ui()
 	_build_audio()
 	if not _load_requested_weapon():
@@ -78,28 +83,40 @@ func _ready() -> void:
 	if not capture_dir.is_empty(): call_deferred("_capture_evidence", capture_dir)
 
 func _load_requested_weapon() -> bool:
-	fixture_id = _argument_value("--fixture=", "M01").to_upper()
 	var sprite_path := _argument_value("--combat-sprite=", "")
 	var blueprint_path := _argument_value("--combat-blueprint=", "")
 	var anchors_path := _argument_value("--combat-anchors=", "")
+	var open_round_path := _argument_value("--open-playtest-round=", "")
+	var requested_live_id := _argument_value("--live-weapon=", "")
+	var requested_fixture := _argument_value("--developer-fixture=", "").to_upper()
 	var result: Dictionary
 	if not sprite_path.is_empty() or not blueprint_path.is_empty() or not anchors_path.is_empty():
 		result = asset_loader.load_live(sprite_path, blueprint_path, anchors_path)
+	elif not open_round_path.is_empty():
+		launched_from_open_playtest = true
+		result = asset_loader.load_open_playtest_round(open_round_path)
+	elif not requested_fixture.is_empty():
+		result = asset_loader.load_fixture(requested_fixture)
+	elif requested_live_id.is_empty():
+		result = asset_loader.load_default_live()
 	else:
-		result = asset_loader.load_fixture(fixture_id)
+		result = asset_loader.load_frozen_live(requested_live_id)
 	if not bool(result.get("ok", false)):
 		source_notice = str(result.get("error", "LOAD_FAILED"))
 		return false
 	blueprint = result.get("blueprint") as WeaponBlueprint
 	asset = result.get("asset") as WeaponVisualAsset
 	source_notice = str(result.get("notice", ""))
-	fixture_id = str(result.get("fixture_id", fixture_id))
+	weapon_id = str(result.get("asset_id", result.get("fixture_id", weapon_id)))
+	is_developer_fixture = bool(result.get("fixture", false))
 	if blueprint == null or asset == null:
 		source_notice = "WEAPON_HANDOFF_INCOMPLETE"
 		return false
 	if blueprint.behavior_family != "heavy_melee":
 		source_notice = "当前切片只验证近战物件。持续远程与投掷返回尚未接入。"
 		return false
+	if launched_from_open_playtest and return_button != null:
+		return_button.text = "CLOSE / RETURN TO OPEN PLAYTEST"
 	return true
 
 func _start_run() -> void:
@@ -126,7 +143,9 @@ func _start_run() -> void:
 func _process(delta: float) -> void:
 	_update_particles(delta)
 	shake_strength = move_toward(shake_strength, 0.0, 22.0 * delta)
-	position = Vector2(randf_range(-shake_strength, shake_strength), randf_range(-shake_strength, shake_strength)) if shake_strength > 0.05 else Vector2.ZERO
+	camera_kick = camera_kick.move_toward(Vector2.ZERO, 34.0 * delta)
+	var shake_offset := Vector2(randf_range(-shake_strength, shake_strength), randf_range(-shake_strength, shake_strength)) if shake_strength > 0.05 else Vector2.ZERO
+	position = shake_offset + camera_kick
 	if not game_active:
 		_update_debug()
 		queue_redraw()
@@ -182,12 +201,17 @@ func _update_player_movement(delta: float) -> void:
 	player_position.y = clampf(player_position.y, ARENA.position.y + 52.0, ARENA.end.y - 28.0)
 
 func _on_attack_started(kind: String, combo_index: int) -> void:
+	attack_connected = false
 	var timing: Dictionary = motion_profile.timing_for(kind, combo_index)
 	var advance: float = 17.0 * float(timing.get("movement_scale", 1.0))
 	if kind == "dodge": advance = 38.0
 	if kind == "charge" and motion_profile.motion_family == "thrust": advance = 58.0
 	player_position.x += advance * player_facing
-	_play_tone("windup")
+	_play_tone("swing_heavy" if kind == "charge" or combo_index >= 3 or motion_profile.tempo == "committed" else "swing_light")
+
+func _on_attack_phase_changed(next_phase: String) -> void:
+	if next_phase == "recovery" and not attack_connected:
+		_play_tone("whiff")
 
 func _resolve_melee_hits() -> void:
 	for enemy: Node2D in enemies:
@@ -203,13 +227,16 @@ func _resolve_melee_hits() -> void:
 		var damage := _current_damage()
 		var direction: Vector2 = (enemy.position - player_position).normalized()
 		if direction.length() < 0.1: direction = Vector2(player_facing, 0)
-		enemy.apply_hit(damage, direction * feedback.knockback_strength, feedback.stagger_strength)
+		var knockback: Vector2 = direction * float(feedback.knockback_strength) + Vector2(0, -float(feedback.launch_strength))
+		enemy.apply_hit(damage, knockback, feedback.stagger_strength, feedback.recoil_degrees)
 		controller.begin_hitstop(feedback.hitstop_seconds)
 		shake_strength = maxf(shake_strength, feedback.camera_shake_strength)
+		camera_kick = Vector2(-player_facing * feedback.camera_shake_strength * 0.72, -feedback.camera_shake_strength * 0.18)
 		last_hit_target = "%s:%d" % [enemy.enemy_kind, enemy.enemy_id]
 		current_knockback = feedback.knockback_strength
-		_spawn_impact(enemy.position, feedback.particle_scale)
-		_play_tone("finisher" if controller.combo_index >= 3 or controller.attack_kind == "charge" else "hit")
+		attack_connected = true
+		_spawn_impact(enemy.position, feedback.particle_scale, feedback.impact_tier, feedback.ring_count)
+		_play_tone("heavy_hit" if feedback.impact_tier in ["finisher", "charge"] else "hit")
 
 func _attack_contains(target: Vector2) -> bool:
 	var hand := _hand_world_position()
@@ -219,12 +246,14 @@ func _attack_contains(target: Vector2) -> bool:
 	var forward := to_target.x * player_facing
 	match motion_profile.motion_family:
 		"thrust":
-			return forward >= -12.0 and forward <= reach and absf(to_target.y) <= 30.0
+			return forward >= -12.0 and forward <= reach and absf(to_target.y) <= motion_profile.hitbox_thickness * 0.5
 		"slam":
 			var impact_center := hand + Vector2(player_facing * reach * 0.68, 28.0)
-			return target.distance_to(impact_center) <= 48.0 + (16.0 if controller.attack_kind == "charge" else 0.0)
+			return target.distance_to(impact_center) <= motion_profile.hitbox_thickness + (16.0 if controller.attack_kind == "charge" else 0.0)
 		_:
-			return forward >= -22.0 and to_target.length() <= reach and absf(to_target.y) <= reach * 0.72
+			var half_arc := deg_to_rad(motion_profile.swing_arc_degrees * 0.5)
+			var angle := absf(wrapf(to_target.angle() - (0.0 if player_facing > 0 else PI), -PI, PI))
+			return forward >= -motion_profile.hitbox_thickness * 0.45 and to_target.length() <= reach and angle <= half_arc
 
 func _current_damage() -> float:
 	var base: float = float({"rapid": 22.0, "balanced": 27.0, "committed": 34.0}.get(motion_profile.tempo, 27.0))
@@ -413,7 +442,8 @@ func _save_questionnaire() -> void:
 	var record := {
 		"schema": "forge-combat-feel-slice-0-playtest-v1",
 		"timestamp": Time.get_datetime_string_from_system(true),
-		"fixture_or_live": fixture_id, "source_notice": source_notice,
+		"weapon_asset_id": weapon_id, "source_notice": source_notice,
+		"developer_fixture": is_developer_fixture,
 		"identity": blueprint.source_identity, "motion_profile": motion_profile.to_dict(),
 		"elapsed_seconds": snappedf(elapsed_seconds, 0.01), "scores": scores,
 		"best_hit": note_inputs[0].text, "most_stuck_hit": note_inputs[1].text,
@@ -459,7 +489,7 @@ func _apply_saved_tuning() -> void:
 
 func _update_hud() -> void:
 	if blueprint == null or motion_profile == null: return
-	status_label.text = "%s　%s　|　%s / %s / %s　|　%s" % [fixture_id, blueprint.display_name, motion_profile.motion_family, motion_profile.tempo, motion_profile.reach_class, source_notice]
+	status_label.text = "%s　%s　|　%s / %s / %s　|　%s" % [weapon_id, blueprint.display_name, motion_profile.motion_family, motion_profile.tempo, motion_profile.reach_class, source_notice]
 	health_label.text = "PLAYER HP %d" % roundi(player_health)
 	wave_label.text = "WAVE %d / 3　TIME %.1fs" % [current_wave, elapsed_seconds]
 
@@ -475,29 +505,42 @@ func _update_debug() -> void:
 func _update_particles(delta: float) -> void:
 	for particle: Dictionary in particles:
 		particle["life"] = float(particle["life"]) - delta
-		particle["pos"] = Vector2(particle["pos"]) + Vector2(particle["vel"]) * delta
-		particle["vel"] = Vector2(particle["vel"]) * 0.90
+		if str(particle.get("kind", "spark")) == "ring":
+			particle["radius"] = float(particle.get("radius", 4.0)) + float(particle.get("speed", 90.0)) * delta
+		else:
+			particle["pos"] = Vector2(particle["pos"]) + Vector2(particle["vel"]) * delta
+			particle["vel"] = Vector2(particle["vel"]) * 0.90
 	particles = particles.filter(func(value: Dictionary) -> bool: return float(value["life"]) > 0.0)
 
-func _spawn_impact(at: Vector2, scale: float) -> void:
-	for index: int in range(roundi(8.0 * scale)):
-		var angle := TAU * float(index) / maxf(1.0, 8.0 * scale) + randf_range(-0.18, 0.18)
-		particles.append({"pos": at, "vel": Vector2.from_angle(angle) * randf_range(70.0, 170.0) * scale, "life": randf_range(0.18, 0.38), "size": randf_range(2.0, 5.0) * scale, "color": Color("ffd164") if index % 2 == 0 else Color("79e1da")})
+func _spawn_impact(at: Vector2, scale: float, tier: String = "light", ring_count: int = 0) -> void:
+	var count := roundi((7.0 if tier == "light" else 10.0) * scale)
+	var speed_min := 85.0 if tier == "light" else 125.0
+	var speed_max := 175.0 if tier == "light" else 255.0
+	for index: int in range(count):
+		var angle := TAU * float(index) / maxf(1.0, float(count)) + randf_range(-0.18, 0.18)
+		var color := Color("fff0a8") if tier == "light" else (Color("ff9f43") if index % 2 == 0 else Color("7cf4e8"))
+		particles.append({"kind": "spark", "pos": at, "vel": Vector2.from_angle(angle) * randf_range(speed_min, speed_max) * scale, "life": randf_range(0.16, 0.34) * minf(scale, 1.7), "size": randf_range(1.7, 4.2) * scale, "color": color})
+	for ring_index: int in range(ring_count):
+		particles.append({"kind": "ring", "pos": at, "radius": 7.0 + ring_index * 9.0, "speed": 135.0 + ring_index * 35.0, "life": 0.24 + ring_index * 0.05, "size": 4.5 - ring_index, "color": Color("ffe08a") if ring_index == 0 else Color("66e9e1")})
 
 func _build_audio() -> void:
 	audio_player = AudioStreamPlayer.new(); add_child(audio_player)
 
 func _play_tone(kind: String) -> void:
-	var frequency: float = float({"windup": 180.0, "hit": 115.0, "finisher": 72.0, "dodge": 310.0, "hurt": 92.0}.get(kind, 140.0))
-	var duration: float = float({"windup": 0.045, "hit": 0.08, "finisher": 0.13, "dodge": 0.055, "hurt": 0.10}.get(kind, 0.07))
+	var frequency: float = float({"swing_light": 245.0, "swing_heavy": 150.0, "whiff": 360.0, "hit": 118.0, "heavy_hit": 64.0, "dodge": 310.0, "hurt": 92.0}.get(kind, 140.0))
+	var duration: float = float({"swing_light": 0.045, "swing_heavy": 0.072, "whiff": 0.065, "hit": 0.085, "heavy_hit": 0.16, "dodge": 0.055, "hurt": 0.10}.get(kind, 0.07))
 	var stream := AudioStreamWAV.new(); stream.format = AudioStreamWAV.FORMAT_16_BITS; stream.mix_rate = 22050; stream.stereo = false
 	var sample_count := int(stream.mix_rate * duration)
 	var data := PackedByteArray(); data.resize(sample_count * 2)
 	for index: int in range(sample_count):
 		var envelope := 1.0 - float(index) / float(sample_count)
-		var wave := sin(TAU * frequency * float(index) / float(stream.mix_rate))
-		var noise := randf_range(-0.12, 0.12) if kind in ["hit", "finisher"] else 0.0
-		data.encode_s16(index * 2, roundi(clampf((wave + noise) * envelope * 0.42, -1.0, 1.0) * 32767.0))
+		var phase := TAU * frequency * float(index) / float(stream.mix_rate)
+		var wave := sin(phase)
+		if kind == "heavy_hit": wave = sin(phase) * 0.70 + sin(phase * 0.51) * 0.45
+		if kind == "whiff": wave = sin(phase * (1.0 + float(index) / float(sample_count) * 1.6)) * 0.55
+		var noise := randf_range(-0.18, 0.18) if kind in ["hit", "heavy_hit"] else (randf_range(-0.08, 0.08) if kind == "whiff" else 0.0)
+		var gain := 0.55 if kind == "heavy_hit" else 0.38
+		data.encode_s16(index * 2, roundi(clampf((wave + noise) * envelope * gain, -1.0, 1.0) * 32767.0))
 	stream.data = data; audio_player.stream = stream; audio_player.play()
 
 func _hand_world_position() -> Vector2:
@@ -508,15 +551,26 @@ func _weapon_pose() -> Dictionary:
 	var extension := 0.0
 	if controller.phase != "idle" or controller.holding_attack:
 		var ratio: float = controller.phase_ratio()
+		var motion_ratio := ratio
+		match controller.phase:
+			"startup": motion_ratio = ratio * 0.30
+			"active": motion_ratio = 0.30 + ratio * 0.52
+			"recovery": motion_ratio = 0.82 + ratio * 0.18
+		if controller.holding_attack and controller.phase == "idle": motion_ratio = clampf(controller.held_seconds / maxf(0.01, motion_profile.charge_threshold_seconds), 0.0, 1.0) * 0.28
 		match motion_profile.motion_family:
 			"sweep":
-				var start := -1.15 if controller.combo_index != 2 else 0.95
-				var finish := 0.95 if controller.combo_index != 2 else -1.05
-				angle = lerpf(start, finish, ratio) * player_facing
-			"slam": angle = lerpf(-1.28, 0.72, ratio) * player_facing
+				var start := -1.18 if controller.combo_index != 2 else 1.02
+				var finish := 1.02 if controller.combo_index != 2 else -1.10
+				if controller.combo_index >= 3 or controller.attack_kind == "charge":
+					start = -1.58; finish = 1.24
+				angle = lerpf(start, finish, motion_ratio) * player_facing
+			"slam":
+				var slam_start := -1.42 if controller.combo_index < 3 else -1.72
+				var slam_finish := 0.76 if controller.combo_index < 3 else 1.02
+				angle = lerpf(slam_start, slam_finish, motion_ratio) * player_facing
 			"thrust":
 				angle = -0.08 * player_facing
-				extension = sin(ratio * PI) * 32.0
+				extension = sin(motion_ratio * PI) * (48.0 if controller.combo_index >= 3 or controller.attack_kind == "charge" else 32.0)
 	return {"angle": angle, "extension": extension}
 
 func _draw() -> void:
@@ -526,9 +580,15 @@ func _draw() -> void:
 	for x: int in range(60, 1240, 80): draw_line(Vector2(x, ARENA.position.y), Vector2(x, ARENA.end.y), Color(0.28, 0.42, 0.47, 0.18), 1.0)
 	for y: int in range(170, 680, 64): draw_line(Vector2(ARENA.position.x, y), Vector2(ARENA.end.x, y), Color(0.28, 0.42, 0.47, 0.14), 1.0)
 	draw_line(Vector2(50, 655), Vector2(1230, 655), Color("896b3a"), 5.0)
-	if capture_comparison: _draw_fixture_comparison()
+	if capture_comparison: _draw_real_weapon_comparison()
 	else: _draw_player()
-	for particle: Dictionary in particles: draw_circle(Vector2(particle["pos"]), float(particle["size"]), Color(particle["color"]))
+	for particle: Dictionary in particles:
+		if str(particle.get("kind", "spark")) == "ring":
+			draw_arc(Vector2(particle["pos"]), float(particle["radius"]), 0.0, TAU, 28, Color(particle["color"], clampf(float(particle["life"]) * 4.0, 0.0, 1.0)), float(particle["size"]))
+		else:
+			var spark_pos := Vector2(particle["pos"])
+			var velocity := Vector2(particle["vel"])
+			draw_line(spark_pos, spark_pos - velocity.normalized() * float(particle["size"]) * 2.4, Color(particle["color"]), float(particle["size"]))
 	if motion_profile != null and controller.phase == "active": _draw_active_hitbox()
 
 func _draw_player() -> void:
@@ -550,7 +610,7 @@ func _draw_player() -> void:
 	if motion_profile.grip_mode == "two_hand": draw_line(base + Vector2(-5 * player_facing, -6), second_hand, Color("e4c8a8"), 7.0)
 	var pose := _weapon_pose()
 	var weapon_origin := hand + Vector2(float(pose["extension"]) * player_facing, 0)
-	draw_set_transform(weapon_origin, float(pose["angle"]), Vector2(player_facing * 1.18, 1.18))
+	draw_set_transform(weapon_origin, float(pose["angle"]), Vector2(player_facing * motion_profile.render_scale, motion_profile.render_scale))
 	draw_texture_rect(asset.texture, Rect2(-asset.grip_primary, Vector2(asset.canvas_size)), false)
 	draw_set_transform(Vector2.ZERO)
 	draw_circle(hand, 4.0, Color("f6d1ac"))
@@ -559,24 +619,31 @@ func _draw_active_hitbox() -> void:
 	var hand := _hand_world_position()
 	var timing: Dictionary = motion_profile.timing_for(controller.attack_kind, controller.combo_index)
 	var reach: float = motion_profile.reach_pixels * float(timing.get("reach_scale", 1.0))
-	var color := Color(1.0, 0.38, 0.22, 0.34)
+	var is_finisher: bool = controller.combo_index >= 3 or controller.attack_kind == "charge"
+	var color := Color(1.0, 0.72, 0.22, 0.42) if is_finisher else Color(1.0, 0.38, 0.22, 0.28)
 	match motion_profile.motion_family:
-		"thrust": draw_rect(Rect2(hand + Vector2(0 if player_facing > 0 else -reach, -25), Vector2(reach, 50)), color, true)
-		"slam": draw_circle(hand + Vector2(player_facing * reach * 0.68, 28), 50.0, color)
-		_: draw_arc(hand, reach, -0.75 if player_facing > 0 else PI - 0.75, 0.75 if player_facing > 0 else PI + 0.75, 30, color, 18.0)
+		"thrust": draw_rect(Rect2(hand + Vector2(0 if player_facing > 0 else -reach, -motion_profile.hitbox_thickness * 0.5), Vector2(reach, motion_profile.hitbox_thickness)), color, true)
+		"slam": draw_circle(hand + Vector2(player_facing * reach * 0.68, 28), motion_profile.hitbox_thickness + (10.0 if is_finisher else 0.0), color)
+		_:
+			var half_arc := deg_to_rad(motion_profile.swing_arc_degrees * 0.5)
+			var facing_angle := 0.0 if player_facing > 0 else PI
+			draw_arc(hand, reach, facing_angle - half_arc, facing_angle + half_arc, 36, color, 24.0 if is_finisher else 16.0)
 
-func _draw_fixture_comparison() -> void:
-	var ids: Array[String] = ["M01", "M02", "M03"]
+func _draw_real_weapon_comparison() -> void:
+	var ids: Array[String] = asset_loader.frozen_live_ids()
 	if comparison_assets.is_empty():
 		for id: String in ids:
-			var retained: Dictionary = asset_loader.load_fixture(id)
+			var retained: Dictionary = asset_loader.load_frozen_live(id)
+			if not bool(retained.get("ok", false)): continue
 			var retained_asset := retained.get("asset") as WeaponVisualAsset
 			comparison_assets.append(retained_asset)
 			comparison_profiles.append(compiler.compile(retained.get("blueprint") as WeaponBlueprint, retained_asset))
-	for index: int in range(ids.size()):
-		var fixture_asset: WeaponVisualAsset = comparison_assets[index]
+	if comparison_assets.is_empty(): return
+	var spacing := 1080.0 / float(comparison_assets.size())
+	for index: int in range(comparison_assets.size()):
+		var live_asset: WeaponVisualAsset = comparison_assets[index]
 		var profile: Resource = comparison_profiles[index]
-		var player_at := Vector2(135 + index * 390, 435)
+		var player_at := Vector2(100.0 + spacing * (float(index) + 0.5), 435)
 		var hand := player_at + Vector2(23, -12)
 		draw_circle(player_at + Vector2(0, -28), 12, Color("e4c8a8"))
 		draw_colored_polygon(PackedVector2Array([player_at + Vector2(-14, -14), player_at + Vector2(14, -14), player_at + Vector2(18, 24), player_at + Vector2(-17, 24)]), Color("58cbd2"))
@@ -584,17 +651,21 @@ func _draw_fixture_comparison() -> void:
 		draw_line(player_at + Vector2(7, 23), player_at + Vector2(11, 44), Color("7f93a2"), 7)
 		draw_line(player_at + Vector2(5, -6), hand, Color("e4c8a8"), 6)
 		draw_set_transform(hand, -0.18 + index * 0.18, Vector2(1.5, 1.5))
-		draw_texture_rect(fixture_asset.texture, Rect2(-fixture_asset.grip_primary, Vector2(fixture_asset.canvas_size)), false)
+		draw_texture_rect(live_asset.texture, Rect2(-live_asset.grip_primary, Vector2(live_asset.canvas_size)), false)
 		draw_set_transform(Vector2.ZERO)
 		if profile.motion_family == "slam":
 			draw_circle(hand + Vector2(135, 45), 34, Color(1.0, 0.35, 0.2, 0.18))
 		else:
 			draw_arc(hand, 135, -0.72, 0.72, 24, Color(1.0, 0.35, 0.2, 0.32), 10)
-		draw_string(ThemeDB.fallback_font, player_at + Vector2(-35, 100), "%s  %s" % [ids[index], profile.motion_family], HORIZONTAL_ALIGNMENT_CENTER, 210, 22, Color("f5dc8c"))
+		draw_string(ThemeDB.fallback_font, player_at + Vector2(-220, 100), "%s  %s/%s/%s" % [ids[index], profile.motion_family, profile.tempo, profile.reach_class], HORIZONTAL_ALIGNMENT_CENTER, 440, 22, Color("f5dc8c"))
 
 func _capture_evidence(directory: String) -> void:
 	game_active = false
-	DirAccess.make_dir_recursive_absolute(directory)
+	var directory_error := DirAccess.make_dir_recursive_absolute(directory)
+	if directory_error != OK:
+		push_error("COMBAT_FEEL_CAPTURE_DIRECTORY_FAILED:%s:%s" % [directory, error_string(directory_error)])
+		get_tree().quit(1)
+		return
 	_cleanup_enemies()
 	var puppet: Node2D = _spawn_enemy(ENEMY.PUPPET, Vector2(760, 410)); puppet.force_state("tell")
 	capture_caption = "Slag Puppet telegraph"; await _capture_frame(directory.path_join("slag_puppet_telegraph.png"))
@@ -602,13 +673,22 @@ func _capture_evidence(directory: String) -> void:
 	var ram: Node2D = _spawn_enemy(ENEMY.RAM, Vector2(790, 410)); ram.force_state("tell")
 	capture_caption = "Forge Ram charge telegraph"; await _capture_frame(directory.path_join("forge_ram_telegraph.png"))
 	_cleanup_enemies()
-	var hit_enemy: Node2D = _spawn_enemy(ENEMY.PUPPET, Vector2(520, 410)); hit_enemy.flash_time = 0.4; _spawn_impact(hit_enemy.position, 1.0)
+	var hit_enemy: Node2D = _spawn_enemy(ENEMY.PUPPET, Vector2(520, 410))
 	controller.attack_kind = "normal"; controller.combo_index = 1; controller.phase = "active"; controller.phase_duration = 0.1
+	var normal_feedback: Resource = FEEDBACK.for_attack(motion_profile, "normal", 1)
+	hit_enemy.apply_hit(10.0, Vector2(normal_feedback.knockback_strength, 0), normal_feedback.stagger_strength, normal_feedback.recoil_degrees)
+	_spawn_impact(hit_enemy.position, normal_feedback.particle_scale, normal_feedback.impact_tier, normal_feedback.ring_count)
+	hit_enemy.simulate(0.035, player_position); _update_particles(0.035)
 	capture_caption = "Normal hit"; await _capture_frame(directory.path_join("normal_hit_feedback.png"))
-	hit_enemy.flash_time = 0.4; _spawn_impact(hit_enemy.position, 1.65); controller.combo_index = 3; shake_strength = 0.0
+	_cleanup_enemies(); particles.clear()
+	hit_enemy = _spawn_enemy(ENEMY.PUPPET, Vector2(520, 410)); controller.combo_index = 3; shake_strength = 0.0
+	var finisher_feedback: Resource = FEEDBACK.for_attack(motion_profile, "normal", 3)
+	hit_enemy.apply_hit(10.0, Vector2(finisher_feedback.knockback_strength, -finisher_feedback.launch_strength), finisher_feedback.stagger_strength, finisher_feedback.recoil_degrees)
+	_spawn_impact(hit_enemy.position, finisher_feedback.particle_scale, finisher_feedback.impact_tier, finisher_feedback.ring_count)
+	hit_enemy.simulate(0.055, player_position); _update_particles(0.055)
 	capture_caption = "Third-hit finisher"; await _capture_frame(directory.path_join("third_hit_feedback.png"))
-	_cleanup_enemies(); particles.clear(); controller.phase = "idle"; capture_comparison = true; capture_caption = "Three fixture holding/attack comparison"
-	await _capture_frame(directory.path_join("three_weapon_comparison.png"))
+	_cleanup_enemies(); particles.clear(); controller.phase = "idle"; capture_comparison = true; capture_caption = "Frozen real Live Forge weapon handoff"
+	await _capture_frame(directory.path_join("real_weapon_comparison.png"))
 	get_tree().quit()
 
 func _capture_frame(path: String) -> void:
@@ -617,13 +697,18 @@ func _capture_frame(path: String) -> void:
 	await get_tree().process_frame
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
-	image.save_png(path)
+	var save_error := image.save_png(path)
+	if save_error != OK:
+		push_error("COMBAT_FEEL_CAPTURE_SAVE_FAILED:%s:%s" % [path, error_string(save_error)])
 
 func _quit_after(seconds: float) -> void:
 	await get_tree().create_timer(seconds).timeout
 	get_tree().quit()
 
 func _return_to_forge() -> void:
+	if launched_from_open_playtest:
+		get_tree().quit()
+		return
 	get_tree().change_scene_to_file("res://scenes/open_identity_spike.tscn")
 
 func _label(text_value: String, size_value: int, color: Color) -> Label:

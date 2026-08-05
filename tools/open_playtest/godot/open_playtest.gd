@@ -3,6 +3,7 @@ extends Node2D
 const ANCHOR_RESOLVER := preload("res://scripts/systems/semantic_anchor_resolver.gd")
 const ANCHOR_CANVAS := preload("res://tools/live_e2e/godot/live_anchor_canvas.gd")
 const TRAINING_ARENA := preload("res://tools/live_e2e/godot/live_training_arena.gd")
+const COMBAT_FEEL_SCENE := "res://scenes/combat_feel_slice_0.tscn"
 
 const OPEN_ARGUMENT := "--forge-open-playtest"
 const EXPECTED_BRIDGE := "http://127.0.0.1:8771"
@@ -499,9 +500,27 @@ func _show_round_complete(message: String) -> void:
 	actions.add_theme_constant_override("separation", 10)
 	box.add_child(actions)
 	actions.add_child(_button("SAVE THIS RESULT", func() -> void: _save_result()))
+	if str(current_response.get("behavior_family", "")) == "heavy_melee":
+		actions.add_child(_button("TEST HEAVY MELEE FEEL", func() -> void: _launch_combat_feel()))
 	actions.add_child(_button("RETRY THIS IDEA", func() -> void: _show_forge_screen(false)))
 	actions.add_child(_button("FORGE NEW IDEA", func() -> void: _show_forge_screen(true)))
 	actions.add_child(_button("SUMMARY", func() -> void: _show_summary()))
+
+
+func _launch_combat_feel() -> void:
+	var round_output_path := str(current_response.get("round_output_path", ""))
+	if round_output_path.is_empty():
+		var error_label := _label("无法启动：本轮最终资产目录缺失。输入和当前结果仍保留。", 18, Color("fb7185"))
+		feedback_notes.get_parent().add_child(error_label)
+		return
+	var arguments := PackedStringArray([
+		"--path", ProjectSettings.globalize_path("res://"), COMBAT_FEEL_SCENE,
+		"--", "--mode=combat-feel-slice-0", "--open-playtest-round=%s" % round_output_path,
+	])
+	var process_id := OS.create_process(OS.get_executable_path(), arguments)
+	if process_id <= 0:
+		var launch_error := _label("无法启动 Combat Feel Slice；本轮结果未被修改。", 18, Color("fb7185"))
+		feedback_notes.get_parent().add_child(launch_error)
 
 
 func _save_result() -> void:

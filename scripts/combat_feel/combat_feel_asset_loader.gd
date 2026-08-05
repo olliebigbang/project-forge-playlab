@@ -2,6 +2,55 @@ class_name CombatFeelAssetLoader
 extends RefCounted
 
 const FIXTURE_PATH := "res://data/combat_feel/heavy_melee_fixtures.json"
+const LIVE_INDEX_PATH := "res://data/combat_feel/live_assets/revision_a/index.json"
+
+func load_default_live() -> Dictionary:
+	var index := _read_json(LIVE_INDEX_PATH)
+	var asset_id := str(index.get("default_asset_id", ""))
+	if asset_id.is_empty():
+		return {"ok": false, "error": "LIVE_DEFAULT_ASSET_NOT_CONFIGURED"}
+	return load_frozen_live(asset_id)
+
+func frozen_live_ids() -> Array[String]:
+	var ids: Array[String] = []
+	var index := _read_json(LIVE_INDEX_PATH)
+	for value: Variant in index.get("assets", []):
+		var entry: Dictionary = value
+		ids.append(str(entry.get("id", "")))
+	return ids
+
+func load_frozen_live(asset_id: String) -> Dictionary:
+	var index := _read_json(LIVE_INDEX_PATH)
+	for value: Variant in index.get("assets", []):
+		var entry: Dictionary = value
+		if str(entry.get("id", "")) != asset_id:
+			continue
+		var integrity_error := _verify_entry_hashes(entry)
+		if not integrity_error.is_empty():
+			return {"ok": false, "error": integrity_error}
+		var loaded := load_live(
+			str(entry.get("sprite", "")),
+			str(entry.get("blueprint", "")),
+			str(entry.get("anchors", ""))
+		)
+		if not bool(loaded.get("ok", false)):
+			return loaded
+		loaded["asset_id"] = asset_id
+		loaded["fixture_id"] = asset_id
+		loaded["source_kind"] = str(entry.get("source_kind", "frozen_live"))
+		loaded["source_run_id"] = str(entry.get("source_run_id", ""))
+		loaded["notice"] = str(index.get("notice", "FROZEN REAL LIVE FORGE RESULT"))
+		return loaded
+	return {"ok": false, "error": "FROZEN_LIVE_ASSET_NOT_FOUND:%s" % asset_id}
+
+func load_open_playtest_round(round_directory: String) -> Dictionary:
+	if round_directory.is_empty():
+		return {"ok": false, "error": "OPEN_PLAYTEST_ROUND_PATH_REQUIRED"}
+	return load_live(
+		round_directory.path_join("processed_sprite.png"),
+		round_directory.path_join("semantic_blueprint.json"),
+		round_directory.path_join("anchors.json")
+	)
 
 func load_fixture(fixture_id: String) -> Dictionary:
 	var data := _read_json(FIXTURE_PATH)
@@ -22,9 +71,13 @@ func load_fixture(fixture_id: String) -> Dictionary:
 func load_live(sprite_path: String, blueprint_path: String, anchors_path: String) -> Dictionary:
 	if sprite_path.is_empty() or blueprint_path.is_empty() or anchors_path.is_empty():
 		return {"ok": false, "error": "LIVE_HANDOFF_PATHS_REQUIRED"}
-	var image := Image.new()
-	if image.load(sprite_path) != OK or image.is_empty():
+	var image := _load_png(sprite_path)
+	if image == null or image.is_empty():
 		return {"ok": false, "error": "LIVE_SPRITE_INVALID"}
+	if image.get_size() != Vector2i(96, 96):
+		return {"ok": false, "error": "LIVE_SPRITE_MUST_BE_96X96"}
+	if not _has_useful_alpha(image):
+		return {"ok": false, "error": "LIVE_SPRITE_ALPHA_INVALID"}
 	var blueprint_data := _read_json(blueprint_path)
 	var anchors := _read_json(anchors_path)
 	if blueprint_data.is_empty() or anchors.is_empty():
@@ -33,7 +86,9 @@ func load_live(sprite_path: String, blueprint_path: String, anchors_path: String
 	if not behavior_supported(blueprint.behavior_family):
 		return {"ok": false, "error": "CURRENT_SLICE_ONLY_SUPPORTS_HEAVY_MELEE"}
 	var asset := _asset_from_image_and_anchors(image, anchors)
-	return {"ok": true, "fixture": false, "fixture_id": "LIVE", "notice": "LIVE LOCAL HANDOFF", "blueprint": blueprint, "asset": asset, "prompt_zh": blueprint.player_identity_text}
+	blueprint.grip_profile = str(anchors.get("grip_profile", blueprint.grip_profile))
+	blueprint.silhouette_aspect = float(maxi(asset.opaque_bounds.size.x, asset.opaque_bounds.size.y)) / maxf(1.0, float(mini(asset.opaque_bounds.size.x, asset.opaque_bounds.size.y)))
+	return {"ok": true, "fixture": false, "fixture_id": "LIVE", "asset_id": "LIVE", "notice": "LIVE OPEN PLAYTEST HANDOFF", "blueprint": blueprint, "asset": asset, "prompt_zh": blueprint.player_identity_text}
 
 static func behavior_supported(family: String) -> bool:
 	return family == "heavy_melee"
@@ -79,20 +134,74 @@ func _blueprint_from_semantic_data(data: Dictionary) -> WeaponBlueprint:
 		if payload.has(key) and payload[key] is Dictionary: payload = payload[key]
 	var identity: Dictionary = payload.get("identity", {})
 	var combat: Dictionary = payload.get("combat", {})
+	var cadence_hint := str(combat.get("cadence_hint", payload.get("cadence", "")))
+	var drawback := str(combat.get("drawback", payload.get("drawback", "recovery")))
 	var mapped := {
 		"id": str(payload.get("id", "live-heavy-melee")),
 		"display_name": str(identity.get("display_name_zh", payload.get("display_name", "Live Forge Object"))),
-		"source_identity": str(identity.get("canonical_name_zh", payload.get("source_identity", ""))),
-		"player_identity_text": str(payload.get("player_identity_text", identity.get("canonical_name_zh", ""))),
+		"source_identity": str(identity.get("canonical_name_zh", identity.get("name_zh", payload.get("source_identity", "")))),
+		"player_identity_text": str(payload.get("player_identity_text", identity.get("canonical_name_zh", identity.get("name_zh", "")))),
+		"identity_confidence": float(payload.get("confidence", 0.0)),
 		"preserved_visual_features": identity.get("required_identity_parts", payload.get("preserved_visual_features", [])),
+		"visual_description": str(payload.get("visual_description", payload.get("visual", {}).get("prompt_en", ""))),
 		"behavior_family": str(combat.get("behavior_family", payload.get("behavior_family", ""))),
 		"delivery": str(combat.get("delivery", payload.get("delivery", "whole_object_strike"))),
 		"impact_mode": str(combat.get("impact_mode", payload.get("impact_mode", "whole_body_collision"))),
-		"weight_class": str(payload.get("weight_class", "medium")),
+		"cadence": cadence_hint,
+		"drawback": drawback,
+		"effect_type": str(combat.get("effect_type", payload.get("effect_type", "normal"))),
+		"weight_class": _semantic_weight_class(cadence_hint, drawback, payload),
 		"grip_profile": str(payload.get("grip_profile", "two_hand_rear")),
-		"silhouette_mass_distribution": str(identity.get("silhouette_hints", payload.get("silhouette_mass_distribution", "balanced"))),
+		"silhouette_mass_distribution": str(payload.get("silhouette_mass_distribution", "balanced")),
+		"confidence": float(payload.get("confidence", 1.0)),
 	}
 	return WeaponBlueprint.from_dict(mapped)
+
+func _semantic_weight_class(cadence_hint: String, drawback: String, payload: Dictionary) -> String:
+	var explicit := str(payload.get("weight_class", ""))
+	if explicit in WeaponBlueprint.WEIGHT_CLASSES:
+		return explicit
+	if cadence_hint == "slow_heavy" or drawback in ["slow_movement", "slow_startup"]:
+		return "heavy"
+	return "medium"
+
+func _verify_entry_hashes(entry: Dictionary) -> String:
+	var expected: Dictionary = entry.get("sha256", {})
+	var paths := {
+		"processed_sprite.png": str(entry.get("sprite", "")),
+		"semantic_blueprint.json": str(entry.get("blueprint", "")),
+		"anchors.json": str(entry.get("anchors", "")),
+		"result_manifest.json": str(entry.get("manifest", "")),
+	}
+	for filename: String in paths:
+		if not expected.has(filename):
+			return "LIVE_EVIDENCE_HASH_MISSING:%s" % filename
+		var path: String = paths[filename]
+		if not FileAccess.file_exists(path):
+			return "LIVE_EVIDENCE_FILE_MISSING:%s" % filename
+		if _sha256_file(path) != str(expected[filename]).to_lower():
+			return "LIVE_EVIDENCE_HASH_MISMATCH:%s" % filename
+	return ""
+
+func _sha256_file(path: String) -> String:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null: return ""
+	var context := HashingContext.new()
+	context.start(HashingContext.HASH_SHA256)
+	while file.get_position() < file.get_length():
+		context.update(file.get_buffer(mini(65536, file.get_length() - file.get_position())))
+	file.close()
+	return context.finish().hex_encode()
+
+func _has_useful_alpha(image: Image) -> bool:
+	var transparent := 0
+	var opaque := 0
+	for y: int in range(image.get_height()):
+		for x: int in range(image.get_width()):
+			var alpha := image.get_pixel(x, y).a
+			if alpha <= 0.02: transparent += 1
+			elif alpha >= 0.25: opaque += 1
+	return transparent > 0 and opaque >= 32
 
 func _point(data: Dictionary, keys: Array[String], fallback: Vector2) -> Vector2:
 	var source: Dictionary = data.get("corrected_anchors", data)
@@ -104,9 +213,16 @@ func _point(data: Dictionary, keys: Array[String], fallback: Vector2) -> Vector2
 	return fallback
 
 func _read_json(path: String) -> Dictionary:
-	var absolute := ProjectSettings.globalize_path(path) if path.begins_with("res://") or path.begins_with("user://") else path
-	if not FileAccess.file_exists(absolute): return {}
-	var file := FileAccess.open(absolute, FileAccess.READ)
+	if not FileAccess.file_exists(path): return {}
+	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null: return {}
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	return parsed if parsed is Dictionary else {}
+
+func _load_png(path: String) -> Image:
+	if not FileAccess.file_exists(path): return null
+	var bytes := FileAccess.get_file_as_bytes(path)
+	if bytes.is_empty(): return null
+	var image := Image.new()
+	if image.load_png_from_buffer(bytes) != OK: return null
+	return image

@@ -1,0 +1,37 @@
+{
+  "schema": "forge-combat-feel-live-assets-v1",
+  "default_asset_id": "giant_wooden_spoon",
+  "notice": "REAL LIVE FORGE RESULT — FROZEN",
+  "assets": [
+    {
+      "id": "giant_wooden_spoon",
+      "display_label": "巨大木勺",
+      "source_kind": "frozen_live_e2e",
+      "source_run_id": "spike7-20260803t234041483z-82d0a3b3",
+      "source_case_id": "L03",
+      "sprite": "res://data/combat_feel/live_assets/revision_a/giant_wooden_spoon/processed_sprite.png",
+      "blueprint": "res://data/combat_feel/live_assets/revision_a/giant_wooden_spoon/semantic_blueprint.json",
+      "anchors": "res://data/combat_feel/live_assets/revision_a/giant_wooden_spoon/anchors.json",
+      "manifest": "res://data/combat_feel/live_assets/revision_a/giant_wooden_spoon/result_manifest.json",
+      "sha256": {
+        "processed_sprite.png": "2740b4c83c2cef29aac846e032f46b845935a30a2acd0f5aa03bf2944afcd28e",
+        "semantic_blueprint.json": "fce28175aefb408874f7ed6fb451bc030b0df19296bd869ba0fab737d8ac9e2c",
+        "anchors.json": "5e1845f508008e18ff9a692eebc63fa0a0a4d67b0f1085a7f9150c42351edca4",
+        "result_manifest.json": "5d9ddbdb1eeab98e22d2dcd33a1c03e261ee1fa39971afd85dc64e0cde977250",
+        "player_input.json": "898312dba63892c00fbd52f8e9c6628d1cebd24f7e2bc7fe07f6e967fb24f150"
+      }
+    }
+  ],
+  "missing_required_verification_assets": [
+    {
+      "id": "frying_pan",
+      "display_label": "平底锅",
+      "reason": "NO_FROZEN_REAL_OPEN_PLAYTEST_RESULT_FOUND"
+    },
+    {
+      "id": "old_mop",
+      "display_label": "旧拖把",
+      "reason": "NO_FROZEN_REAL_OPEN_PLAYTEST_RESULT_FOUND"
+    }
+  ]
+}

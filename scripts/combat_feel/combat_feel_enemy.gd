@@ -18,6 +18,8 @@ var locked_direction := Vector2.LEFT
 var velocity := Vector2.ZERO
 var flash_time := 0.0
 var stagger_time := 0.0
+var recoil_tilt := 0.0
+var recoil_visual_time := 0.0
 var dead_time := 0.0
 var tell_seconds := 0.52
 var recovery_seconds := 0.68
@@ -44,6 +46,9 @@ func setup(kind: String, id_value: int, spawn_position: Vector2) -> void:
 
 func simulate(delta: float, player_position: Vector2, frozen: bool = false) -> void:
 	flash_time = maxf(0.0, flash_time - delta)
+	recoil_visual_time = maxf(0.0, recoil_visual_time - delta)
+	if recoil_visual_time <= 0.0:
+		recoil_tilt = move_toward(recoil_tilt, 0.0, 7.5 * delta)
 	if state == "dead":
 		dead_time += delta
 		position += velocity * delta
@@ -64,13 +69,16 @@ func simulate(delta: float, player_position: Vector2, frozen: bool = false) -> v
 	position.y = clampf(position.y, arena_bounds.position.y + 35.0, arena_bounds.end.y - 20.0)
 	queue_redraw()
 
-func apply_hit(damage: float, knockback: Vector2, stagger_strength: float) -> bool:
+func apply_hit(damage: float, knockback: Vector2, stagger_strength: float, recoil_degrees: float = 7.0) -> bool:
 	if state == "dead": return false
 	health -= damage
 	flash_time = 0.11
 	velocity = knockback
-	stagger_time = 0.10 + 0.24 * stagger_strength
-	if stagger_strength >= 0.95 and enemy_kind == PUPPET: stagger_time = 0.58
+	stagger_time = 0.14 + 0.30 * stagger_strength
+	recoil_visual_time = stagger_time
+	recoil_tilt = deg_to_rad(recoil_degrees) * (-signf(knockback.x) if absf(knockback.x) > 0.1 else -facing)
+	if stagger_strength >= 1.20 and enemy_kind == PUPPET: stagger_time = 0.82
+	elif stagger_strength >= 0.95 and enemy_kind == PUPPET: stagger_time = 0.68
 	if health <= 0.0:
 		state = "dead"
 		state_time = 0.0
@@ -145,7 +153,7 @@ func _draw() -> void:
 
 func _draw_puppet() -> void:
 	var body := Color("fff7df") if flash_time > 0.0 else Color("514a45")
-	var death_rotation := minf(dead_time * 1.8, 1.42) if state == "dead" else 0.0
+	var death_rotation := minf(dead_time * 1.8, 1.42) if state == "dead" else recoil_tilt
 	draw_set_transform(Vector2.ZERO, death_rotation * facing)
 	draw_colored_polygon(PackedVector2Array([Vector2(-18, -20), Vector2(15, -23), Vector2(23, 20), Vector2(-16, 25)]), body)
 	draw_circle(Vector2(0, -31), 14.0, Color("8c7656"))
@@ -164,6 +172,7 @@ func _draw_puppet() -> void:
 func _draw_ram() -> void:
 	var body := Color("fff7df") if flash_time > 0.0 else Color("4b6670")
 	var crouch := 9.0 if state == "tell" else 0.0
+	draw_set_transform(Vector2.ZERO, recoil_tilt)
 	draw_colored_polygon(PackedVector2Array([Vector2(-32, -17 + crouch), Vector2(22, -22 + crouch), Vector2(34, 14), Vector2(-28, 24)]), body)
 	draw_rect(Rect2(-22, -10 + crouch, 38, 23), Color("263943"), true)
 	draw_circle(Vector2(-7, 0 + crouch), 8.0, Color("ff8b3d"))
@@ -177,3 +186,4 @@ func _draw_ram() -> void:
 	if state == "charge":
 		for index: int in range(3):
 			draw_line(Vector2(-34 * facing - index * 12 * facing, -8 + index * 8), Vector2(-48 * facing - index * 12 * facing, -8 + index * 8), Color("d5f5f2"), 3.0)
+	draw_set_transform(Vector2.ZERO)

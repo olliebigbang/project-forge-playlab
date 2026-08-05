@@ -31,6 +31,13 @@ const GRIP_MODES: PackedStringArray = ["one_hand", "two_hand", "center"]
 @export var late_recovery_cancel_ratio := 0.55
 @export var reach_pixels := 104.0
 @export var movement_commitment := 0.62
+@export var silhouette_fill_ratio := 0.35
+@export var contact_bulk_ratio := 0.20
+@export var swing_arc_degrees := 110.0
+@export var hitbox_thickness := 46.0
+@export var control_strength := 1.0
+@export var impact_sharpness := 1.0
+@export var render_scale := 1.18
 
 func configure_timing_from_tempo() -> void:
 	match tempo:
@@ -107,4 +114,11 @@ func to_dict() -> Dictionary:
 		"recovery": recovery_seconds, "combo_window": combo_window_seconds,
 		"input_buffer": input_buffer_seconds, "charge_threshold": charge_threshold_seconds,
 		"dodge_attack_window": dodge_attack_window_seconds, "reach_pixels": reach_pixels,
+		"silhouette_fill_ratio": silhouette_fill_ratio,
+		"contact_bulk_ratio": contact_bulk_ratio,
+		"swing_arc_degrees": swing_arc_degrees,
+		"hitbox_thickness": hitbox_thickness,
+		"control_strength": control_strength,
+		"impact_sharpness": impact_sharpness,
+		"render_scale": render_scale,
 	}

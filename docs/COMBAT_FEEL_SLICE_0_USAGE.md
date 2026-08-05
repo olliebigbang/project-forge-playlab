@@ -2,29 +2,49 @@
 
 这是 `project-forge-playlab` 内部的独立桌面试玩切片，不是 V2，也不会成为默认主场景。
 
-## 启动固定开发夹具
+## 启动 Revision A（真实生成武器）
 
 ```powershell
 cd "C:\Users\Eddie L\Documents\project-forge-playlab"
-.\scripts\run_combat_feel_slice.ps1 -Fixture M01
-.\scripts\run_combat_feel_slice.ps1 -Fixture M02
-.\scripts\run_combat_feel_slice.ps1 -Fixture M03
+.\scripts\run_combat_feel_slice.ps1
 ```
 
-`THRUST` 仅用于开发者验证通用刺击动作。所有 fixture 都会在界面中明确显示 `DEVELOPER FIXTURE`，不会冒充真实生成结果。
+默认加载冻结的真实 Live E2E L03 巨大木勺成品，并在载入前检查
+Sprite/Blueprint/Anchors/Manifest 的 SHA-256、96×96 尺寸和透明 Alpha。
+界面显示 `REAL LIVE FORGE RESULT — FROZEN`，不会再默认进入 fixture。
 
-## 使用现有 Live 结果
+在 Open Playtest 中完成一个真实 `heavy_melee` 轮次并确认身份、锚点和训练后，
+点击 `TEST HEAVY MELEE FEEL` 可直接以该轮最终目录打开本切片。该按钮不会对
+`sustained_ranged` 或 `returning_thrown` 显示。
+
+## 手工传入现有 Open Playtest / Live 结果
 
 不调用任何模型；只把已经存在且已确认的本地结果交给战斗切片：
 
 ```powershell
+.\scripts\run_combat_feel_slice.ps1 `
+  -OpenPlaytestRound "<rounds\<round_id>>"
+
 .\scripts\run_combat_feel_slice.ps1 `
   -SpritePath "<processed_sprite.png>" `
   -BlueprintPath "<blueprint.json>" `
   -AnchorsPath "<anchors.json>"
 ```
 
-入口会拒绝非 `heavy_melee` Blueprint，不会强制改成固定武器。若从打包版启动，显式传入 `-- --mode=combat-feel-slice-0`；无此参数时默认 Playlab 流程不变。
+入口会拒绝非 `heavy_melee` Blueprint、非 96×96 Sprite、无有效 Alpha 或缺失
+Blueprint/Anchors 的结果，不会强制改成固定武器，也不会回退 fixture。
+
+## 仅供开发诊断的 fixture
+
+fixture 必须显式请求：
+
+```powershell
+.\scripts\run_combat_feel_slice.ps1 -DeveloperFixture M01
+.\scripts\run_combat_feel_slice.ps1 -DeveloperFixture M02
+.\scripts\run_combat_feel_slice.ps1 -DeveloperFixture M03
+```
+
+它们仍会显示 `DEVELOPER FIXTURE`，只用于通用动作编译器回归，不作为真人试玩视觉证据。
 
 ## 操作与调试
 
