@@ -338,11 +338,13 @@ func _draw_player_and_weapon() -> void:
 	draw_line(player_position + Vector2(-8, 30), player_position + Vector2(-13, 49), Color("94a3b8"), 7.0)
 	draw_line(player_position + Vector2(8, 30), player_position + Vector2(13, 49), Color("94a3b8"), 7.0)
 	var hand_primary := player_position + Vector2(19.0 * facing, -10.0)
+	var weapon_rotation := _melee_weapon_rotation()
 	var relative_secondary := (asset.grip_secondary - asset.grip_primary) * 1.15
-	var hand_secondary := hand_primary + Vector2(relative_secondary.x * facing, relative_secondary.y)
+	var relative_secondary_world := Vector2(relative_secondary.x * facing, relative_secondary.y).rotated(weapon_rotation)
+	var hand_secondary := hand_primary + relative_secondary_world
 	draw_line(player_position + Vector2(0, -5), hand_primary, Color("f0c7a6"), 7.0)
 	draw_line(player_position + Vector2(2, 1), hand_secondary, Color("f0c7a6"), 7.0)
-	draw_set_transform(hand_primary, 0.0, Vector2(facing, 1.0))
+	draw_set_transform(hand_primary, weapon_rotation, Vector2(facing, 1.0))
 	var local_position := -asset.grip_primary * 1.15
 	draw_texture_rect(asset.texture, Rect2(local_position, Vector2(asset.canvas_size) * 1.15), false)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
@@ -355,6 +357,30 @@ func _draw_player_and_weapon() -> void:
 		_draw_world_anchor(hand_primary, asset.muzzle, asset.grip_primary, "Muzzle", Color("38bdf8"))
 		_draw_world_anchor(hand_primary, asset.tip, asset.grip_primary, "Tip", Color("fb7185"))
 		_draw_world_anchor(hand_primary, asset.spin_pivot, asset.grip_primary, "SpinPivot", Color("c084fc"))
+
+func _melee_weapon_rotation() -> float:
+	if blueprint == null or blueprint.behavior_family != "heavy_melee" or melee_timer <= 0.0:
+		return 0.0
+	var startup_multiplier := float(blueprint.modifiers.get("startup_multiplier", 1.0))
+	var total_duration := maxf(0.35, 0.75 * startup_multiplier)
+	var rotation := 0.0
+	if melee_timer > 0.34:
+		# Wind up above and behind the primary grip.
+		var windup := _smooth_unit(inverse_lerp(total_duration, 0.34, melee_timer))
+		rotation = lerpf(0.0, -1.12, windup)
+	elif melee_timer > 0.08:
+		# The visible downswing is deliberately aligned with the damage window.
+		var strike := _smooth_unit(inverse_lerp(0.34, 0.08, melee_timer))
+		rotation = lerpf(-1.12, 1.18, strike)
+	else:
+		# Recover without snapping the generated Sprite back to its idle pose.
+		var recovery := _smooth_unit(inverse_lerp(0.08, 0.0, melee_timer))
+		rotation = lerpf(1.18, 0.0, recovery)
+	return rotation * facing
+
+func _smooth_unit(value: float) -> float:
+	var clamped := clampf(value, 0.0, 1.0)
+	return clamped * clamped * (3.0 - 2.0 * clamped)
 
 func _draw_world_anchor(hand: Vector2, point: Vector2, grip: Vector2, label: String, color: Color) -> void:
 	var relative := (point - grip) * 1.15

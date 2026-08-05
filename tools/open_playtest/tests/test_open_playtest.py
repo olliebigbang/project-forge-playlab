@@ -231,6 +231,14 @@ class OpenPlaytestTests(unittest.TestCase):
         self.assertIn("一个武器长度内", ui)
         self.assertIn("只表示输入已触发", ui)
 
+    def test_generated_melee_sprite_visibly_swings_around_primary_grip(self) -> None:
+        arena = (PLAYLAB / "scripts" / "systems" / "gameplay_arena.gd").read_text(encoding="utf-8")
+        self.assertIn("func _melee_weapon_rotation()", arena)
+        self.assertIn("draw_set_transform(hand_primary, weapon_rotation", arena)
+        self.assertIn(".rotated(weapon_rotation)", arena)
+        self.assertIn("inverse_lerp(0.34, 0.08, melee_timer)", arena)
+        self.assertIn("rotation = lerpf(-1.12, 1.18, strike)", arena)
+
     def test_save_is_local_and_requires_terminal_round(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
