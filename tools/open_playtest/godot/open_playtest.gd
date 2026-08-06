@@ -426,7 +426,6 @@ func _show_heavy_melee_entry_prompt() -> void:
 	dialog.dialog_text = "该武器支持完整近战手感测试。\n训练区只提供基础挥动预览。\n是否现在进入近战手感测试？\n\n选择进入后，先确认握持点与作用点，再直接载入当前真实生成武器。"
 	dialog.ok_button_text = "进入近战手感测试"
 	dialog.cancel_button_text = "稍后"
-	dialog.custom_minimum_size = Vector2(760, 280)
 	dialog.exclusive = true
 	screen_root.add_child(dialog)
 	dialog.confirmed.connect(func() -> void:
@@ -437,7 +436,7 @@ func _show_heavy_melee_entry_prompt() -> void:
 		launch_combat_after_anchors = false
 		_show_anchor_confirmation()
 	)
-	dialog.popup_centered()
+	dialog.popup_centered(Vector2i(760, 280))
 	dialog.get_ok_button().call_deferred("grab_focus")
 
 

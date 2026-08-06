@@ -26,4 +26,7 @@ if ($LASTEXITCODE -ne 0) { throw "OPEN_PLAYTEST_PYTHON_COMPILE_FAILED" }
 & $GodotConsolePath --headless --path $PlaylabRoot --script "res://tools/open_playtest/godot/open_playtest.gd" --check-only
 if ($LASTEXITCODE -ne 0) { throw "OPEN_PLAYTEST_GODOT_PARSE_FAILED" }
 
+& $GodotConsolePath --headless --path $PlaylabRoot --script "res://tools/open_playtest/tests/open_playtest_ui_runtime_smoke.gd"
+if ($LASTEXITCODE -ne 0) { throw "OPEN_PLAYTEST_GODOT_UI_RUNTIME_FAILED" }
+
 Write-Host "OPEN_PLAYTEST_OFFLINE_TESTS=PASS"

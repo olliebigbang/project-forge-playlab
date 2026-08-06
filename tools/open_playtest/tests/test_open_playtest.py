@@ -256,6 +256,8 @@ class OpenPlaytestTests(unittest.TestCase):
         self.assertIn("该武器支持完整近战手感测试", ui)
         self.assertIn('dialog.ok_button_text = "进入近战手感测试"', ui)
         self.assertIn('dialog.cancel_button_text = "稍后"', ui)
+        self.assertIn("dialog.popup_centered(Vector2i(760, 280))", ui)
+        self.assertNotIn("dialog.custom_minimum_size", ui)
         self.assertIn('primary_action.call_deferred("grab_focus")', ui)
         self.assertIn('"--open-playtest-round=%s" % round_output_path', ui)
         self.assertIn("and training_asset != null", ui)
