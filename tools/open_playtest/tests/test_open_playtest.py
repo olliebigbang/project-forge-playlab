@@ -261,6 +261,19 @@ class OpenPlaytestTests(unittest.TestCase):
         self.assertIn("and training_asset != null", ui)
         self.assertNotIn("--fixture=", ui)
 
+    def test_round_in_progress_can_resume_without_another_model_request(self) -> None:
+        ui = (OPEN_ROOT / "godot" / "open_playtest.gd").read_text(encoding="utf-8")
+        self.assertIn("恢复当前进行中的轮次", ui)
+        self.assertIn('if reason == "ROUND_IN_PROGRESS"', ui)
+        self.assertIn('var recent := await _get_json("/history?', ui)
+        self.assertIn('var result := await _get_json(route)', ui)
+        self.assertIn("不会创建第二个请求", ui)
+        resume_start = ui.index("func _resume_current_round()")
+        resume_end = ui.index("func _show_resume_unavailable", resume_start)
+        resume_source = ui[resume_start:resume_end]
+        self.assertNotIn('"/round/start"', resume_source)
+        self.assertNotIn("_start_forge", resume_source)
+
     def test_save_is_local_and_requires_terminal_round(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

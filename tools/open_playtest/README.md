@@ -33,6 +33,8 @@ Anthropic Key 每个试玩窗口最多输入一次，不是每个点子输入一
 
 训练区的基础挥动不用于判断不同 `heavy_melee` 武器的最终动作差异。进入 Combat Feel Slice 时只传递本轮真实生成目录和玩家确认锚点；不存在 developer fixture 回退。
 
+如果界面因重复提交显示 `ROUND_IN_PROGRESS`，使用 **恢复当前进行中的轮次**。恢复只读取本会话的 history 与 round status，不创建第二个请求，也不会重新调用 Claude、FLUX 或 BiRefNet。
+
 同一窗口最多进行 20 次真实语义调用。每轮只调用一次 Claude、一次 FLUX、一次 BiRefNet；没有自动重试，没有 Mock 回退，也没有固定武器替换。若 Claude 要求澄清，界面会把它作为语义阶段的单一澄清问题显示在失败原因中；编辑原输入后可显式重新 Forge。
 
 ## 模式边界

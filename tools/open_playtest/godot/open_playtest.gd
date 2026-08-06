@@ -25,6 +25,14 @@ const STAGE_NAMES := {
 	"confirm_anchors": "确认握持点 / 作用点",
 	"ready_in_training_zone": "训练区就绪",
 }
+const RESUMABLE_STAGES: Array[String] = [
+	"semantic_compiling",
+	"image_generating",
+	"background_removing",
+	"sprite_processing",
+	"confirm_identity",
+	"confirm_anchors",
+]
 
 var bridge_base := ""
 var session_id := ""
@@ -128,6 +136,7 @@ func _show_intro() -> void:
 	var enter := _button("进入 OPEN PLAYTEST MODE", func() -> void: _show_forge_screen(false))
 	enter.custom_minimum_size.y = 66
 	box.add_child(enter)
+	box.add_child(_button("恢复当前进行中的轮次（不重新调用模型）", func() -> void: _resume_current_round()))
 
 
 func _show_forge_screen(clear_input: bool) -> void:
@@ -262,6 +271,73 @@ func _poll_round(expected_round: String, expected_revision: int) -> void:
 				return
 			_show_identity_confirmation()
 			return
+
+
+func _resume_current_round() -> void:
+	if request_in_flight:
+		return
+	_show_wait("正在读取当前会话状态；不会调用 Claude、FLUX 或 BiRefNet……")
+	var recent := await _get_json("/history?session_id=%s" % session_id.uri_encode())
+	if not bool(recent.get("ok", false)):
+		_show_resume_unavailable("无法读取本地会话记录。")
+		return
+	var candidate: Dictionary = {}
+	for value: Variant in recent["body"].get("records", []):
+		var record := value as Dictionary
+		if str(record.get("status", "")) in RESUMABLE_STAGES:
+			candidate = record
+			break
+	if candidate.is_empty():
+		_show_resume_unavailable("当前没有可恢复的进行中轮次。")
+		return
+	current_round_id = str(candidate.get("round_id", ""))
+	revision = int(candidate.get("revision", 0))
+	current_input = str(candidate.get("user_input", current_input))
+	if current_round_id.is_empty() or revision <= 0:
+		_show_resume_unavailable("进行中轮次缺少安全恢复标识。")
+		return
+	var route := "/round/status?session_id=%s&round_id=%s&revision=%d" % [
+		session_id.uri_encode(), current_round_id.uri_encode(), revision
+	]
+	var result := await _get_json(route)
+	if not bool(result.get("ok", false)):
+		_show_resume_unavailable("进行中轮次状态读取失败：%s" % str(result.get("failure_reason", "STATUS_FAILED")))
+		return
+	var body: Dictionary = result["body"]
+	current_stage = str(body.get("stage", ""))
+	if current_stage in ["semantic_compiling", "image_generating", "background_removing", "sprite_processing"]:
+		await _show_forge_screen(false)
+		request_in_flight = true
+		status_label.text = "已恢复进行中的生成；不会创建第二个请求。"
+		stage_label.text = _stage_text(current_stage)
+		_poll_round(current_round_id, revision)
+		return
+	if current_stage not in ["confirm_identity", "confirm_anchors"]:
+		_show_resume_unavailable("该轮次当前阶段无法由此界面恢复：%s" % current_stage)
+		return
+	current_response = body
+	if not _load_result_images(body):
+		_show_resume_unavailable("现有轮次的 Raw 或 Sprite 文件校验失败。")
+		return
+	if current_stage == "confirm_identity":
+		identity_confirmed_for_round = false
+		_show_identity_confirmation()
+		return
+	identity_confirmed_for_round = true
+	launch_combat_after_anchors = false
+	if str(current_response.get("behavior_family", "")) == "heavy_melee":
+		_show_heavy_melee_entry_prompt()
+	else:
+		_show_anchor_confirmation()
+
+
+func _show_resume_unavailable(message: String) -> void:
+	_clear_screen()
+	var box := _vbox(_panel(), 140, 120, 1140, 580)
+	box.add_child(_title("无法恢复当前轮次"))
+	box.add_child(_label(message, 21, Color("fb7185")))
+	box.add_child(_label("没有创建新请求，也没有调用任何模型。玩家输入仍然保留。", 19, Color("fbbf24")))
+	box.add_child(_button("返回试玩输入", func() -> void: _show_forge_screen(false)))
 
 
 func _load_result_images(body: Dictionary) -> bool:
@@ -680,6 +756,10 @@ func _show_failure(stage: String, reason: String) -> void:
 	box.add_child(_label("准确原因：%s" % reason, 20, Color("fb7185")))
 	box.add_child(_label("玩家输入已保留：\n%s" % current_input, 20))
 	box.add_child(_label("没有自动重试，没有固定武器替换，也没有 Mock 回退。", 19, Color("fbbf24")))
+	if reason == "ROUND_IN_PROGRESS":
+		var resume := _primary_button("恢复当前进行中的轮次", func() -> void: _resume_current_round())
+		box.add_child(resume)
+		resume.call_deferred("grab_focus")
 	box.add_child(_button("REFORGE SAME IDEA", func() -> void: _show_forge_screen(false)))
 	box.add_child(_button("TRY NEW IDEA", func() -> void: _show_forge_screen(true)))
 	box.add_child(_button("查看本地总结", func() -> void: _show_summary()))
