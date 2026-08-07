@@ -1,0 +1,44 @@
+{
+  "schema": "forge-motion-grammar-developer-override-v1",
+  "developer_only": true,
+  "normal_player_flow": false,
+  "source_session_id": "open-20260806t133353124z-4c7c4825",
+  "source_round_id": "R0006-6a492611",
+  "source_files": {
+    "processed_sprite": "res://tools/open_playtest/output/sessions/open-20260806t133353124z-4c7c4825/rounds/R0006-6a492611/processed_sprite.png",
+    "semantic_blueprint": "res://tools/open_playtest/output/sessions/open-20260806t133353124z-4c7c4825/rounds/R0006-6a492611/semantic_blueprint.json",
+    "anchors": "res://tools/open_playtest/output/sessions/open-20260806t133353124z-4c7c4825/rounds/R0006-6a492611/anchors.json"
+  },
+  "source_sha256": {
+    "processed_sprite.png": "4591b56581f375138e58a4712c7fda4b9a22b050d4830748aaa6ef0495af5e02",
+    "semantic_blueprint.json": "71df05ef1f1451a0ce44b4dde90c88b958c895b9b32115d88247a79e89417259",
+    "anchors.json": "9ddb558f1e4f44ad02f12bdaf251acf260c00d9b2e74b74c0462c4abae9de830"
+  },
+  "melee_intent_override": {
+    "behavior_family": "heavy_melee",
+    "reason": "developer-only motion grammar validation; original semantic blueprint remains sustained_ranged"
+  },
+  "anchor_override": {
+    "behavior_family": "heavy_melee",
+    "grip_profile": "center_shaft",
+    "required_anchor_types": [
+      "GripPrimary",
+      "EffectOrigin"
+    ],
+    "corrected_anchors": {
+      "GripPrimary": [29.0, 57.0],
+      "EffectOrigin": [6.0, 46.0],
+      "RearContact": [90.0, 46.0]
+    },
+    "confidence": {
+      "GripPrimary": 0.95,
+      "EffectOrigin": 0.95,
+      "RearContact": 0.9
+    },
+    "anchor_source": {
+      "GripPrimary": "frozen_player_confirmed",
+      "EffectOrigin": "developer_visual_correction",
+      "RearContact": "developer_alpha_axis_endpoint"
+    }
+  }
+}

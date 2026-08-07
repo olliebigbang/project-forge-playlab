@@ -61,6 +61,8 @@ func build_asset_copy() -> WeaponVisualAsset:
 	copy.spin_pivot = training_anchor_point("SpinPivot") if required_anchor_types.has("SpinPivot") else _image_centroid_fallback(copy)
 	copy.anchor_source = "semantic_required+player_calibration"
 	copy.anchor_confidence = _minimum_required_confidence()
+	copy.orientation_flipped = should_flip
+	copy.orientation_source = "GripPrimary->%s" % action_type
 	return copy
 
 func training_anchor_point(anchor_type: String) -> Vector2:

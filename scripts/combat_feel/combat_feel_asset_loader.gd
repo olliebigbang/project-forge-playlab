@@ -5,6 +5,7 @@ const FIXTURE_PATH := "res://data/combat_feel/heavy_melee_fixtures.json"
 const LIVE_INDEX_PATH := "res://data/combat_feel/live_assets/revision_a/index.json"
 const RECIPE_INDEX_PATH := "res://data/combat_feel/live_assets/recipe_slice_1b/index.json"
 const AFFORDANCE_PROFILE := preload("res://scripts/combat_feel/object_affordance_profile.gd")
+const ANCHOR_CALIBRATION := preload("res://scripts/data/semantic_anchor_calibration.gd")
 
 
 func recipe_asset_ids() -> Array[String]:
@@ -172,7 +173,58 @@ func _asset_from_image_and_anchors(image: Image, anchors: Dictionary) -> WeaponV
 	asset.spin_pivot = _point(anchors, ["SpinPivot", "spin_pivot"], Vector2(asset.opaque_bounds.get_center()))
 	asset.anchor_confidence = 1.0
 	asset.anchor_source = "developer_fixture" if anchors.has("strike_point") else "live_player_confirmed"
-	return asset
+	asset.rear_contact = asset.grip_primary
+	return _normalize_asset_orientation(asset, anchors)
+
+
+func _normalize_asset_orientation(asset: WeaponVisualAsset, anchors: Dictionary) -> WeaponVisualAsset:
+	var required_values: Array = anchors.get("required_anchor_types", [])
+	if asset == null or not required_values.has("GripPrimary"):
+		return asset
+	var action_type := "EffectOrigin" if required_values.has("EffectOrigin") else "StrikePoint"
+	if not required_values.has(action_type):
+		return asset
+	var calibration: Variant = ANCHOR_CALIBRATION.new()
+	calibration.asset = asset
+	calibration.behavior_family = str(anchors.get("behavior_family", ""))
+	calibration.grip_profile = str(anchors.get("grip_profile", ""))
+	for value: Variant in required_values:
+		calibration.required_anchor_types.append(str(value))
+	calibration.auto_anchors = _points_from_json(anchors.get("auto_anchors", {}))
+	calibration.corrected_anchors = _points_from_json(anchors.get("corrected_anchors", {}))
+	calibration.auto_confidence = (anchors.get("auto_confidence", {}) as Dictionary).duplicate(true)
+	calibration.confidence = (anchors.get("confidence", {}) as Dictionary).duplicate(true)
+	var normalized: WeaponVisualAsset = calibration.build_asset_copy()
+	if normalized == null:
+		return asset
+	normalized.anchor_source = asset.anchor_source
+	normalized.anchor_confidence = asset.anchor_confidence
+	if normalized.tip != normalized.grip_primary:
+		normalized.muzzle = normalized.tip
+	var source: Dictionary = anchors.get("corrected_anchors", anchors)
+	if source.has("RearContact") or source.has("rear_contact"):
+		var rear_raw := _point(anchors, ["RearContact", "rear_contact"], asset.grip_primary)
+		normalized.rear_contact = _transform_point_x(rear_raw, normalized.orientation_flipped, normalized.canvas_size.x)
+	else:
+		normalized.rear_contact = normalized.grip_primary
+	return normalized
+
+
+func _points_from_json(value: Variant) -> Dictionary:
+	var result: Dictionary = {}
+	if not value is Dictionary:
+		return result
+	for key: Variant in (value as Dictionary).keys():
+		var point_value: Variant = (value as Dictionary)[key]
+		if point_value is Array and point_value.size() >= 2:
+			result[str(key)] = Vector2(float(point_value[0]), float(point_value[1]))
+		elif point_value is Dictionary:
+			result[str(key)] = Vector2(float(point_value.get("x", 0.0)), float(point_value.get("y", 0.0)))
+	return result
+
+
+func _transform_point_x(point: Vector2, flip_x: bool, width: int) -> Vector2:
+	return Vector2(float(width - 1) - point.x, point.y) if flip_x else point
 
 func _blueprint_from_semantic_data(data: Dictionary) -> WeaponBlueprint:
 	var payload := data

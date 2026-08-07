@@ -6,6 +6,7 @@ const CONTROLLER := preload("res://scripts/combat_feel/melee_combat_controller.g
 const FEEDBACK := preload("res://scripts/combat_feel/impact_feedback_profile.gd")
 const LOADER := preload("res://scripts/combat_feel/combat_feel_asset_loader.gd")
 const SLICE := preload("res://scripts/combat_feel/combat_feel_slice_0.gd")
+const SHOTGUN_OVERRIDE_PATH := "res://data/combat_feel/live_assets/motion_grammar_slice_1a/shotgun_melee_override.json"
 
 var passed := 0
 var failed := 0
@@ -25,6 +26,8 @@ func _run() -> void:
 	_test_unsupported_has_no_sweep_fallback()
 	_test_runtime_executes_each_recipe_primitive()
 	_test_spin_has_stronger_multi_target_coverage()
+	_test_pan_and_broom_orientation_normalization()
+	_test_shotgun_developer_anchor_override()
 	print("PAN_BROOM_RECIPE_SLICE_1B_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -144,6 +147,51 @@ func _test_spin_has_stronger_multi_target_coverage() -> void:
 	broom_arena.free()
 	pan_arena.free()
 	_check(broom_front and broom_rear and pan_front and not pan_rear, "09 spin covers front and rear targets while slam stays focused")
+
+
+func _test_pan_and_broom_orientation_normalization() -> void:
+	var loader: Variant = LOADER.new()
+	var pan: Dictionary = loader.load_recipe_asset("frying_pan")
+	var broom: Dictionary = loader.load_recipe_asset("old_mop")
+	var pan_asset := pan.get("asset") as WeaponVisualAsset
+	var broom_asset := broom.get("asset") as WeaponVisualAsset
+	var pan_arena: Variant = _arena_on_hit(_compiled("frying_pan") as Resource, 1)
+	var broom_arena: Variant = _arena_on_hit(_compiled("old_mop") as Resource, 1)
+	var pan_hand: Vector2 = pan_arena._hand_world_position()
+	var broom_hand: Vector2 = broom_arena._hand_world_position()
+	var ok: bool = pan_asset.orientation_flipped and broom_asset.orientation_flipped
+	ok = ok and pan_asset.tip.x > pan_asset.grip_primary.x and broom_asset.tip.x > broom_asset.grip_primary.x
+	ok = ok and pan_arena._attack_contains(pan_hand + Vector2(50, 0)) and not pan_arena._attack_contains(pan_hand + Vector2(-70, 0))
+	ok = ok and broom_arena._attack_contains(broom_hand + Vector2(90, 0)) and not broom_arena._attack_contains(broom_hand + Vector2(-120, 0))
+	pan_arena.free()
+	broom_arena.free()
+	_check(ok, "10 Pan and Broom normalize sprite anchors and forward hitboxes together")
+
+
+func _test_shotgun_developer_anchor_override() -> void:
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(SHOTGUN_OVERRIDE_PATH))
+	var override: Dictionary = parsed if parsed is Dictionary else {}
+	var source_files: Dictionary = override.get("source_files", {})
+	var source_hashes: Dictionary = override.get("source_sha256", {})
+	var sprite_path := str(source_files.get("processed_sprite", ""))
+	var blueprint_path := str(source_files.get("semantic_blueprint", ""))
+	var anchors_path := str(source_files.get("anchors", ""))
+	var loader: Variant = LOADER.new()
+	var image := Image.load_from_file(ProjectSettings.globalize_path(sprite_path))
+	var anchor_override: Dictionary = override.get("anchor_override", {})
+	var normalized: WeaponVisualAsset = loader._asset_from_image_and_anchors(image, anchor_override)
+	var blueprint_data: Variant = JSON.parse_string(FileAccess.get_file_as_string(blueprint_path))
+	var original_family := str((blueprint_data as Dictionary).get("combat", {}).get("behavior_family", "")) if blueprint_data is Dictionary else ""
+	var melee_override: Dictionary = override.get("melee_intent_override", {})
+	var ok := bool(override.get("developer_only", false)) and not bool(override.get("normal_player_flow", true))
+	ok = ok and FileAccess.file_exists(sprite_path) and FileAccess.file_exists(blueprint_path) and FileAccess.file_exists(anchors_path)
+	ok = ok and loader._sha256_file(sprite_path) == str(source_hashes.get("processed_sprite.png", ""))
+	ok = ok and loader._sha256_file(blueprint_path) == str(source_hashes.get("semantic_blueprint.json", ""))
+	ok = ok and loader._sha256_file(anchors_path) == str(source_hashes.get("anchors.json", ""))
+	ok = ok and original_family == "sustained_ranged" and str(melee_override.get("behavior_family", "")) == "heavy_melee"
+	ok = ok and normalized != null and normalized.orientation_flipped
+	ok = ok and normalized.muzzle.x > normalized.grip_primary.x and normalized.rear_contact.x < normalized.grip_primary.x
+	_check(ok, "11 Shotgun developer sidecar preserves source and corrects muzzle rear-contact orientation")
 
 
 func _compiled(asset_id: String) -> Variant:
