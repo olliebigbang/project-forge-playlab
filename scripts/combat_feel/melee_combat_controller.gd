@@ -18,6 +18,7 @@ var charge_state := "none"
 var dodge_attack_window := 0.0
 var dodge_motion_seconds := 0.0
 var attack_kind := "normal"
+var current_primitive: Variant
 var attack_serial := 0
 var active_just_started := false
 var hitstop_remaining := 0.0
@@ -35,6 +36,7 @@ func reset() -> void:
 	holding_attack = false; held_seconds = 0.0; charge_state = "none"
 	dodge_attack_window = 0.0; dodge_motion_seconds = 0.0
 	attack_kind = "normal"; attack_serial = 0; active_just_started = false
+	current_primitive = null
 	hitstop_remaining = 0.0; hit_targets.clear()
 
 func press_attack() -> void:
@@ -109,7 +111,7 @@ func begin_hitstop(seconds: float) -> void:
 	hitstop_remaining = maxf(hitstop_remaining, seconds)
 
 func current_timing() -> Dictionary:
-	return profile.timing_for(attack_kind, combo_index) if profile != null else {}
+	return profile.timing_for(attack_kind, combo_index, current_primitive) if profile != null else {}
 
 func phase_ratio() -> float:
 	return clampf(phase_elapsed / maxf(0.001, phase_duration), 0.0, 1.0)
@@ -121,6 +123,11 @@ func _start_attack(kind: String) -> void:
 		return
 	attack_kind = kind
 	combo_index = combo_index % 3 + 1 if kind == "normal" else 0
+	if kind == "normal" and profile.combo_recipe != null:
+		var recipe: Variant = profile.combo_recipe
+		current_primitive = recipe.primitive_for(combo_index)
+	else:
+		current_primitive = null
 	attack_serial += 1; hit_targets.clear(); _enter_phase("startup")
 	attack_started.emit(kind, combo_index)
 

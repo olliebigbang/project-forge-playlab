@@ -202,7 +202,7 @@ func _update_player_movement(delta: float) -> void:
 
 func _on_attack_started(kind: String, combo_index: int) -> void:
 	attack_connected = false
-	var timing: Dictionary = motion_profile.timing_for(kind, combo_index)
+	var timing: Dictionary = controller.current_timing()
 	var advance: float = 17.0 * float(timing.get("movement_scale", 1.0))
 	if kind == "dodge": advance = 38.0
 	if kind == "charge" and motion_profile.motion_family == "thrust": advance = 58.0
@@ -241,19 +241,25 @@ func _resolve_melee_hits() -> void:
 func _attack_contains(target: Vector2) -> bool:
 	var hand := _hand_world_position()
 	var to_target := target - hand
-	var timing: Dictionary = motion_profile.timing_for(controller.attack_kind, controller.combo_index)
+	var primitive: Variant = _current_normal_primitive()
+	if controller.attack_kind == "normal" and primitive == null:
+		return false
+	var timing: Dictionary = controller.current_timing()
 	var reach: float = motion_profile.reach_pixels * float(timing.get("reach_scale", 1.0))
+	var hitbox_scale: float = float(primitive.hitbox_multiplier) if primitive != null else 1.0
+	var hitbox_thickness: float = motion_profile.hitbox_thickness * hitbox_scale
+	var motion_family: String = str(primitive.motion_family) if primitive != null else str(motion_profile.motion_family)
 	var forward := to_target.x * player_facing
-	match motion_profile.motion_family:
+	match motion_family:
 		"thrust":
-			return forward >= -12.0 and forward <= reach and absf(to_target.y) <= motion_profile.hitbox_thickness * 0.5
+			return forward >= -12.0 and forward <= reach and absf(to_target.y) <= hitbox_thickness * 0.5
 		"slam":
 			var impact_center := hand + Vector2(player_facing * reach * 0.68, 28.0)
-			return target.distance_to(impact_center) <= motion_profile.hitbox_thickness + (16.0 if controller.attack_kind == "charge" else 0.0)
+			return target.distance_to(impact_center) <= hitbox_thickness + (16.0 if controller.attack_kind == "charge" else 0.0)
 		_:
 			var half_arc := deg_to_rad(motion_profile.swing_arc_degrees * 0.5)
 			var angle := absf(wrapf(to_target.angle() - (0.0 if player_facing > 0 else PI), -PI, PI))
-			return forward >= -motion_profile.hitbox_thickness * 0.45 and to_target.length() <= reach and angle <= half_arc
+			return forward >= -hitbox_thickness * 0.45 and to_target.length() <= reach and angle <= half_arc
 
 func _current_damage() -> float:
 	var base: float = float({"rapid": 22.0, "balanced": 27.0, "committed": 34.0}.get(motion_profile.tempo, 27.0))
@@ -557,21 +563,33 @@ func _weapon_pose() -> Dictionary:
 			"active": motion_ratio = 0.30 + ratio * 0.52
 			"recovery": motion_ratio = 0.82 + ratio * 0.18
 		if controller.holding_attack and controller.phase == "idle": motion_ratio = clampf(controller.held_seconds / maxf(0.01, motion_profile.charge_threshold_seconds), 0.0, 1.0) * 0.28
-		match motion_profile.motion_family:
-			"sweep":
-				var start := -1.18 if controller.combo_index != 2 else 1.02
-				var finish := 1.02 if controller.combo_index != 2 else -1.10
-				if controller.combo_index >= 3 or controller.attack_kind == "charge":
-					start = -1.58; finish = 1.24
-				angle = lerpf(start, finish, motion_ratio) * player_facing
-			"slam":
-				var slam_start := -1.42 if controller.combo_index < 3 else -1.72
-				var slam_finish := 0.76 if controller.combo_index < 3 else 1.02
-				angle = lerpf(slam_start, slam_finish, motion_ratio) * player_facing
-			"thrust":
-				angle = -0.08 * player_facing
-				extension = sin(motion_ratio * PI) * (48.0 if controller.combo_index >= 3 or controller.attack_kind == "charge" else 32.0)
+		var primitive: Variant = _current_normal_primitive()
+		if controller.attack_kind == "normal" and controller.phase != "idle":
+			if primitive == null:
+				return {"angle": angle, "extension": extension}
+			angle = lerpf(primitive.start_angle, primitive.end_angle, motion_ratio) * player_facing
+			extension = sin(motion_ratio * PI) * primitive.extension_pixels
+		else:
+			match motion_profile.motion_family:
+				"sweep":
+					var start := -1.18 if controller.combo_index != 2 else 1.02
+					var finish := 1.02 if controller.combo_index != 2 else -1.10
+					if controller.combo_index >= 3 or controller.attack_kind == "charge":
+						start = -1.58; finish = 1.24
+					angle = lerpf(start, finish, motion_ratio) * player_facing
+				"slam":
+					var slam_start := -1.42 if controller.combo_index < 3 else -1.72
+					var slam_finish := 0.76 if controller.combo_index < 3 else 1.02
+					angle = lerpf(slam_start, slam_finish, motion_ratio) * player_facing
+				"thrust":
+					angle = -0.08 * player_facing
+					extension = sin(motion_ratio * PI) * (48.0 if controller.combo_index >= 3 or controller.attack_kind == "charge" else 32.0)
 	return {"angle": angle, "extension": extension}
+
+func _current_normal_primitive() -> Variant:
+	if controller == null or controller.attack_kind != "normal" or controller.phase == "idle":
+		return null
+	return controller.current_primitive
 
 func _draw() -> void:
 	draw_rect(Rect2(0, 0, 1280, 720), Color("071018"), true)
@@ -617,13 +635,19 @@ func _draw_player() -> void:
 
 func _draw_active_hitbox() -> void:
 	var hand := _hand_world_position()
-	var timing: Dictionary = motion_profile.timing_for(controller.attack_kind, controller.combo_index)
+	var primitive: Variant = _current_normal_primitive()
+	if controller.attack_kind == "normal" and primitive == null:
+		return
+	var timing: Dictionary = controller.current_timing()
 	var reach: float = motion_profile.reach_pixels * float(timing.get("reach_scale", 1.0))
+	var hitbox_scale: float = float(primitive.hitbox_multiplier) if primitive != null else 1.0
+	var hitbox_thickness: float = motion_profile.hitbox_thickness * hitbox_scale
+	var motion_family: String = str(primitive.motion_family) if primitive != null else str(motion_profile.motion_family)
 	var is_finisher: bool = controller.combo_index >= 3 or controller.attack_kind == "charge"
 	var color := Color(1.0, 0.72, 0.22, 0.42) if is_finisher else Color(1.0, 0.38, 0.22, 0.28)
-	match motion_profile.motion_family:
-		"thrust": draw_rect(Rect2(hand + Vector2(0 if player_facing > 0 else -reach, -motion_profile.hitbox_thickness * 0.5), Vector2(reach, motion_profile.hitbox_thickness)), color, true)
-		"slam": draw_circle(hand + Vector2(player_facing * reach * 0.68, 28), motion_profile.hitbox_thickness + (10.0 if is_finisher else 0.0), color)
+	match motion_family:
+		"thrust": draw_rect(Rect2(hand + Vector2(0 if player_facing > 0 else -reach, -hitbox_thickness * 0.5), Vector2(reach, hitbox_thickness)), color, true)
+		"slam": draw_circle(hand + Vector2(player_facing * reach * 0.68, 28), hitbox_thickness + (10.0 if is_finisher else 0.0), color)
 		_:
 			var half_arc := deg_to_rad(motion_profile.swing_arc_degrees * 0.5)
 			var facing_angle := 0.0 if player_facing > 0 else PI
@@ -674,14 +698,14 @@ func _capture_evidence(directory: String) -> void:
 	capture_caption = "Forge Ram charge telegraph"; await _capture_frame(directory.path_join("forge_ram_telegraph.png"))
 	_cleanup_enemies()
 	var hit_enemy: Node2D = _spawn_enemy(ENEMY.PUPPET, Vector2(520, 410))
-	controller.attack_kind = "normal"; controller.combo_index = 1; controller.phase = "active"; controller.phase_duration = 0.1
+	controller.attack_kind = "normal"; controller.combo_index = 1; controller.current_primitive = motion_profile.combo_recipe.primitive_for(1); controller.phase = "active"; controller.phase_duration = 0.1
 	var normal_feedback: Resource = FEEDBACK.for_attack(motion_profile, "normal", 1)
 	hit_enemy.apply_hit(10.0, Vector2(normal_feedback.knockback_strength, 0), normal_feedback.stagger_strength, normal_feedback.recoil_degrees)
 	_spawn_impact(hit_enemy.position, normal_feedback.particle_scale, normal_feedback.impact_tier, normal_feedback.ring_count)
 	hit_enemy.simulate(0.035, player_position); _update_particles(0.035)
 	capture_caption = "Normal hit"; await _capture_frame(directory.path_join("normal_hit_feedback.png"))
 	_cleanup_enemies(); particles.clear()
-	hit_enemy = _spawn_enemy(ENEMY.PUPPET, Vector2(520, 410)); controller.combo_index = 3; shake_strength = 0.0
+	hit_enemy = _spawn_enemy(ENEMY.PUPPET, Vector2(520, 410)); controller.combo_index = 3; controller.current_primitive = motion_profile.combo_recipe.primitive_for(3); shake_strength = 0.0
 	var finisher_feedback: Resource = FEEDBACK.for_attack(motion_profile, "normal", 3)
 	hit_enemy.apply_hit(10.0, Vector2(finisher_feedback.knockback_strength, -finisher_feedback.launch_strength), finisher_feedback.stagger_strength, finisher_feedback.recoil_degrees)
 	_spawn_impact(hit_enemy.position, finisher_feedback.particle_scale, finisher_feedback.impact_tier, finisher_feedback.ring_count)

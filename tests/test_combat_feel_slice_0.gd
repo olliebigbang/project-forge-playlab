@@ -1,6 +1,8 @@
 extends SceneTree
 
 const PROFILE := preload("res://scripts/combat_feel/combat_motion_profile.gd")
+const PRIMITIVE := preload("res://scripts/combat_feel/motion_primitive.gd")
+const RECIPE := preload("res://scripts/combat_feel/combo_recipe.gd")
 const COMPILER := preload("res://scripts/combat_feel/melee_motion_compiler.gd")
 const CONTROLLER := preload("res://scripts/combat_feel/melee_combat_controller.gd")
 const FEEDBACK := preload("res://scripts/combat_feel/impact_feedback_profile.gd")
@@ -47,6 +49,13 @@ func _run() -> void:
 	_test_31_missing_real_assets_are_not_misrepresented()
 	_test_32_open_playtest_round_direct_handoff()
 	_test_33_open_playtest_ui_exposes_heavy_only_launch()
+	_test_34_compiler_outputs_three_valid_independent_primitives()
+	_test_35_combo_locks_three_distinct_motion_families()
+	_test_36_combo_timeout_returns_to_hit_one_primitive()
+	_test_37_buffer_does_not_switch_current_primitive_early()
+	_test_38_hitstop_keeps_current_primitive_locked()
+	_test_39_slice_executes_current_primitive_consistently()
+	_test_40_charge_and_dodge_keep_legacy_motion_path()
 	print("COMBAT_FEEL_SLICE_0_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -252,11 +261,99 @@ func _test_33_open_playtest_ui_exposes_heavy_only_launch() -> void:
 	ok = ok and server_source.contains("round_output_path") and not godot_source.contains("--fixture=")
 	_check(ok, "33 Open Playtest exposes direct handoff only for heavy melee")
 
+func _test_34_compiler_outputs_three_valid_independent_primitives() -> void:
+	var loaded: Dictionary = LOADER.new().load_fixture("M01")
+	var profile: Variant = COMPILER.new().compile(loaded["blueprint"] as WeaponBlueprint, loaded["asset"] as WeaponVisualAsset)
+	var recipe: Variant = profile.combo_recipe
+	var values: Array = recipe.primitives() if recipe != null else []
+	var independent: bool = values.size() == 3
+	if independent:
+		independent = not is_same(values[0], values[1]) and not is_same(values[0], values[2]) and not is_same(values[1], values[2])
+	var finite_validation: bool = independent and recipe.validation_errors().is_empty()
+	if finite_validation:
+		values[0].start_angle = INF
+		finite_validation = not recipe.validation_errors().is_empty()
+	_check(independent and finite_validation, "34 compiler emits three valid independent primitives")
+
+func _test_35_combo_locks_three_distinct_motion_families() -> void:
+	var controller: Variant = CONTROLLER.new(); var profile: Variant = _mixed_recipe_profile(); controller.configure(profile)
+	var families: Array[String] = []
+	for index: int in range(3):
+		controller.press_attack(); controller.release_attack()
+		families.append(controller.current_primitive.motion_family if controller.current_primitive != null else "missing")
+		_advance_to_idle(controller)
+	_check(families == ["sweep", "thrust", "slam"], "35 hit 1 2 3 lock sweep thrust slam recipe")
+
+func _test_36_combo_timeout_returns_to_hit_one_primitive() -> void:
+	var controller: Variant = CONTROLLER.new(); var profile: Variant = _mixed_recipe_profile(); controller.configure(profile)
+	controller.press_attack(); controller.release_attack(); _advance_to_idle(controller)
+	controller.tick(profile.combo_window_seconds + 0.02)
+	controller.press_attack(); controller.release_attack()
+	_check(controller.combo_index == 1 and is_same(controller.current_primitive, profile.combo_recipe.hit_1), "36 combo timeout returns to hit one primitive")
+
+func _test_37_buffer_does_not_switch_current_primitive_early() -> void:
+	var controller: Variant = CONTROLLER.new(); var profile: Variant = _mixed_recipe_profile(); controller.configure(profile)
+	controller.press_attack(); controller.release_attack()
+	var first: Variant = controller.current_primitive
+	controller.press_attack()
+	var stayed_during_buffer: bool = controller.buffered_input and is_same(controller.current_primitive, first)
+	controller.tick(controller.current_timing().get("startup", 0.1) + 0.001)
+	stayed_during_buffer = stayed_during_buffer and is_same(controller.current_primitive, first)
+	controller.tick(controller.current_timing().get("active", 0.1) + 0.001)
+	stayed_during_buffer = stayed_during_buffer and controller.phase == "recovery" and is_same(controller.current_primitive, first)
+	_check(stayed_during_buffer, "37 buffered input does not switch primitive before next attack")
+
+func _test_38_hitstop_keeps_current_primitive_locked() -> void:
+	var controller: Variant = CONTROLLER.new(); controller.configure(_mixed_recipe_profile())
+	controller.press_attack(); controller.release_attack()
+	controller.tick(controller.current_timing().get("startup", 0.1) + 0.001)
+	var first: Variant = controller.current_primitive
+	controller.begin_hitstop(0.09); controller.press_attack(); controller.tick(0.05)
+	_check(controller.hitstop_remaining > 0.0 and is_same(controller.current_primitive, first), "38 hitstop keeps current primitive locked")
+
+func _test_39_slice_executes_current_primitive_consistently() -> void:
+	var source := _text("res://scripts/combat_feel/combat_feel_slice_0.gd")
+	var attack_source := _function_source(source, "func _attack_contains", "func _current_damage")
+	var pose_source := _function_source(source, "func _weapon_pose", "func _current_normal_primitive")
+	var hitbox_source := _function_source(source, "func _draw_active_hitbox", "func _draw_real_weapon_comparison")
+	var started_source := _function_source(source, "func _on_attack_started", "func _on_attack_phase_changed")
+	var ok: bool = attack_source.contains("_current_normal_primitive()") and attack_source.contains("primitive.hitbox_multiplier")
+	ok = ok and pose_source.contains("primitive.start_angle") and pose_source.contains("primitive.end_angle") and pose_source.contains("primitive.extension_pixels")
+	ok = ok and hitbox_source.contains("_current_normal_primitive()") and hitbox_source.contains("primitive.hitbox_multiplier")
+	ok = ok and started_source.contains("controller.current_timing()")
+	_check(ok, "39 pose advance collision and debug hitbox share current primitive")
+
+func _test_40_charge_and_dodge_keep_legacy_motion_path() -> void:
+	var profile: Variant = _mixed_recipe_profile(); profile.motion_family = "thrust"
+	var controller: Variant = CONTROLLER.new(); controller.configure(profile)
+	controller.press_attack(); controller.tick(profile.charge_threshold_seconds + 0.01); controller.release_attack()
+	var charge_ok: bool = controller.attack_kind == "charge" and controller.combo_index == 0 and controller.current_primitive == null
+	controller.reset(); controller.configure(profile); controller.press_dodge(); controller.press_attack(); controller.release_attack()
+	var dodge_ok: bool = controller.attack_kind == "dodge" and controller.combo_index == 0 and controller.current_primitive == null
+	_check(charge_ok and dodge_ok, "40 charge and dodge retain global legacy motion path")
+
 func _controller() -> Variant:
 	var controller: Variant = CONTROLLER.new(); controller.configure(_profile()); return controller
 
 func _profile() -> Variant:
 	var profile: Variant = PROFILE.new(); profile.configure_timing_from_tempo(); return profile
+
+func _mixed_recipe_profile() -> Variant:
+	var profile: Variant = _profile()
+	var recipe: Variant = RECIPE.new()
+	recipe.hit_1 = _test_primitive("sweep", -1.0, 1.0, 0.0)
+	recipe.hit_2 = _test_primitive("thrust", -0.08, -0.08, 36.0)
+	recipe.hit_3 = _test_primitive("slam", -1.6, 1.0, 0.0)
+	profile.combo_recipe = recipe
+	return profile
+
+func _test_primitive(family: String, start_angle: float, end_angle: float, extension: float) -> Resource:
+	var primitive: Variant = PRIMITIVE.new()
+	primitive.motion_family = family
+	primitive.start_angle = start_angle
+	primitive.end_angle = end_angle
+	primitive.extension_pixels = extension
+	return primitive
 
 func _advance_to_idle(controller: Variant) -> void:
 	controller.tick(1.0)
@@ -272,6 +369,13 @@ func _combat_source() -> String:
 func _text(path: String) -> String:
 	var file := FileAccess.open(path, FileAccess.READ)
 	return file.get_as_text() if file != null else ""
+
+func _function_source(source: String, start_marker: String, end_marker: String) -> String:
+	var start := source.find(start_marker)
+	var end := source.find(end_marker, start + start_marker.length())
+	if start < 0 or end < 0:
+		return ""
+	return source.substr(start, end - start)
 
 func _check(condition: bool, label: String) -> void:
 	if condition:

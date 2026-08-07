@@ -2,6 +2,8 @@ class_name MeleeMotionCompiler
 extends RefCounted
 
 const PROFILE := preload("res://scripts/combat_feel/combat_motion_profile.gd")
+const PRIMITIVE := preload("res://scripts/combat_feel/motion_primitive.gd")
+const RECIPE := preload("res://scripts/combat_feel/combo_recipe.gd")
 
 const IMPACT_TO_MOTION := {
 	"strike_edge": ["sweep", "edge"], "edge": ["sweep", "edge"],
@@ -32,7 +34,50 @@ func compile(blueprint: WeaponBlueprint, asset: WeaponVisualAsset) -> Resource:
 	profile.control_strength = _control_strength(profile)
 	profile.impact_sharpness = _impact_sharpness(profile)
 	profile.render_scale = {"short": 1.10, "medium": 1.22, "long": 1.34}.get(profile.reach_class, 1.22)
+	profile.combo_recipe = _compile_combo_recipe(profile.motion_family)
 	return profile
+
+func _compile_combo_recipe(base_family: String) -> Resource:
+	var recipe: Variant = RECIPE.new()
+	match base_family:
+		"slam":
+			recipe.hit_1 = _primitive("slam", -1.42, 0.76, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+			recipe.hit_2 = _primitive("slam", -1.42, 0.76, 0.0, 1.06, 1.08, 1.08, 1.0, 1.08, 1.0)
+			recipe.hit_3 = _primitive("slam", -1.72, 1.02, 0.0, 1.23, 1.30, 1.34, 1.18, 1.20, 1.0)
+		"thrust":
+			recipe.hit_1 = _primitive("thrust", -0.08, -0.08, 32.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+			recipe.hit_2 = _primitive("thrust", -0.08, -0.08, 32.0, 1.06, 1.08, 1.08, 1.0, 1.08, 1.0)
+			recipe.hit_3 = _primitive("thrust", -0.08, -0.08, 48.0, 1.23, 1.30, 1.34, 1.18, 1.20, 1.0)
+		_:
+			recipe.hit_1 = _primitive("sweep", -1.18, 1.02, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+			recipe.hit_2 = _primitive("sweep", 1.02, -1.10, 0.0, 1.06, 1.08, 1.08, 1.0, 1.08, 1.0)
+			recipe.hit_3 = _primitive("sweep", -1.58, 1.24, 0.0, 1.23, 1.30, 1.34, 1.18, 1.20, 1.0)
+	return recipe
+
+func _primitive(
+	family: String,
+	start_angle: float,
+	end_angle: float,
+	extension_pixels: float,
+	startup_multiplier: float,
+	active_multiplier: float,
+	recovery_multiplier: float,
+	reach_multiplier: float,
+	movement_multiplier: float,
+	hitbox_multiplier: float
+) -> Resource:
+	var primitive: Variant = PRIMITIVE.new()
+	primitive.motion_family = family
+	primitive.start_angle = start_angle
+	primitive.end_angle = end_angle
+	primitive.extension_pixels = extension_pixels
+	primitive.startup_multiplier = startup_multiplier
+	primitive.active_multiplier = active_multiplier
+	primitive.recovery_multiplier = recovery_multiplier
+	primitive.reach_multiplier = reach_multiplier
+	primitive.movement_multiplier = movement_multiplier
+	primitive.hitbox_multiplier = hitbox_multiplier
+	return primitive
 
 func _resolve_motion_family(mapped_family: String, contact_bulk: float) -> String:
 	# A semantic strike point is not automatically a stabbing tip. A broad,

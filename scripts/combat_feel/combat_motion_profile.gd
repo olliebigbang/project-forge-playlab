@@ -17,6 +17,7 @@ const GRIP_MODES: PackedStringArray = ["one_hand", "two_hand", "center"]
 @export var combo_style := "alternating"
 @export var charge_style := "wide_commitment"
 @export var dodge_attack_style := "advancing_strike"
+@export var combo_recipe: Resource
 
 # Slice-only starting values. They stay centralized instead of being spread
 # through player, enemy, or fixture-specific scripts.
@@ -57,7 +58,7 @@ func configure_timing_from_tempo() -> void:
 			recovery_seconds = 0.25
 			movement_commitment = 0.62
 
-func timing_for(attack_kind: String, combo_index: int) -> Dictionary:
+func timing_for(attack_kind: String, combo_index: int, primitive: Variant = null) -> Dictionary:
 	var startup := startup_seconds
 	var active := active_seconds
 	var recovery := recovery_seconds
@@ -77,7 +78,17 @@ func timing_for(attack_kind: String, combo_index: int) -> Dictionary:
 			reach_scale = 1.12
 			movement_scale = 1.35
 		_:
-			if combo_index == 2:
+			var selected_primitive: Variant = primitive
+			if selected_primitive == null and combo_recipe != null:
+				var recipe: Variant = combo_recipe
+				selected_primitive = recipe.primitive_for(combo_index)
+			if selected_primitive != null:
+				startup *= selected_primitive.startup_multiplier
+				active *= selected_primitive.active_multiplier
+				recovery *= selected_primitive.recovery_multiplier
+				reach_scale = selected_primitive.reach_multiplier
+				movement_scale = selected_primitive.movement_multiplier
+			elif combo_index == 2:
 				startup *= 1.06
 				active *= 1.08
 				recovery *= 1.08
@@ -102,14 +113,19 @@ func validation_errors() -> Array[String]:
 	if grip_mode not in GRIP_MODES: errors.append("INVALID_GRIP_MODE")
 	if startup_seconds <= 0.0 or active_seconds <= 0.0 or recovery_seconds <= 0.0:
 		errors.append("INVALID_TIMING")
+	if combo_recipe != null:
+		var recipe: Variant = combo_recipe
+		errors.append_array(recipe.validation_errors())
 	return errors
 
 func to_dict() -> Dictionary:
+	var recipe: Variant = combo_recipe
 	return {
 		"motion_family": motion_family, "weight_class": weight_class,
 		"reach_class": reach_class, "tempo": tempo, "contact_mode": contact_mode,
 		"grip_mode": grip_mode, "combo_style": combo_style,
 		"charge_style": charge_style, "dodge_attack_style": dodge_attack_style,
+		"combo_recipe": recipe.to_dict() if recipe != null else null,
 		"startup": startup_seconds, "active": active_seconds,
 		"recovery": recovery_seconds, "combo_window": combo_window_seconds,
 		"input_buffer": input_buffer_seconds, "charge_threshold": charge_threshold_seconds,
