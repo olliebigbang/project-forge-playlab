@@ -27,8 +27,8 @@
     ],
     "corrected_anchors": {
       "GripPrimary": [29.0, 57.0],
-      "EffectOrigin": [6.0, 46.0],
-      "RearContact": [90.0, 46.0]
+      "EffectOrigin": [90.0, 46.0],
+      "RearContact": [6.0, 46.0]
     },
     "confidence": {
       "GripPrimary": 0.95,
@@ -37,8 +37,13 @@
     },
     "anchor_source": {
       "GripPrimary": "frozen_player_confirmed",
-      "EffectOrigin": "developer_visual_correction",
-      "RearContact": "developer_alpha_axis_endpoint"
+      "EffectOrigin": "player_runtime_orientation_correction",
+      "RearContact": "player_runtime_opposite_axis_endpoint"
+    },
+    "human_runtime_review": {
+      "date": "2026-08-07",
+      "previous_orientation": "rejected_reversed",
+      "requested_action": "invert_shotgun_visual_and_contact_axis"
     }
   }
 }
