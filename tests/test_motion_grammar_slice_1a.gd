@@ -28,6 +28,7 @@ func _run() -> void:
 	_test_shotgun_rear_contact()
 	_test_per_hit_spatial_and_feedback_are_consumed()
 	_test_exported_recipes_match_runtime()
+	_test_shotgun_entry_is_visible_and_selectable()
 	print("MOTION_GRAMMAR_SLICE_1A_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -161,6 +162,16 @@ func _test_exported_recipes_match_runtime() -> void:
 		var profile: Resource = _compiled(asset_id) as Resource
 		ok = ok and str(recipe_data.get("recipe_signature", "")) == profile.combo_recipe.signature()
 	_check(ok, "11 exported recipe JSON matches the deterministic runtime compiler output")
+
+
+func _test_shotgun_entry_is_visible_and_selectable() -> void:
+	var runner := FileAccess.get_file_as_string("res://scripts/run_motion_grammar_slice_1a.ps1")
+	var slice_source := FileAccess.get_file_as_string(SLICE_PATH)
+	var ok := runner.contains("3. Shotgun melee")
+	ok = ok and runner.contains("ShotgunMelee") and runner.contains("shotgun_melee")
+	ok = ok and slice_source.contains("SHOTGUN STOCK MELEE — DEV OVERRIDE")
+	ok = ok and slice_source.contains("ASSET %s  |  ACTUAL RECIPE")
+	_check(ok, "12 launcher exposes Shotgun and the scene identifies the loaded asset")
 
 
 func _compiled(asset_id: String) -> Variant:

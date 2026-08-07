@@ -45,6 +45,7 @@ var capture_comparison := false
 var capture_caption := ""
 
 var ui_layer: CanvasLayer
+var title_label: Label
 var status_label: Label
 var help_label: Label
 var health_label: Label
@@ -78,6 +79,7 @@ func _ready() -> void:
 		_show_blocked(MOTION_COMPILER.UNSUPPORTED)
 		return
 	motion_profile = compiled
+	_update_mode_title()
 	controller.configure(motion_profile)
 	_apply_saved_tuning()
 	_sync_debug_panel()
@@ -386,8 +388,8 @@ func _build_ui() -> void:
 	var top := ColorRect.new()
 	top.position = Vector2(0, 0); top.size = Vector2(1280, 138); top.color = Color("111a24")
 	ui_layer.add_child(top)
-	var title := _label("PAN VS BROOM RECIPE SLICE 1B — HEAVY MELEE", 24, Color("72e4e0"))
-	title.position = Vector2(28, 14); top.add_child(title)
+	title_label = _label("COMBAT FEEL SLICE 0 — HEAVY MELEE", 24, Color("72e4e0"))
+	title_label.position = Vector2(28, 14); top.add_child(title_label)
 	status_label = _label("", 15, Color("d8e5ec")); status_label.position = Vector2(28, 46); status_label.size = Vector2(930, 48); top.add_child(status_label)
 	help_label = _label("WASD/方向键 移动　Space/J 攻击（按住蓄力）　Shift/K 闪避　F3 调试", 15, Color("b7c7d2")); help_label.position = Vector2(28, 94); top.add_child(help_label)
 	var boundary := _label("当前切片只验证近战物件；持续远程与投掷返回尚未接入。", 14, Color("f5c86b")); boundary.position = Vector2(28, 116); top.add_child(boundary)
@@ -399,6 +401,19 @@ func _build_ui() -> void:
 	debug_label = _label("", 14, Color("d9f99d")); debug_label.position = Vector2(14, 475); debug_label.size = Vector2(420, 230); debug_label.visible = false; ui_layer.add_child(debug_label)
 	debug_panel = _build_debug_panel(); ui_layer.add_child(debug_panel)
 	questionnaire_panel = _build_questionnaire(); ui_layer.add_child(questionnaire_panel)
+
+
+func _update_mode_title() -> void:
+	if title_label == null:
+		return
+	var labels := {
+		"frying_pan": "PAN",
+		"old_mop": "BROOM / MOP",
+		"shotgun_melee": "SHOTGUN STOCK MELEE — DEV OVERRIDE",
+		"giant_wooden_spoon": "GIANT WOODEN SPOON",
+		"LIVE": "LIVE OPEN PLAYTEST WEAPON",
+	}
+	title_label.text = "MOTION GRAMMAR SLICE 1A — %s" % str(labels.get(weapon_id, weapon_id.to_upper()))
 
 func _build_debug_panel() -> PanelContainer:
 	var panel := PanelContainer.new()
@@ -523,7 +538,7 @@ func _update_hud() -> void:
 	if blueprint == null or motion_profile == null: return
 	var recipe: Variant = motion_profile.combo_recipe
 	var sequence: PackedStringArray = recipe.primitive_sequence() if recipe != null else PackedStringArray(["missing", "missing", "missing"])
-	status_label.text = "ACTUAL RECIPE  %s → %s → %s  |  reach %.0f px  |  tempo %s\nHit 1 %s  |  Hit 2 %s  |  Hit 3 %s" % [sequence[0], sequence[1], sequence[2], motion_profile.reach_pixels, motion_profile.tempo, sequence[0], sequence[1], sequence[2]]
+	status_label.text = "ASSET %s  |  ACTUAL RECIPE  %s → %s → %s  |  reach %.0f px  |  tempo %s\nHit 1 %s  |  Hit 2 %s  |  Hit 3 %s" % [weapon_id, sequence[0], sequence[1], sequence[2], motion_profile.reach_pixels, motion_profile.tempo, sequence[0], sequence[1], sequence[2]]
 	health_label.text = "PLAYER HP %d" % roundi(player_health)
 	wave_label.text = "WAVE %d / 3　TIME %.1fs" % [current_wave, elapsed_seconds]
 
