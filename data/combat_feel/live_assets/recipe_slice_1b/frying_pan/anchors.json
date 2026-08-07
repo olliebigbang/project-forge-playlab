@@ -1,0 +1,63 @@
+{
+  "anchor_source": {
+    "GripPrimary": "player_confirmed_open_playtest",
+    "GripSecondary": "derived_after_primary_calibration",
+    "StrikePoint": "player_confirmed_open_playtest"
+  },
+  "auto_anchor_source": {
+    "GripPrimary": "AnchorResolver:alpha_local_search+profile",
+    "GripSecondary": "alpha_centroid_from_primary",
+    "StrikePoint": "AnchorResolver:tip"
+  },
+  "auto_anchors": {
+    "GripPrimary": [
+      18.0,
+      62.0
+    ],
+    "GripSecondary": [
+      28.0,
+      55.0
+    ],
+    "StrikePoint": [
+      88.0,
+      32.0
+    ]
+  },
+  "auto_confidence": {
+    "GripPrimary": 0.88,
+    "GripSecondary": 0.76,
+    "StrikePoint": 0.58
+  },
+  "behavior_family": "heavy_melee",
+  "case_id": "R0001-17630115",
+  "confidence": {
+    "GripPrimary": 0.95,
+    "GripSecondary": 0.9,
+    "StrikePoint": 0.95
+  },
+  "corrected_anchors": {
+    "GripPrimary": [
+      84.89,
+      35.11
+    ],
+    "GripSecondary": [
+      63.0,
+      41.0
+    ],
+    "StrikePoint": [
+      28.67,
+      51.56
+    ]
+  },
+  "grip_profile": "two_hand_rear",
+  "required_anchor_types": [
+    "GripPrimary",
+    "GripSecondary",
+    "StrikePoint"
+  ],
+  "run_id": "open-20260806t133353124z-4c7c4825",
+  "source_sprite": "processed_sprite.png",
+  "training_transform": {
+    "flip_x": false
+  }
+}

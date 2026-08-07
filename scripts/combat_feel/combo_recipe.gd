@@ -19,6 +19,34 @@ func primitives() -> Array[Resource]:
 	return values
 
 
+func primitive_sequence() -> PackedStringArray:
+	var sequence := PackedStringArray()
+	for primitive: Variant in primitives():
+		sequence.append(str(primitive.motion_family) if primitive != null else "missing")
+	return sequence
+
+
+func signature() -> String:
+	var segments: Array[String] = []
+	for primitive: Variant in primitives():
+		if primitive == null:
+			segments.append("missing")
+			continue
+		segments.append("%s:%.3f,%.3f,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f" % [
+			primitive.motion_family,
+			primitive.start_angle,
+			primitive.end_angle,
+			primitive.extension_pixels,
+			primitive.startup_multiplier,
+			primitive.active_multiplier,
+			primitive.recovery_multiplier,
+			primitive.reach_multiplier,
+			primitive.movement_multiplier,
+			primitive.hitbox_multiplier,
+		])
+	return "|".join(segments)
+
+
 func validation_errors() -> Array[String]:
 	var errors: Array[String] = []
 	var values := primitives()

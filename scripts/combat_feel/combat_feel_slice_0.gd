@@ -13,6 +13,7 @@ var compiler: Variant
 var controller: Variant
 var blueprint: WeaponBlueprint
 var asset: WeaponVisualAsset
+var affordance_profile: Resource
 var motion_profile: Variant
 var source_notice := ""
 var weapon_id := "giant_wooden_spoon"
@@ -72,7 +73,11 @@ func _ready() -> void:
 	if not _load_requested_weapon():
 		_show_blocked("无法进入：%s" % source_notice)
 		return
-	motion_profile = compiler.compile(blueprint, asset)
+	var compiled: Variant = compiler.compile(affordance_profile, asset.anchors_dict(), asset.opaque_bounds)
+	if compiled is String and str(compiled) == MOTION_COMPILER.UNSUPPORTED:
+		_show_blocked(MOTION_COMPILER.UNSUPPORTED)
+		return
+	motion_profile = compiled
 	controller.configure(motion_profile)
 	_apply_saved_tuning()
 	_sync_debug_panel()
@@ -87,10 +92,13 @@ func _load_requested_weapon() -> bool:
 	var blueprint_path := _argument_value("--combat-blueprint=", "")
 	var anchors_path := _argument_value("--combat-anchors=", "")
 	var open_round_path := _argument_value("--open-playtest-round=", "")
+	var requested_recipe_id := _argument_value("--recipe-asset=", "")
 	var requested_live_id := _argument_value("--live-weapon=", "")
 	var requested_fixture := _argument_value("--developer-fixture=", "").to_upper()
 	var result: Dictionary
-	if not sprite_path.is_empty() or not blueprint_path.is_empty() or not anchors_path.is_empty():
+	if not requested_recipe_id.is_empty():
+		result = asset_loader.load_recipe_asset(requested_recipe_id)
+	elif not sprite_path.is_empty() or not blueprint_path.is_empty() or not anchors_path.is_empty():
 		result = asset_loader.load_live(sprite_path, blueprint_path, anchors_path)
 	elif not open_round_path.is_empty():
 		launched_from_open_playtest = true
@@ -106,6 +114,7 @@ func _load_requested_weapon() -> bool:
 		return false
 	blueprint = result.get("blueprint") as WeaponBlueprint
 	asset = result.get("asset") as WeaponVisualAsset
+	affordance_profile = result.get("affordance_profile") as Resource
 	source_notice = str(result.get("notice", ""))
 	weapon_id = str(result.get("asset_id", result.get("fixture_id", weapon_id)))
 	is_developer_fixture = bool(result.get("fixture", false))
@@ -251,11 +260,16 @@ func _attack_contains(target: Vector2) -> bool:
 	var motion_family: String = str(primitive.motion_family) if primitive != null else str(motion_profile.motion_family)
 	var forward := to_target.x * player_facing
 	match motion_family:
+		"bash":
+			var bash_center := hand + Vector2(player_facing * reach * 0.72, 0.0)
+			return target.distance_to(bash_center) <= hitbox_thickness * 0.58
 		"thrust":
 			return forward >= -12.0 and forward <= reach and absf(to_target.y) <= hitbox_thickness * 0.5
 		"slam":
 			var impact_center := hand + Vector2(player_facing * reach * 0.68, 28.0)
 			return target.distance_to(impact_center) <= hitbox_thickness + (16.0 if controller.attack_kind == "charge" else 0.0)
+		"spin":
+			return to_target.length() <= reach
 		_:
 			var half_arc := deg_to_rad(motion_profile.swing_arc_degrees * 0.5)
 			var angle := absf(wrapf(to_target.angle() - (0.0 if player_facing > 0 else PI), -PI, PI))
@@ -360,11 +374,11 @@ func _build_ui() -> void:
 	var top := ColorRect.new()
 	top.position = Vector2(0, 0); top.size = Vector2(1280, 138); top.color = Color("111a24")
 	ui_layer.add_child(top)
-	var title := _label("FORGE COMBAT FEEL SLICE 0 — HEAVY MELEE", 24, Color("72e4e0"))
+	var title := _label("PAN VS BROOM RECIPE SLICE 1B — HEAVY MELEE", 24, Color("72e4e0"))
 	title.position = Vector2(28, 14); top.add_child(title)
-	status_label = _label("", 17, Color("d8e5ec")); status_label.position = Vector2(28, 50); status_label.size = Vector2(900, 28); status_label.clip_text = true; top.add_child(status_label)
-	help_label = _label("WASD/方向键 移动　Space/J 攻击（按住蓄力）　Shift/K 闪避　F3 调试", 16, Color("b7c7d2")); help_label.position = Vector2(28, 82); top.add_child(help_label)
-	var boundary := _label("当前切片只验证近战物件；持续远程与投掷返回尚未接入。", 15, Color("f5c86b")); boundary.position = Vector2(28, 110); top.add_child(boundary)
+	status_label = _label("", 15, Color("d8e5ec")); status_label.position = Vector2(28, 46); status_label.size = Vector2(930, 48); top.add_child(status_label)
+	help_label = _label("WASD/方向键 移动　Space/J 攻击（按住蓄力）　Shift/K 闪避　F3 调试", 15, Color("b7c7d2")); help_label.position = Vector2(28, 94); top.add_child(help_label)
+	var boundary := _label("当前切片只验证近战物件；持续远程与投掷返回尚未接入。", 14, Color("f5c86b")); boundary.position = Vector2(28, 116); top.add_child(boundary)
 	health_label = _label("", 18, Color("ffcf70")); health_label.position = Vector2(980, 20); top.add_child(health_label)
 	wave_label = _label("", 18, Color("91e0b1")); wave_label.position = Vector2(980, 50); top.add_child(wave_label)
 	return_button = _button("RETURN TO FORGE", _return_to_forge); return_button.position = Vector2(1080, 88); return_button.size = Vector2(170, 38); top.add_child(return_button)
@@ -495,7 +509,9 @@ func _apply_saved_tuning() -> void:
 
 func _update_hud() -> void:
 	if blueprint == null or motion_profile == null: return
-	status_label.text = "%s　%s　|　%s / %s / %s　|　%s" % [weapon_id, blueprint.display_name, motion_profile.motion_family, motion_profile.tempo, motion_profile.reach_class, source_notice]
+	var recipe: Variant = motion_profile.combo_recipe
+	var sequence: PackedStringArray = recipe.primitive_sequence() if recipe != null else PackedStringArray(["missing", "missing", "missing"])
+	status_label.text = "ACTUAL RECIPE  %s → %s → %s  |  reach %.0f px  |  tempo %s\nHit 1 %s  |  Hit 2 %s  |  Hit 3 %s" % [sequence[0], sequence[1], sequence[2], motion_profile.reach_pixels, motion_profile.tempo, sequence[0], sequence[1], sequence[2]]
 	health_label.text = "PLAYER HP %d" % roundi(player_health)
 	wave_label.text = "WAVE %d / 3　TIME %.1fs" % [current_wave, elapsed_seconds]
 
@@ -646,22 +662,27 @@ func _draw_active_hitbox() -> void:
 	var is_finisher: bool = controller.combo_index >= 3 or controller.attack_kind == "charge"
 	var color := Color(1.0, 0.72, 0.22, 0.42) if is_finisher else Color(1.0, 0.38, 0.22, 0.28)
 	match motion_family:
+		"bash": draw_circle(hand + Vector2(player_facing * reach * 0.72, 0.0), hitbox_thickness * 0.58, color)
 		"thrust": draw_rect(Rect2(hand + Vector2(0 if player_facing > 0 else -reach, -hitbox_thickness * 0.5), Vector2(reach, hitbox_thickness)), color, true)
 		"slam": draw_circle(hand + Vector2(player_facing * reach * 0.68, 28), hitbox_thickness + (10.0 if is_finisher else 0.0), color)
+		"spin": draw_arc(hand, reach, 0.0, TAU, 48, color, 28.0)
 		_:
 			var half_arc := deg_to_rad(motion_profile.swing_arc_degrees * 0.5)
 			var facing_angle := 0.0 if player_facing > 0 else PI
 			draw_arc(hand, reach, facing_angle - half_arc, facing_angle + half_arc, 36, color, 24.0 if is_finisher else 16.0)
 
 func _draw_real_weapon_comparison() -> void:
-	var ids: Array[String] = asset_loader.frozen_live_ids()
+	var ids: Array[String] = asset_loader.recipe_asset_ids()
 	if comparison_assets.is_empty():
 		for id: String in ids:
-			var retained: Dictionary = asset_loader.load_frozen_live(id)
+			var retained: Dictionary = asset_loader.load_recipe_asset(id)
 			if not bool(retained.get("ok", false)): continue
 			var retained_asset := retained.get("asset") as WeaponVisualAsset
+			var retained_affordance := retained.get("affordance_profile") as Resource
+			var retained_compiled: Variant = compiler.compile(retained_affordance, retained_asset.anchors_dict(), retained_asset.opaque_bounds)
+			if retained_compiled is String: continue
 			comparison_assets.append(retained_asset)
-			comparison_profiles.append(compiler.compile(retained.get("blueprint") as WeaponBlueprint, retained_asset))
+			comparison_profiles.append(retained_compiled)
 	if comparison_assets.is_empty(): return
 	var spacing := 1080.0 / float(comparison_assets.size())
 	for index: int in range(comparison_assets.size()):

@@ -1,9 +1,9 @@
 class_name MotionPrimitive
 extends Resource
 
-const MOTION_FAMILIES: PackedStringArray = ["sweep", "slam", "thrust"]
+const MOTION_FAMILIES: PackedStringArray = ["bash", "sweep", "thrust", "slam", "spin"]
 
-@export_enum("sweep", "slam", "thrust") var motion_family := "sweep"
+@export_enum("bash", "sweep", "thrust", "slam", "spin") var motion_family := "sweep"
 @export var start_angle := -1.18
 @export var end_angle := 1.02
 @export var extension_pixels := 0.0

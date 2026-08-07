@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-08-06T13:58:45.126Z",
+  "session_id": "open-20260806t133353124z-4c7c4825",
+  "round_id": "R0020-03582d76",
+  "revision": 20,
+  "user_input": "一根旧拖把，\n我要拿它连续横扫敌人。",
+  "semantic_summary": "旧拖把 · heavy_melee · normal",
+  "behavior_family": "heavy_melee",
+  "canonical_identity": "旧拖把",
+  "display_name": "旧拖把",
+  "raw_image_path": "tools/open_playtest/output/sessions/open-20260806t133353124z-4c7c4825/rounds/R0020-03582d76/flux_raw.png",
+  "processed_sprite_path": "tools/open_playtest/output/sessions/open-20260806t133353124z-4c7c4825/rounds/R0020-03582d76/processed_sprite.png",
+  "identity_confirmed": true,
+  "anchor_confirmed": true,
+  "entered_training": true,
+  "user_notes": "",
+  "subjective_rating": null,
+  "keep_idea": null,
+  "saved_locally": false,
+  "total_forge_seconds": 14.31,
+  "stage_timings": {
+    "semantic_compiling": 6.953,
+    "image_generating": 5.75,
+    "background_removing": 1.562,
+    "sprite_processing": 0.063
+  },
+  "status": "completed",
+  "failure_stage": "",
+  "failure_reason": ""
+}

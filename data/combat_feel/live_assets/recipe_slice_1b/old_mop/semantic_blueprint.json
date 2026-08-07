@@ -1,0 +1,48 @@
+{
+  "identity": {
+    "canonical_name_zh": "旧拖把",
+    "canonical_name_en": "old mop",
+    "display_name_zh": "旧拖把",
+    "display_name_en": "Old Mop",
+    "category": "household_object",
+    "required_identity_parts": [
+      "long wooden handle",
+      "frayed mop head strands"
+    ],
+    "material_hints": [
+      "worn wood",
+      "cotton or cloth strands"
+    ],
+    "silhouette_hints": [
+      "long slender pole with a bulky fibrous head at one end"
+    ],
+    "optional_decorations": [
+      "water stains",
+      "tattered strand ends"
+    ]
+  },
+  "combat": {
+    "behavior_family": "heavy_melee",
+    "delivery": "melee_swing",
+    "impact_mode": "strike_edge",
+    "effect_type": "normal",
+    "drawback": "slow_movement",
+    "cadence_hint": "slow_heavy"
+  },
+  "visual": {
+    "prompt_en": "An old mop, full object visible, long worn wooden handle with a bulky frayed cloth mop head at the end, side view, isolated on plain background, slightly reinforced grip for combat use, realistic worn texture, single object, complete silhouette",
+    "negative_prompt_en": "not a sword, not a staff weapon, not a spear, no blade, no gun",
+    "must_preserve": [
+      "long wooden handle",
+      "frayed mop head strands"
+    ],
+    "must_not_replace_with": [
+      "sword",
+      "staff",
+      "spear",
+      "broom weapon",
+      "polearm"
+    ]
+  },
+  "confidence": 0.9
+}

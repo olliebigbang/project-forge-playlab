@@ -1,0 +1,51 @@
+{
+  "identity": {
+    "canonical_name_zh": "平底锅",
+    "canonical_name_en": "frying pan",
+    "display_name_zh": "重击平底锅",
+    "display_name_en": "Heavy Smash Frying Pan",
+    "category": "household_object",
+    "required_identity_parts": [
+      "flat circular pan body",
+      "long handle",
+      "pan rim",
+      "flat pan bottom"
+    ],
+    "material_hints": [
+      "cast iron",
+      "metal"
+    ],
+    "silhouette_hints": [
+      "round flat pan with a protruding long handle, side view silhouette"
+    ],
+    "optional_decorations": [
+      "riveted handle joint",
+      "worn metal shine"
+    ]
+  },
+  "combat": {
+    "behavior_family": "heavy_melee",
+    "delivery": "melee_swing",
+    "impact_mode": "strike_point",
+    "effect_type": "normal",
+    "drawback": "long_recovery",
+    "cadence_hint": "slow_heavy"
+  },
+  "visual": {
+    "prompt_en": "A frying pan with a flat circular pan body, long handle, and pan rim, made of cast iron metal, reinforced holdable grip on the handle for combat use, one isolated object, side view, the complete object visible, clean studio background",
+    "negative_prompt_en": "not a sword, not a hammer, not a shield, no unrelated weapon shapes, no blade, no gun",
+    "must_preserve": [
+      "flat circular pan body",
+      "long handle",
+      "pan rim",
+      "flat pan bottom"
+    ],
+    "must_not_replace_with": [
+      "sword",
+      "hammer",
+      "shield",
+      "blade weapon"
+    ]
+  },
+  "confidence": 0.9
+}

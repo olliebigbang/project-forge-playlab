@@ -1,0 +1,7 @@
+{
+  "handle_length": "short",
+  "body_length": "short",
+  "mass_distribution": "front",
+  "contact_surface": "broad",
+  "rigidity": "rigid"
+}

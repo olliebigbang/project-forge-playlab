@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-08-06T13:35:49.832Z",
+  "session_id": "open-20260806t133353124z-4c7c4825",
+  "round_id": "R0001-17630115",
+  "revision": 1,
+  "user_input": "一把平底锅，我要拿它快速拍击敌人，最后一击用锅底重重砸下去，尽量保留锅身和锅柄。",
+  "semantic_summary": "重击平底锅 · heavy_melee · normal",
+  "behavior_family": "heavy_melee",
+  "canonical_identity": "平底锅",
+  "display_name": "重击平底锅",
+  "raw_image_path": "tools/open_playtest/output/sessions/open-20260806t133353124z-4c7c4825/rounds/R0001-17630115/flux_raw.png",
+  "processed_sprite_path": "tools/open_playtest/output/sessions/open-20260806t133353124z-4c7c4825/rounds/R0001-17630115/processed_sprite.png",
+  "identity_confirmed": true,
+  "anchor_confirmed": true,
+  "entered_training": true,
+  "user_notes": "",
+  "subjective_rating": null,
+  "keep_idea": null,
+  "saved_locally": false,
+  "total_forge_seconds": 17.127,
+  "stage_timings": {
+    "semantic_compiling": 7.078,
+    "image_generating": 7.891,
+    "background_removing": 2.094,
+    "sprite_processing": 0.078
+  },
+  "status": "completed",
+  "failure_stage": "",
+  "failure_reason": ""
+}

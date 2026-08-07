@@ -3,6 +3,52 @@ extends RefCounted
 
 const FIXTURE_PATH := "res://data/combat_feel/heavy_melee_fixtures.json"
 const LIVE_INDEX_PATH := "res://data/combat_feel/live_assets/revision_a/index.json"
+const RECIPE_INDEX_PATH := "res://data/combat_feel/live_assets/recipe_slice_1b/index.json"
+const AFFORDANCE_PROFILE := preload("res://scripts/combat_feel/object_affordance_profile.gd")
+
+
+func recipe_asset_ids() -> Array[String]:
+	var ids: Array[String] = []
+	var index := _read_json(RECIPE_INDEX_PATH)
+	for value: Variant in index.get("assets", []):
+		var entry: Dictionary = value
+		ids.append(str(entry.get("id", "")))
+	return ids
+
+
+func load_recipe_asset(asset_id: String) -> Dictionary:
+	var index := _read_json(RECIPE_INDEX_PATH)
+	for value: Variant in index.get("assets", []):
+		var entry: Dictionary = value
+		if str(entry.get("id", "")) != asset_id:
+			continue
+		var integrity_error := _verify_recipe_entry_hashes(entry)
+		if not integrity_error.is_empty():
+			return {"ok": false, "error": integrity_error}
+		var manifest := _read_json(str(entry.get("manifest", "")))
+		if str(manifest.get("status", "")) != "completed" \
+			or not bool(manifest.get("identity_confirmed", false)) \
+			or not bool(manifest.get("anchor_confirmed", false)) \
+			or not bool(manifest.get("entered_training", false)):
+			return {"ok": false, "error": "RECIPE_ASSET_NOT_PLAYER_CONFIRMED:%s" % asset_id}
+		var loaded := load_live(
+			str(entry.get("sprite", "")),
+			str(entry.get("blueprint", "")),
+			str(entry.get("anchors", ""))
+		)
+		if not bool(loaded.get("ok", false)):
+			return loaded
+		var affordance_data := _read_json(str(entry.get("affordance_profile", "")))
+		var affordance_profile: Resource = _affordance_profile_from_dict(affordance_data)
+		if affordance_profile == null:
+			return {"ok": false, "error": "RECIPE_AFFORDANCE_PROFILE_INVALID:%s" % asset_id}
+		loaded["asset_id"] = asset_id
+		loaded["source_kind"] = str(entry.get("source_kind", "frozen_open_playtest"))
+		loaded["source_round_id"] = str(entry.get("source_round_id", ""))
+		loaded["notice"] = str(index.get("notice", "FROZEN PLAYER-CONFIRMED OPEN PLAYTEST RESULT"))
+		loaded["affordance_profile"] = affordance_profile
+		return loaded
+	return {"ok": false, "error": "RECIPE_ASSET_NOT_FOUND:%s" % asset_id}
 
 func load_default_live() -> Dictionary:
 	var index := _read_json(LIVE_INDEX_PATH)
@@ -182,6 +228,45 @@ func _verify_entry_hashes(entry: Dictionary) -> String:
 		if _sha256_file(path) != str(expected[filename]).to_lower():
 			return "LIVE_EVIDENCE_HASH_MISMATCH:%s" % filename
 	return ""
+
+func _verify_recipe_entry_hashes(entry: Dictionary) -> String:
+	var expected: Dictionary = entry.get("sha256", {})
+	var paths := {
+		"processed_sprite.png": str(entry.get("sprite", "")),
+		"semantic_blueprint.json": str(entry.get("blueprint", "")),
+		"anchors.json": str(entry.get("anchors", "")),
+		"object_affordance_profile.json": str(entry.get("affordance_profile", "")),
+		"open_playtest_round.json": str(entry.get("manifest", "")),
+	}
+	for filename: String in paths:
+		if not expected.has(filename):
+			return "RECIPE_EVIDENCE_HASH_MISSING:%s" % filename
+		var path: String = paths[filename]
+		if not FileAccess.file_exists(path):
+			return "RECIPE_EVIDENCE_FILE_MISSING:%s" % filename
+		if _sha256_file(path) != str(expected[filename]).to_lower():
+			return "RECIPE_EVIDENCE_HASH_MISMATCH:%s" % filename
+	return ""
+
+func _affordance_profile_from_dict(data: Dictionary) -> Resource:
+	var handle_length := str(data.get("handle_length", ""))
+	var body_length := str(data.get("body_length", ""))
+	var mass_distribution := str(data.get("mass_distribution", ""))
+	var contact_surface := str(data.get("contact_surface", ""))
+	var rigidity := str(data.get("rigidity", ""))
+	if handle_length not in ["short", "medium", "long"] \
+		or body_length not in ["short", "medium", "long"] \
+		or mass_distribution not in ["rear", "balanced", "front"] \
+		or contact_surface not in ["point", "edge", "broad", "whole_body"] \
+		or rigidity not in ["rigid", "semi_rigid", "flexible"]:
+		return null
+	var profile: Variant = AFFORDANCE_PROFILE.new()
+	profile.handle_length = handle_length
+	profile.body_length = body_length
+	profile.mass_distribution = mass_distribution
+	profile.contact_surface = contact_surface
+	profile.rigidity = rigidity
+	return profile
 
 func _sha256_file(path: String) -> String:
 	var file := FileAccess.open(path, FileAccess.READ)
