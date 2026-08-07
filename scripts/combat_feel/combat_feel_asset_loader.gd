@@ -4,6 +4,7 @@ extends RefCounted
 const FIXTURE_PATH := "res://data/combat_feel/heavy_melee_fixtures.json"
 const LIVE_INDEX_PATH := "res://data/combat_feel/live_assets/revision_a/index.json"
 const RECIPE_INDEX_PATH := "res://data/combat_feel/live_assets/recipe_slice_1b/index.json"
+const MOTION_GRAMMAR_INDEX_PATH := "res://data/combat_feel/live_assets/motion_grammar_slice_1a/index.json"
 const AFFORDANCE_PROFILE := preload("res://scripts/combat_feel/object_affordance_profile.gd")
 const ANCHOR_CALIBRATION := preload("res://scripts/data/semantic_anchor_calibration.gd")
 
@@ -15,6 +16,93 @@ func recipe_asset_ids() -> Array[String]:
 		var entry: Dictionary = value
 		ids.append(str(entry.get("id", "")))
 	return ids
+
+
+func motion_grammar_asset_ids() -> Array[String]:
+	var ids: Array[String] = []
+	var index := _read_json(MOTION_GRAMMAR_INDEX_PATH)
+	for value: Variant in index.get("assets", []):
+		var entry: Dictionary = value
+		ids.append(str(entry.get("id", "")))
+	return ids
+
+
+func load_motion_grammar_asset(asset_id: String) -> Dictionary:
+	var index := _read_json(MOTION_GRAMMAR_INDEX_PATH)
+	for value: Variant in index.get("assets", []):
+		var entry: Dictionary = value
+		if str(entry.get("id", "")) != asset_id:
+			continue
+		var integrity_error := _verify_named_evidence_hashes(entry)
+		if not integrity_error.is_empty():
+			return {"ok": false, "error": integrity_error}
+		var affordance_data := _read_json(str(entry.get("affordance_profile", "")))
+		var affordance_profile: Resource = _affordance_profile_from_dict(affordance_data)
+		if affordance_profile == null:
+			return {"ok": false, "error": "MOTION_GRAMMAR_AFFORDANCE_INVALID:%s" % asset_id}
+		var recipe_source_id := str(entry.get("source_recipe_asset_id", ""))
+		if not recipe_source_id.is_empty():
+			var retained := load_recipe_asset(recipe_source_id)
+			if not bool(retained.get("ok", false)):
+				return retained
+			retained["asset_id"] = asset_id
+			retained["affordance_profile"] = affordance_profile
+			retained["notice"] = str(index.get("notice", "MOTION GRAMMAR SLICE 1A"))
+			return retained
+		return _load_developer_motion_grammar_asset(entry, affordance_profile, index)
+	return {"ok": false, "error": "MOTION_GRAMMAR_ASSET_NOT_FOUND:%s" % asset_id}
+
+
+func _load_developer_motion_grammar_asset(entry: Dictionary, affordance_profile: Resource, index: Dictionary) -> Dictionary:
+	var asset_id := str(entry.get("id", ""))
+	if not bool(entry.get("developer_only", false)) or bool(entry.get("normal_player_flow", true)):
+		return {"ok": false, "error": "MOTION_GRAMMAR_DEVELOPER_BOUNDARY_INVALID:%s" % asset_id}
+	var manifest := _read_json(str(entry.get("manifest", "")))
+	if str(manifest.get("status", "")) != "completed" \
+		or not bool(manifest.get("identity_confirmed", false)) \
+		or not bool(manifest.get("anchor_confirmed", false)) \
+		or not bool(manifest.get("entered_training", false)):
+		return {"ok": false, "error": "MOTION_GRAMMAR_SOURCE_NOT_PLAYER_CONFIRMED:%s" % asset_id}
+	var override := _read_json(str(entry.get("override", "")))
+	if not bool(override.get("developer_only", false)) or bool(override.get("normal_player_flow", true)):
+		return {"ok": false, "error": "MOTION_GRAMMAR_OVERRIDE_BOUNDARY_INVALID:%s" % asset_id}
+	var melee_intent: Dictionary = override.get("melee_intent_override", {})
+	if str(melee_intent.get("behavior_family", "")) != "heavy_melee":
+		return {"ok": false, "error": "MOTION_GRAMMAR_MELEE_OVERRIDE_INVALID:%s" % asset_id}
+	var source_hash_error := _verify_override_source_hashes(override)
+	if not source_hash_error.is_empty():
+		return {"ok": false, "error": source_hash_error}
+	var image := _load_png(str(entry.get("sprite", "")))
+	if image == null or image.is_empty() or image.get_size() != Vector2i(96, 96) or not _has_useful_alpha(image):
+		return {"ok": false, "error": "MOTION_GRAMMAR_SPRITE_INVALID:%s" % asset_id}
+	var blueprint_data := _read_json(str(entry.get("blueprint", "")))
+	var blueprint := _blueprint_from_semantic_data(blueprint_data)
+	var original_behavior := blueprint.behavior_family
+	if original_behavior != "sustained_ranged":
+		return {"ok": false, "error": "MOTION_GRAMMAR_SOURCE_BEHAVIOR_CHANGED:%s" % asset_id}
+	var anchor_override: Dictionary = override.get("anchor_override", {})
+	var asset := _asset_from_image_and_anchors(image, anchor_override)
+	if asset == null or asset.rear_contact == asset.grip_primary:
+		return {"ok": false, "error": "MOTION_GRAMMAR_REAR_CONTACT_INVALID:%s" % asset_id}
+	blueprint.behavior_family = "heavy_melee"
+	blueprint.delivery = "whole_object_strike"
+	blueprint.impact_mode = "whole_body_collision"
+	blueprint.grip_profile = str(anchor_override.get("grip_profile", blueprint.grip_profile))
+	blueprint.silhouette_aspect = float(maxi(asset.opaque_bounds.size.x, asset.opaque_bounds.size.y)) / maxf(1.0, float(mini(asset.opaque_bounds.size.x, asset.opaque_bounds.size.y)))
+	return {
+		"ok": true,
+		"fixture": false,
+		"developer_only": true,
+		"normal_player_flow": false,
+		"asset_id": asset_id,
+		"source_round_id": str(entry.get("source_round_id", "")),
+		"source_behavior_family": original_behavior,
+		"notice": str(index.get("notice", "MOTION GRAMMAR SLICE 1A")),
+		"blueprint": blueprint,
+		"asset": asset,
+		"affordance_profile": affordance_profile,
+		"prompt_zh": blueprint.player_identity_text,
+	}
 
 
 func load_recipe_asset(asset_id: String) -> Dictionary:
@@ -300,6 +388,42 @@ func _verify_recipe_entry_hashes(entry: Dictionary) -> String:
 			return "RECIPE_EVIDENCE_HASH_MISMATCH:%s" % filename
 	return ""
 
+
+func _verify_named_evidence_hashes(entry: Dictionary) -> String:
+	var paths: Dictionary = entry.get("evidence_files", {})
+	var expected: Dictionary = entry.get("sha256", {})
+	if paths.is_empty() or expected.is_empty():
+		return "MOTION_GRAMMAR_EVIDENCE_HASHES_MISSING"
+	for filename: Variant in paths.keys():
+		var key := str(filename)
+		if not expected.has(key):
+			return "MOTION_GRAMMAR_EVIDENCE_HASH_MISSING:%s" % key
+		var path := str(paths[key])
+		if not FileAccess.file_exists(path):
+			return "MOTION_GRAMMAR_EVIDENCE_FILE_MISSING:%s" % key
+		if _sha256_file(path) != str(expected[key]).to_lower():
+			return "MOTION_GRAMMAR_EVIDENCE_HASH_MISMATCH:%s" % key
+	return ""
+
+
+func _verify_override_source_hashes(override: Dictionary) -> String:
+	var source_files: Dictionary = override.get("source_files", {})
+	var expected: Dictionary = override.get("source_sha256", {})
+	var bindings := {
+		"processed_sprite.png": str(source_files.get("processed_sprite", "")),
+		"semantic_blueprint.json": str(source_files.get("semantic_blueprint", "")),
+		"anchors.json": str(source_files.get("anchors", "")),
+	}
+	for filename: String in bindings:
+		var path: String = bindings[filename]
+		if path.is_empty() or not expected.has(filename):
+			return "MOTION_GRAMMAR_OVERRIDE_HASH_MISSING:%s" % filename
+		if not FileAccess.file_exists(path):
+			return "MOTION_GRAMMAR_OVERRIDE_FILE_MISSING:%s" % filename
+		if _sha256_file(path) != str(expected[filename]).to_lower():
+			return "MOTION_GRAMMAR_OVERRIDE_HASH_MISMATCH:%s" % filename
+	return ""
+
 func _affordance_profile_from_dict(data: Dictionary) -> Resource:
 	var handle_length := str(data.get("handle_length", ""))
 	var body_length := str(data.get("body_length", ""))
@@ -318,6 +442,11 @@ func _affordance_profile_from_dict(data: Dictionary) -> Resource:
 	profile.mass_distribution = mass_distribution
 	profile.contact_surface = contact_surface
 	profile.rigidity = rigidity
+	profile.has_point = bool(data.get("has_point", contact_surface == "point"))
+	profile.has_edge = bool(data.get("has_edge", contact_surface == "edge"))
+	profile.has_broad_face = bool(data.get("has_broad_face", contact_surface == "broad"))
+	profile.has_barrel = bool(data.get("has_barrel", false))
+	profile.has_stock = bool(data.get("has_stock", false))
 	return profile
 
 func _sha256_file(path: String) -> String:

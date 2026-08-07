@@ -101,6 +101,11 @@ func _test_same_structure_ignores_different_names() -> void:
 	second_profile.mass_distribution = first_profile.mass_distribution
 	second_profile.contact_surface = first_profile.contact_surface
 	second_profile.rigidity = first_profile.rigidity
+	second_profile.has_point = first_profile.has_point
+	second_profile.has_edge = first_profile.has_edge
+	second_profile.has_broad_face = first_profile.has_broad_face
+	second_profile.has_barrel = first_profile.has_barrel
+	second_profile.has_stock = first_profile.has_stock
 	var first_name := "Kitchen Pan Alpha"
 	var second_name := "Unrelated Label Beta"
 	var first: Variant = COMPILER.new().compile(first_profile, asset.anchors_dict(), asset.opaque_bounds)
@@ -142,7 +147,8 @@ func _test_spin_has_stronger_multi_target_coverage() -> void:
 	var pan_profile: Resource = _compiled("frying_pan") as Resource
 	var pan_arena: Variant = _arena_on_hit(pan_profile, 3)
 	var pan_hand: Vector2 = pan_arena._hand_world_position()
-	var pan_front: bool = pan_arena._attack_contains(pan_hand + Vector2(56, 28))
+	var pan_contact: Vector2 = pan_arena._primitive_contact_world(pan_arena.controller.current_primitive, pan_hand)
+	var pan_front: bool = pan_arena._attack_contains(pan_contact)
 	var pan_rear: bool = pan_arena._attack_contains(pan_hand + Vector2(-56, 0))
 	broom_arena.free()
 	pan_arena.free()
@@ -159,9 +165,10 @@ func _test_pan_and_broom_orientation_normalization() -> void:
 	var broom_arena: Variant = _arena_on_hit(_compiled("old_mop") as Resource, 1)
 	var pan_hand: Vector2 = pan_arena._hand_world_position()
 	var broom_hand: Vector2 = broom_arena._hand_world_position()
+	var pan_contact: Vector2 = pan_arena._primitive_contact_world(pan_arena.controller.current_primitive, pan_hand)
 	var ok: bool = pan_asset.orientation_flipped and broom_asset.orientation_flipped
 	ok = ok and pan_asset.tip.x > pan_asset.grip_primary.x and broom_asset.tip.x > broom_asset.grip_primary.x
-	ok = ok and pan_arena._attack_contains(pan_hand + Vector2(50, 0)) and not pan_arena._attack_contains(pan_hand + Vector2(-70, 0))
+	ok = ok and pan_arena._attack_contains(pan_contact) and not pan_arena._attack_contains(pan_hand + Vector2(-70, 0))
 	ok = ok and broom_arena._attack_contains(broom_hand + Vector2(90, 0)) and not broom_arena._attack_contains(broom_hand + Vector2(-120, 0))
 	pan_arena.free()
 	broom_arena.free()

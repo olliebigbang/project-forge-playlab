@@ -98,11 +98,14 @@ func _load_requested_weapon() -> bool:
 	var blueprint_path := _argument_value("--combat-blueprint=", "")
 	var anchors_path := _argument_value("--combat-anchors=", "")
 	var open_round_path := _argument_value("--open-playtest-round=", "")
+	var requested_motion_grammar_id := _argument_value("--motion-grammar-asset=", "")
 	var requested_recipe_id := _argument_value("--recipe-asset=", "")
 	var requested_live_id := _argument_value("--live-weapon=", "")
 	var requested_fixture := _argument_value("--developer-fixture=", "").to_upper()
 	var result: Dictionary
-	if not requested_recipe_id.is_empty():
+	if not requested_motion_grammar_id.is_empty():
+		result = asset_loader.load_motion_grammar_asset(requested_motion_grammar_id)
+	elif not requested_recipe_id.is_empty():
 		result = asset_loader.load_recipe_asset(requested_recipe_id)
 	elif not sprite_path.is_empty() or not blueprint_path.is_empty() or not anchors_path.is_empty():
 		result = asset_loader.load_live(sprite_path, blueprint_path, anchors_path)
@@ -209,7 +212,9 @@ func _update_player_movement(delta: float) -> void:
 		player_position += dodge_direction * 510.0 * delta
 	elif player_hurt <= 0.0:
 		var speed := 205.0
-		if controller.phase in ["startup", "active"]: speed *= motion_profile.movement_commitment
+		if controller.phase in ["startup", "active"]:
+			var primitive: Variant = _current_normal_primitive()
+			speed *= float(primitive.movement_allowed_ratio) if primitive != null else motion_profile.movement_commitment
 		player_position += input_vector * speed * delta
 		if absf(input_vector.x) > 0.05: player_facing = signf(input_vector.x)
 	player_position.x = clampf(player_position.x, ARENA.position.x + 30.0, ARENA.end.x - 30.0)
@@ -218,7 +223,8 @@ func _update_player_movement(delta: float) -> void:
 func _on_attack_started(kind: String, combo_index: int) -> void:
 	attack_connected = false
 	var timing: Dictionary = controller.current_timing()
-	var advance: float = 17.0 * float(timing.get("movement_scale", 1.0))
+	var primitive: Variant = controller.current_primitive if kind == "normal" else null
+	var advance: float = float(primitive.root_motion_distance) if primitive != null else 17.0 * float(timing.get("movement_scale", 1.0))
 	if kind == "dodge": advance = 38.0
 	if kind == "charge" and motion_profile.motion_family == "thrust": advance = 58.0
 	player_position.x += advance * player_facing
@@ -233,7 +239,7 @@ func _resolve_melee_hits() -> void:
 		if enemy.state == "dead": continue
 		if not _attack_contains(enemy.position): continue
 		if not controller.register_hit(enemy.enemy_id): continue
-		var feedback: Resource = FEEDBACK.for_attack(motion_profile, controller.attack_kind, controller.combo_index)
+		var feedback: Resource = FEEDBACK.for_attack(motion_profile, controller.attack_kind, controller.combo_index, controller.current_primitive)
 		var finisher_scale := 1.45 if controller.combo_index >= 3 or controller.attack_kind == "charge" else 1.0
 		if has_meta("debug_hitstop"):
 			feedback.hitstop_seconds = float(get_meta("debug_hitstop")) * finisher_scale
@@ -260,20 +266,20 @@ func _attack_contains(target: Vector2) -> bool:
 	if controller.attack_kind == "normal" and primitive == null:
 		return false
 	var timing: Dictionary = controller.current_timing()
-	var reach: float = motion_profile.reach_pixels * float(timing.get("reach_scale", 1.0))
-	var hitbox_scale: float = float(primitive.hitbox_multiplier) if primitive != null else 1.0
+	var hitbox_length_scale: float = float(primitive.hitbox_length_multiplier) if primitive != null else 1.0
+	var reach: float = motion_profile.reach_pixels * float(timing.get("reach_scale", 1.0)) * hitbox_length_scale
+	var hitbox_scale: float = float(primitive.hitbox_multiplier) * float(primitive.hitbox_width_multiplier) if primitive != null else 1.0
 	var hitbox_thickness: float = motion_profile.hitbox_thickness * hitbox_scale
 	var motion_family: String = str(primitive.motion_family) if primitive != null else str(motion_profile.motion_family)
 	var forward := to_target.x * player_facing
+	var contact_world := _primitive_contact_world(primitive, hand) if primitive != null else hand + Vector2(player_facing * reach * 0.72, 0.0)
 	match motion_family:
 		"bash":
-			var bash_center := hand + Vector2(player_facing * reach * 0.72, 0.0)
-			return target.distance_to(bash_center) <= hitbox_thickness * 0.58
+			return target.distance_to(contact_world) <= hitbox_thickness * 0.58
 		"thrust":
 			return forward >= -12.0 and forward <= reach and absf(to_target.y) <= hitbox_thickness * 0.5
 		"slam":
-			var impact_center := hand + Vector2(player_facing * reach * 0.68, 28.0)
-			return target.distance_to(impact_center) <= hitbox_thickness + (16.0 if controller.attack_kind == "charge" else 0.0)
+			return target.distance_to(contact_world) <= hitbox_thickness + (16.0 if controller.attack_kind == "charge" else 0.0)
 		"spin":
 			return to_target.length() <= reach
 		_:
@@ -577,6 +583,7 @@ func _hand_world_position() -> Vector2:
 func _weapon_pose() -> Dictionary:
 	var angle := -0.18 * player_facing
 	var extension := 0.0
+	var local_offset := Vector2.ZERO
 	if controller.phase != "idle" or controller.holding_attack:
 		var ratio: float = controller.phase_ratio()
 		var motion_ratio := ratio
@@ -591,6 +598,7 @@ func _weapon_pose() -> Dictionary:
 				return {"angle": angle, "extension": extension}
 			angle = lerpf(primitive.start_angle, primitive.end_angle, motion_ratio) * player_facing
 			extension = sin(motion_ratio * PI) * primitive.extension_pixels
+			local_offset = primitive.local_start_offset.lerp(primitive.local_end_offset, motion_ratio)
 		else:
 			match motion_profile.motion_family:
 				"sweep":
@@ -606,12 +614,30 @@ func _weapon_pose() -> Dictionary:
 				"thrust":
 					angle = -0.08 * player_facing
 					extension = sin(motion_ratio * PI) * (48.0 if controller.combo_index >= 3 or controller.attack_kind == "charge" else 32.0)
-	return {"angle": angle, "extension": extension}
+	return {"angle": angle, "extension": extension, "local_offset": local_offset}
 
 func _current_normal_primitive() -> Variant:
 	if controller == null or controller.attack_kind != "normal" or controller.phase == "idle":
 		return null
 	return controller.current_primitive
+
+
+func _primitive_contact_world(primitive: Variant, hand: Vector2) -> Vector2:
+	if primitive == null or asset == null:
+		return hand
+	var anchor: Vector2
+	match str(primitive.contact_anchor):
+		"muzzle": anchor = asset.muzzle
+		"rear_contact": anchor = asset.rear_contact
+		"whole_body": anchor = Vector2(asset.opaque_bounds.get_center())
+		_: anchor = asset.tip
+	var pose: Dictionary = _weapon_pose()
+	var offset := Vector2(float(pose["extension"]) * player_facing, 0.0)
+	var local_offset: Vector2 = pose.get("local_offset", Vector2.ZERO)
+	offset += Vector2(local_offset.x * player_facing, local_offset.y)
+	var local_anchor := anchor - asset.grip_primary
+	local_anchor = Vector2(local_anchor.x * player_facing, local_anchor.y) * motion_profile.render_scale
+	return hand + offset + local_anchor.rotated(float(pose["angle"]))
 
 func _draw() -> void:
 	draw_rect(Rect2(0, 0, 1280, 720), Color("071018"), true)
@@ -649,7 +675,8 @@ func _draw_player() -> void:
 	draw_line(base + Vector2(8 * player_facing, -8), hand, Color("e4c8a8"), 7.0)
 	if motion_profile.grip_mode == "two_hand": draw_line(base + Vector2(-5 * player_facing, -6), second_hand, Color("e4c8a8"), 7.0)
 	var pose := _weapon_pose()
-	var weapon_origin := hand + Vector2(float(pose["extension"]) * player_facing, 0)
+	var local_offset: Vector2 = pose.get("local_offset", Vector2.ZERO)
+	var weapon_origin := hand + Vector2(float(pose["extension"]) * player_facing + local_offset.x * player_facing, local_offset.y)
 	draw_set_transform(weapon_origin, float(pose["angle"]), Vector2(player_facing * motion_profile.render_scale, motion_profile.render_scale))
 	draw_texture_rect(asset.texture, Rect2(-asset.grip_primary, Vector2(asset.canvas_size)), false)
 	draw_set_transform(Vector2.ZERO)
@@ -661,16 +688,18 @@ func _draw_active_hitbox() -> void:
 	if controller.attack_kind == "normal" and primitive == null:
 		return
 	var timing: Dictionary = controller.current_timing()
-	var reach: float = motion_profile.reach_pixels * float(timing.get("reach_scale", 1.0))
-	var hitbox_scale: float = float(primitive.hitbox_multiplier) if primitive != null else 1.0
+	var hitbox_length_scale: float = float(primitive.hitbox_length_multiplier) if primitive != null else 1.0
+	var reach: float = motion_profile.reach_pixels * float(timing.get("reach_scale", 1.0)) * hitbox_length_scale
+	var hitbox_scale: float = float(primitive.hitbox_multiplier) * float(primitive.hitbox_width_multiplier) if primitive != null else 1.0
 	var hitbox_thickness: float = motion_profile.hitbox_thickness * hitbox_scale
 	var motion_family: String = str(primitive.motion_family) if primitive != null else str(motion_profile.motion_family)
 	var is_finisher: bool = controller.combo_index >= 3 or controller.attack_kind == "charge"
 	var color := Color(1.0, 0.72, 0.22, 0.42) if is_finisher else Color(1.0, 0.38, 0.22, 0.28)
+	var contact_world := _primitive_contact_world(primitive, hand) if primitive != null else hand + Vector2(player_facing * reach * 0.72, 0.0)
 	match motion_family:
-		"bash": draw_circle(hand + Vector2(player_facing * reach * 0.72, 0.0), hitbox_thickness * 0.58, color)
+		"bash": draw_circle(contact_world, hitbox_thickness * 0.58, color)
 		"thrust": draw_rect(Rect2(hand + Vector2(0 if player_facing > 0 else -reach, -hitbox_thickness * 0.5), Vector2(reach, hitbox_thickness)), color, true)
-		"slam": draw_circle(hand + Vector2(player_facing * reach * 0.68, 28), hitbox_thickness + (10.0 if is_finisher else 0.0), color)
+		"slam": draw_circle(contact_world, hitbox_thickness + (10.0 if is_finisher else 0.0), color)
 		"spin": draw_arc(hand, reach, 0.0, TAU, 48, color, 28.0)
 		_:
 			var half_arc := deg_to_rad(motion_profile.swing_arc_degrees * 0.5)
@@ -726,14 +755,14 @@ func _capture_evidence(directory: String) -> void:
 	_cleanup_enemies()
 	var hit_enemy: Node2D = _spawn_enemy(ENEMY.PUPPET, Vector2(520, 410))
 	controller.attack_kind = "normal"; controller.combo_index = 1; controller.current_primitive = motion_profile.combo_recipe.primitive_for(1); controller.phase = "active"; controller.phase_duration = 0.1
-	var normal_feedback: Resource = FEEDBACK.for_attack(motion_profile, "normal", 1)
+	var normal_feedback: Resource = FEEDBACK.for_attack(motion_profile, "normal", 1, controller.current_primitive)
 	hit_enemy.apply_hit(10.0, Vector2(normal_feedback.knockback_strength, 0), normal_feedback.stagger_strength, normal_feedback.recoil_degrees)
 	_spawn_impact(hit_enemy.position, normal_feedback.particle_scale, normal_feedback.impact_tier, normal_feedback.ring_count)
 	hit_enemy.simulate(0.035, player_position); _update_particles(0.035)
 	capture_caption = "Normal hit"; await _capture_frame(directory.path_join("normal_hit_feedback.png"))
 	_cleanup_enemies(); particles.clear()
 	hit_enemy = _spawn_enemy(ENEMY.PUPPET, Vector2(520, 410)); controller.combo_index = 3; controller.current_primitive = motion_profile.combo_recipe.primitive_for(3); shake_strength = 0.0
-	var finisher_feedback: Resource = FEEDBACK.for_attack(motion_profile, "normal", 3)
+	var finisher_feedback: Resource = FEEDBACK.for_attack(motion_profile, "normal", 3, controller.current_primitive)
 	hit_enemy.apply_hit(10.0, Vector2(finisher_feedback.knockback_strength, -finisher_feedback.launch_strength), finisher_feedback.stagger_strength, finisher_feedback.recoil_degrees)
 	_spawn_impact(hit_enemy.position, finisher_feedback.particle_scale, finisher_feedback.impact_tier, finisher_feedback.ring_count)
 	hit_enemy.simulate(0.055, player_position); _update_particles(0.055)

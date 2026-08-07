@@ -13,7 +13,7 @@ extends Resource
 @export var impact_tier := "light"
 @export var ring_count := 0
 
-static func for_attack(profile: Resource, attack_kind: String, combo_index: int) -> Resource:
+static func for_attack(profile: Resource, attack_kind: String, combo_index: int, primitive: Variant = null) -> Resource:
 	var feedback: Variant = load("res://scripts/combat_feel/impact_feedback_profile.gd").new()
 	match profile.tempo:
 		"rapid":
@@ -70,4 +70,9 @@ static func for_attack(profile: Resource, attack_kind: String, combo_index: int)
 		feedback.particle_scale = 0.92
 		feedback.stagger_strength = 0.48
 		feedback.impact_tier = "light"
+	if primitive != null:
+		feedback.knockback_strength *= float(primitive.knockback_multiplier)
+		feedback.stagger_strength *= float(primitive.stagger_multiplier)
+		feedback.hitstop_seconds *= float(primitive.hitstop_multiplier)
+		feedback.camera_shake_strength *= float(primitive.camera_kick_multiplier)
 	return feedback

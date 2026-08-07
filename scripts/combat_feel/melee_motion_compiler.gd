@@ -13,7 +13,7 @@ const IMPACT_TO_MOTION := {
 	"whole_body": ["slam", "whole_body"],
 }
 
-const UNSUPPORTED := "unsupported"
+const UNSUPPORTED := "UNSUPPORTED_AFFORDANCE_FOR_SLICE_1A"
 const HANDLE_LENGTHS: PackedStringArray = ["short", "medium", "long"]
 const BODY_LENGTHS: PackedStringArray = ["short", "medium", "long"]
 const MASS_DISTRIBUTIONS: PackedStringArray = ["rear", "balanced", "front"]
@@ -32,6 +32,8 @@ func compile(source: Variant, detail: Variant, alpha_bounds: Rect2i = Rect2i()) 
 func _compile_affordance(affordance_profile: Resource, anchor_data: Dictionary, alpha_bounds: Rect2i) -> Variant:
 	if not _inputs_are_valid(affordance_profile, anchor_data, alpha_bounds):
 		return UNSUPPORTED
+	if _matches_barrel_stock(affordance_profile):
+		return _compile_barrel_stock(affordance_profile, anchor_data, alpha_bounds)
 	if _matches_short_front_broad(affordance_profile):
 		return _compile_short_front_broad(affordance_profile, anchor_data, alpha_bounds)
 	if _matches_long_broad(affordance_profile):
@@ -66,6 +68,7 @@ func _compile_legacy(blueprint: WeaponBlueprint, asset: WeaponVisualAsset) -> Re
 
 func _compile_legacy_combo_recipe(base_family: String) -> Resource:
 	var recipe: Variant = RECIPE.new()
+	recipe.compile_reason = "legacy Blueprint plus visual compatibility path"
 	match base_family:
 		"slam":
 			recipe.hit_1 = _primitive("slam", -1.42, 0.76, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
@@ -79,6 +82,8 @@ func _compile_legacy_combo_recipe(base_family: String) -> Resource:
 			recipe.hit_1 = _primitive("sweep", -1.18, 1.02, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
 			recipe.hit_2 = _primitive("sweep", 1.02, -1.10, 0.0, 1.06, 1.08, 1.08, 1.0, 1.08, 1.0)
 			recipe.hit_3 = _primitive("sweep", -1.58, 1.24, 0.0, 1.23, 1.30, 1.34, 1.18, 1.20, 1.0)
+	recipe.charge_attack = _primitive(base_family, -1.58, 1.24, 0.0, 1.28, 1.35, 1.38, 1.24, 0.72, 1.15)
+	recipe.dodge_attack = _primitive(base_family, -0.92, 0.82, 0.0, 0.68, 0.95, 0.72, 1.12, 1.35, 1.0)
 	return recipe
 
 
@@ -104,9 +109,22 @@ func _compile_short_front_broad(
 	profile.impact_sharpness = 1.30
 	profile.render_scale = 1.18
 	var recipe: Variant = RECIPE.new()
-	recipe.hit_1 = _primitive("bash", -0.74, 0.32, 0.0, 0.42, 0.85, 0.48, 0.86, 0.48, 0.78)
-	recipe.hit_2 = _primitive("bash", 0.64, -0.40, 0.0, 0.46, 0.90, 0.52, 0.90, 0.42, 0.82)
-	recipe.hit_3 = _primitive("slam", -1.78, 1.05, 0.0, 0.90, 1.15, 1.05, 1.00, 0.32, 1.05)
+	recipe.compile_reason = "short handle + front mass + broad face"
+	recipe.hit_1 = _primitive("bash", -0.74, 0.32, 0.0, 0.42, 0.85, 0.48, 0.86, 0.48, 0.78, {
+		"root_motion_distance": 8.0, "hitbox_width_multiplier": 0.88, "hitbox_length_multiplier": 0.82,
+		"hitstop_multiplier": 1.20, "camera_kick_multiplier": 1.12, "movement_allowed_ratio": 0.05,
+	})
+	recipe.hit_2 = _primitive("bash", 0.64, -0.40, 0.0, 0.46, 0.90, 0.52, 0.90, 0.42, 0.82, {
+		"root_motion_distance": 8.0, "hitbox_width_multiplier": 0.90, "hitbox_length_multiplier": 0.86,
+		"hitstop_multiplier": 1.20, "camera_kick_multiplier": 1.12, "movement_allowed_ratio": 0.05,
+	})
+	recipe.hit_3 = _primitive("slam", -1.78, 1.05, 0.0, 0.90, 1.15, 1.15, 1.00, 0.32, 1.05, {
+		"root_motion_distance": 10.0, "hitbox_width_multiplier": 1.02, "hitbox_length_multiplier": 0.90,
+		"knockback_multiplier": 1.12, "stagger_multiplier": 1.18, "hitstop_multiplier": 1.22,
+		"camera_kick_multiplier": 1.22, "movement_allowed_ratio": 0.0,
+	})
+	recipe.charge_attack = _primitive("slam", -1.92, 1.12, 0.0, 1.0, 1.18, 1.24, 1.04, 0.30, 1.08)
+	recipe.dodge_attack = _primitive("bash", -0.52, 0.28, 8.0, 0.72, 0.90, 0.78, 0.92, 1.10, 0.84)
 	profile.combo_recipe = recipe
 	return profile
 
@@ -133,9 +151,74 @@ func _compile_long_broad(
 	profile.impact_sharpness = 0.96
 	profile.render_scale = 1.28
 	var recipe: Variant = RECIPE.new()
-	recipe.hit_1 = _primitive("sweep", -1.35, 1.15, 0.0, 0.95, 1.00, 0.92, 1.08, 1.12, 1.15)
-	recipe.hit_2 = _primitive("thrust", -0.05, -0.05, 42.0, 1.08, 0.92, 0.98, 1.18, 1.35, 1.05)
-	recipe.hit_3 = _primitive("spin", -2.85, 3.25, 0.0, 1.18, 1.18, 1.22, 1.32, 1.18, 1.35)
+	recipe.compile_reason = "long handle + long body + broad whole-body contact without barrel"
+	recipe.hit_1 = _primitive("sweep", -1.35, 1.15, 0.0, 0.95, 1.00, 0.92, 1.08, 1.12, 1.15, {
+		"root_motion_distance": 18.0, "hitbox_width_multiplier": 1.25, "hitbox_length_multiplier": 1.12,
+		"knockback_multiplier": 1.20, "hitstop_multiplier": 0.75, "camera_kick_multiplier": 0.82,
+		"movement_allowed_ratio": 0.25,
+	})
+	recipe.hit_2 = _primitive("thrust", -0.05, -0.05, 42.0, 1.08, 0.92, 0.98, 1.18, 1.35, 1.05, {
+		"root_motion_distance": 24.0, "hitbox_width_multiplier": 0.82, "hitbox_length_multiplier": 1.18,
+		"knockback_multiplier": 1.18, "hitstop_multiplier": 0.78, "movement_allowed_ratio": 0.20,
+	})
+	recipe.hit_3 = _primitive("spin", -2.85, 3.25, 0.0, 1.18, 1.18, 1.22, 1.32, 1.18, 1.35, {
+		"root_motion_distance": 16.0, "contact_anchor": "whole_body", "hitbox_width_multiplier": 1.25,
+		"hitbox_length_multiplier": 1.20, "knockback_multiplier": 1.28, "hitstop_multiplier": 0.78,
+		"camera_kick_multiplier": 0.92, "movement_allowed_ratio": 0.20,
+	})
+	recipe.charge_attack = _primitive("sweep", -1.72, 1.42, 0.0, 1.12, 1.22, 1.28, 1.25, 0.82, 1.25)
+	recipe.dodge_attack = _primitive("sweep", -1.10, 0.92, 0.0, 0.72, 0.94, 0.76, 1.12, 1.28, 1.12)
+	profile.combo_recipe = recipe
+	return profile
+
+
+func _compile_barrel_stock(
+	affordance_profile: Resource,
+	anchor_data: Dictionary,
+	alpha_bounds: Rect2i
+) -> Resource:
+	var profile: Variant = _base_profile(affordance_profile, anchor_data, alpha_bounds)
+	profile.motion_family = "thrust"
+	profile.weight_class = "heavy"
+	profile.reach_class = "long"
+	profile.tempo = "committed"
+	profile.contact_mode = "point"
+	profile.combo_style = "front_thrust_body_sweep_rear_bash"
+	profile.charge_style = "rear_stock_commitment"
+	profile.dodge_attack_style = "advancing_thrust"
+	profile.configure_timing_from_tempo()
+	profile.reach_pixels = _long_reach(anchor_data, alpha_bounds)
+	profile.swing_arc_degrees = 132.0
+	profile.hitbox_thickness = 46.0
+	profile.control_strength = 1.04
+	profile.impact_sharpness = 1.18
+	profile.render_scale = 1.26
+	var recipe: Variant = RECIPE.new()
+	recipe.compile_reason = "long rigid body + barrel + stock"
+	recipe.hit_1 = _primitive("thrust", -0.06, -0.06, 38.0, 0.88, 0.92, 0.94, 1.18, 1.25, 0.82, {
+		"contact_anchor": "muzzle", "root_motion_distance": 32.0,
+		"hitbox_width_multiplier": 0.65, "hitbox_length_multiplier": 1.24,
+		"knockback_multiplier": 0.92, "hitstop_multiplier": 0.88, "movement_allowed_ratio": 0.12,
+	})
+	recipe.hit_2 = _primitive("sweep", -1.05, 0.92, 0.0, 0.98, 1.02, 1.00, 1.04, 1.08, 1.05, {
+		"contact_anchor": "whole_body", "root_motion_distance": 22.0,
+		"hitbox_width_multiplier": 1.05, "hitbox_length_multiplier": 1.02,
+		"knockback_multiplier": 1.06, "movement_allowed_ratio": 0.10,
+	})
+	recipe.hit_3 = _primitive("bash", 1.82, 3.02, 0.0, 1.08, 1.08, 1.25, 0.94, 1.12, 1.10, {
+		"contact_anchor": "rear_contact", "root_motion_distance": 28.0,
+		"hitbox_width_multiplier": 1.10, "hitbox_length_multiplier": 0.90,
+		"knockback_multiplier": 1.22, "stagger_multiplier": 1.35, "hitstop_multiplier": 1.30,
+		"camera_kick_multiplier": 1.28, "movement_allowed_ratio": 0.0,
+	})
+	recipe.charge_attack = _primitive("bash", 1.62, 3.08, 0.0, 1.18, 1.18, 1.28, 1.02, 0.86, 1.14, {
+		"contact_anchor": "rear_contact", "root_motion_distance": 30.0,
+		"stagger_multiplier": 1.38, "hitstop_multiplier": 1.32,
+	})
+	recipe.dodge_attack = _primitive("thrust", -0.04, -0.04, 44.0, 0.72, 0.92, 0.78, 1.20, 1.38, 0.78, {
+		"contact_anchor": "muzzle", "root_motion_distance": 38.0,
+		"hitbox_width_multiplier": 0.68, "hitbox_length_multiplier": 1.24,
+	})
 	profile.combo_recipe = recipe
 	return profile
 
@@ -159,7 +242,8 @@ func _primitive(
 	recovery_multiplier: float,
 	reach_multiplier: float,
 	movement_multiplier: float,
-	hitbox_multiplier: float
+	hitbox_multiplier: float,
+	extras: Dictionary = {}
 ) -> Resource:
 	var primitive: Variant = PRIMITIVE.new()
 	primitive.motion_family = family
@@ -172,11 +256,15 @@ func _primitive(
 	primitive.reach_multiplier = reach_multiplier
 	primitive.movement_multiplier = movement_multiplier
 	primitive.hitbox_multiplier = hitbox_multiplier
+	for key: String in extras:
+		primitive.set(key, extras[key])
 	return primitive
 
 
 func _inputs_are_valid(affordance_profile: Resource, anchor_data: Dictionary, alpha_bounds: Rect2i) -> bool:
 	if affordance_profile == null or alpha_bounds.size.x <= 0 or alpha_bounds.size.y <= 0:
+		return false
+	if affordance_profile.has_method("validation_errors") and not affordance_profile.validation_errors().is_empty():
 		return false
 	if affordance_profile.handle_length not in HANDLE_LENGTHS:
 		return false
@@ -196,13 +284,22 @@ func _matches_short_front_broad(affordance_profile: Resource) -> bool:
 	return affordance_profile.handle_length == "short" \
 		and affordance_profile.body_length == "short" \
 		and affordance_profile.mass_distribution == "front" \
-		and affordance_profile.contact_surface == "broad"
+		and affordance_profile.contact_surface == "broad" \
+		and affordance_profile.has_broad_face
 
 
 func _matches_long_broad(affordance_profile: Resource) -> bool:
 	return affordance_profile.handle_length == "long" \
 		and affordance_profile.body_length == "long" \
-		and affordance_profile.contact_surface in ["broad", "whole_body"]
+		and affordance_profile.contact_surface in ["broad", "whole_body"] \
+		and not affordance_profile.has_barrel
+
+
+func _matches_barrel_stock(affordance_profile: Resource) -> bool:
+	return affordance_profile.body_length == "long" \
+		and affordance_profile.rigidity == "rigid" \
+		and affordance_profile.has_barrel \
+		and affordance_profile.has_stock
 
 
 func _short_reach(anchor_data: Dictionary, alpha_bounds: Rect2i) -> float:

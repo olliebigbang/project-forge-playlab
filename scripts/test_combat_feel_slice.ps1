@@ -16,6 +16,13 @@ $RecipeOutput = Get-Content -LiteralPath $RecipeLog.FullName -Raw
 Remove-Item -LiteralPath $RecipeLog.FullName
 if ($RecipeExit -ne 0 -or $RecipeOutput -match "SCRIPT ERROR|Parse Error|Compile Error|ERROR: FAIL|failed=[1-9]") { exit 1 }
 
+$MotionGrammarLog = New-TemporaryFile
+& $Godot --headless --verbose --path $PlaylabRoot --script "res://tests/test_motion_grammar_slice_1a.gd" 2>&1 | Tee-Object -FilePath $MotionGrammarLog.FullName
+$MotionGrammarExit = $LASTEXITCODE
+$MotionGrammarOutput = Get-Content -LiteralPath $MotionGrammarLog.FullName -Raw
+Remove-Item -LiteralPath $MotionGrammarLog.FullName
+if ($MotionGrammarExit -ne 0 -or $MotionGrammarOutput -match "SCRIPT ERROR|Parse Error|Compile Error|ERROR: FAIL|failed=[1-9]") { exit 1 }
+
 $LegacySceneLog = New-TemporaryFile
 & $Godot --headless --verbose --path $PlaylabRoot "res://scenes/combat_feel_slice_0.tscn" -- --mode=combat-feel-slice-0 --live-weapon=giant_wooden_spoon --smoke-seconds=0.2 2>&1 | Tee-Object -FilePath $LegacySceneLog.FullName
 $LegacySceneExit = $LASTEXITCODE
@@ -30,6 +37,15 @@ foreach ($RecipeAsset in @("frying_pan", "old_mop")) {
     $SceneOutput = Get-Content -LiteralPath $SceneLog.FullName -Raw
     Remove-Item -LiteralPath $SceneLog.FullName
     if ($SceneExit -ne 0 -or $SceneOutput -match "SCRIPT ERROR|Parse Error|Compile Error") { exit 1 }
+}
+
+foreach ($MotionGrammarAsset in @("frying_pan", "old_mop", "shotgun_melee")) {
+    $SceneLog = New-TemporaryFile
+    & $Godot --headless --verbose --path $PlaylabRoot "res://scenes/combat_feel_slice_0.tscn" -- --mode=combat-feel-slice-0 --motion-grammar-asset=$MotionGrammarAsset --smoke-seconds=0.2 2>&1 | Tee-Object -FilePath $SceneLog.FullName
+    $SceneExit = $LASTEXITCODE
+    $SceneOutput = Get-Content -LiteralPath $SceneLog.FullName -Raw
+    Remove-Item -LiteralPath $SceneLog.FullName
+    if ($SceneExit -ne 0 -or $SceneOutput -match "SCRIPT ERROR|Parse Error|Compile Error|UNSUPPORTED_AFFORDANCE") { exit 1 }
 }
 
 Write-Output "COMBAT_FEEL_SLICE_0_GODOT_PARSE=PASS"

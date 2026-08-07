@@ -4,6 +4,9 @@ extends Resource
 @export var hit_1: Resource
 @export var hit_2: Resource
 @export var hit_3: Resource
+@export var charge_attack: Resource
+@export var dodge_attack: Resource
+@export var compile_reason := ""
 
 
 func primitive_for(combo_index: int) -> Resource:
@@ -19,6 +22,11 @@ func primitives() -> Array[Resource]:
 	return values
 
 
+func all_primitives() -> Array[Resource]:
+	var values: Array[Resource] = [hit_1, hit_2, hit_3, charge_attack, dodge_attack]
+	return values
+
+
 func primitive_sequence() -> PackedStringArray:
 	var sequence := PackedStringArray()
 	for primitive: Variant in primitives():
@@ -28,23 +36,15 @@ func primitive_sequence() -> PackedStringArray:
 
 func signature() -> String:
 	var segments: Array[String] = []
-	for primitive: Variant in primitives():
+	for primitive: Variant in all_primitives():
 		if primitive == null:
 			segments.append("missing")
 			continue
-		segments.append("%s:%.3f,%.3f,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f" % [
-			primitive.motion_family,
-			primitive.start_angle,
-			primitive.end_angle,
-			primitive.extension_pixels,
-			primitive.startup_multiplier,
-			primitive.active_multiplier,
-			primitive.recovery_multiplier,
-			primitive.reach_multiplier,
-			primitive.movement_multiplier,
-			primitive.hitbox_multiplier,
-		])
-	return "|".join(segments)
+		segments.append(JSON.stringify(primitive.to_dict()))
+	var context := HashingContext.new()
+	context.start(HashingContext.HASH_SHA256)
+	context.update("|".join(segments).to_utf8_buffer())
+	return context.finish().hex_encode()
 
 
 func validation_errors() -> Array[String]:
@@ -66,6 +66,18 @@ func validation_errors() -> Array[String]:
 		errors.append("HIT_1_AND_HIT_3_SHARE_INSTANCE")
 	if hit_2 != null and hit_3 != null and is_same(hit_2, hit_3):
 		errors.append("HIT_2_AND_HIT_3_SHARE_INSTANCE")
+	for entry: Dictionary in [
+		{"name": "CHARGE", "primitive": charge_attack},
+		{"name": "DODGE", "primitive": dodge_attack},
+	]:
+		var special: Variant = entry["primitive"]
+		if special == null:
+			errors.append("MISSING_%s_ATTACK" % str(entry["name"]))
+			continue
+		for error: String in special.validation_errors():
+			errors.append("%s_%s" % [str(entry["name"]), error])
+	if compile_reason.is_empty():
+		errors.append("MISSING_COMPILE_REASON")
 	return errors
 
 
@@ -77,4 +89,8 @@ func to_dict() -> Dictionary:
 		"hit_1": first.to_dict() if first != null else null,
 		"hit_2": second.to_dict() if second != null else null,
 		"hit_3": third.to_dict() if third != null else null,
+		"charge_attack": charge_attack.to_dict() if charge_attack != null else null,
+		"dodge_attack": dodge_attack.to_dict() if dodge_attack != null else null,
+		"recipe_signature": signature(),
+		"compile_reason": compile_reason,
 	}

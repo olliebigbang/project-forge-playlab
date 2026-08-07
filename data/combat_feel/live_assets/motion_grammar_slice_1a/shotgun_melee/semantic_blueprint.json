@@ -1,0 +1,53 @@
+{
+  "identity": {
+    "canonical_name_zh": "霰弹枪",
+    "canonical_name_en": "shotgun",
+    "display_name_zh": "银色霰弹枪",
+    "display_name_en": "Silver Shotgun",
+    "category": "tool",
+    "required_identity_parts": [
+      "barrel",
+      "trigger and grip",
+      "stock",
+      "pump/foregrip"
+    ],
+    "material_hints": [
+      "silver metal",
+      "polished steel"
+    ],
+    "silhouette_hints": [
+      "elongated firearm silhouette with wide barrel and shoulder stock"
+    ],
+    "optional_decorations": [
+      "engraved silver filigree",
+      "polished shine highlights"
+    ]
+  },
+  "combat": {
+    "behavior_family": "sustained_ranged",
+    "delivery": "projectile_stream",
+    "impact_mode": "emitter_projectiles",
+    "effect_type": "normal",
+    "drawback": "overheat",
+    "cadence_hint": "continuous"
+  },
+  "visual": {
+    "prompt_en": "A silver shotgun, isolated object, side view, complete object visible, elongated firearm silhouette with wide barrel, pump foregrip, trigger and grip, shoulder stock, polished steel and silver metal finish, subtle engraved filigree detailing, small functional Forge emitter fixture near the muzzle, clean studio lighting, high detail",
+    "negative_prompt_en": "not a sword, not a bow, not a cannon, not a laser gun, not a generic sci-fi weapon, no background clutter, no other objects",
+    "must_preserve": [
+      "barrel",
+      "trigger and grip",
+      "stock",
+      "pump/foregrip",
+      "elongated firearm silhouette with wide barrel and shoulder stock"
+    ],
+    "must_not_replace_with": [
+      "sword",
+      "bow",
+      "cannon",
+      "laser rifle",
+      "generic sci-fi weapon"
+    ]
+  },
+  "confidence": 0.9
+}

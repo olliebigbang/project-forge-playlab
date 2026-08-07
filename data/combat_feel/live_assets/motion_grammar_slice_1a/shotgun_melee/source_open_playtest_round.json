@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-08-06T13:42:02.192Z",
+  "session_id": "open-20260806t133353124z-4c7c4825",
+  "round_id": "R0006-6a492611",
+  "revision": 6,
+  "user_input": "一把银色霰弹枪，连续射击敌人",
+  "semantic_summary": "银色霰弹枪 · sustained_ranged · normal",
+  "behavior_family": "sustained_ranged",
+  "canonical_identity": "霰弹枪",
+  "display_name": "银色霰弹枪",
+  "raw_image_path": "tools/open_playtest/output/sessions/open-20260806t133353124z-4c7c4825/rounds/R0006-6a492611/flux_raw.png",
+  "processed_sprite_path": "tools/open_playtest/output/sessions/open-20260806t133353124z-4c7c4825/rounds/R0006-6a492611/processed_sprite.png",
+  "identity_confirmed": true,
+  "anchor_confirmed": true,
+  "entered_training": true,
+  "user_notes": "枪管和握把反了",
+  "subjective_rating": null,
+  "keep_idea": null,
+  "saved_locally": false,
+  "total_forge_seconds": 15.486,
+  "stage_timings": {
+    "semantic_compiling": 7.656,
+    "image_generating": 6.219,
+    "background_removing": 1.594,
+    "sprite_processing": 0.047
+  },
+  "status": "completed",
+  "failure_stage": "",
+  "failure_reason": ""
+}

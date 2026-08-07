@@ -5,9 +5,9 @@
   "source_session_id": "open-20260806t133353124z-4c7c4825",
   "source_round_id": "R0006-6a492611",
   "source_files": {
-    "processed_sprite": "res://tools/open_playtest/output/sessions/open-20260806t133353124z-4c7c4825/rounds/R0006-6a492611/processed_sprite.png",
-    "semantic_blueprint": "res://tools/open_playtest/output/sessions/open-20260806t133353124z-4c7c4825/rounds/R0006-6a492611/semantic_blueprint.json",
-    "anchors": "res://tools/open_playtest/output/sessions/open-20260806t133353124z-4c7c4825/rounds/R0006-6a492611/anchors.json"
+    "processed_sprite": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/shotgun_melee/processed_sprite.png",
+    "semantic_blueprint": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/shotgun_melee/semantic_blueprint.json",
+    "anchors": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/shotgun_melee/source_anchors.json"
   },
   "source_sha256": {
     "processed_sprite.png": "4591b56581f375138e58a4712c7fda4b9a22b050d4830748aaa6ef0495af5e02",

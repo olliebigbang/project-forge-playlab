@@ -1,0 +1,57 @@
+{
+  "schema": "forge-motion-grammar-slice-1a-assets-v1",
+  "notice": "REAL PLAYER-CONFIRMED ASSETS; SHOTGUN MELEE INTENT IS DEVELOPER-ONLY",
+  "assets": [
+    {
+      "id": "frying_pan",
+      "source_recipe_asset_id": "frying_pan",
+      "affordance_profile": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/frying_pan_affordance.json",
+      "evidence_files": {
+        "object_affordance_profile.json": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/frying_pan_affordance.json"
+      },
+      "sha256": {
+        "object_affordance_profile.json": "a0c102b4ddc113f13db18465f412487bb1c679baf28363c4ab6949264dfc5ed1"
+      }
+    },
+    {
+      "id": "old_mop",
+      "source_recipe_asset_id": "old_mop",
+      "affordance_profile": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/old_mop_affordance.json",
+      "evidence_files": {
+        "object_affordance_profile.json": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/old_mop_affordance.json"
+      },
+      "sha256": {
+        "object_affordance_profile.json": "2e598c06f454318f9eda90f1882ce4ed76889ef44c9357098608ea5415bce561"
+      }
+    },
+    {
+      "id": "shotgun_melee",
+      "developer_only": true,
+      "normal_player_flow": false,
+      "source_session_id": "open-20260806t133353124z-4c7c4825",
+      "source_round_id": "R0006-6a492611",
+      "sprite": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/shotgun_melee/processed_sprite.png",
+      "blueprint": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/shotgun_melee/semantic_blueprint.json",
+      "source_anchors": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/shotgun_melee/source_anchors.json",
+      "manifest": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/shotgun_melee/source_open_playtest_round.json",
+      "override": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/shotgun_melee_override.json",
+      "affordance_profile": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/shotgun_melee/object_affordance_profile.json",
+      "evidence_files": {
+        "processed_sprite.png": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/shotgun_melee/processed_sprite.png",
+        "semantic_blueprint.json": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/shotgun_melee/semantic_blueprint.json",
+        "source_anchors.json": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/shotgun_melee/source_anchors.json",
+        "source_open_playtest_round.json": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/shotgun_melee/source_open_playtest_round.json",
+        "shotgun_melee_override.json": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/shotgun_melee_override.json",
+        "object_affordance_profile.json": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/shotgun_melee/object_affordance_profile.json"
+      },
+      "sha256": {
+        "processed_sprite.png": "4591b56581f375138e58a4712c7fda4b9a22b050d4830748aaa6ef0495af5e02",
+        "semantic_blueprint.json": "71df05ef1f1451a0ce44b4dde90c88b958c895b9b32115d88247a79e89417259",
+        "source_anchors.json": "9ddb558f1e4f44ad02f12bdaf251acf260c00d9b2e74b74c0462c4abae9de830",
+        "source_open_playtest_round.json": "005d4fac1447956313986bc5fa7885bfadf75c75b20a5306dc3c5de16763bea4",
+        "shotgun_melee_override.json": "345ffe53fd098524d340dcb0bad3251b0013057a4cf0bf202456707510d5a7dc",
+        "object_affordance_profile.json": "acdcb0034dd16f19b2064f7a2f50009ed73c203572ec11e14e475ed1db680e33"
+      }
+    }
+  ]
+}

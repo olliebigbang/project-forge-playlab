@@ -1,3 +1,5 @@
 /data/combat_feel/live_assets/revision_a/giant_wooden_spoon/*.json -text
 /data/combat_feel/live_assets/recipe_slice_1b/*.json -text
 /data/combat_feel/live_assets/recipe_slice_1b/*/*.json -text
+/data/combat_feel/live_assets/motion_grammar_slice_1a/*.json -text
+/data/combat_feel/live_assets/motion_grammar_slice_1a/*/*.json -text

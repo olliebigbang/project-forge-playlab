@@ -1,0 +1,12 @@
+{
+  "handle_length": "short",
+  "body_length": "short",
+  "rigidity": "rigid",
+  "mass_distribution": "front",
+  "contact_surface": "broad",
+  "has_point": false,
+  "has_edge": false,
+  "has_broad_face": true,
+  "has_barrel": false,
+  "has_stock": false
+}
