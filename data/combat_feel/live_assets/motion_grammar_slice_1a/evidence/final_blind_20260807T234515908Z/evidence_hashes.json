@@ -1,0 +1,24 @@
+{
+  "schema": "forge-motion-grammar-slice-1a-final-blind-evidence-v1",
+  "session_id": "blind-20260807T234515908Z-514d3e4f",
+  "source": "Godot user_data Motion Grammar Slice 1A local blind results",
+  "source_files_matched_exactly": true,
+  "files": {
+    "blind_comparison_result.jsonl": {
+      "bytes": 1769,
+      "sha256": "9940ba750078c4aebb556f792826ca6cf79bb68705c838cf51cd3f7bc7e1819d"
+    },
+    "blind_run_A.json": {
+      "bytes": 452,
+      "sha256": "2966331f084a61b3719c1f4374e9de5104dacd74f98bcff7e3a717a0706f707f"
+    },
+    "blind_run_B.json": {
+      "bytes": 450,
+      "sha256": "6ed3a9646661e216524ca027b73771aa357a1d1e14822cf25e41715ea5741991"
+    },
+    "blind_run_C.json": {
+      "bytes": 450,
+      "sha256": "3bf6b9288f8f158c9f2352940f9c665ebf965685a77eb18230d58337bcd479d9"
+    }
+  }
+}

@@ -56,8 +56,9 @@ func _run() -> void:
 	_test_37_buffer_does_not_switch_current_primitive_early()
 	_test_38_hitstop_keeps_current_primitive_locked()
 	_test_39_slice_executes_current_primitive_consistently()
-	_test_40_charge_and_dodge_keep_legacy_motion_path()
+	_test_40_charge_and_dodge_use_recipe_primitives()
 	_test_41_slice_compiles_legacy_live_without_affordance()
+	_test_42_attack_press_enters_visible_startup_immediately()
 	print("COMBAT_FEEL_SLICE_0_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -318,23 +319,24 @@ func _test_38_hitstop_keeps_current_primitive_locked() -> void:
 func _test_39_slice_executes_current_primitive_consistently() -> void:
 	var source := _text("res://scripts/combat_feel/combat_feel_slice_0.gd")
 	var attack_source := _function_source(source, "func _attack_contains", "func _current_damage")
-	var pose_source := _function_source(source, "func _weapon_pose", "func _current_normal_primitive")
+	var pose_source := _function_source(source, "func _weapon_pose", "func _current_attack_primitive")
 	var hitbox_source := _function_source(source, "func _draw_active_hitbox", "func _draw_real_weapon_comparison")
 	var started_source := _function_source(source, "func _on_attack_started", "func _on_attack_phase_changed")
-	var ok: bool = attack_source.contains("_current_normal_primitive()") and attack_source.contains("primitive.hitbox_multiplier")
+	var ok: bool = attack_source.contains("_current_attack_primitive()") and attack_source.contains("primitive.hitbox_multiplier")
 	ok = ok and pose_source.contains("primitive.start_angle") and pose_source.contains("primitive.end_angle") and pose_source.contains("primitive.extension_pixels")
-	ok = ok and hitbox_source.contains("_current_normal_primitive()") and hitbox_source.contains("primitive.hitbox_multiplier")
-	ok = ok and started_source.contains("controller.current_timing()")
+	ok = ok and hitbox_source.contains("_current_attack_primitive()") and hitbox_source.contains("primitive.hitbox_multiplier")
+	ok = ok and started_source.contains("controller.current_primitive") and started_source.contains("primitive.root_motion_distance")
+	ok = ok and not attack_source.contains("motion_profile.motion_family") and not hitbox_source.contains("motion_profile.motion_family")
 	_check(ok, "39 pose advance collision and debug hitbox share current primitive")
 
-func _test_40_charge_and_dodge_keep_legacy_motion_path() -> void:
+func _test_40_charge_and_dodge_use_recipe_primitives() -> void:
 	var profile: Variant = _mixed_recipe_profile(); profile.motion_family = "thrust"
 	var controller: Variant = CONTROLLER.new(); controller.configure(profile)
-	controller.press_attack(); controller.tick(profile.charge_threshold_seconds + 0.01); controller.release_attack()
-	var charge_ok: bool = controller.attack_kind == "charge" and controller.combo_index == 0 and controller.current_primitive == null
-	controller.reset(); controller.configure(profile); controller.press_dodge(); controller.press_attack(); controller.release_attack()
-	var dodge_ok: bool = controller.attack_kind == "dodge" and controller.combo_index == 0 and controller.current_primitive == null
-	_check(charge_ok and dodge_ok, "40 charge and dodge retain global legacy motion path")
+	controller.press_attack(); controller.tick(profile.charge_threshold_seconds + 0.01)
+	var charge_ok: bool = controller.attack_kind == "charge" and controller.combo_index == 0 and is_same(controller.current_primitive, profile.combo_recipe.charge_attack)
+	controller.reset(); controller.configure(profile); controller.press_dodge(); controller.press_attack()
+	var dodge_ok: bool = controller.attack_kind == "dodge" and controller.combo_index == 0 and is_same(controller.current_primitive, profile.combo_recipe.dodge_attack)
+	_check(charge_ok and dodge_ok, "40 charge and dodge lock their recipe primitives")
 
 func _test_41_slice_compiles_legacy_live_without_affordance() -> void:
 	var loaded: Dictionary = LOADER.new().load_default_live()
@@ -347,6 +349,18 @@ func _test_41_slice_compiles_legacy_live_without_affordance() -> void:
 	var ok: bool = compiled is Resource and compiled.combo_recipe != null and compiled.validation_errors().is_empty()
 	arena.free()
 	_check(ok, "41 slice compiles legacy Live handoff without affordance sidecar")
+
+func _test_42_attack_press_enters_visible_startup_immediately() -> void:
+	var profile: Variant = _mixed_recipe_profile()
+	var controller: Variant = CONTROLLER.new(); controller.configure(profile)
+	controller.press_attack()
+	var immediate: bool = controller.phase == "startup" and controller.priming_attack and is_same(controller.current_primitive, profile.combo_recipe.hit_1)
+	controller.press_attack()
+	immediate = immediate and not controller.buffered_input
+	controller.release_attack()
+	controller.tick(float(controller.current_timing().get("startup", 0.1)) + 0.001)
+	var committed: bool = controller.phase == "active" and controller.attack_kind == "normal" and is_same(controller.current_primitive, profile.combo_recipe.hit_1)
+	_check(immediate and committed, "42 attack press shows hit-one startup on the next frame and release commits it")
 
 func _controller() -> Variant:
 	var controller: Variant = CONTROLLER.new(); controller.configure(_profile()); return controller
@@ -371,6 +385,9 @@ func _mixed_recipe_profile() -> Variant:
 	recipe.hit_1 = _test_primitive("sweep", -1.0, 1.0, 0.0)
 	recipe.hit_2 = _test_primitive("thrust", -0.08, -0.08, 36.0)
 	recipe.hit_3 = _test_primitive("slam", -1.6, 1.0, 0.0)
+	recipe.charge_attack = _test_primitive("slam", -1.8, 1.1, 0.0)
+	recipe.dodge_attack = _test_primitive("thrust", -0.05, -0.05, 44.0)
+	recipe.compile_reason = "test sweep thrust slam recipe"
 	profile.combo_recipe = recipe
 	return profile
 

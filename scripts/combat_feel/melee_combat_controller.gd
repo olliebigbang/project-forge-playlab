@@ -15,6 +15,7 @@ var buffer_age := 0.0
 var holding_attack := false
 var held_seconds := 0.0
 var charge_state := "none"
+var priming_attack := false
 var dodge_attack_window := 0.0
 var dodge_motion_seconds := 0.0
 var attack_kind := "normal"
@@ -33,7 +34,7 @@ func reset() -> void:
 	phase = "idle"; phase_elapsed = 0.0; phase_duration = 0.0
 	combo_index = 0; combo_idle_seconds = 0.0
 	buffered_input = false; buffer_age = 0.0
-	holding_attack = false; held_seconds = 0.0; charge_state = "none"
+	holding_attack = false; held_seconds = 0.0; charge_state = "none"; priming_attack = false
 	dodge_attack_window = 0.0; dodge_motion_seconds = 0.0
 	attack_kind = "normal"; attack_serial = 0; active_just_started = false
 	current_primitive = null
@@ -41,19 +42,28 @@ func reset() -> void:
 
 func press_attack() -> void:
 	if profile == null: return
+	if priming_attack and holding_attack:
+		return
 	if phase == "idle" and not holding_attack:
+		if dodge_attack_window > 0.0:
+			_start_attack("dodge")
+			return
 		holding_attack = true; held_seconds = 0.0; charge_state = "priming"
+		_begin_priming_normal()
 		return
 	if phase in ["startup", "recovery"] or (phase == "active" and hitstop_remaining > 0.0):
 		buffered_input = true; buffer_age = 0.0
 
 func release_attack() -> void:
-	if not holding_attack or profile == null: return
+	if profile == null or not priming_attack: return
 	holding_attack = false
-	var next_kind := "charge" if held_seconds >= profile.charge_threshold_seconds else "normal"
-	if dodge_attack_window > 0.0 and next_kind == "normal": next_kind = "dodge"
-	charge_state = "released" if next_kind == "charge" else "none"
-	_start_attack(next_kind)
+	priming_attack = false
+	charge_state = "none"
+	attack_serial += 1
+	hit_targets.clear()
+	attack_started.emit("normal", combo_index)
+	if phase == "startup" and phase_elapsed >= phase_duration:
+		_enter_phase("active")
 
 func press_dodge() -> bool:
 	if profile == null: return false
@@ -62,7 +72,8 @@ func press_dodge() -> bool:
 	if phase != "idle":
 		last_cancel_reason = "%s_cancel" % phase
 		phase = "idle"; phase_changed.emit(phase)
-	holding_attack = false; charge_state = "none"
+	holding_attack = false; charge_state = "none"; priming_attack = false
+	current_primitive = null
 	dodge_motion_seconds = 0.18
 	dodge_attack_window = profile.dodge_attack_window_seconds
 	return true
@@ -78,7 +89,8 @@ func tick(delta: float) -> void:
 	active_just_started = false
 	if holding_attack:
 		held_seconds += delta
-		if held_seconds >= profile.charge_threshold_seconds: charge_state = "ready"
+		if priming_attack and held_seconds >= profile.charge_threshold_seconds:
+			_promote_priming_to_charge()
 	dodge_attack_window = maxf(0.0, dodge_attack_window - delta)
 	dodge_motion_seconds = maxf(0.0, dodge_motion_seconds - delta)
 	if hitstop_remaining > 0.0:
@@ -93,6 +105,9 @@ func tick(delta: float) -> void:
 		return
 	phase_elapsed += delta
 	if phase_elapsed < phase_duration: return
+	if phase == "startup" and priming_attack:
+		phase_elapsed = phase_duration
+		return
 	match phase:
 		"startup": _enter_phase("active")
 		"active": _enter_phase("recovery")
@@ -123,13 +138,37 @@ func _start_attack(kind: String) -> void:
 		return
 	attack_kind = kind
 	combo_index = combo_index % 3 + 1 if kind == "normal" else 0
-	if kind == "normal" and profile.combo_recipe != null:
+	if profile.combo_recipe != null:
 		var recipe: Variant = profile.combo_recipe
-		current_primitive = recipe.primitive_for(combo_index)
+		current_primitive = recipe.primitive_for_attack(kind, combo_index)
 	else:
 		current_primitive = null
 	attack_serial += 1; hit_targets.clear(); _enter_phase("startup")
 	attack_started.emit(kind, combo_index)
+
+
+func _begin_priming_normal() -> void:
+	attack_kind = "normal"
+	combo_index = combo_index % 3 + 1
+	current_primitive = profile.combo_recipe.primitive_for(combo_index) if profile.combo_recipe != null else null
+	priming_attack = true
+	hit_targets.clear()
+	_enter_phase("startup")
+
+
+func _promote_priming_to_charge() -> void:
+	if not priming_attack or profile == null:
+		return
+	priming_attack = false
+	holding_attack = false
+	charge_state = "ready"
+	attack_kind = "charge"
+	combo_index = 0
+	current_primitive = profile.combo_recipe.primitive_for_attack("charge") if profile.combo_recipe != null else null
+	attack_serial += 1
+	hit_targets.clear()
+	_enter_phase("startup")
+	attack_started.emit("charge", 0)
 
 func _enter_phase(next_phase: String) -> void:
 	phase = next_phase; phase_elapsed = 0.0

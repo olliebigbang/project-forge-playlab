@@ -64,41 +64,27 @@ func timing_for(attack_kind: String, combo_index: int, primitive: Variant = null
 	var recovery := recovery_seconds
 	var reach_scale := 1.0
 	var movement_scale := 1.0
-	match attack_kind:
-		"charge":
-			startup *= 1.28
-			active *= 1.35
-			recovery *= 1.38
-			reach_scale = 1.24
-			movement_scale = 0.72
-		"dodge":
-			startup *= 0.68
-			active *= 0.95
-			recovery *= 0.72
-			reach_scale = 1.12
-			movement_scale = 1.35
-		_:
-			var selected_primitive: Variant = primitive
-			if selected_primitive == null and combo_recipe != null:
-				var recipe: Variant = combo_recipe
-				selected_primitive = recipe.primitive_for(combo_index)
-			if selected_primitive != null:
-				startup *= selected_primitive.startup_multiplier
-				active *= selected_primitive.active_multiplier
-				recovery *= selected_primitive.recovery_multiplier
-				reach_scale = selected_primitive.reach_multiplier
-				movement_scale = selected_primitive.movement_multiplier
-			elif combo_index == 2:
-				startup *= 1.06
-				active *= 1.08
-				recovery *= 1.08
-				movement_scale = 1.08
-			elif combo_index >= 3:
-				startup *= 1.23
-				active *= 1.30
-				recovery *= 1.34
-				reach_scale = 1.18
-				movement_scale = 1.20
+	var selected_primitive: Variant = primitive
+	if selected_primitive == null and combo_recipe != null:
+		var recipe: Variant = combo_recipe
+		selected_primitive = recipe.primitive_for_attack(attack_kind, combo_index)
+	if selected_primitive != null:
+		startup *= selected_primitive.startup_multiplier
+		active *= selected_primitive.active_multiplier
+		recovery *= selected_primitive.recovery_multiplier
+		reach_scale = selected_primitive.reach_multiplier
+		movement_scale = selected_primitive.movement_multiplier
+	elif attack_kind == "charge":
+		startup *= 1.28; active *= 1.35; recovery *= 1.38
+		reach_scale = 1.24; movement_scale = 0.72
+	elif attack_kind == "dodge":
+		startup *= 0.68; active *= 0.95; recovery *= 0.72
+		reach_scale = 1.12; movement_scale = 1.35
+	elif combo_index == 2:
+		startup *= 1.06; active *= 1.08; recovery *= 1.08; movement_scale = 1.08
+	elif combo_index >= 3:
+		startup *= 1.23; active *= 1.30; recovery *= 1.34
+		reach_scale = 1.18; movement_scale = 1.20
 	return {
 		"startup": startup, "active": active, "recovery": recovery,
 		"reach_scale": reach_scale, "movement_scale": movement_scale,

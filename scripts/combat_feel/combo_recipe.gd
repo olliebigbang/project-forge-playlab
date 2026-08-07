@@ -7,6 +7,9 @@ extends Resource
 @export var charge_attack: Resource
 @export var dodge_attack: Resource
 @export var compile_reason := ""
+var recipe_signature: String:
+	get:
+		return signature()
 
 
 func primitive_for(combo_index: int) -> Resource:
@@ -14,6 +17,14 @@ func primitive_for(combo_index: int) -> Resource:
 		1: return hit_1
 		2: return hit_2
 		3: return hit_3
+		_: return null
+
+
+func primitive_for_attack(attack_kind: String, combo_index: int = 0) -> Resource:
+	match attack_kind:
+		"normal": return primitive_for(combo_index)
+		"charge": return charge_attack
+		"dodge": return dodge_attack
 		_: return null
 
 

@@ -1,0 +1,26 @@
+{
+  "blind_label": "A",
+  "completed": true,
+  "elapsed_seconds": 37.33,
+  "input_to_active_ms": 141,
+  "input_to_visual_ms": 1,
+  "normal_attack_stats": {
+    "attempts": {
+      "1": 16,
+      "2": 13,
+      "3": 10
+    },
+    "hits": {
+      "1": 7,
+      "2": 4,
+      "3": 8
+    },
+    "whiffs": {
+      "1": 9,
+      "2": 9,
+      "3": 2
+    }
+  },
+  "schema": "forge-motion-grammar-slice-1a-blind-run-v1",
+  "timestamp": "2026-08-07T23:45:54"
+}
