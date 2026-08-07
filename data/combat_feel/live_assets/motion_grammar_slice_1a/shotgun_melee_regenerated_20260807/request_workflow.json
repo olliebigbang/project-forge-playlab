@@ -1,0 +1,146 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "flux-2-klein-4b-fp8.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "flux2",
+      "device": "default"
+    }
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    }
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "2",
+        0
+      ],
+      "text": "One isolated silver pump-action shotgun in strict side view, laid out horizontally. The shoulder stock is unmistakably at the far left rear. The receiver follows to its right, with the trigger and pistol grip located underneath the rear half near the stock. A separate pump foregrip sits underneath the forward half. The long barrel extends from the receiver toward the right and ends in a clearly visible open muzzle at the far right. The object points and attacks to image right. Preserve realistic functional spacing between stock, rear grip, pump foregrip, barrel and muzzle. Complete uncropped object, generous empty margin, clean readable silhouette, no hands or person. canonical object identity: shotgun. required physical identity structures: long barrel ending in a clearly visible muzzle at the far right; trigger grip under the rear half of the receiver; shoulder stock at the far left rear; separate pump foregrip under the forward barrel. material cues: silver metal; polished steel. silhouette cues: strict horizontal side profile with the shoulder stock on the far left and the muzzle on the far right; long firearm silhouette with a clearly separated rear stock, rear trigger grip, forward pump and barrel. subtle optional forge decorations: subtle engraved silver filigree; small restrained Forge fittings. identity-preservation cues: muzzle at the far right; long barrel extending toward the right; shoulder stock at the far left rear; trigger grip underneath the rear half near the stock; separate pump foregrip underneath the forward barrel. one isolated physical fantasy game prop, side view or slight three-quarter side view, facing right, complete object fully visible, centered with generous empty margin, flat high-contrast solid chroma key magenta background, readable silhouette, handcrafted fantasy toy aesthetic."
+    }
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "2",
+        0
+      ],
+      "text": "muzzle pointing left, barrel pointing left, shoulder stock on the right, reversed firearm anatomy, trigger grip at the front, grip at the muzzle, centered grip, missing stock, missing pump foregrip, ambiguous front and rear, shortened barrel, fantasy gun with unreadable structure, sword, bow, cannon, laser gun, generic sci-fi weapon, human, person, hand, text, watermark, multiple objects, cropped object, scenery. forbidden substitutions: reversed shotgun; sword; bow; cannon; laser rifle; generic sci-fi weapon. portrait, human, person, face, hand, hands, fingers, character holding object, text, label, logo, watermark, user interface, inventory grid, weapon sheet, multiple views, multiple objects, scenery, room, environment, pedestal, cropped object, cut off object."
+    }
+  },
+  "6": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+      "conditioning": [
+        "5",
+        0
+      ]
+    }
+  },
+  "7": {
+    "class_type": "EmptyFlux2LatentImage",
+    "inputs": {
+      "width": 512,
+      "height": 512,
+      "batch_size": 1
+    }
+  },
+  "8": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler"
+    }
+  },
+  "9": {
+    "class_type": "Flux2Scheduler",
+    "inputs": {
+      "steps": 4,
+      "width": 512,
+      "height": 512
+    }
+  },
+  "10": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 8072026
+    }
+  },
+  "11": {
+    "class_type": "CFGGuider",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "4",
+        0
+      ],
+      "negative": [
+        "6",
+        0
+      ],
+      "cfg": 1.0
+    }
+  },
+  "12": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": [
+        "10",
+        0
+      ],
+      "guider": [
+        "11",
+        0
+      ],
+      "sampler": [
+        "8",
+        0
+      ],
+      "sigmas": [
+        "9",
+        0
+      ],
+      "latent_image": [
+        "7",
+        0
+      ]
+    }
+  },
+  "13": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "12",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    }
+  },
+  "14": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "13",
+        0
+      ],
+      "filename_prefix": "ForgeFlux2/approved_single_regeneration/shotgun_regeneration_01/seed_8072026/raw"
+    }
+  }
+}

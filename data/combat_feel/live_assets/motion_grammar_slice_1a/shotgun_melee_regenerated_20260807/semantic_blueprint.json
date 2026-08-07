@@ -1,0 +1,61 @@
+{
+  "identity": {
+    "canonical_name_zh": "霰弹枪",
+    "canonical_name_en": "shotgun",
+    "display_name_zh": "银色霰弹枪",
+    "display_name_en": "Silver Shotgun",
+    "category": "tool",
+    "required_identity_parts": [
+      "long barrel ending in a clearly visible muzzle at the far right",
+      "trigger grip under the rear half of the receiver",
+      "shoulder stock at the far left rear",
+      "separate pump foregrip under the forward barrel"
+    ],
+    "material_hints": [
+      "silver metal",
+      "polished steel"
+    ],
+    "silhouette_hints": [
+      "strict horizontal side profile with the shoulder stock on the far left and the muzzle on the far right",
+      "long firearm silhouette with a clearly separated rear stock, rear trigger grip, forward pump and barrel"
+    ],
+    "optional_decorations": [
+      "subtle engraved silver filigree",
+      "small restrained Forge fittings"
+    ]
+  },
+  "combat": {
+    "behavior_family": "sustained_ranged",
+    "delivery": "projectile_stream",
+    "impact_mode": "emitter_projectiles",
+    "effect_type": "normal",
+    "drawback": "overheat",
+    "cadence_hint": "continuous"
+  },
+  "visual": {
+    "prompt_en": "One isolated silver pump-action shotgun in strict side view, laid out horizontally. The shoulder stock is unmistakably at the far left rear. The receiver follows to its right, with the trigger and pistol grip located underneath the rear half near the stock. A separate pump foregrip sits underneath the forward half. The long barrel extends from the receiver toward the right and ends in a clearly visible open muzzle at the far right. The object points and attacks to image right. Preserve realistic functional spacing between stock, rear grip, pump foregrip, barrel and muzzle. Complete uncropped object, generous empty margin, clean readable silhouette, no hands or person",
+    "negative_prompt_en": "muzzle pointing left, barrel pointing left, shoulder stock on the right, reversed firearm anatomy, trigger grip at the front, grip at the muzzle, centered grip, missing stock, missing pump foregrip, ambiguous front and rear, shortened barrel, fantasy gun with unreadable structure, sword, bow, cannon, laser gun, generic sci-fi weapon, human, person, hand, text, watermark, multiple objects, cropped object, scenery",
+    "must_preserve": [
+      "muzzle at the far right",
+      "long barrel extending toward the right",
+      "shoulder stock at the far left rear",
+      "trigger grip underneath the rear half near the stock",
+      "separate pump foregrip underneath the forward barrel"
+    ],
+    "must_not_replace_with": [
+      "reversed shotgun",
+      "sword",
+      "bow",
+      "cannon",
+      "laser rifle",
+      "generic sci-fi weapon"
+    ]
+  },
+  "confidence": 0.9,
+  "regeneration_scope": {
+    "approved_single_attempt": true,
+    "semantic_model_called": false,
+    "source_blueprint_modified": false,
+    "purpose": "Correct intrinsic shotgun front/rear readability and rear-half grip placement"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "anchor_source": {
+    "GripPrimary": "developer_visual_review_after_approved_regeneration",
+    "GripSecondary": "developer_visual_review_after_approved_regeneration",
+    "EffectOrigin": "developer_visual_review_after_approved_regeneration",
+    "RearContact": "developer_visual_review_after_approved_regeneration"
+  },
+  "auto_anchor_source": {
+    "GripPrimary": "rear_receiver_grip_region",
+    "GripSecondary": "forward_pump_region",
+    "EffectOrigin": "rightmost_muzzle_endpoint",
+    "RearContact": "leftmost_stock_endpoint"
+  },
+  "auto_anchors": {
+    "GripPrimary": [34.0, 50.0],
+    "GripSecondary": [58.0, 49.0],
+    "EffectOrigin": [88.0, 46.0],
+    "RearContact": [7.0, 50.0]
+  },
+  "auto_confidence": {
+    "GripPrimary": 0.9,
+    "GripSecondary": 0.9,
+    "EffectOrigin": 0.97,
+    "RearContact": 0.97
+  },
+  "behavior_family": "sustained_ranged",
+  "case_id": "shotgun_regeneration_01",
+  "confidence": {
+    "GripPrimary": 0.9,
+    "GripSecondary": 0.9,
+    "EffectOrigin": 0.97,
+    "RearContact": 0.97
+  },
+  "corrected_anchors": {
+    "GripPrimary": [34.0, 50.0],
+    "GripSecondary": [58.0, 49.0],
+    "EffectOrigin": [88.0, 46.0],
+    "RearContact": [7.0, 50.0]
+  },
+  "grip_profile": "two_hand_rear",
+  "required_anchor_types": [
+    "GripPrimary",
+    "GripSecondary",
+    "EffectOrigin"
+  ],
+  "run_id": "approved-single-regeneration-seed-8072026",
+  "source_sprite": "processed_sprite.png",
+  "training_transform": {
+    "flip_x": false
+  }
+}

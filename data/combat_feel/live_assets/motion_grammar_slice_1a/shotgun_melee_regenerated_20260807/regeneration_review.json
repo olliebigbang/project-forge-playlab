@@ -1,0 +1,37 @@
+{
+  "contract": "forge-motion-grammar-single-asset-regeneration-v1",
+  "status": "technical_and_player_runtime_review_pass",
+  "approved_single_attempt": true,
+  "attempt_count": 1,
+  "retry_count": 0,
+  "semantic_model_called": false,
+  "flux_calls": 1,
+  "birefnet_calls": 1,
+  "seed": 8072026,
+  "model": "flux-2-klein-4b-fp8.safetensors",
+  "workflow": "flux2_klein_4b_t2i_forge_api.json",
+  "workflow_sha256": "26b8f7c151a47835a1a08993f18430adf7f3120320747e6491cabd1d2c4ceae6",
+  "birefnet_workflow": "birefnet_remove_background_forge_api.json",
+  "birefnet_workflow_sha256": "56d74936b840de2ce2d5e823b6ad1704b9e65dd7ddd8b7a0edbfb5d4d4cf19df",
+  "generation_seconds": 6.63,
+  "postprocess_seconds": 0.076,
+  "segmentation_confidence": 0.969553,
+  "processed_dimensions": [96, 96],
+  "alpha_valid": true,
+  "visual_review": {
+    "single_complete_subject": true,
+    "stock_at_left_rear": true,
+    "muzzle_at_right_front": true,
+    "primary_grip_in_rear_half": true,
+    "separate_forward_pump_visible": true,
+    "no_person_hand_or_text": true,
+    "ready_for_developer_runtime_test": true,
+    "player_runtime_direction_confirmation": "passed_2026-08-08"
+  },
+  "preservation": {
+    "previous_asset_directory_unchanged": "shotgun_melee",
+    "previous_evidence_overwritten": false,
+    "recipe_modified": false,
+    "gameplay_modified": false
+  }
+}

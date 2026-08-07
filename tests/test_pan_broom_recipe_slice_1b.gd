@@ -196,9 +196,9 @@ func _test_shotgun_developer_anchor_override() -> void:
 	ok = ok and loader._sha256_file(blueprint_path) == str(source_hashes.get("semantic_blueprint.json", ""))
 	ok = ok and loader._sha256_file(anchors_path) == str(source_hashes.get("anchors.json", ""))
 	ok = ok and original_family == "sustained_ranged" and str(melee_override.get("behavior_family", "")) == "heavy_melee"
-	ok = ok and normalized != null and normalized.orientation_flipped
+	ok = ok and normalized != null and not normalized.orientation_flipped
 	ok = ok and normalized.muzzle.x > normalized.grip_primary.x and normalized.rear_contact.x < normalized.grip_primary.x
-	_check(ok, "11 Shotgun developer sidecar preserves source and corrects muzzle rear-contact orientation")
+	_check(ok, "11 regenerated Shotgun source is intrinsically forward and preserves muzzle rear-contact orientation")
 
 
 func _compiled(asset_id: String) -> Variant:
