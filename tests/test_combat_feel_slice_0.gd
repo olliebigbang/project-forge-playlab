@@ -8,6 +8,7 @@ const CONTROLLER := preload("res://scripts/combat_feel/melee_combat_controller.g
 const FEEDBACK := preload("res://scripts/combat_feel/impact_feedback_profile.gd")
 const LOADER := preload("res://scripts/combat_feel/combat_feel_asset_loader.gd")
 const ENEMY := preload("res://scripts/combat_feel/combat_feel_enemy.gd")
+const SLICE := preload("res://scripts/combat_feel/combat_feel_slice_0.gd")
 
 var passed := 0
 var failed := 0
@@ -56,6 +57,7 @@ func _run() -> void:
 	_test_38_hitstop_keeps_current_primitive_locked()
 	_test_39_slice_executes_current_primitive_consistently()
 	_test_40_charge_and_dodge_keep_legacy_motion_path()
+	_test_41_slice_compiles_legacy_live_without_affordance()
 	print("COMBAT_FEEL_SLICE_0_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -63,25 +65,33 @@ func _test_01_profile_enums() -> void:
 	_check(PROFILE.MOTION_FAMILIES == PackedStringArray(["sweep", "slam", "thrust"]) and PROFILE.WEIGHT_CLASSES.size() == 3 and PROFILE.REACH_CLASSES.size() == 3, "01 profile legal enums")
 
 func _test_02_impact_mapping() -> void:
-	var pan_profile: Variant = _compiled_recipe_asset("frying_pan")
-	var broom_profile: Variant = _compiled_recipe_asset("old_mop")
-	var ok: bool = pan_profile is Resource and broom_profile is Resource
-	if ok:
-		ok = pan_profile.motion_family == "slam" and pan_profile.combo_recipe.primitive_sequence() == PackedStringArray(["bash", "bash", "slam"])
-		ok = ok and broom_profile.motion_family == "sweep" and broom_profile.combo_recipe.primitive_sequence() == PackedStringArray(["sweep", "thrust", "spin"])
-	_check(ok, "02 structure plus alpha anchor recipe mapping")
+	var loader: Variant = LOADER.new()
+	var compiler: Variant = COMPILER.new()
+	var broad: Dictionary = loader.load_fixture("M01")
+	var broad_blueprint := broad["blueprint"] as WeaponBlueprint
+	broad_blueprint.impact_mode = "strike_edge"
+	var edge_profile: Variant = compiler.compile(broad_blueprint, broad["asset"] as WeaponVisualAsset)
+	broad_blueprint.impact_mode = "whole_body_collision"
+	var body_profile: Variant = compiler.compile(broad_blueprint, broad["asset"] as WeaponVisualAsset)
+	var narrow: Dictionary = loader.load_fixture("THRUST")
+	var narrow_blueprint := narrow["blueprint"] as WeaponBlueprint
+	narrow_blueprint.impact_mode = "strike_point"
+	var point_profile: Variant = compiler.compile(narrow_blueprint, narrow["asset"] as WeaponVisualAsset)
+	_check(edge_profile.motion_family == "sweep" and body_profile.motion_family == "slam" and point_profile.motion_family == "thrust", "02 legacy impact plus alpha contact mapping")
 
 func _test_03_reach_bounded() -> void:
-	var ok := true
-	for id: String in ["frying_pan", "old_mop"]:
-		var profile: Variant = _compiled_recipe_asset(id)
-		ok = ok and profile is Resource and profile.reach_class in PROFILE.REACH_CLASSES and profile.reach_pixels >= 84.0 and profile.reach_pixels <= 148.0
+	var loader: Variant = LOADER.new(); var compiler: Variant = COMPILER.new(); var ok := true
+	for id: String in ["M01", "M02", "M03", "THRUST"]:
+		var loaded: Dictionary = loader.load_fixture(id)
+		var profile: Variant = compiler.compile(loaded["blueprint"] as WeaponBlueprint, loaded["asset"] as WeaponVisualAsset)
+		ok = ok and profile.reach_class in PROFILE.REACH_CLASSES and profile.reach_pixels >= 84.0 and profile.reach_pixels <= 138.0
 	_check(ok, "03 bounded reach classification")
 
 func _test_04_weight_bounded() -> void:
-	var ok := true
-	for id: String in ["frying_pan", "old_mop"]:
-		var profile: Variant = _compiled_recipe_asset(id)
+	var loader: Variant = LOADER.new(); var compiler: Variant = COMPILER.new(); var ok := true
+	for id: String in ["M01", "M02", "M03"]:
+		var loaded: Dictionary = loader.load_fixture(id)
+		var profile: Variant = compiler.compile(loaded["blueprint"] as WeaponBlueprint, loaded["asset"] as WeaponVisualAsset)
 		ok = ok and profile.weight_class in PROFILE.WEIGHT_CLASSES
 	_check(ok, "04 bounded weight classification")
 
@@ -198,12 +208,16 @@ func _test_25_live_asset_integrity_and_anchor() -> void:
 	_check(ok, "25 real sprite hash alpha blueprint and confirmed anchor")
 
 func _test_26_shape_driven_weapon_distinction() -> void:
-	var pan_profile: Variant = _compiled_recipe_asset("frying_pan")
-	var broom_profile: Variant = _compiled_recipe_asset("old_mop")
-	var ok: bool = pan_profile.reach_class == "short" and pan_profile.motion_family == "slam"
-	ok = ok and broom_profile.reach_class == "long" and broom_profile.tempo == "balanced" and broom_profile.motion_family == "sweep"
-	ok = ok and broom_profile.control_strength > pan_profile.control_strength and broom_profile.reach_pixels > pan_profile.reach_pixels
-	_check(ok, "26 generic affordance alpha anchor profiles distinguish compact impact and long control")
+	var loader: Variant = LOADER.new(); var compiler: Variant = COMPILER.new()
+	var profiles: Array = []
+	for id: String in ["M01", "M02", "M03"]:
+		var loaded: Dictionary = loader.load_fixture(id)
+		profiles.append(compiler.compile(loaded["blueprint"] as WeaponBlueprint, loaded["asset"] as WeaponVisualAsset))
+	var ok: bool = profiles[0].reach_class == "long" and profiles[0].tempo == "committed"
+	ok = ok and profiles[1].reach_class == "short" and profiles[1].tempo == "rapid" and profiles[1].motion_family == "slam"
+	ok = ok and profiles[2].reach_class == "long" and profiles[2].tempo == "balanced" and profiles[2].motion_family == "sweep"
+	ok = ok and profiles[2].control_strength > profiles[1].control_strength
+	_check(ok, "26 legacy alpha anchor motion profiles distinguish long heavy compact crisp and long control")
 
 func _test_27_feedback_has_four_clear_tiers() -> void:
 	var profile: Variant = _profile()
@@ -239,7 +253,9 @@ func _test_32_open_playtest_round_direct_handoff() -> void:
 	var round_directory := ProjectSettings.globalize_path("res://data/combat_feel/live_assets/revision_a/giant_wooden_spoon")
 	var loaded: Dictionary = LOADER.new().load_open_playtest_round(round_directory)
 	var loaded_blueprint := loaded.get("blueprint") as WeaponBlueprint
-	_check(bool(loaded.get("ok", false)) and not bool(loaded.get("fixture", true)) and loaded_blueprint != null and loaded_blueprint.behavior_family == "heavy_melee", "32 finalized Open Playtest directory loads directly")
+	var loaded_asset := loaded.get("asset") as WeaponVisualAsset
+	var profile: Variant = COMPILER.new().compile(loaded_blueprint, loaded_asset)
+	_check(bool(loaded.get("ok", false)) and not bool(loaded.get("fixture", true)) and loaded_blueprint != null and loaded_blueprint.behavior_family == "heavy_melee" and profile is Resource and profile.combo_recipe != null, "32 finalized Open Playtest directory loads and compiles without affordance sidecar")
 
 func _test_33_open_playtest_ui_exposes_heavy_only_launch() -> void:
 	var godot_source := _text("res://tools/open_playtest/godot/open_playtest.gd")
@@ -250,7 +266,8 @@ func _test_33_open_playtest_ui_exposes_heavy_only_launch() -> void:
 	_check(ok, "33 Open Playtest exposes direct handoff only for heavy melee")
 
 func _test_34_compiler_outputs_three_valid_independent_primitives() -> void:
-	var profile: Variant = _compiled_recipe_asset("frying_pan")
+	var loaded: Dictionary = LOADER.new().load_fixture("M01")
+	var profile: Variant = COMPILER.new().compile(loaded["blueprint"] as WeaponBlueprint, loaded["asset"] as WeaponVisualAsset)
 	var recipe: Variant = profile.combo_recipe
 	var values: Array = recipe.primitives() if recipe != null else []
 	var independent: bool = values.size() == 3
@@ -318,6 +335,18 @@ func _test_40_charge_and_dodge_keep_legacy_motion_path() -> void:
 	controller.reset(); controller.configure(profile); controller.press_dodge(); controller.press_attack(); controller.release_attack()
 	var dodge_ok: bool = controller.attack_kind == "dodge" and controller.combo_index == 0 and controller.current_primitive == null
 	_check(charge_ok and dodge_ok, "40 charge and dodge retain global legacy motion path")
+
+func _test_41_slice_compiles_legacy_live_without_affordance() -> void:
+	var loaded: Dictionary = LOADER.new().load_default_live()
+	var arena: Variant = SLICE.new()
+	arena.compiler = COMPILER.new()
+	arena.blueprint = loaded.get("blueprint") as WeaponBlueprint
+	arena.asset = loaded.get("asset") as WeaponVisualAsset
+	arena.affordance_profile = null
+	var compiled: Variant = arena._compile_loaded_weapon()
+	var ok: bool = compiled is Resource and compiled.combo_recipe != null and compiled.validation_errors().is_empty()
+	arena.free()
+	_check(ok, "41 slice compiles legacy Live handoff without affordance sidecar")
 
 func _controller() -> Variant:
 	var controller: Variant = CONTROLLER.new(); controller.configure(_profile()); return controller

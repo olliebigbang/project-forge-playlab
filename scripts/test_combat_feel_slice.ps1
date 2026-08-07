@@ -16,6 +16,13 @@ $RecipeOutput = Get-Content -LiteralPath $RecipeLog.FullName -Raw
 Remove-Item -LiteralPath $RecipeLog.FullName
 if ($RecipeExit -ne 0 -or $RecipeOutput -match "SCRIPT ERROR|Parse Error|Compile Error|ERROR: FAIL|failed=[1-9]") { exit 1 }
 
+$LegacySceneLog = New-TemporaryFile
+& $Godot --headless --verbose --path $PlaylabRoot "res://scenes/combat_feel_slice_0.tscn" -- --mode=combat-feel-slice-0 --live-weapon=giant_wooden_spoon --smoke-seconds=0.2 2>&1 | Tee-Object -FilePath $LegacySceneLog.FullName
+$LegacySceneExit = $LASTEXITCODE
+$LegacySceneOutput = Get-Content -LiteralPath $LegacySceneLog.FullName -Raw
+Remove-Item -LiteralPath $LegacySceneLog.FullName
+if ($LegacySceneExit -ne 0 -or $LegacySceneOutput -match "SCRIPT ERROR|Parse Error|Compile Error|UNSUPPORTED") { exit 1 }
+
 foreach ($RecipeAsset in @("frying_pan", "old_mop")) {
     $SceneLog = New-TemporaryFile
     & $Godot --headless --verbose --path $PlaylabRoot "res://scenes/combat_feel_slice_0.tscn" -- --mode=combat-feel-slice-0 --recipe-asset=$RecipeAsset --smoke-seconds=0.2 2>&1 | Tee-Object -FilePath $SceneLog.FullName

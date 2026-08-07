@@ -78,8 +78,11 @@ func _test_recipe_signatures_and_gameplay_differ() -> void:
 
 func _test_compiler_has_no_identity_input() -> void:
 	var source := FileAccess.get_file_as_string("res://scripts/combat_feel/melee_motion_compiler.gd")
-	var lowered := source.to_lower()
-	var ok := source.contains("func compile(affordance_profile: Resource, anchor_data: Dictionary, alpha_bounds: Rect2i)")
+	var start := source.find("func _compile_affordance")
+	var finish := source.find("func _compile_legacy", start)
+	var structure_source := source.substr(start, finish - start) if start >= 0 and finish > start else ""
+	var lowered := structure_source.to_lower()
+	var ok := structure_source.contains("affordance_profile: Resource, anchor_data: Dictionary, alpha_bounds: Rect2i")
 	for forbidden: String in ["weaponblueprint", "display_name", "canonical_name", "player_identity", "player_text", "source_identity"]:
 		ok = ok and not lowered.contains(forbidden)
 	_check(ok, "05 compiler reads structure anchors and alpha bounds but no identity text")

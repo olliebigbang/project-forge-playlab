@@ -73,7 +73,7 @@ func _ready() -> void:
 	if not _load_requested_weapon():
 		_show_blocked("无法进入：%s" % source_notice)
 		return
-	var compiled: Variant = compiler.compile(affordance_profile, asset.anchors_dict(), asset.opaque_bounds)
+	var compiled: Variant = _compile_loaded_weapon()
 	if compiled is String and str(compiled) == MOTION_COMPILER.UNSUPPORTED:
 		_show_blocked(MOTION_COMPILER.UNSUPPORTED)
 		return
@@ -86,6 +86,12 @@ func _ready() -> void:
 	if smoke_seconds > 0.0: _quit_after(smoke_seconds)
 	var capture_dir := _argument_value("--capture-dir=", "")
 	if not capture_dir.is_empty(): call_deferred("_capture_evidence", capture_dir)
+
+
+func _compile_loaded_weapon() -> Variant:
+	if affordance_profile != null:
+		return compiler.compile(affordance_profile, asset.anchors_dict(), asset.opaque_bounds)
+	return compiler.compile(blueprint, asset)
 
 func _load_requested_weapon() -> bool:
 	var sprite_path := _argument_value("--combat-sprite=", "")
