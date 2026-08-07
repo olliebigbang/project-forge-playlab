@@ -62,7 +62,7 @@ The existing controller still locks a Primitive only when an attack truly starts
 
 ## Direction normalization
 
-Pan and Broom direction were human-confirmed after the shared sprite/anchor/hitbox normalization fix. The first inferred Shotgun direction was rejected as reversed during the 2026-08-07 runtime review, so its developer-only sidecar now records the player-corrected muzzle/rear axis. Generic runtime normalization still transforms Sprite, all action anchors and rear contact together. Rule C Hit 3 uses `rear_contact` rather than a Shotgun-name branch. The corrected Shotgun orientation awaits a second human confirmation.
+Pan and Broom direction were human-confirmed after the shared sprite/anchor/hitbox normalization fix. During the 2026-08-07 runtime review, the player clarified that the generated Shotgun source image itself has its barrel facing left, behind the right-facing player. Its developer-only sidecar therefore requires a horizontal runtime mirror. Generic runtime normalization transforms Sprite, GripPrimary, muzzle, rear contact and Hitbox together. Rule C Hit 3 uses the transformed `rear_contact` rather than a Shotgun-name combat branch. The corrected Shotgun orientation awaits a second human confirmation.
 
 ## Verification
 
