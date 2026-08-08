@@ -9,8 +9,8 @@ one identity-free, score-based composer over orthogonal affordance axes.
 Current status:
 
 - **OFFLINE TECHNICAL PASS**
-- **REAL AI AFFORDANCE VALIDATION NEEDS WORK (8/12 strict-valid)**
-- **HUMAN FEEL RETEST BLOCKED**
+- **REAL AI AFFORDANCE COVERAGE PASS WITH VERSIONED EVIDENCE**
+- **HUMAN FEEL RETEST NEEDS WORK (3/5)**
 
 The earlier three-sample 5/5 result is preserved as historical evidence and is
 marked `SUPERSEDED` by the adjacent supersession ledger. It is not evidence for
@@ -24,11 +24,14 @@ run IDs. Invalid, contradictory, incomplete, or low-confidence profiles fail
 closed with `UNSUPPORTED_AFFORDANCE_FOR_SLICE_1A` / `AFFORDANCE_NOT_READY`.
 
 The frozen semantic v1.1 contract remains the default Open Playtest contract.
-`forge-semantic-v1.2-candidate` remains a non-default candidate. A bounded
-12-call Anthropic retest was executed after explicit approval with the frozen
-`claude-sonnet-5` model: eight results passed the strict candidate contract and
-compiled through the existing `MeleeMotionCompiler`; four were rejected. FLUX,
-BiRefNet, ComfyUI, and the new BlindComparison were not started.
+`forge-semantic-v1.2-candidate` and the additive v1.2.1 correction remain
+non-default candidates. A bounded 12-call Anthropic retest produced eight
+strict-valid results. A separately approved four-call v1.2.1 targeted retest
+then produced strict-valid results for A03, A07, A08, and A09: 4/4 API success,
+4/4 sole legal tool use, 4/4 Schema and cross-field valid, and zero retries.
+Together these frozen runs cover all 12 inputs, but they are explicitly not
+represented as one homogeneous 12/12 run under one contract version. FLUX,
+BiRefNet, and ComfyUI were not started.
 
 The manual runtime boundary is exposed as
 `scripts/run_combat_feel_slice.ps1 -OpenPlaytestRound <path> -RequireAffordanceGrammar`.
@@ -57,13 +60,13 @@ not be presented as AI output.
 |---|---|---|---|---|---|
 | A01 | kitchen knife | strict-valid | short/front/edge | sweep → bash → slam | COMPILED |
 | A02 | longsword | strict-valid | short+long/balanced/edge+point | sweep → thrust → slam | COMPILED |
-| A03 | fire axe | rejected by canonical `fire` false-positive | — | — | CONTRACT/RUNNER NEEDS WORK |
+| A03 | fire axe | v1.2.1 targeted strict-valid | long/front/edge+point | combined export pending | TARGETED PASS |
 | A04 | spear | strict-valid | long/front/point | thrust → thrust → slam | COMPILED |
 | A05 | hammer | strict-valid | long/front/broad | bash → slam → sweep | COMPILED |
 | A06 | baseball bat | strict-valid | medium/front/broad | bash → slam → bash | COMPILED |
-| A07 | chair | unknown extra field | — | — | MODEL SCHEMA FAILURE |
-| A08 | fire extinguisher | rejected by canonical `fire` false-positive | — | — | CONTRACT/RUNNER NEEDS WORK |
-| A09 | shield | contradictory body-grip/short-handle pair | — | — | MODEL CROSS-FIELD FAILURE |
+| A07 | chair | v1.2.1 targeted strict-valid | none/body-grip/front/whole-body | combined export pending | TARGETED PASS |
+| A08 | fire extinguisher | v1.2.1 targeted strict-valid | none/body-grip/balanced/whole-body | combined export pending | TARGETED PASS |
+| A09 | shield | v1.2.1 targeted strict-valid | short/clamp-grip/balanced/broad | combined export pending | TARGETED PASS |
 | A10 | giant chicken leg | strict-valid | short/front/broad | bash → slam → bash | COMPILED |
 | A11 | folding stool | strict-valid | none/front/broad | bash → slam → bash | COMPILED |
 | A12 | fishing rod | strict-valid | medium+long/rear/flexible whole-body | sweep → spin → slam | COMPILED |
@@ -76,8 +79,17 @@ reach, Mop has the widest contact coverage, and the barrel/stock structure has
 the greatest root-motion total. No exact multiplier or legacy sequence is an
 acceptance requirement.
 
-The additive v1.2.1 offline contract/runner correction now passes its concentrated
-regressions. A maximum four-call targeted retest for A03/A07/A08/A09 requires
-new approval; no call has been made by the correction. The new BlindComparison
-remains blocked, and the orthogonal composer must not be promoted to the default
-player flow.
+The approved orthogonal-composer BlindComparison was completed as session
+`blind-20260808T130540547Z-65f7d463`. It scored **3/5**. Pan was correctly felt
+as shortest and Mop as widest/best for control, but Shotgun stock was not felt
+as the heaviest third hit or the greatest forward progression. The qualitative
+Shotgun confirmation was also `no`. Runtime evidence recorded Shotgun Hit 2 at
+1/6 successful contacts and Hit 3 at 2/4, which is consistent with the failed
+feel read rather than a semantic or asset-identity failure.
+
+The governing state is therefore **TECHNICAL PASS / FEEL NEEDS WORK**. The
+orthogonal composer must not be promoted to the default player flow. The next
+change, if separately approved, should be a bounded structure-driven Shotgun
+contact/readability correction followed by one unchanged BlindComparison; it
+must not introduce identity-specific Recipe logic or silently tune until the
+questionnaire passes.

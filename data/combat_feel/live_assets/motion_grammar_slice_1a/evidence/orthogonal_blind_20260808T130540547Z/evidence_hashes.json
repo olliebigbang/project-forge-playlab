@@ -1,0 +1,29 @@
+{
+  "algorithm": "SHA-256",
+  "session_id": "blind-20260808T130540547Z-65f7d463",
+  "verdict": "TECHNICAL PASS / FEEL NEEDS WORK",
+  "semantic_copy_verified": true,
+  "files": {
+    "blind_comparison_result.jsonl": {
+      "bytes": 1774,
+      "sha256": "e8ab14ae200f2495e1dde2ef9355d7955a4790b7ee1cdfc335ef121fd345ebbf",
+      "source_sha256": "8f75e46a8f6cdaac1c42df72a168d72c9defa95fd0df264ef62589b43f444531"
+    },
+    "blind_run_A.json": {
+      "bytes": 450,
+      "sha256": "6a7644220ec540542c49551a5b4be46359bcc08d656ded4c882408117b57912f",
+      "source_sha256": "6a7644220ec540542c49551a5b4be46359bcc08d656ded4c882408117b57912f"
+    },
+    "blind_run_B.json": {
+      "bytes": 449,
+      "sha256": "24aed36e1291d9fd15f37d791f6d452b84a558fd70ed8e87838fd871ed36d45c",
+      "source_sha256": "24aed36e1291d9fd15f37d791f6d452b84a558fd70ed8e87838fd871ed36d45c"
+    },
+    "blind_run_C.json": {
+      "bytes": 449,
+      "sha256": "ea5482527e0bde31caa952d8dac38b7a7c2c3ea67039ec6ae81adf29415f7725",
+      "source_sha256": "ea5482527e0bde31caa952d8dac38b7a7c2c3ea67039ec6ae81adf29415f7725"
+    }
+  },
+  "source_note": "The JSONL source uses the Windows process newline. The frozen repository copy uses the repository newline; parsed JSON equality was verified before hashing."
+}

@@ -249,3 +249,41 @@ Remaining risks:
 - the Shotgun melee intent remains a developer-only test override.
 
 The final unchanged three-asset BlindComparison passed at 5/5 with all qualitative weapon confirmations. Combo Grammar remains **TECHNICAL PASS** and weapon differentiation remains **FEEL PASS**. Character pose visibility is a separately tracked **PENDING HUMAN CHECK** item after the bounded visibility revision; no broader development is authorized.
+
+## Orthogonal-composer supersession retest
+
+The 5/5 result above remains historical evidence for the previous three-rule
+compiler. It was marked `SUPERSEDED_FOR_ORTHOGONAL_COMPOSER_ACCEPTANCE` before
+the score-based orthogonal composer was evaluated and is not reused as evidence
+for the new composer.
+
+After the bounded semantic v1.2.1 targeted retest passed 4/4, the player
+separately approved and completed a new three-asset BlindComparison using the
+orthogonal compiler without further tuning.
+
+Session: `blind-20260808T130540547Z-65f7d463`
+
+Randomized mapping:
+
+- A: frying pan
+- B: old mop
+- C: Shotgun stock melee
+
+| Question | Player answer | Expected | Result |
+|---|---:|---:|---|
+| Shortest reach | A | A | Correct |
+| Widest coverage | B | B | Correct |
+| Heaviest third hit | A | C | Incorrect |
+| Best crowd control | B | B | Correct |
+| Most forward movement | B | C | Incorrect |
+
+The orthogonal-composer retest scored **3/5**. Pan and Mop qualitative
+confirmations were `yes`; the combined Shotgun linear/advancing/heaviest-third
+confirmation was `no`. Shotgun run evidence recorded Hit 1 at 7/9, Hit 2 at
+1/6, and Hit 3 at 2/4 successful contacts. This supports a bounded
+contact/readability diagnosis, but it does not authorize automatic tuning or a
+repeat run.
+
+The current formal result is **TECHNICAL PASS / FEEL NEEDS WORK**. The exact
+comparison record and A/B/C run records are frozen under
+`data/combat_feel/live_assets/motion_grammar_slice_1a/evidence/orthogonal_blind_20260808T130540547Z/`.
