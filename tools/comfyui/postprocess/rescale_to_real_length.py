@@ -8,7 +8,7 @@ compared on one ruler. Sprites rebuilt this way come from a lossy source and are
 evidence, not production assets.
 
 Usage:
-    python rescale_to_real_length.py <in.png> <out.png> --object-id old_mop
+    python rescale_to_real_length.py <in.png> <out.png> --affordance-profile <profile.json>
 """
 
 from __future__ import annotations
@@ -25,11 +25,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from process_sprite import (  # noqa: E402
     PX_PER_CM,
-    REAL_LENGTH_CM,
     SpritePostprocessError,
     _harden_alpha,
     _principal_axis_length,
     _resize_premultiplied,
+    read_real_length_cm,
 )
 
 
@@ -86,18 +86,22 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("source_png", type=Path)
     parser.add_argument("output_png", type=Path)
-    parser.add_argument("--object-id", choices=sorted(REAL_LENGTH_CM))
-    parser.add_argument("--real-length-cm", type=float)
+    parser.add_argument("--affordance-profile", type=Path, help="sidecar to read real_length_cm from (contract v1.3+)")
+    parser.add_argument("--real-length-cm", type=float, help="overrides the sidecar")
     parser.add_argument("--px-per-cm", type=float, default=PX_PER_CM)
     parser.add_argument("--size", type=int, default=96)
     parser.add_argument("--alpha-threshold", type=int, default=128)
     args = parser.parse_args()
 
-    real_length_cm = args.real_length_cm
-    if real_length_cm is None and args.object_id is not None:
-        real_length_cm = REAL_LENGTH_CM[args.object_id]
+    try:
+        real_length_cm = args.real_length_cm
+        if real_length_cm is None and args.affordance_profile is not None:
+            real_length_cm = read_real_length_cm(args.affordance_profile)
+    except SpritePostprocessError as exc:
+        print(json.dumps({"status": "failed", "failure_reason": str(exc)}))
+        return 2
     if real_length_cm is None:
-        raise SystemExit("pass --object-id or --real-length-cm")
+        raise SystemExit("pass --affordance-profile or --real-length-cm")
 
     try:
         result = rescale_to_real_length(

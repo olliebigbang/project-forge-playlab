@@ -19,16 +19,29 @@ class SpritePostprocessError(RuntimeError):
 # mop) spans 84px inside a 96px frame, leaving room for the outline and centring.
 PX_PER_CM = 0.56
 
-# FLUX renders every object filling its canvas, so an image cannot tell us how big
-# the thing actually is -- that has to come from outside the pixels. Hard-coded for
-# the four known objects as a proof of concept; sourcing these from the semantic
-# contract is a separate task.
-REAL_LENGTH_CM = {
-    "frying_pan": 40.0,
-    "giant_wooden_spoon": 60.0,
-    "shotgun_melee": 100.0,
-    "old_mop": 150.0,
-}
+# FLUX renders every object filling its canvas, so an image cannot tell us how big the
+# thing actually is -- that has to come from outside the pixels. It comes from the
+# affordance sidecar's real_length_cm, which the semantic contract requires from v1.3.
+REAL_LENGTH_FIELD = "real_length_cm"
+
+
+def read_real_length_cm(profile_path: Path) -> float:
+    """Read real_length_cm from an affordance profile sidecar.
+
+    Deliberately a plain read rather than an import of the v1.3 validator: the contract
+    is enforced where blueprints are produced, in tools/semantic, and the postprocessor
+    should not depend on that package. It still fails closed on anything unusable.
+    """
+    try:
+        payload = json.loads(Path(profile_path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise SpritePostprocessError("UNREADABLE_AFFORDANCE_PROFILE") from exc
+    if not isinstance(payload, dict) or REAL_LENGTH_FIELD not in payload:
+        raise SpritePostprocessError("AFFORDANCE_PROFILE_MISSING_REAL_LENGTH")
+    value = payload[REAL_LENGTH_FIELD]
+    if type(value) not in (int, float) or isinstance(value, bool) or not math.isfinite(value) or value <= 0.0:
+        raise SpritePostprocessError("INVALID_REAL_LENGTH_CM")
+    return float(value)
 
 
 def _largest_component(mask: np.ndarray) -> np.ndarray:
@@ -267,8 +280,8 @@ def main() -> int:
     parser.add_argument("--size", type=int, default=96)
     parser.add_argument("--colors", type=int, default=32)
     parser.add_argument("--no-outline", action="store_true")
-    parser.add_argument("--object-id", choices=sorted(REAL_LENGTH_CM), help="look the real length up in the built-in table")
-    parser.add_argument("--real-length-cm", type=float, help="real-world length of the object's long axis")
+    parser.add_argument("--affordance-profile", type=Path, help="sidecar to read real_length_cm from (contract v1.3+)")
+    parser.add_argument("--real-length-cm", type=float, help="real-world length of the object's long axis, overrides the sidecar")
     parser.add_argument("--px-per-cm", type=float, default=PX_PER_CM)
     parser.add_argument("--alpha-threshold", type=int, default=128)
     args = parser.parse_args()
@@ -276,8 +289,12 @@ def main() -> int:
     if len(background) != 3:
         raise SystemExit("--background must be R,G,B")
     real_length_cm = args.real_length_cm
-    if real_length_cm is None and args.object_id is not None:
-        real_length_cm = REAL_LENGTH_CM[args.object_id]
+    try:
+        if real_length_cm is None and args.affordance_profile is not None:
+            real_length_cm = read_real_length_cm(args.affordance_profile)
+    except SpritePostprocessError as exc:
+        print(json.dumps({"status": "failed", "failure_reason": str(exc)}))
+        return 2
     try:
         result = process_sprite(
             args.raw_png,
