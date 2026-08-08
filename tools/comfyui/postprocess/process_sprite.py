@@ -15,6 +15,22 @@ class SpritePostprocessError(RuntimeError):
     pass
 
 
+# Pixels per real-world centimetre. Chosen so the longest known object (the 150cm
+# mop) spans 84px inside a 96px frame, leaving room for the outline and centring.
+PX_PER_CM = 0.56
+
+# FLUX renders every object filling its canvas, so an image cannot tell us how big
+# the thing actually is -- that has to come from outside the pixels. Hard-coded for
+# the four known objects as a proof of concept; sourcing these from the semantic
+# contract is a separate task.
+REAL_LENGTH_CM = {
+    "frying_pan": 40.0,
+    "giant_wooden_spoon": 60.0,
+    "shotgun_melee": 100.0,
+    "old_mop": 150.0,
+}
+
+
 def _largest_component(mask: np.ndarray) -> np.ndarray:
     count, labels, stats, _ = cv2.connectedComponentsWithStats(mask.astype(np.uint8), 8)
     if count <= 1:
@@ -30,7 +46,7 @@ def _border_pixels(rgb: np.ndarray) -> np.ndarray:
     return np.concatenate((rgb[0], rgb[-1], rgb[1:-1, 0], rgb[1:-1, -1]), axis=0)
 
 
-def _background_mask(rgb: np.ndarray, expected_rgb: tuple[int, int, int]) -> tuple[np.ndarray, np.ndarray, float]:
+def _background_mask(rgb: np.ndarray, expected_rgb: tuple[int, int, int]) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
     border = _border_pixels(rgb).astype(np.float32)
     expected = np.array(expected_rgb, dtype=np.float32)
     expected_distance = np.linalg.norm(border - expected, axis=1)
@@ -55,7 +71,12 @@ def _background_mask(rgb: np.ndarray, expected_rgb: tuple[int, int, int]) -> tup
             cv2.floodFill(flood_source, flood_mask, (0, y), 2)
         if flood_source[y, -1]:
             cv2.floodFill(flood_source, flood_mask, (rgb.shape[1] - 1, y), 2)
-    return flood_source == 2, border_median, expected_ratio
+    reached = flood_source == 2
+    # Chroma the flood fill cannot reach because the object encloses it -- the gap
+    # inside a trigger guard, the eye of a hook. It is background, but no path leads
+    # to it from the border, so without this it would be keyed as solid object.
+    enclosed = (permissive > 0) & ~reached
+    return reached, enclosed, border_median, expected_ratio
 
 
 def _quantize_rgba(image: Image.Image, colors: int) -> Image.Image:
@@ -78,6 +99,58 @@ def _add_outline(image: Image.Image) -> Image.Image:
     return Image.alpha_composite(outline, rgba)
 
 
+def _principal_axis_length(mask: np.ndarray) -> float:
+    """Extent of the silhouette along its principal axis, in pixels.
+
+    Mirrors the PCA in tools/shape_metrics/shape_metrics.py so that what we scale
+    here is the same quantity the metrics report measures. Bounding-box width would
+    not do: a diagonal object fills its box while being much longer than its side.
+    """
+    ys, xs = np.nonzero(mask)
+    points = np.stack((xs.astype(np.float64), ys.astype(np.float64)), axis=1)
+    centered = points - points.mean(axis=0)
+    # eigh returns eigenvalues ascending, so the last vector is the principal axis.
+    _, vectors = np.linalg.eigh(np.cov(centered, rowvar=False))
+    projection = centered @ vectors[:, -1]
+    return float(projection.max() - projection.min())
+
+
+def _resize_premultiplied(image: Image.Image, size: tuple[int, int]) -> Image.Image:
+    """Resize RGBA without letting transparent pixels bleed their colour inwards.
+
+    PIL resamples each channel independently, so background chroma still contributes
+    its magenta to neighbouring pixels even where alpha is zero. Over an 8x downscale
+    that paints a purple fringe along every edge, which soft alpha used to hide and a
+    binary alpha turns opaque. Weighting colour by alpha first keeps it out.
+    """
+    source = np.array(image.convert("RGBA"), dtype=np.float32)
+    weight = source[:, :, 3:4] / 255.0
+    premultiplied = np.dstack((source[:, :, :3] * weight, source[:, :, 3]))
+    resized = np.array(
+        Image.fromarray(np.clip(premultiplied, 0.0, 255.0).astype(np.uint8), mode="RGBA").resize(
+            size, Image.Resampling.LANCZOS
+        ),
+        dtype=np.float32,
+    )
+    out_alpha = resized[:, :, 3]
+    recovered = resized[:, :, :3] / np.maximum(out_alpha[:, :, None] / 255.0, 1e-6)
+    return Image.fromarray(
+        np.dstack((np.clip(recovered, 0.0, 255.0), out_alpha)).astype(np.uint8), mode="RGBA"
+    )
+
+
+def _harden_alpha(image: Image.Image, threshold: int) -> Image.Image:
+    """Force alpha to exactly 0 or 255.
+
+    The soft_alpha ramp and the LANCZOS resize both leave wide partial-alpha edges,
+    which made every downstream measurement depend on an arbitrary cutoff. With a
+    binary alpha the silhouette is countable instead of a guess.
+    """
+    rgba = np.array(image.convert("RGBA"), dtype=np.uint8)
+    rgba[:, :, 3] = np.where(rgba[:, :, 3] >= threshold, 255, 0).astype(np.uint8)
+    return Image.fromarray(rgba, mode="RGBA")
+
+
 def process_sprite(
     raw_path: Path,
     sprite_path: Path,
@@ -88,6 +161,9 @@ def process_sprite(
     max_colors: int = 32,
     margin_ratio: float = 0.10,
     outline: bool = True,
+    real_length_cm: float | None = None,
+    px_per_cm: float = PX_PER_CM,
+    alpha_threshold: int = 128,
 ) -> dict:
     started = time.perf_counter()
     try:
@@ -98,7 +174,7 @@ def process_sprite(
     rgb = np.array(source, dtype=np.uint8)
     if rgb.shape[0] < 64 or rgb.shape[1] < 64:
         raise SpritePostprocessError("RAW_IMAGE_TOO_SMALL")
-    background, border_color, border_match = _background_mask(rgb, expected_background)
+    background, enclosed_chroma, border_color, border_match = _background_mask(rgb, expected_background)
     foreground = _largest_component(~background)
     foreground = cv2.morphologyEx(foreground.astype(np.uint8), cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8)) > 0
     foreground = _largest_component(foreground)
@@ -114,20 +190,39 @@ def process_sprite(
     soft_alpha = np.clip((distance - 22.0) / 54.0, 0.0, 1.0)
     keep = cv2.dilate(foreground.astype(np.uint8), np.ones((5, 5), np.uint8), iterations=1) > 0
     alpha = np.where(keep, soft_alpha, 0.0)
-    alpha = np.maximum(alpha, foreground.astype(np.float32) * 0.88)
+    # The background mask is a border flood fill, so it cannot reach chroma that the
+    # object encloses -- the hole in a trigger guard reads as foreground. Applying the
+    # solidity floor there paints that chroma into the sprite, which stayed half hidden
+    # while edges were soft and becomes a solid blob once alpha is binary. Only treat a
+    # pixel as solid where the chroma test agrees it is not background.
+    solid = foreground & (soft_alpha >= 0.5)
+    alpha = np.maximum(alpha, solid.astype(np.float32) * 0.88)
+    alpha = np.where(enclosed_chroma, 0.0, alpha)
     rgba = np.dstack((rgb, np.rint(alpha * 255.0).astype(np.uint8)))
     cropped = Image.fromarray(rgba[y0:y1, x0:x1], mode="RGBA")
     span = max(cropped.width, cropped.height)
     padding = max(2, int(math.ceil(span * margin_ratio)))
     padded = Image.new("RGBA", (cropped.width + padding * 2, cropped.height + padding * 2), (0, 0, 0, 0))
     padded.alpha_composite(cropped, (padding, padding))
-    scale = min(sprite_size / padded.width, sprite_size / padded.height)
+    source_axis_px = _principal_axis_length(foreground)
+    if real_length_cm is None:
+        # Legacy behaviour: every object is stretched to fill the frame, so all
+        # objects come out the same length regardless of what they are.
+        scale = min(sprite_size / padded.width, sprite_size / padded.height)
+    else:
+        if source_axis_px <= 0.0:
+            raise SpritePostprocessError("DEGENERATE_PRINCIPAL_AXIS")
+        scale = (real_length_cm * px_per_cm) / source_axis_px
+        if padded.width * scale > sprite_size or padded.height * scale > sprite_size:
+            raise SpritePostprocessError("REAL_LENGTH_EXCEEDS_SPRITE_FRAME")
     resized_size = (max(1, int(round(padded.width * scale))), max(1, int(round(padded.height * scale))))
-    resized = padded.resize(resized_size, Image.Resampling.LANCZOS)
+    resized = _resize_premultiplied(padded, resized_size)
     sprite = Image.new("RGBA", (sprite_size, sprite_size), (0, 0, 0, 0))
     offset = ((sprite_size - resized.width) // 2, (sprite_size - resized.height) // 2)
     sprite.alpha_composite(resized, offset)
     sprite = _quantize_rgba(sprite, max_colors)
+    sprite = _harden_alpha(sprite, alpha_threshold)
+    # _add_outline composites binary alpha over binary alpha, so the result stays binary.
     if outline:
         sprite = _add_outline(sprite)
     output_alpha = np.array(sprite.getchannel("A"), dtype=np.uint8)
@@ -155,6 +250,11 @@ def process_sprite(
         "background_expected_match": round(border_match, 4),
         "palette_limit": max_colors,
         "outline": outline,
+        "real_length_cm": real_length_cm,
+        "px_per_cm": px_per_cm if real_length_cm is not None else None,
+        "source_axis_px": round(source_axis_px, 2),
+        "target_axis_px": round(real_length_cm * px_per_cm, 2) if real_length_cm is not None else None,
+        "alpha_threshold": alpha_threshold,
     }
 
 
@@ -167,10 +267,17 @@ def main() -> int:
     parser.add_argument("--size", type=int, default=96)
     parser.add_argument("--colors", type=int, default=32)
     parser.add_argument("--no-outline", action="store_true")
+    parser.add_argument("--object-id", choices=sorted(REAL_LENGTH_CM), help="look the real length up in the built-in table")
+    parser.add_argument("--real-length-cm", type=float, help="real-world length of the object's long axis")
+    parser.add_argument("--px-per-cm", type=float, default=PX_PER_CM)
+    parser.add_argument("--alpha-threshold", type=int, default=128)
     args = parser.parse_args()
     background = tuple(int(part) for part in args.background.split(","))
     if len(background) != 3:
         raise SystemExit("--background must be R,G,B")
+    real_length_cm = args.real_length_cm
+    if real_length_cm is None and args.object_id is not None:
+        real_length_cm = REAL_LENGTH_CM[args.object_id]
     try:
         result = process_sprite(
             args.raw_png,
@@ -180,6 +287,9 @@ def main() -> int:
             sprite_size=args.size,
             max_colors=args.colors,
             outline=not args.no_outline,
+            real_length_cm=real_length_cm,
+            px_per_cm=args.px_per_cm,
+            alpha_threshold=args.alpha_threshold,
         )
     except SpritePostprocessError as exc:
         print(json.dumps({"status": "failed", "failure_reason": str(exc)}))
