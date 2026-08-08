@@ -1,0 +1,21 @@
+{
+  "handle_length": "none",
+  "body_length": "medium",
+  "grip_topology": "body_grip",
+  "rigidity": "rigid",
+  "mass_distribution": "balanced",
+  "contact_surface": "whole_body",
+  "secondary_contact_surface": "none",
+  "has_point": false,
+  "has_edge": false,
+  "has_broad_face": false,
+  "has_barrel": false,
+  "has_stock": false,
+  "confidence": 0.82,
+  "evidence_parts": [
+    "cylindrical tank body",
+    "carrying handle",
+    "discharge nozzle",
+    "hugged against chest for impact"
+  ]
+}

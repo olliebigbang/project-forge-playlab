@@ -1,0 +1,21 @@
+{
+  "handle_length": "long",
+  "body_length": "medium",
+  "grip_topology": "two_hand_handle",
+  "rigidity": "rigid",
+  "mass_distribution": "front",
+  "contact_surface": "edge",
+  "secondary_contact_surface": "point",
+  "has_point": true,
+  "has_edge": true,
+  "has_broad_face": false,
+  "has_barrel": false,
+  "has_stock": false,
+  "confidence": 0.88,
+  "evidence_parts": [
+    "long wooden handle",
+    "heavy steel axe head",
+    "curved blade edge",
+    "rear spike or pick"
+  ]
+}

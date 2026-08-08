@@ -1,0 +1,21 @@
+{
+  "handle_length": "none",
+  "body_length": "medium",
+  "grip_topology": "body_grip",
+  "rigidity": "rigid",
+  "mass_distribution": "front",
+  "contact_surface": "whole_body",
+  "secondary_contact_surface": "edge",
+  "has_point": false,
+  "has_edge": true,
+  "has_broad_face": true,
+  "has_barrel": false,
+  "has_stock": false,
+  "confidence": 0.85,
+  "evidence_parts": [
+    "chair back as grip point",
+    "four legs as striking extremities",
+    "seat as broad mass",
+    "rigid wood frame"
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "schema": "forge-affordance-combined-handoff-v1",
+  "status": "PREPARED_FOR_OFFLINE_GODOT_COMPILATION",
+  "created_at": "2026-08-08T13:21:29.489Z",
+  "case_order": [
+    "A01",
+    "A02",
+    "A03",
+    "A04",
+    "A05",
+    "A06",
+    "A07",
+    "A08",
+    "A09",
+    "A10",
+    "A11",
+    "A12"
+  ],
+  "profile_count": 12,
+  "identity_inputs_in_compiler_bundle": false,
+  "version_boundary": {
+    "v1_2_case_count": 8,
+    "v1_2_1_targeted_case_count": 4,
+    "homogeneous_twelve_call_run": false
+  },
+  "frozen_evidence": {
+    "source": {
+      "run_id": "affordance-retest-v1-2-20260808T074610104680Z-70b603d7",
+      "evidence_sha256": "fa76d8bc4f3c78ce4a9eb29c4a8baeade03e5297acefa4a0bf45fb8f1ff06324",
+      "file_count": 58
+    },
+    "targeted": {
+      "run_id": "affordance-targeted-v1-2-1-20260808T130139638529Z-a318dc88",
+      "evidence_sha256": "6ffd56aebc23140104ebb511186c6f4c8e5cd395f43c083cc0a0f723facf01a7",
+      "file_count": 16
+    }
+  },
+  "case_sources": [
+    {
+      "case_id": "A01",
+      "contract_version": "forge-semantic-v1.2-candidate",
+      "source_run_id": "affordance-retest-v1-2-20260808T074610104680Z-70b603d7",
+      "source_result_sha256": "e63950fc1ab17dcaef5e4c3741f477b7e32982d48632e47b2652a70a6b41702a",
+      "profile_sha256": "50bf63ae35f67397da52cfc5339921b59f07c877ad08de2f7954718841d9da44"
+    },
+    {
+      "case_id": "A02",
+      "contract_version": "forge-semantic-v1.2-candidate",
+      "source_run_id": "affordance-retest-v1-2-20260808T074610104680Z-70b603d7",
+      "source_result_sha256": "699df97d0c137ba22124ef01d7b3b93fb03b016d4930c3d8c7e8da5aefcddc7c",
+      "profile_sha256": "43360a87fe2b9de1c4f615741847594ead009d75a195e8bb40ec7a9142a2f0cf"
+    },
+    {
+      "case_id": "A03",
+      "contract_version": "forge-semantic-v1.2.1-candidate",
+      "source_run_id": "affordance-targeted-v1-2-1-20260808T130139638529Z-a318dc88",
+      "source_result_sha256": "93ad027d2356219da78215d48e4b203c39196fee4968ae0d9753a1e8a318f942",
+      "profile_sha256": "f06f144960567c2787ecb5bc919e08ec5416bf1ee5a90769a0f93f2c1e96913f"
+    },
+    {
+      "case_id": "A04",
+      "contract_version": "forge-semantic-v1.2-candidate",
+      "source_run_id": "affordance-retest-v1-2-20260808T074610104680Z-70b603d7",
+      "source_result_sha256": "4dd4856a996a89cb9599af0089182ea3d66727c1c9cbefec83e6a347753bc4fb",
+      "profile_sha256": "30342acaa30cced99e0e23c72c3a39e25e6bfd75d3a26dd68c805b384d744d8d"
+    },
+    {
+      "case_id": "A05",
+      "contract_version": "forge-semantic-v1.2-candidate",
+      "source_run_id": "affordance-retest-v1-2-20260808T074610104680Z-70b603d7",
+      "source_result_sha256": "9261c2245e56f94f14a87ebca042c8bc9b80e6056ea3e20e8b00952c44e60998",
+      "profile_sha256": "6a7cf8ec96cf94b84a447c2e9ce8cbb9476d90f8a3cad825ec35d685e1fcbfcf"
+    },
+    {
+      "case_id": "A06",
+      "contract_version": "forge-semantic-v1.2-candidate",
+      "source_run_id": "affordance-retest-v1-2-20260808T074610104680Z-70b603d7",
+      "source_result_sha256": "ebe453b976bdfb667579caae93e9b81f7cc3705ecac7a7ada94d28a086c3d396",
+      "profile_sha256": "1cec7f61bdd33cf2f3e6e396177fd2e1ec165c72ce2600b79aaa883295073865"
+    },
+    {
+      "case_id": "A07",
+      "contract_version": "forge-semantic-v1.2.1-candidate",
+      "source_run_id": "affordance-targeted-v1-2-1-20260808T130139638529Z-a318dc88",
+      "source_result_sha256": "433e88abfba91f8239551709f6449afb15966b8a85306951d04e7ef44c78da1e",
+      "profile_sha256": "a30dd123f352fbb02fe7776ac7ba4656183d99ed49fc0d86ca97c39622b76606"
+    },
+    {
+      "case_id": "A08",
+      "contract_version": "forge-semantic-v1.2.1-candidate",
+      "source_run_id": "affordance-targeted-v1-2-1-20260808T130139638529Z-a318dc88",
+      "source_result_sha256": "ea4b942ca635ba26acb69323eb86004b56ff7fbbe4284207c775b6c3c1c3eb38",
+      "profile_sha256": "f36007dcb4abda87660f2e66951fccbca7a6158b64bd3b358e96a73f1474c948"
+    },
+    {
+      "case_id": "A09",
+      "contract_version": "forge-semantic-v1.2.1-candidate",
+      "source_run_id": "affordance-targeted-v1-2-1-20260808T130139638529Z-a318dc88",
+      "source_result_sha256": "d31d49290e39fbf691378cb521db13612709ba053d7b3e7c61ea0e345e240691",
+      "profile_sha256": "7cdb67e498a40696c69ddba1e21c7d162d8237a2f1e3ed5832904adf98111203"
+    },
+    {
+      "case_id": "A10",
+      "contract_version": "forge-semantic-v1.2-candidate",
+      "source_run_id": "affordance-retest-v1-2-20260808T074610104680Z-70b603d7",
+      "source_result_sha256": "c6dde8ab6b396e81348f4ae5ca5265e6e776d3f7f19f571b475982c8cc6b691f",
+      "profile_sha256": "fd5dec6ed74232fae194945b7fde1444acab792ca366c17fc5b782d0eec556e0"
+    },
+    {
+      "case_id": "A11",
+      "contract_version": "forge-semantic-v1.2-candidate",
+      "source_run_id": "affordance-retest-v1-2-20260808T074610104680Z-70b603d7",
+      "source_result_sha256": "634934f4ac200478089d9baf74e86c22a69a8e76a5472f9b8320224a0ddd871d",
+      "profile_sha256": "24c1d054648ae50f34b165cddf8f9d8f2636c128d2fa0087ab43fd0aeebe6dba"
+    },
+    {
+      "case_id": "A12",
+      "contract_version": "forge-semantic-v1.2-candidate",
+      "source_run_id": "affordance-retest-v1-2-20260808T074610104680Z-70b603d7",
+      "source_result_sha256": "9d0abcb18abfdee500305b4dd6525ceca1cb7142902c9b4002165c4106084b2f",
+      "profile_sha256": "373cb85146217983ba1d60e8f5cdcf99646d22feded3f2bdd013c32c0608173e"
+    }
+  ]
+}

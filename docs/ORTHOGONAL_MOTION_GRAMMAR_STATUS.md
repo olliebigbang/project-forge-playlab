@@ -10,6 +10,7 @@ Current status:
 
 - **OFFLINE TECHNICAL PASS**
 - **REAL AI AFFORDANCE COVERAGE PASS WITH VERSIONED EVIDENCE**
+- **12-PROFILE COMPOSER COVERAGE PASS (7 sequences, all 5 primitives)**
 - **HUMAN FEEL RETEST NEEDS WORK (3/5)**
 
 The earlier three-sample 5/5 result is preserved as historical evidence and is
@@ -60,13 +61,13 @@ not be presented as AI output.
 |---|---|---|---|---|---|
 | A01 | kitchen knife | strict-valid | short/front/edge | sweep → bash → slam | COMPILED |
 | A02 | longsword | strict-valid | short+long/balanced/edge+point | sweep → thrust → slam | COMPILED |
-| A03 | fire axe | v1.2.1 targeted strict-valid | long/front/edge+point | combined export pending | TARGETED PASS |
+| A03 | fire axe | v1.2.1 targeted strict-valid | long/front/edge+point | sweep → thrust → slam | COMPILED |
 | A04 | spear | strict-valid | long/front/point | thrust → thrust → slam | COMPILED |
 | A05 | hammer | strict-valid | long/front/broad | bash → slam → sweep | COMPILED |
 | A06 | baseball bat | strict-valid | medium/front/broad | bash → slam → bash | COMPILED |
-| A07 | chair | v1.2.1 targeted strict-valid | none/body-grip/front/whole-body | combined export pending | TARGETED PASS |
-| A08 | fire extinguisher | v1.2.1 targeted strict-valid | none/body-grip/balanced/whole-body | combined export pending | TARGETED PASS |
-| A09 | shield | v1.2.1 targeted strict-valid | short/clamp-grip/balanced/broad | combined export pending | TARGETED PASS |
+| A07 | chair | v1.2.1 targeted strict-valid | none/body-grip/front/whole-body | sweep → spin → slam | COMPILED |
+| A08 | fire extinguisher | v1.2.1 targeted strict-valid | none/body-grip/balanced/whole-body | sweep → spin → slam | COMPILED |
+| A09 | shield | v1.2.1 targeted strict-valid | short/clamp-grip/balanced/broad | bash → sweep → slam | COMPILED |
 | A10 | giant chicken leg | strict-valid | short/front/broad | bash → slam → bash | COMPILED |
 | A11 | folding stool | strict-valid | none/front/broad | bash → slam → bash | COMPILED |
 | A12 | fishing rod | strict-valid | medium+long/rear/flexible whole-body | sweep → spin → slam | COMPILED |
@@ -79,6 +80,14 @@ reach, Mop has the widest contact coverage, and the barrel/stock structure has
 the greatest root-motion total. No exact multiplier or legacy sequence is an
 acceptance requirement.
 
+The versioned twelve-profile handoff was compiled through the same existing
+`MeleeMotionCompiler` with one neutral anchor/bounds basis. It produced 12/12
+valid compilations, seven distinct normal-combo sequences, 12 mechanically
+distinct parameter Recipes, and normal-combo use of all five primitives. The
+most frequent sequence appears in 3/12 cases (25%), so the corpus has not
+collapsed to one default combo. The complete reproducible matrix is frozen in
+`tools/semantic/reports/affordance_combined_handoff_v1_2_1/affordance-combined-v1-2-1-20260808T132129343Z/`.
+
 The approved orthogonal-composer BlindComparison was completed as session
 `blind-20260808T130540547Z-65f7d463`. It scored **3/5**. Pan was correctly felt
 as shortest and Mop as widest/best for control, but Shotgun stock was not felt
@@ -89,7 +98,7 @@ feel read rather than a semantic or asset-identity failure.
 
 The governing state is therefore **TECHNICAL PASS / FEEL NEEDS WORK**. The
 orthogonal composer must not be promoted to the default player flow. The next
-change, if separately approved, should be a bounded structure-driven Shotgun
-contact/readability correction followed by one unchanged BlindComparison; it
-must not introduce identity-specific Recipe logic or silently tune until the
-questionnaire passes.
+change, if separately approved, must audit or calibrate generic causal axis
+effects with anonymous counterfactual profiles (for example point-front versus
+rear-broad contact). It must not target Shotgun, Pan, Mop, any case ID, or any
+identity label, and it must not silently tune until the questionnaire passes.

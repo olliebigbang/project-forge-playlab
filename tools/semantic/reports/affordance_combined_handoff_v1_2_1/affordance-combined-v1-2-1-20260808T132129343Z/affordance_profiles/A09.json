@@ -1,0 +1,21 @@
+{
+  "handle_length": "short",
+  "body_length": "medium",
+  "grip_topology": "clamp_grip",
+  "rigidity": "rigid",
+  "mass_distribution": "balanced",
+  "contact_surface": "broad",
+  "secondary_contact_surface": "edge",
+  "has_point": false,
+  "has_edge": true,
+  "has_broad_face": true,
+  "has_barrel": false,
+  "has_stock": false,
+  "confidence": 0.85,
+  "evidence_parts": [
+    "circular flat body",
+    "back handle strap",
+    "rim edge",
+    "convex front face"
+  ]
+}

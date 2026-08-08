@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "case_count": 12,
+  "compiled_count": 12,
+  "identity_inputs_used": false,
+  "all_five_primitives_used_in_normal_combo_hits": true,
+  "primitive_counts": {
+    "bash": 9,
+    "slam": 12,
+    "spin": 3,
+    "sweep": 8,
+    "thrust": 4
+  },
+  "unique_primitive_sequences": 7,
+  "sequence_counts": {
+    "bash -> slam -> bash": 3,
+    "bash -> slam -> sweep": 1,
+    "bash -> sweep -> slam": 1,
+    "sweep -> bash -> slam": 1,
+    "sweep -> spin -> slam": 3,
+    "sweep -> thrust -> slam": 2,
+    "thrust -> thrust -> slam": 1
+  },
+  "unique_mechanical_recipes": 12,
+  "most_common_sequence": "bash -> slam -> bash",
+  "most_common_sequence_count": 3,
+  "most_common_sequence_ratio": 0.25,
+  "single_sequence_degradation": false,
+  "dominant_sequence_warning": false
+}

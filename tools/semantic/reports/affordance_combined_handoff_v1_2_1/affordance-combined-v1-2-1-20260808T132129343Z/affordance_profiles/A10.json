@@ -1,0 +1,21 @@
+{
+  "handle_length": "short",
+  "body_length": "medium",
+  "grip_topology": "one_hand_handle",
+  "rigidity": "semi_rigid",
+  "mass_distribution": "front",
+  "contact_surface": "broad",
+  "secondary_contact_surface": "none",
+  "has_point": false,
+  "has_edge": false,
+  "has_broad_face": true,
+  "has_barrel": false,
+  "has_stock": false,
+  "confidence": 0.82,
+  "evidence_parts": [
+    "narrow bone shaft as handle",
+    "bulbous meat mass at striking end",
+    "semi-rigid meat and bone structure",
+    "front-heavy weight distribution"
+  ]
+}

@@ -287,3 +287,33 @@ repeat run.
 The current formal result is **TECHNICAL PASS / FEEL NEEDS WORK**. The exact
 comparison record and A/B/C run records are frozen under
 `data/combat_feel/live_assets/motion_grammar_slice_1a/evidence/orthogonal_blind_20260808T130540547Z/`.
+
+## Twelve-profile orthogonal coverage audit
+
+The eight frozen strict-valid v1.2 affordance profiles and four separately
+frozen strict-valid targeted v1.2.1 profiles were combined in a versioned
+offline handoff. They were not represented as one homogeneous 12/12 model run.
+Only anonymous affordance profiles, case IDs, neutral anchors, and neutral alpha
+bounds entered the existing `MeleeMotionCompiler`; identity labels were joined
+after compilation for the report table.
+
+Results:
+
+- 12/12 profiles compiled through the existing compiler;
+- seven distinct Hit 1 -> Hit 2 -> Hit 3 sequences;
+- 12 distinct mechanical parameter Recipes after excluding evidence text and
+  reporting metadata from the mechanical signature;
+- all five primitives appeared in ordinary combo hits;
+- the most common sequence appeared in 3/12 cases (25%);
+- no single-sequence or >=50% dominant-sequence warning;
+- no object-name, asset-ID, run-ID, or case-specific Recipe branch was added.
+
+The exact `affordance -> dominant mechanism scores -> primitive sequence`
+matrix and frozen hashes are stored in
+`tools/semantic/reports/affordance_combined_handoff_v1_2_1/affordance-combined-v1-2-1-20260808T132129343Z/`.
+
+This audit resolves the structural coverage question: the orthogonal composer
+does not reduce the twelve frozen inputs to one reskinned attack. It does not
+override the separate 3/5 human result. The next investigation must concern
+generic causal axis readability across anonymous profiles, not Shotgun-specific
+or other identity-specific tuning.

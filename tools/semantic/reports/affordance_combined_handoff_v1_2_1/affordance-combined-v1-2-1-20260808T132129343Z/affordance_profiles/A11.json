@@ -1,0 +1,21 @@
+{
+  "handle_length": "none",
+  "body_length": "short",
+  "grip_topology": "clamp_grip",
+  "rigidity": "rigid",
+  "mass_distribution": "front",
+  "contact_surface": "broad",
+  "secondary_contact_surface": "none",
+  "has_point": false,
+  "has_edge": false,
+  "has_broad_face": true,
+  "has_barrel": false,
+  "has_stock": false,
+  "confidence": 0.8,
+  "evidence_parts": [
+    "flat seat surface as striking face",
+    "folding legs as grip point",
+    "rigid leg frame",
+    "seat mass offset from hand grip"
+  ]
+}
