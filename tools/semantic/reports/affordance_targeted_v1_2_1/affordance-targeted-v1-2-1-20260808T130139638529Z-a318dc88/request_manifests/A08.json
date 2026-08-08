@@ -1,0 +1,8 @@
+{
+  "case_id": "A08",
+  "ordinal": 3,
+  "contract_version": "forge-semantic-v1.2.1-candidate",
+  "model_id": "claude-sonnet-5",
+  "request_body_sha256": "8b0554d10ae796a065331619a3fa459ff2ba58727779213f8244e72df8361611",
+  "retry_count": 0
+}

@@ -1,0 +1,22 @@
+{
+  "algorithm": "SHA-256",
+  "run_id": "affordance-targeted-v1-2-1-20260808T130139638529Z-a318dc88",
+  "files": {
+    "AFFORDANCE_TARGETED_V1_2_1_REPORT.md": "3f796c0b46f3fede82592aaf34545080d0584b751b875e8f6de3aad091088e7f",
+    "affordance_targeted_v1_2_1_summary.json": "07e92b1ea9ee84e2e6d144494d6a47308cb923b173ed0e9243a32717d81c752c",
+    "case_order.json": "f204e3095474c6483857ae2a8fc29d6bb9d73d44b7e1c2081c13c7583eff0dea",
+    "cases/A03/result.json": "93ad027d2356219da78215d48e4b203c39196fee4968ae0d9753a1e8a318f942",
+    "cases/A07/result.json": "433e88abfba91f8239551709f6449afb15966b8a85306951d04e7ef44c78da1e",
+    "cases/A08/result.json": "ea4b942ca635ba26acb69323eb86004b56ff7fbbe4284207c775b6c3c1c3eb38",
+    "cases/A09/result.json": "d31d49290e39fbf691378cb521db13612709ba053d7b3e7c61ea0e345e240691",
+    "configuration_snapshot.json": "d012afc42023ed5fa0bd2065c0809b2f6afe81186ab95074720c8bd15e5cc1c9",
+    "raw_response_redacted/A03.json": "fdfea43464f22d5082c417ba3849038fb2fb85aaa9fb1eb79498859b77c81be9",
+    "raw_response_redacted/A07.json": "f065cc90f5c80481db00e89fa18d964c82fc419e2c8fc0f1e0a5e83b4aa3fa97",
+    "raw_response_redacted/A08.json": "f5a9cc070879aba2783f67496813c0f0841d3fa35f2e4475da677a3a2303378d",
+    "raw_response_redacted/A09.json": "d199b7ed141f9dbc6133707c77ecb202ebe2f88837df091d19f3f47b6256bf31",
+    "request_manifests/A03.json": "a7d4230e44ed2e489a9c1108d8214c6b25d48f23c0d026a2f399c3fce51ac111",
+    "request_manifests/A07.json": "5192d9afc7866606b0645691bce890aa7f925585a377c724fb4daccf4fa47634",
+    "request_manifests/A08.json": "72e71b7eb653b15d7c94800c95933809abf74f459572390256d4524f0078a3ea",
+    "request_manifests/A09.json": "db0323226d4ebb163588288d99e6a67f63b65987517b0f81901ba26b2f777805"
+  }
+}

@@ -1,0 +1,179 @@
+{
+  "case_id": "A09",
+  "contract_version": "forge-semantic-v1.2.1-candidate",
+  "provider": "anthropic",
+  "endpoint": "https://api.anthropic.com/v1/messages",
+  "model_id": "claude-sonnet-5",
+  "local_request_id": "d61cc528-50a6-471c-890a-3441c7d31d1c",
+  "request_body_sha256": "e83cf064477c380aef8aabaaafa428ae8926e29bbb5b00b67de2086271eaab00",
+  "retry_count": 0,
+  "repair_applied": false,
+  "unwrap_applied": false,
+  "coercion_applied": false,
+  "defaults_applied": false,
+  "api_status": 200,
+  "api_success": true,
+  "request_id": "msg_011CdqKqp1Xh6vCYrgZ4VeJi",
+  "response_model_id": "claude-sonnet-5",
+  "tool_name": "submit_forge_semantic_blueprint",
+  "tool_input_received": {
+    "identity": {
+      "canonical_name_zh": "圆盾",
+      "canonical_name_en": "round shield",
+      "display_name_zh": "圆盾",
+      "display_name_en": "Round Shield",
+      "category": "traditional_weapon",
+      "required_identity_parts": [
+        "circular body",
+        "back handle",
+        "rim edge"
+      ],
+      "material_hints": [
+        "wood",
+        "metal rim",
+        "leather straps"
+      ],
+      "silhouette_hints": [
+        "flat circular disc shape",
+        "slightly convex face"
+      ],
+      "optional_decorations": [
+        "emblem on front face",
+        "riveted studs along rim"
+      ]
+    },
+    "combat": {
+      "behavior_family": "heavy_melee",
+      "delivery": "melee_swing",
+      "impact_mode": "whole_body_collision",
+      "effect_type": "normal",
+      "drawback": "slow_movement",
+      "cadence_hint": "slow_heavy"
+    },
+    "visual": {
+      "prompt_en": "A round shield, circular flat disc body with a slightly convex face, reinforced rim edge, a sturdy handle mounted on the back for gripping, made of wood with a metal rim and leather straps, one isolated object, side view, complete object visible",
+      "negative_prompt_en": "not a sword, not a gun, not an umbrella, do not depict as a weapon replacement, no gatling gun, no blade",
+      "must_preserve": [
+        "circular body",
+        "back handle",
+        "rim edge"
+      ],
+      "must_not_replace_with": [
+        "sword",
+        "gun",
+        "umbrella",
+        "spear"
+      ]
+    },
+    "confidence": 0.9,
+    "affordance": {
+      "handle_length": "short",
+      "body_length": "medium",
+      "grip_topology": "clamp_grip",
+      "rigidity": "rigid",
+      "mass_distribution": "balanced",
+      "contact_surface": "broad",
+      "secondary_contact_surface": "edge",
+      "has_point": false,
+      "has_edge": true,
+      "has_broad_face": true,
+      "has_barrel": false,
+      "has_stock": false,
+      "confidence": 0.85,
+      "evidence_parts": [
+        "circular flat body",
+        "back handle strap",
+        "rim edge",
+        "convex front face"
+      ]
+    }
+  },
+  "exactly_one_legal_tool_use": true,
+  "sole_content_is_tool_use": true,
+  "usage": {
+    "input_tokens": 6435,
+    "output_tokens": 726,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0
+  },
+  "stop_reason": "tool_use",
+  "status": "VALID",
+  "validation_stage": "complete",
+  "failure_reason": "",
+  "schema_valid": true,
+  "cross_field_valid": true,
+  "validated_blueprint": {
+    "identity": {
+      "canonical_name_zh": "圆盾",
+      "canonical_name_en": "round shield",
+      "display_name_zh": "圆盾",
+      "display_name_en": "Round Shield",
+      "category": "traditional_weapon",
+      "required_identity_parts": [
+        "circular body",
+        "back handle",
+        "rim edge"
+      ],
+      "material_hints": [
+        "wood",
+        "metal rim",
+        "leather straps"
+      ],
+      "silhouette_hints": [
+        "flat circular disc shape",
+        "slightly convex face"
+      ],
+      "optional_decorations": [
+        "emblem on front face",
+        "riveted studs along rim"
+      ]
+    },
+    "combat": {
+      "behavior_family": "heavy_melee",
+      "delivery": "melee_swing",
+      "impact_mode": "whole_body_collision",
+      "effect_type": "normal",
+      "drawback": "slow_movement",
+      "cadence_hint": "slow_heavy"
+    },
+    "visual": {
+      "prompt_en": "A round shield, circular flat disc body with a slightly convex face, reinforced rim edge, a sturdy handle mounted on the back for gripping, made of wood with a metal rim and leather straps, one isolated object, side view, complete object visible",
+      "negative_prompt_en": "not a sword, not a gun, not an umbrella, do not depict as a weapon replacement, no gatling gun, no blade",
+      "must_preserve": [
+        "circular body",
+        "back handle",
+        "rim edge"
+      ],
+      "must_not_replace_with": [
+        "sword",
+        "gun",
+        "umbrella",
+        "spear"
+      ]
+    },
+    "confidence": 0.9,
+    "affordance": {
+      "handle_length": "short",
+      "body_length": "medium",
+      "grip_topology": "clamp_grip",
+      "rigidity": "rigid",
+      "mass_distribution": "balanced",
+      "contact_surface": "broad",
+      "secondary_contact_surface": "edge",
+      "has_point": false,
+      "has_edge": true,
+      "has_broad_face": true,
+      "has_barrel": false,
+      "has_stock": false,
+      "confidence": 0.85,
+      "evidence_parts": [
+        "circular flat body",
+        "back handle strap",
+        "rim edge",
+        "convex front face"
+      ]
+    }
+  },
+  "ordinal": 4,
+  "elapsed_ms": 8610
+}

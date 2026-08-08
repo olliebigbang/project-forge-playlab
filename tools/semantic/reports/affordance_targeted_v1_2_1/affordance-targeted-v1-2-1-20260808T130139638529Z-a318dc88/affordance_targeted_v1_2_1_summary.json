@@ -1,0 +1,11 @@
+{
+  "run_id": "affordance-targeted-v1-2-1-20260808T130139638529Z-a318dc88",
+  "status": "PASS",
+  "contract_version": "forge-semantic-v1.2.1-candidate",
+  "model_id": "claude-sonnet-5",
+  "call_count": 4,
+  "retry_count": 0,
+  "api_success_count": 4,
+  "strict_valid_count": 4,
+  "blind_comparison_executed": false
+}

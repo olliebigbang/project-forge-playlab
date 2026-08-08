@@ -1,0 +1,187 @@
+{
+  "case_id": "A03",
+  "contract_version": "forge-semantic-v1.2.1-candidate",
+  "provider": "anthropic",
+  "endpoint": "https://api.anthropic.com/v1/messages",
+  "model_id": "claude-sonnet-5",
+  "local_request_id": "82d44d5f-3f7a-4948-a223-51839c59d117",
+  "request_body_sha256": "3f6572ac7f99f82acc37b8ae521718ea67970e8ac6f4659c52609b56e045a13c",
+  "retry_count": 0,
+  "repair_applied": false,
+  "unwrap_applied": false,
+  "coercion_applied": false,
+  "defaults_applied": false,
+  "api_status": 200,
+  "api_success": true,
+  "request_id": "msg_011CdqKouEzgEPBt1k5pRHAx",
+  "response_model_id": "claude-sonnet-5",
+  "tool_name": "submit_forge_semantic_blueprint",
+  "tool_input_received": {
+    "identity": {
+      "canonical_name_zh": "消防斧",
+      "canonical_name_en": "fire axe",
+      "display_name_zh": "消防斧",
+      "display_name_en": "Fire Axe",
+      "category": "tool",
+      "required_identity_parts": [
+        "axe head",
+        "curved blade edge",
+        "rear spike or pick",
+        "long wooden handle"
+      ],
+      "material_hints": [
+        "steel head",
+        "wooden or fiberglass handle",
+        "red painted finish"
+      ],
+      "silhouette_hints": [
+        "long straight handle with a broad flat-topped axe head at one end",
+        "asymmetric head with blade on one side and spike on the other"
+      ],
+      "optional_decorations": [
+        "worn paint chips",
+        "fire department emblem",
+        "leather wrist strap"
+      ]
+    },
+    "combat": {
+      "behavior_family": "heavy_melee",
+      "delivery": "melee_swing",
+      "impact_mode": "strike_edge",
+      "effect_type": "normal",
+      "drawback": "long_recovery",
+      "cadence_hint": "slow_heavy"
+    },
+    "visual": {
+      "prompt_en": "A fire axe, isolated object on plain background, side view, complete object visible: a long straight wooden handle with a heavy steel axe head at the top, featuring a broad curved cutting blade on one side and a narrow rear spike or pick on the other, red painted handle with worn steel head, sturdy functional tool silhouette",
+      "negative_prompt_en": "not a sword, not a greatsword, not a hammer, not a gun, not an umbrella, no dual blades, no fantasy ornamentation replacing the axe head",
+      "must_preserve": [
+        "axe head",
+        "curved blade edge",
+        "rear spike or pick",
+        "long wooden handle"
+      ],
+      "must_not_replace_with": [
+        "sword",
+        "greatsword",
+        "hammer",
+        "gun",
+        "umbrella"
+      ]
+    },
+    "confidence": 0.9,
+    "affordance": {
+      "handle_length": "long",
+      "body_length": "medium",
+      "grip_topology": "two_hand_handle",
+      "rigidity": "rigid",
+      "mass_distribution": "front",
+      "contact_surface": "edge",
+      "secondary_contact_surface": "point",
+      "has_point": true,
+      "has_edge": true,
+      "has_broad_face": false,
+      "has_barrel": false,
+      "has_stock": false,
+      "confidence": 0.88,
+      "evidence_parts": [
+        "long wooden handle",
+        "heavy steel axe head",
+        "curved blade edge",
+        "rear spike or pick"
+      ]
+    }
+  },
+  "exactly_one_legal_tool_use": true,
+  "sole_content_is_tool_use": true,
+  "usage": {
+    "input_tokens": 6430,
+    "output_tokens": 882,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0
+  },
+  "stop_reason": "tool_use",
+  "status": "VALID",
+  "validation_stage": "complete",
+  "failure_reason": "",
+  "schema_valid": true,
+  "cross_field_valid": true,
+  "validated_blueprint": {
+    "identity": {
+      "canonical_name_zh": "消防斧",
+      "canonical_name_en": "fire axe",
+      "display_name_zh": "消防斧",
+      "display_name_en": "Fire Axe",
+      "category": "tool",
+      "required_identity_parts": [
+        "axe head",
+        "curved blade edge",
+        "rear spike or pick",
+        "long wooden handle"
+      ],
+      "material_hints": [
+        "steel head",
+        "wooden or fiberglass handle",
+        "red painted finish"
+      ],
+      "silhouette_hints": [
+        "long straight handle with a broad flat-topped axe head at one end",
+        "asymmetric head with blade on one side and spike on the other"
+      ],
+      "optional_decorations": [
+        "worn paint chips",
+        "fire department emblem",
+        "leather wrist strap"
+      ]
+    },
+    "combat": {
+      "behavior_family": "heavy_melee",
+      "delivery": "melee_swing",
+      "impact_mode": "strike_edge",
+      "effect_type": "normal",
+      "drawback": "long_recovery",
+      "cadence_hint": "slow_heavy"
+    },
+    "visual": {
+      "prompt_en": "A fire axe, isolated object on plain background, side view, complete object visible: a long straight wooden handle with a heavy steel axe head at the top, featuring a broad curved cutting blade on one side and a narrow rear spike or pick on the other, red painted handle with worn steel head, sturdy functional tool silhouette",
+      "negative_prompt_en": "not a sword, not a greatsword, not a hammer, not a gun, not an umbrella, no dual blades, no fantasy ornamentation replacing the axe head",
+      "must_preserve": [
+        "axe head",
+        "curved blade edge",
+        "rear spike or pick",
+        "long wooden handle"
+      ],
+      "must_not_replace_with": [
+        "sword",
+        "greatsword",
+        "hammer",
+        "gun",
+        "umbrella"
+      ]
+    },
+    "confidence": 0.9,
+    "affordance": {
+      "handle_length": "long",
+      "body_length": "medium",
+      "grip_topology": "two_hand_handle",
+      "rigidity": "rigid",
+      "mass_distribution": "front",
+      "contact_surface": "edge",
+      "secondary_contact_surface": "point",
+      "has_point": true,
+      "has_edge": true,
+      "has_broad_face": false,
+      "has_barrel": false,
+      "has_stock": false,
+      "confidence": 0.88,
+      "evidence_parts": [
+        "long wooden handle",
+        "heavy steel axe head",
+        "curved blade edge",
+        "rear spike or pick"
+      ]
+    }
+  },
+  "ordinal": 1,
+  "elapsed_ms": 9125
+}

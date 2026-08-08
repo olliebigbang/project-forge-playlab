@@ -1,0 +1,185 @@
+{
+  "case_id": "A08",
+  "contract_version": "forge-semantic-v1.2.1-candidate",
+  "provider": "anthropic",
+  "endpoint": "https://api.anthropic.com/v1/messages",
+  "model_id": "claude-sonnet-5",
+  "local_request_id": "8457b3f1-e067-4d7f-a09f-a5bbddbe6bc0",
+  "request_body_sha256": "8b0554d10ae796a065331619a3fa459ff2ba58727779213f8244e72df8361611",
+  "retry_count": 0,
+  "repair_applied": false,
+  "unwrap_applied": false,
+  "coercion_applied": false,
+  "defaults_applied": false,
+  "api_status": 200,
+  "api_success": true,
+  "request_id": "msg_011CdqKq9PKkfHzPcrLSJTAg",
+  "response_model_id": "claude-sonnet-5",
+  "tool_name": "submit_forge_semantic_blueprint",
+  "tool_input_received": {
+    "identity": {
+      "canonical_name_zh": "灭火器",
+      "canonical_name_en": "fire extinguisher",
+      "display_name_zh": "灭火器",
+      "display_name_en": "Fire Extinguisher",
+      "category": "tool",
+      "required_identity_parts": [
+        "cylindrical tank body",
+        "discharge nozzle/hose",
+        "top valve handle",
+        "carrying handle"
+      ],
+      "material_hints": [
+        "red painted steel",
+        "metal nozzle",
+        "rubber hose"
+      ],
+      "silhouette_hints": [
+        "stout cylindrical canister with narrow neck and nozzle hose at top"
+      ],
+      "optional_decorations": [
+        "safety pin ring",
+        "pressure gauge dial",
+        "warning label markings"
+      ]
+    },
+    "combat": {
+      "behavior_family": "heavy_melee",
+      "delivery": "whole_object_strike",
+      "impact_mode": "whole_body_collision",
+      "effect_type": "normal",
+      "drawback": "slow_movement",
+      "cadence_hint": "slow_heavy"
+    },
+    "visual": {
+      "prompt_en": "A red fire extinguisher, full cylindrical tank body with narrow neck, discharge nozzle and hose coiled near the top, small top valve handle and carrying handle, sturdy metal construction, side view, isolated single object, complete object visible, slightly reinforced base for melee use",
+      "negative_prompt_en": "not a hammer, not a club, not a mace, not a generic blunt weapon, no unrelated weapon shapes, do not remove the nozzle or hose",
+      "must_preserve": [
+        "cylindrical tank body",
+        "discharge nozzle/hose",
+        "top valve handle",
+        "carrying handle"
+      ],
+      "must_not_replace_with": [
+        "hammer",
+        "mace",
+        "club",
+        "battering ram",
+        "generic blunt weapon"
+      ]
+    },
+    "confidence": 0.85,
+    "affordance": {
+      "handle_length": "none",
+      "body_length": "medium",
+      "grip_topology": "body_grip",
+      "rigidity": "rigid",
+      "mass_distribution": "balanced",
+      "contact_surface": "whole_body",
+      "secondary_contact_surface": "none",
+      "has_point": false,
+      "has_edge": false,
+      "has_broad_face": false,
+      "has_barrel": false,
+      "has_stock": false,
+      "confidence": 0.82,
+      "evidence_parts": [
+        "cylindrical tank body",
+        "carrying handle",
+        "discharge nozzle",
+        "hugged against chest for impact"
+      ]
+    }
+  },
+  "exactly_one_legal_tool_use": true,
+  "sole_content_is_tool_use": true,
+  "usage": {
+    "input_tokens": 6432,
+    "output_tokens": 833,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0
+  },
+  "stop_reason": "tool_use",
+  "status": "VALID",
+  "validation_stage": "complete",
+  "failure_reason": "",
+  "schema_valid": true,
+  "cross_field_valid": true,
+  "validated_blueprint": {
+    "identity": {
+      "canonical_name_zh": "灭火器",
+      "canonical_name_en": "fire extinguisher",
+      "display_name_zh": "灭火器",
+      "display_name_en": "Fire Extinguisher",
+      "category": "tool",
+      "required_identity_parts": [
+        "cylindrical tank body",
+        "discharge nozzle/hose",
+        "top valve handle",
+        "carrying handle"
+      ],
+      "material_hints": [
+        "red painted steel",
+        "metal nozzle",
+        "rubber hose"
+      ],
+      "silhouette_hints": [
+        "stout cylindrical canister with narrow neck and nozzle hose at top"
+      ],
+      "optional_decorations": [
+        "safety pin ring",
+        "pressure gauge dial",
+        "warning label markings"
+      ]
+    },
+    "combat": {
+      "behavior_family": "heavy_melee",
+      "delivery": "whole_object_strike",
+      "impact_mode": "whole_body_collision",
+      "effect_type": "normal",
+      "drawback": "slow_movement",
+      "cadence_hint": "slow_heavy"
+    },
+    "visual": {
+      "prompt_en": "A red fire extinguisher, full cylindrical tank body with narrow neck, discharge nozzle and hose coiled near the top, small top valve handle and carrying handle, sturdy metal construction, side view, isolated single object, complete object visible, slightly reinforced base for melee use",
+      "negative_prompt_en": "not a hammer, not a club, not a mace, not a generic blunt weapon, no unrelated weapon shapes, do not remove the nozzle or hose",
+      "must_preserve": [
+        "cylindrical tank body",
+        "discharge nozzle/hose",
+        "top valve handle",
+        "carrying handle"
+      ],
+      "must_not_replace_with": [
+        "hammer",
+        "mace",
+        "club",
+        "battering ram",
+        "generic blunt weapon"
+      ]
+    },
+    "confidence": 0.85,
+    "affordance": {
+      "handle_length": "none",
+      "body_length": "medium",
+      "grip_topology": "body_grip",
+      "rigidity": "rigid",
+      "mass_distribution": "balanced",
+      "contact_surface": "whole_body",
+      "secondary_contact_surface": "none",
+      "has_point": false,
+      "has_edge": false,
+      "has_broad_face": false,
+      "has_barrel": false,
+      "has_stock": false,
+      "confidence": 0.82,
+      "evidence_parts": [
+        "cylindrical tank body",
+        "carrying handle",
+        "discharge nozzle",
+        "hugged against chest for impact"
+      ]
+    }
+  },
+  "ordinal": 3,
+  "elapsed_ms": 9109
+}

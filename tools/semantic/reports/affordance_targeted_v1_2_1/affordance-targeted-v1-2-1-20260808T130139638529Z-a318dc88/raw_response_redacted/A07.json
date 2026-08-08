@@ -1,0 +1,107 @@
+{
+  "case_id": "A07",
+  "response": {
+    "model": "claude-sonnet-5",
+    "id": "msg_011CdqKpZqDgbPdi8QQWD8aU",
+    "type": "message",
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "toolu_01FCQJGMgKurMiD6JYAzS2RZ",
+        "name": "submit_forge_semantic_blueprint",
+        "input": {
+          "identity": {
+            "canonical_name_zh": "木椅",
+            "canonical_name_en": "wooden chair",
+            "display_name_zh": "木椅",
+            "display_name_en": "Wooden Chair",
+            "category": "furniture",
+            "required_identity_parts": [
+              "chair back",
+              "seat",
+              "four legs"
+            ],
+            "material_hints": [
+              "wood"
+            ],
+            "silhouette_hints": [
+              "upright four-legged chair silhouette with vertical backrest"
+            ],
+            "optional_decorations": [
+              "carved wood grain",
+              "metal reinforcement bands"
+            ]
+          },
+          "combat": {
+            "behavior_family": "heavy_melee",
+            "delivery": "whole_object_strike",
+            "impact_mode": "whole_body_collision",
+            "effect_type": "normal",
+            "drawback": "slow_movement",
+            "cadence_hint": "slow_heavy"
+          },
+          "visual": {
+            "prompt_en": "A wooden chair, isolated single object, side view, complete object visible, showing chair back, seat, and four legs, sturdy wood construction with visible grain, slightly reinforced backrest for gripping, realistic proportions, plain background",
+            "negative_prompt_en": "do not depict a sword, do not depict a club, do not depict a generic weapon, no metal blade, no gun, no bat",
+            "must_preserve": [
+              "chair back",
+              "seat",
+              "four legs"
+            ],
+            "must_not_replace_with": [
+              "sword",
+              "club",
+              "baseball bat",
+              "generic melee weapon",
+              "gun"
+            ]
+          },
+          "confidence": 0.9,
+          "affordance": {
+            "handle_length": "none",
+            "body_length": "medium",
+            "grip_topology": "body_grip",
+            "rigidity": "rigid",
+            "mass_distribution": "front",
+            "contact_surface": "whole_body",
+            "secondary_contact_surface": "edge",
+            "has_point": false,
+            "has_edge": true,
+            "has_broad_face": true,
+            "has_barrel": false,
+            "has_stock": false,
+            "confidence": 0.85,
+            "evidence_parts": [
+              "chair back as grip point",
+              "four legs as striking extremities",
+              "seat as broad mass",
+              "rigid wood frame"
+            ]
+          }
+        },
+        "caller": {
+          "type": "direct"
+        }
+      }
+    ],
+    "stop_reason": "tool_use",
+    "stop_sequence": null,
+    "stop_details": null,
+    "usage": {
+      "input_tokens": 6435,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "cache_creation": {
+        "ephemeral_5m_input_tokens": 0,
+        "ephemeral_1h_input_tokens": 0
+      },
+      "output_tokens": 731,
+      "output_tokens_details": {
+        "thinking_tokens": 0
+      },
+      "service_tier": "standard",
+      "inference_geo": "global"
+    }
+  }
+}
