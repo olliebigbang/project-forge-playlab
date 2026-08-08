@@ -1,0 +1,53 @@
+{
+  "identity": {
+    "canonical_name_zh": "长剑",
+    "canonical_name_en": "longsword",
+    "display_name_zh": "霜之哀伤风格长剑",
+    "display_name_en": "Frostmourne-style Longsword",
+    "category": "traditional_weapon",
+    "required_identity_parts": [
+      "long straight blade",
+      "crossguard",
+      "hilt",
+      "pommel"
+    ],
+    "material_hints": [
+      "dark metal",
+      "ice-blue engraved runes"
+    ],
+    "silhouette_hints": [
+      "long slender blade with jagged runic engravings",
+      "elongated cruciform silhouette"
+    ],
+    "optional_decorations": [
+      "glowing rune inscriptions along blade",
+      "frost mist wisps around edge"
+    ]
+  },
+  "combat": {
+    "behavior_family": "heavy_melee",
+    "delivery": "melee_swing",
+    "impact_mode": "strike_edge",
+    "effect_type": "ice",
+    "drawback": "slow_movement",
+    "cadence_hint": "slow_heavy"
+  },
+  "visual": {
+    "prompt_en": "A longsword with a long straight dark-metal blade engraved with glowing ice-blue runic lines, cruciform crossguard, wrapped hilt, and ornate pommel, evoking a Frostmourne-style runeblade, faint frost mist along the edge, isolated single object, side view, complete blade and hilt visible",
+    "negative_prompt_en": "not a gun, not a greatsword replaced by firearm, no gatling, no bow, no unrelated object, not a stick, not an umbrella",
+    "must_preserve": [
+      "long straight blade",
+      "crossguard",
+      "hilt",
+      "pommel"
+    ],
+    "must_not_replace_with": [
+      "gun",
+      "gatling gun",
+      "bow",
+      "umbrella",
+      "generic stick"
+    ]
+  },
+  "confidence": 0.9
+}

@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-08-06T13:47:48.950Z",
+  "session_id": "open-20260806t133353124z-4c7c4825",
+  "round_id": "R0011-18daf27f",
+  "revision": 11,
+  "user_input": "一个像霜之哀伤的长剑，挥击斩向敌人",
+  "semantic_summary": "霜之哀伤风格长剑 · heavy_melee · ice",
+  "behavior_family": "heavy_melee",
+  "canonical_identity": "长剑",
+  "display_name": "霜之哀伤风格长剑",
+  "raw_image_path": "tools/open_playtest/output/sessions/open-20260806t133353124z-4c7c4825/rounds/R0011-18daf27f/flux_raw.png",
+  "processed_sprite_path": "tools/open_playtest/output/sessions/open-20260806t133353124z-4c7c4825/rounds/R0011-18daf27f/processed_sprite.png",
+  "identity_confirmed": true,
+  "anchor_confirmed": true,
+  "entered_training": true,
+  "user_notes": "",
+  "subjective_rating": null,
+  "keep_idea": null,
+  "saved_locally": false,
+  "total_forge_seconds": 15.689,
+  "stage_timings": {
+    "semantic_compiling": 7.735,
+    "image_generating": 6.312,
+    "background_removing": 1.61,
+    "sprite_processing": 0.062
+  },
+  "status": "completed",
+  "failure_stage": "",
+  "failure_reason": ""
+}

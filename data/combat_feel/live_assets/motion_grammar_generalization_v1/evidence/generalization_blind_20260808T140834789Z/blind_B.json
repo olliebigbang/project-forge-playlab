@@ -1,0 +1,40 @@
+{
+  "blind_label": "B",
+  "blind_suite": "generalization_v1",
+  "compiled_metrics": {
+    "combo_root_motion_total": 63.84,
+    "control_score": 0.92179296,
+    "maximum_coverage_score": 4360.66902064661,
+    "primitive_sequence": [
+      "thrust",
+      "thrust",
+      "slam"
+    ],
+    "reach_pixels": 148.0,
+    "recipe_signature": "83f6eb8abd388d14f001d3b1ba4d979b102f7549e6eba96aaa013005f5877a64",
+    "third_hit_weight_score": 2.6357164461056
+  },
+  "completed": true,
+  "elapsed_seconds": 53.56,
+  "input_to_active_ms": 164,
+  "input_to_visual_ms": 79,
+  "normal_attack_stats": {
+    "attempts": {
+      "1": 13,
+      "2": 7,
+      "3": 6
+    },
+    "hits": {
+      "1": 7,
+      "2": 5,
+      "3": 3
+    },
+    "whiffs": {
+      "1": 6,
+      "2": 2,
+      "3": 3
+    }
+  },
+  "schema": "forge-motion-grammar-blind-run-v2",
+  "timestamp": "2026-08-08T15:08:32"
+}

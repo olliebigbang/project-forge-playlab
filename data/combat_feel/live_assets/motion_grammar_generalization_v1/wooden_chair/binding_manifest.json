@@ -1,0 +1,21 @@
+{
+  "schema": "forge-motion-grammar-generalization-binding-v1",
+  "status": "eligible_for_developer_blind_test",
+  "developer_only": true,
+  "normal_player_flow": false,
+  "asset_identity": "wooden chair",
+  "source_visual": "res://tools/comfyui/output/case_d/seed_41002_s70/processed_sprite.png",
+  "source_visual_review": "res://tools/comfyui/reports/spike_scores.csv",
+  "source_semantic_response": "res://tools/semantic/reports/affordance_targeted_v1_2_1/affordance-targeted-v1-2-1-20260808T130139638529Z-a318dc88/raw_response_redacted/A07.json",
+  "source_anchor_calibration": "res://tools/comfyui/anchor_calibration/output/case_d/seed_41002_s70/semantic_anchors.json",
+  "source_affordance": "res://tools/semantic/reports/affordance_combined_handoff_v1_2_1/affordance-combined-v1-2-1-20260808T132129343Z/affordance_profiles/A07.json",
+  "derivation": {
+    "semantic_blueprint": "exact submit_forge_semantic_blueprint input from source_semantic_response",
+    "sprite": "byte-identical copy of source_visual",
+    "grip_primary": "existing manual player calibration",
+    "strike_point": "existing manually calibrated EffectOrigin rebound as a developer-only whole-body melee contact point",
+    "recipe": "not stored; compiled at runtime from the frozen affordance profile"
+  },
+  "model_calls_performed_for_binding": 0,
+  "case_specific_recipe": false
+}

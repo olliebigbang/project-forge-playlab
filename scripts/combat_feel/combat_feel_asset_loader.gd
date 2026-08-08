@@ -5,6 +5,7 @@ const FIXTURE_PATH := "res://data/combat_feel/heavy_melee_fixtures.json"
 const LIVE_INDEX_PATH := "res://data/combat_feel/live_assets/revision_a/index.json"
 const RECIPE_INDEX_PATH := "res://data/combat_feel/live_assets/recipe_slice_1b/index.json"
 const MOTION_GRAMMAR_INDEX_PATH := "res://data/combat_feel/live_assets/motion_grammar_slice_1a/index.json"
+const GENERALIZATION_INDEX_PATH := "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/index.json"
 const AFFORDANCE_PROFILE := preload("res://scripts/combat_feel/object_affordance_profile.gd")
 const ANCHOR_CALIBRATION := preload("res://scripts/data/semantic_anchor_calibration.gd")
 
@@ -25,6 +26,51 @@ func motion_grammar_asset_ids() -> Array[String]:
 		var entry: Dictionary = value
 		ids.append(str(entry.get("id", "")))
 	return ids
+
+
+func generalization_asset_ids() -> Array[String]:
+	var ids: Array[String] = []
+	var index := _read_json(GENERALIZATION_INDEX_PATH)
+	for value: Variant in index.get("assets", []):
+		var entry: Dictionary = value
+		ids.append(str(entry.get("id", "")))
+	return ids
+
+
+func load_generalization_asset(asset_id: String) -> Dictionary:
+	var index := _read_json(GENERALIZATION_INDEX_PATH)
+	for value: Variant in index.get("assets", []):
+		var entry: Dictionary = value
+		if str(entry.get("id", "")) != asset_id:
+			continue
+		if not bool(entry.get("developer_only", false)) or bool(entry.get("normal_player_flow", true)):
+			return {"ok": false, "error": "GENERALIZATION_DEVELOPER_BOUNDARY_INVALID:%s" % asset_id}
+		var integrity_error := _verify_named_evidence_hashes(entry)
+		if not integrity_error.is_empty():
+			return {"ok": false, "error": integrity_error.replace("MOTION_GRAMMAR_", "GENERALIZATION_")}
+		var qualification_error := _verify_generalization_qualification(entry)
+		if not qualification_error.is_empty():
+			return {"ok": false, "error": qualification_error}
+		var loaded := load_live(
+			str(entry.get("sprite", "")),
+			str(entry.get("blueprint", "")),
+			str(entry.get("anchors", ""))
+		)
+		if not bool(loaded.get("ok", false)):
+			return loaded
+		var affordance_profile: Resource = _affordance_profile_from_dict(
+			_read_json(str(entry.get("affordance_profile", "")))
+		)
+		if affordance_profile == null:
+			return {"ok": false, "error": "GENERALIZATION_AFFORDANCE_INVALID:%s" % asset_id}
+		loaded["asset_id"] = asset_id
+		loaded["source_kind"] = str(entry.get("source_kind", ""))
+		loaded["developer_only"] = true
+		loaded["normal_player_flow"] = false
+		loaded["notice"] = str(index.get("notice", "MOTION GRAMMAR GENERALIZATION BLIND"))
+		loaded["affordance_profile"] = affordance_profile
+		return loaded
+	return {"ok": false, "error": "GENERALIZATION_ASSET_NOT_FOUND:%s" % asset_id}
 
 
 func load_motion_grammar_asset(asset_id: String) -> Dictionary:
@@ -437,6 +483,30 @@ func _verify_override_source_hashes(override: Dictionary) -> String:
 			return "MOTION_GRAMMAR_OVERRIDE_FILE_MISSING:%s" % filename
 		if _sha256_file(path) != str(expected[filename]).to_lower():
 			return "MOTION_GRAMMAR_OVERRIDE_HASH_MISMATCH:%s" % filename
+	return ""
+
+
+func _verify_generalization_qualification(entry: Dictionary) -> String:
+	var mode := str(entry.get("qualification_mode", ""))
+	var manifest := _read_json(str(entry.get("manifest", "")))
+	match mode:
+		"player_confirmed_open_playtest":
+			var identity_review := _read_json(str(entry.get("identity_review", "")))
+			if str(manifest.get("status", "")) != "completed" \
+				or not bool(manifest.get("identity_confirmed", false)) \
+				or not bool(manifest.get("anchor_confirmed", false)) \
+				or not bool(manifest.get("entered_training", false)) \
+				or not bool(identity_review.get("identity_confirmed", false)):
+				return "GENERALIZATION_SOURCE_NOT_PLAYER_CONFIRMED"
+		"developer_identity_binding":
+			if str(manifest.get("status", "")) != "eligible_for_developer_blind_test" \
+				or not bool(manifest.get("developer_only", false)) \
+				or bool(manifest.get("normal_player_flow", true)) \
+				or int(manifest.get("model_calls_performed_for_binding", -1)) != 0 \
+				or bool(manifest.get("case_specific_recipe", true)):
+				return "GENERALIZATION_BINDING_BOUNDARY_INVALID"
+		_:
+			return "GENERALIZATION_QUALIFICATION_MODE_INVALID"
 	return ""
 
 func _affordance_profile_from_dict(data: Dictionary) -> Resource:

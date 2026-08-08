@@ -4,3 +4,7 @@
 /data/combat_feel/live_assets/motion_grammar_slice_1a/*.json -text
 /data/combat_feel/live_assets/motion_grammar_slice_1a/*/*.json -text
 /data/combat_feel/live_assets/motion_grammar_slice_1a/evidence/** -text
+/data/combat_feel/live_assets/motion_grammar_generalization_v1/*.json -text
+/data/combat_feel/live_assets/motion_grammar_generalization_v1/*/*.json -text
+/data/combat_feel/live_assets/motion_grammar_generalization_v1/evidence/** -text
+/data/combat_feel/live_assets/motion_grammar_generalization_v1/evidence/**/*.jsonl -text -diff

@@ -23,6 +23,13 @@ $MotionGrammarOutput = Get-Content -LiteralPath $MotionGrammarLog.FullName -Raw
 Remove-Item -LiteralPath $MotionGrammarLog.FullName
 if ($MotionGrammarExit -ne 0 -or $MotionGrammarOutput -match "SCRIPT ERROR|Parse Error|Compile Error|ERROR: FAIL|failed=[1-9]") { exit 1 }
 
+$GeneralizationLog = New-TemporaryFile
+& $Godot --headless --verbose --path $PlaylabRoot --script "res://tests/test_motion_grammar_generalization.gd" 2>&1 | Tee-Object -FilePath $GeneralizationLog.FullName
+$GeneralizationExit = $LASTEXITCODE
+$GeneralizationOutput = Get-Content -LiteralPath $GeneralizationLog.FullName -Raw
+Remove-Item -LiteralPath $GeneralizationLog.FullName
+if ($GeneralizationExit -ne 0 -or $GeneralizationOutput -match "SCRIPT ERROR|Parse Error|Compile Error|ERROR: FAIL|failed=[1-9]") { exit 1 }
+
 $LegacySceneLog = New-TemporaryFile
 & $Godot --headless --verbose --path $PlaylabRoot "res://scenes/combat_feel_slice_0.tscn" -- --mode=combat-feel-slice-0 --live-weapon=giant_wooden_spoon --smoke-seconds=0.2 2>&1 | Tee-Object -FilePath $LegacySceneLog.FullName
 $LegacySceneExit = $LASTEXITCODE
@@ -46,6 +53,15 @@ foreach ($MotionGrammarAsset in @("frying_pan", "old_mop", "shotgun_melee")) {
     $SceneOutput = Get-Content -LiteralPath $SceneLog.FullName -Raw
     Remove-Item -LiteralPath $SceneLog.FullName
     if ($SceneExit -ne 0 -or $SceneOutput -match "SCRIPT ERROR|Parse Error|Compile Error|UNSUPPORTED_AFFORDANCE") { exit 1 }
+}
+
+foreach ($GeneralizationAsset in @("longsword_generalization", "spear_generalization", "wooden_chair_generalization")) {
+    $SceneLog = New-TemporaryFile
+    & $Godot --headless --verbose --path $PlaylabRoot "res://scenes/combat_feel_slice_0.tscn" -- --mode=combat-feel-slice-0 --generalization-asset=$GeneralizationAsset --smoke-seconds=0.2 2>&1 | Tee-Object -FilePath $SceneLog.FullName
+    $SceneExit = $LASTEXITCODE
+    $SceneOutput = Get-Content -LiteralPath $SceneLog.FullName -Raw
+    Remove-Item -LiteralPath $SceneLog.FullName
+    if ($SceneExit -ne 0 -or $SceneOutput -match "SCRIPT ERROR|Parse Error|Compile Error|UNSUPPORTED_AFFORDANCE|GENERALIZATION_.*INVALID") { exit 1 }
 }
 
 Write-Output "COMBAT_FEEL_SLICE_0_GODOT_PARSE=PASS"

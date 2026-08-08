@@ -1,0 +1,22 @@
+{
+  "schema": "forge-motion-grammar-generalization-blind-evidence-hashes-v1",
+  "session_id": "generalization-blind-20260808T140834789Z-61b35914",
+  "files": {
+    "blind_A.json": {
+      "sha256": "13ed57d972aaddc46be1b9a0de7ac131ccf5901ab48fbbb66aaa3ebe4c3aa0bd",
+      "bytes": 886
+    },
+    "blind_B.json": {
+      "sha256": "598fae2ac9172df7f712099d8d6f94029228e2ce5cc45beffe9ad74b8540e526",
+      "bytes": 873
+    },
+    "blind_C.json": {
+      "sha256": "8e8f40a66157df7cb2759423cb68a74dd8788adcdf2c4a53481cc89ded41488a",
+      "bytes": 880
+    },
+    "comparison.jsonl": {
+      "sha256": "bc53bab448dfc352fb7851c7a09800dad5474b0aa839fe873ae416946c34c78f",
+      "bytes": 2954
+    }
+  }
+}

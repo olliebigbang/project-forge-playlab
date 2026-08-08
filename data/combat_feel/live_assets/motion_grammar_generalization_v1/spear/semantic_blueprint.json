@@ -1,0 +1,53 @@
+{
+  "identity": {
+    "canonical_name_zh": "朗基努斯之枪",
+    "canonical_name_en": "Spear of Longinus",
+    "display_name_zh": "圣枪·朗基努斯之枪",
+    "display_name_en": "Holy Lance of Longinus",
+    "category": "traditional_weapon",
+    "required_identity_parts": [
+      "long shaft",
+      "narrow piercing spearhead",
+      "cross-guard near blade base"
+    ],
+    "material_hints": [
+      "metal blade",
+      "wooden or metal shaft",
+      "aged bronze or iron finish"
+    ],
+    "silhouette_hints": [
+      "long slender pole weapon with a slim pointed tip",
+      "elongated straight profile"
+    ],
+    "optional_decorations": [
+      "ornate engravings on blade",
+      "wrapped grip binding",
+      "faint holy glow along blade edge"
+    ]
+  },
+  "combat": {
+    "behavior_family": "heavy_melee",
+    "delivery": "melee_swing",
+    "impact_mode": "strike_point",
+    "effect_type": "normal",
+    "drawback": "long_recovery",
+    "cadence_hint": "slow_heavy"
+  },
+  "visual": {
+    "prompt_en": "Spear of Longinus, a long slender pole weapon with a slim narrow piercing spearhead and a cross-guard near the blade base, aged metal blade with subtle engravings, wooden or metal shaft, isolated single object, side view, complete object fully visible, faint holy glow along the blade edge",
+    "negative_prompt_en": "not a gun, not a sword, not a greatsword, not an umbrella, no generic firearm, no unrelated modern weapon",
+    "must_preserve": [
+      "long shaft",
+      "narrow piercing spearhead",
+      "cross-guard near blade base"
+    ],
+    "must_not_replace_with": [
+      "gun",
+      "sword",
+      "greatsword",
+      "umbrella",
+      "gatling gun"
+    ]
+  },
+  "confidence": 0.82
+}

@@ -1,0 +1,35 @@
+{
+  "anchor_source": {
+    "GripPrimary": "manual_player_calibration:GripPrimary",
+    "GripSecondary": "existing_alpha_resolver:GripSecondary",
+    "StrikePoint": "manual_player_calibration:EffectOrigin_rebound_for_developer_melee_test",
+    "SpinPivot": "existing_alpha_resolver:SpinPivot"
+  },
+  "auto_anchors": {
+    "GripPrimary": [17.0, 75.0],
+    "GripSecondary": [26.0, 60.0],
+    "StrikePoint": [85.0, 41.0],
+    "SpinPivot": [38.0, 41.0]
+  },
+  "corrected_anchors": {
+    "GripPrimary": [27.0, 62.0],
+    "GripSecondary": [26.0, 60.0],
+    "StrikePoint": [85.0, 40.0],
+    "SpinPivot": [38.0, 41.0]
+  },
+  "confidence": {
+    "GripPrimary": 0.7,
+    "GripSecondary": 0.76,
+    "StrikePoint": 0.8,
+    "SpinPivot": 0.88
+  },
+  "behavior_family": "heavy_melee",
+  "grip_profile": "body_grip",
+  "required_anchor_types": [
+    "GripPrimary",
+    "StrikePoint"
+  ],
+  "training_transform": {
+    "flip_x": false
+  }
+}

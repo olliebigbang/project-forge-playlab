@@ -1,0 +1,97 @@
+{
+  "schema": "forge-motion-grammar-generalization-assets-v1",
+  "notice": "MOTION GRAMMAR GENERALIZATION BLIND — FROZEN REAL ASSETS — DEVELOPER ONLY",
+  "normal_player_flow": false,
+  "assets": [
+    {
+      "id": "longsword_generalization",
+      "source_kind": "frozen_player_confirmed_open_playtest",
+      "qualification_mode": "player_confirmed_open_playtest",
+      "developer_only": true,
+      "normal_player_flow": false,
+      "sprite": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/longsword/processed_sprite.png",
+      "blueprint": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/longsword/semantic_blueprint.json",
+      "anchors": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/longsword/anchors.json",
+      "affordance_profile": "res://tools/semantic/reports/affordance_combined_handoff_v1_2_1/affordance-combined-v1-2-1-20260808T132129343Z/affordance_profiles/A02.json",
+      "manifest": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/longsword/open_playtest_round.json",
+      "identity_review": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/longsword/identity_review.json",
+      "evidence_files": {
+        "processed_sprite.png": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/longsword/processed_sprite.png",
+        "semantic_blueprint.json": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/longsword/semantic_blueprint.json",
+        "anchors.json": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/longsword/anchors.json",
+        "open_playtest_round.json": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/longsword/open_playtest_round.json",
+        "identity_review.json": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/longsword/identity_review.json",
+        "object_affordance_profile.json": "res://tools/semantic/reports/affordance_combined_handoff_v1_2_1/affordance-combined-v1-2-1-20260808T132129343Z/affordance_profiles/A02.json"
+      },
+      "sha256": {
+        "processed_sprite.png": "5927a51f2400ca64fee06293b6d678a07ea985351cb5e55032fa14d072592620",
+        "semantic_blueprint.json": "a4b6733063dbdf738303a69f7f9f4986f833fae5bce62344f90ab0b15659f8f6",
+        "anchors.json": "c8b8f0ad0fa7d015b52951f98dd631da67f3fabe08fdb5c06c90eec4b5e02c2c",
+        "open_playtest_round.json": "a866d65c46714e0ae5d90e55870e58c99c245787694021cdf55b561490527f87",
+        "identity_review.json": "2d1dfa9ae3e9a098c335454decca88de2e5a29ab6ec019a6e55ae5832ac34e9f",
+        "object_affordance_profile.json": "43360a87fe2b9de1c4f615741847594ead009d75a195e8bb40ec7a9142a2f0cf"
+      }
+    },
+    {
+      "id": "spear_generalization",
+      "source_kind": "frozen_player_confirmed_open_playtest",
+      "qualification_mode": "player_confirmed_open_playtest",
+      "developer_only": true,
+      "normal_player_flow": false,
+      "sprite": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/spear/processed_sprite.png",
+      "blueprint": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/spear/semantic_blueprint.json",
+      "anchors": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/spear/anchors.json",
+      "affordance_profile": "res://tools/semantic/reports/affordance_combined_handoff_v1_2_1/affordance-combined-v1-2-1-20260808T132129343Z/affordance_profiles/A04.json",
+      "manifest": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/spear/open_playtest_round.json",
+      "identity_review": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/spear/identity_review.json",
+      "evidence_files": {
+        "processed_sprite.png": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/spear/processed_sprite.png",
+        "semantic_blueprint.json": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/spear/semantic_blueprint.json",
+        "anchors.json": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/spear/anchors.json",
+        "open_playtest_round.json": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/spear/open_playtest_round.json",
+        "identity_review.json": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/spear/identity_review.json",
+        "object_affordance_profile.json": "res://tools/semantic/reports/affordance_combined_handoff_v1_2_1/affordance-combined-v1-2-1-20260808T132129343Z/affordance_profiles/A04.json"
+      },
+      "sha256": {
+        "processed_sprite.png": "8011b504a9d6c5ef2239612d98aabbcb3daad063eedd6e2516db97effc442669",
+        "semantic_blueprint.json": "b9f037ec0a8165577b4e34a426319ccc1ea372c27ffd6db7fb5b1cd006a6b890",
+        "anchors.json": "205919d8f2d32de4ea69e69e27178379c2e207418217ca602c94075a6facbdfe",
+        "open_playtest_round.json": "60dc34ef2751be041e7f068b0cbd1386492324168f738a339ab85195f8df17cc",
+        "identity_review.json": "56ada1a59179b6a83282dbe3659e7aee6300b4d10d60760f65f428f8176dfe71",
+        "object_affordance_profile.json": "30342acaa30cced99e0e23c72c3a39e25e6bfd75d3a26dd68c805b384d744d8d"
+      }
+    },
+    {
+      "id": "wooden_chair_generalization",
+      "source_kind": "frozen_cross_spike_identity_binding",
+      "qualification_mode": "developer_identity_binding",
+      "developer_only": true,
+      "normal_player_flow": false,
+      "sprite": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/wooden_chair/processed_sprite.png",
+      "blueprint": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/wooden_chair/semantic_blueprint.json",
+      "anchors": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/wooden_chair/anchors.json",
+      "affordance_profile": "res://tools/semantic/reports/affordance_combined_handoff_v1_2_1/affordance-combined-v1-2-1-20260808T132129343Z/affordance_profiles/A07.json",
+      "manifest": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/wooden_chair/binding_manifest.json",
+      "evidence_files": {
+        "processed_sprite.png": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/wooden_chair/processed_sprite.png",
+        "semantic_blueprint.json": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/wooden_chair/semantic_blueprint.json",
+        "anchors.json": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/wooden_chair/anchors.json",
+        "binding_manifest.json": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/wooden_chair/binding_manifest.json",
+        "object_affordance_profile.json": "res://tools/semantic/reports/affordance_combined_handoff_v1_2_1/affordance-combined-v1-2-1-20260808T132129343Z/affordance_profiles/A07.json",
+        "source_semantic_response.json": "res://tools/semantic/reports/affordance_targeted_v1_2_1/affordance-targeted-v1-2-1-20260808T130139638529Z-a318dc88/raw_response_redacted/A07.json",
+        "source_anchor_calibration.json": "res://tools/comfyui/anchor_calibration/output/case_d/seed_41002_s70/semantic_anchors.json",
+        "source_visual_review.csv": "res://tools/comfyui/reports/spike_scores.csv"
+      },
+      "sha256": {
+        "processed_sprite.png": "89b81c3392c482ea6e3b8910e7039f344d432b2e7c015f6ae8d39fc06bfc0930",
+        "semantic_blueprint.json": "5ca6f631bb639fe50f0abb7e3b047de07d5b4516240d17200d97bab822217f57",
+        "anchors.json": "91b655ae77a4bd87866fc35f3a4892b52b79d3daf9e6a0f0dafed205d2dc9238",
+        "binding_manifest.json": "60c5f65da8bde2a8ce4bcec130562726ce027e1d773cf34e20c4be516d59ee06",
+        "object_affordance_profile.json": "a30dd123f352fbb02fe7776ac7ba4656183d99ed49fc0d86ca97c39622b76606",
+        "source_semantic_response.json": "f065cc90f5c80481db00e89fa18d964c82fc419e2c8fc0f1e0a5e83b4aa3fa97",
+        "source_anchor_calibration.json": "861d09a0072f8ef758ca59215b7ed606f8233d7bb6550fd5d9accb2d7f77c13b",
+        "source_visual_review.csv": "14727da44ddebdb31ddc92f4f3fdeaf260e063bb9da135b51a65cee3d93f0848"
+      }
+    }
+  ]
+}

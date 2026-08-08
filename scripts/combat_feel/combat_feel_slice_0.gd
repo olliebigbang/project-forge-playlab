@@ -54,6 +54,7 @@ var blind_comparison := false
 var blind_label := ""
 var blind_run_completed := false
 var blind_result_path := ""
+var blind_suite := "slice_1a"
 var capture_pose_only := false
 
 var ui_layer: CanvasLayer
@@ -79,6 +80,7 @@ func _ready() -> void:
 	blind_comparison = _argument_value("--blind-comparison=", "false").to_lower() in ["1", "true", "yes"]
 	blind_label = _argument_value("--blind-label=", "").to_upper()
 	blind_result_path = _argument_value("--blind-result-path=", "")
+	blind_suite = _argument_value("--blind-suite=", "slice_1a")
 	asset_loader = ASSET_LOADER.new()
 	compiler = MOTION_COMPILER.new()
 	controller = CONTROLLER.new()
@@ -117,12 +119,15 @@ func _load_requested_weapon() -> bool:
 	var blueprint_path := _argument_value("--combat-blueprint=", "")
 	var anchors_path := _argument_value("--combat-anchors=", "")
 	var open_round_path := _argument_value("--open-playtest-round=", "")
+	var requested_generalization_id := _argument_value("--generalization-asset=", "")
 	var requested_motion_grammar_id := _argument_value("--motion-grammar-asset=", "")
 	var requested_recipe_id := _argument_value("--recipe-asset=", "")
 	var requested_live_id := _argument_value("--live-weapon=", "")
 	var requested_fixture := _argument_value("--developer-fixture=", "").to_upper()
 	var result: Dictionary
-	if not requested_motion_grammar_id.is_empty():
+	if not requested_generalization_id.is_empty():
+		result = asset_loader.load_generalization_asset(requested_generalization_id)
+	elif not requested_motion_grammar_id.is_empty():
 		result = asset_loader.load_motion_grammar_asset(requested_motion_grammar_id)
 	elif not requested_recipe_id.is_empty():
 		result = asset_loader.load_recipe_asset(requested_recipe_id)
@@ -473,7 +478,8 @@ func _update_mode_title() -> void:
 	if title_label == null:
 		return
 	if blind_comparison:
-		title_label.text = "MOTION GRAMMAR SLICE 1A — BLIND %s" % blind_label
+		title_label.text = "MOTION GRAMMAR GENERALIZATION — BLIND %s" % blind_label \
+			if blind_suite == "generalization_v1" else "MOTION GRAMMAR SLICE 1A — BLIND %s" % blind_label
 		return
 	var labels := {
 		"frying_pan": "PAN",
@@ -1071,6 +1077,10 @@ func _write_blind_run_result() -> void:
 		"input_to_active_ms": input_to_active_ms,
 		"normal_attack_stats": _normal_attack_stats(),
 	}
+	if blind_suite == "generalization_v1":
+		record["schema"] = "forge-motion-grammar-blind-run-v2"
+		record["blind_suite"] = blind_suite
+		record["compiled_metrics"] = _blind_compiled_metrics()
 	file.store_string(JSON.stringify(record, "  ") + "\n")
 	file.close()
 	if FileAccess.file_exists(absolute_path):
@@ -1078,6 +1088,37 @@ func _write_blind_run_result() -> void:
 	var rename_error := DirAccess.rename_absolute(temporary_path, absolute_path)
 	if rename_error != OK:
 		push_error("BLIND_RESULT_DELIVERY_FAILED:%s" % error_string(rename_error))
+
+
+func _blind_compiled_metrics() -> Dictionary:
+	var recipe: Resource = motion_profile.combo_recipe
+	if recipe == null:
+		return {}
+	var max_coverage := 0.0
+	var max_control := 0.0
+	var total_root_motion := 0.0
+	for primitive: Resource in recipe.primitives():
+		var arc_degrees := absf(rad_to_deg(primitive.end_angle - primitive.start_angle))
+		var effective_width: float = motion_profile.hitbox_thickness * primitive.hitbox_width_multiplier
+		var coverage: float = effective_width * maxf(8.0, arc_degrees) * primitive.hitbox_length_multiplier
+		max_coverage = maxf(max_coverage, coverage)
+		max_control = maxf(
+			max_control,
+			motion_profile.control_strength * primitive.knockback_multiplier * primitive.hitbox_width_multiplier
+		)
+		total_root_motion += primitive.root_motion_distance
+	var third: Resource = recipe.hit_3
+	var third_weight: float = third.hitstop_multiplier * third.stagger_multiplier \
+		* third.camera_kick_multiplier * motion_profile.impact_sharpness
+	return {
+		"reach_pixels": motion_profile.reach_pixels,
+		"maximum_coverage_score": max_coverage,
+		"third_hit_weight_score": third_weight,
+		"control_score": max_control,
+		"combo_root_motion_total": total_root_motion,
+		"recipe_signature": recipe.signature(),
+		"primitive_sequence": Array(recipe.primitive_sequence()),
+	}
 
 func _label(text_value: String, size_value: int, color: Color) -> Label:
 	var label := Label.new(); label.text = text_value; label.add_theme_font_size_override("font_size", size_value); label.modulate = color

@@ -1,8 +1,8 @@
 # Forge Motion Grammar Slice 1A — Per-Hit Combo Recipes
 
-Status: **COMBO GRAMMAR TECHNICAL PASS / WEAPON FEEL PASS / CHARACTER POSE VISIBILITY PENDING HUMAN CHECK**
+Status: **ORTHOGONAL GENERALIZATION TECHNICAL PASS / FEEL NEEDS WORK**
 
-This is the bounded Motion Grammar Slice 1A result. The technical chain is complete, but the randomized human comparison scored 2/5. The Slice therefore does not pass its feel gate and does not claim that the melee reskin problem is solved.
+This report preserves the bounded Motion Grammar Slice 1A history and records the later orthogonal-composer generalization checks. The original three-asset Slice eventually passed its frozen comparison, but the newer unseen-identity comparison scored 3/5 and does not pass its feel gate. The current implementation therefore does not claim that the melee reskin problem is solved for new identities.
 
 ## Existing combat chain reused
 
@@ -378,3 +378,60 @@ reports **PASS**: 23/23 mechanism probes changed actual runtime parameters,
 0 were score-only masked, 0 were silent, and both non-mechanical controls
 remained invariant. This is a technical causality result only; the governing
 human verdict remains **FEEL NEEDS WORK** until a new approved comparison.
+
+## Unseen-identity generalization blind comparison
+
+The new comparison did not reuse the original Frying Pan, Old Mop, or Shotgun
+assets. It used three frozen real Sprites through the same
+`MeleeMotionCompiler -> MeleeCombatController -> CombatFeelSlice0` chain:
+
+- a player-confirmed Open Playtest Longsword;
+- a player-confirmed Open Playtest Spear;
+- a frozen generated Wooden Chair, bound only for this developer test to an
+  existing heavy-melee semantic result and existing manual anchor calibration.
+
+The Chair binding is explicitly developer-only, performs no model call, does
+not enter normal player flow, and stores no Recipe. All three Recipes are
+compiled at runtime from their frozen Affordance profiles. The blind launcher
+derives expected answers from the actual compiled runtime metrics rather than
+from object-name mappings.
+
+Session: `generalization-blind-20260808T140834789Z-61b35914`
+
+Randomized mapping and compiled combo:
+
+| Label | Frozen identity | Primitive sequence |
+|---|---|---|
+| A | Longsword | `sweep -> thrust -> slam` |
+| B | Spear | `thrust -> thrust -> slam` |
+| C | Wooden Chair | `sweep -> spin -> slam` |
+
+| Question | Player answer | Runtime-metric answer | Result |
+|---|---:|---:|---|
+| Shortest reach | C | C | Correct |
+| Widest coverage | B | C | Incorrect |
+| Heaviest third hit | B | B | Correct |
+| Best crowd control | B | C | Incorrect |
+| Most forward movement | B | B | Correct |
+
+Blind score: **3/5**.
+
+The player confirmed that the three objects felt materially different and that
+the motions were plausible for the visible structures. The player also answered
+`yes` when asked whether they still felt like the same moves with swapped
+Sprites. That last answer is retained as an explicit residual-reskin concern;
+it is not overwritten by the two positive confirmations.
+
+The runtime evidence shows three distinct Recipe signatures and three distinct
+normal-combo sequences. It also shows that the two failed dimensions were not
+perceived in the same order as their compiled values: the Chair had the highest
+computed coverage and control scores, while the player selected the Spear for
+both. This is a metric-to-perception failure, not evidence that all three
+Recipes serialized identically. No automatic tuning is authorized from this
+single result.
+
+Formal result: **TECHNICAL PASS / FEEL NEEDS WORK**.
+
+The exact comparison record, all three A/B/C run records, and their hashes are
+frozen under
+`data/combat_feel/live_assets/motion_grammar_generalization_v1/evidence/generalization_blind_20260808T140834789Z/`.

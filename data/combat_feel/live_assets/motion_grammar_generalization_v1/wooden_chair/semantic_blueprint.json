@@ -1,0 +1,49 @@
+{
+  "identity": {
+    "canonical_name_zh": "木椅",
+    "canonical_name_en": "wooden chair",
+    "display_name_zh": "木椅",
+    "display_name_en": "Wooden Chair",
+    "category": "furniture",
+    "required_identity_parts": [
+      "chair back",
+      "seat",
+      "four legs"
+    ],
+    "material_hints": [
+      "wood"
+    ],
+    "silhouette_hints": [
+      "upright four-legged chair silhouette with vertical backrest"
+    ],
+    "optional_decorations": [
+      "carved wood grain",
+      "metal reinforcement bands"
+    ]
+  },
+  "combat": {
+    "behavior_family": "heavy_melee",
+    "delivery": "whole_object_strike",
+    "impact_mode": "whole_body_collision",
+    "effect_type": "normal",
+    "drawback": "slow_movement",
+    "cadence_hint": "slow_heavy"
+  },
+  "visual": {
+    "prompt_en": "A wooden chair, isolated single object, side view, complete object visible, showing chair back, seat, and four legs, sturdy wood construction with visible grain, slightly reinforced backrest for gripping, realistic proportions, plain background",
+    "negative_prompt_en": "do not depict a sword, do not depict a club, do not depict a generic weapon, no metal blade, no gun, no bat",
+    "must_preserve": [
+      "chair back",
+      "seat",
+      "four legs"
+    ],
+    "must_not_replace_with": [
+      "sword",
+      "club",
+      "baseball bat",
+      "generic melee weapon",
+      "gun"
+    ]
+  },
+  "confidence": 0.9
+}
