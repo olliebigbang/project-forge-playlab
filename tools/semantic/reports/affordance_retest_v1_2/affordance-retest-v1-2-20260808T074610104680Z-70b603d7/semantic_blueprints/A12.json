@@ -1,0 +1,75 @@
+{
+  "identity": {
+    "canonical_name_zh": "钓鱼竿",
+    "canonical_name_en": "fishing rod",
+    "display_name_zh": "钓鱼竿",
+    "display_name_en": "fishing rod",
+    "category": "tool",
+    "required_identity_parts": [
+      "long flexible rod shaft",
+      "handle grip",
+      "fishing line",
+      "reel"
+    ],
+    "material_hints": [
+      "carbon fiber",
+      "cork handle",
+      "metal reel"
+    ],
+    "silhouette_hints": [
+      "long thin tapering rod with slight curve",
+      "narrow whip-like profile"
+    ],
+    "optional_decorations": [
+      "line guides along rod",
+      "small reel handle crank"
+    ]
+  },
+  "combat": {
+    "behavior_family": "heavy_melee",
+    "delivery": "melee_swing",
+    "impact_mode": "whole_body_collision",
+    "effect_type": "normal",
+    "drawback": "lower_damage",
+    "cadence_hint": "slow_heavy"
+  },
+  "visual": {
+    "prompt_en": "A fishing rod, long flexible tapering carbon fiber rod shaft with a cork handle grip and a small fishing reel attached, fishing line strung along guides down the length of the rod, isolated single object, side view, complete object visible from handle to tip",
+    "negative_prompt_en": "not a sword, not a whip weapon, not a staff, not a spear, no blade, no gun barrel, do not remove rod taper",
+    "must_preserve": [
+      "long flexible rod shaft",
+      "handle grip",
+      "fishing line",
+      "reel"
+    ],
+    "must_not_replace_with": [
+      "sword",
+      "whip",
+      "staff",
+      "spear",
+      "melee weapon"
+    ]
+  },
+  "confidence": 0.85,
+  "affordance": {
+    "handle_length": "medium",
+    "body_length": "long",
+    "grip_topology": "two_hand_handle",
+    "rigidity": "flexible",
+    "mass_distribution": "rear",
+    "contact_surface": "whole_body",
+    "secondary_contact_surface": "point",
+    "has_point": true,
+    "has_edge": false,
+    "has_broad_face": false,
+    "has_barrel": false,
+    "has_stock": false,
+    "confidence": 0.75,
+    "evidence_parts": [
+      "long flexible rod shaft",
+      "cork handle grip",
+      "rod tip",
+      "reel mounted near handle"
+    ]
+  }
+}

@@ -1,0 +1,188 @@
+{
+  "case_id": "A02",
+  "ordinal": 2,
+  "contract_version": "forge-semantic-v1.2-candidate",
+  "provider": "anthropic",
+  "endpoint": "https://api.anthropic.com/v1/messages",
+  "model_id": "claude-sonnet-5",
+  "local_request_id": "6a79ad0a-dd70-45df-adc4-bedaa9422fd9",
+  "input_sha256": "717510e2ea10820bacc78d8e0a8aeaa50b71582125c0e0cbd6761f84202e4816",
+  "request_body_sha256": "3dbd904cd903c7613b1a793ccb9a884c3ed379b5e8c099e182902a6fa63d9cf5",
+  "started_at": "2026-08-08T07:46:18.920Z",
+  "retry_count": 0,
+  "repair_applied": false,
+  "unwrap_applied": false,
+  "coercion_applied": false,
+  "defaults_applied": false,
+  "api_status": 200,
+  "request_id": "msg_011CdpumBf6BbPufJCBtiTmm",
+  "response_model_id": "claude-sonnet-5",
+  "tool_name": "submit_forge_semantic_blueprint",
+  "tool_input_received": {
+    "identity": {
+      "canonical_name_zh": "长剑",
+      "canonical_name_en": "longsword",
+      "display_name_zh": "细长长剑",
+      "display_name_en": "Slender Longsword",
+      "category": "traditional_weapon",
+      "required_identity_parts": [
+        "slender straight blade",
+        "sharp point tip",
+        "cutting edge",
+        "handle grip",
+        "crossguard"
+      ],
+      "material_hints": [
+        "steel"
+      ],
+      "silhouette_hints": [
+        "long slender straight blade with tapering tip",
+        "narrow elongated profile"
+      ],
+      "optional_decorations": [
+        "engraved fuller",
+        "polished pommel ornament"
+      ]
+    },
+    "combat": {
+      "behavior_family": "heavy_melee",
+      "delivery": "melee_swing",
+      "impact_mode": "strike_edge",
+      "effect_type": "normal",
+      "drawback": "long_recovery",
+      "cadence_hint": "slow_heavy"
+    },
+    "visual": {
+      "prompt_en": "A slender longsword with a long straight tapering blade, sharp point tip, keen cutting edge, simple crossguard, and a handle grip suited for one or two hands, steel material, isolated object, side view, complete object visible, minimalist fantasy forge adaptation on the hilt",
+      "negative_prompt_en": "do not depict a gun, do not depict a greatsword, do not depict a curved scimitar, do not depict a dagger, no modern firearm parts, no umbrella",
+      "must_preserve": [
+        "slender straight blade",
+        "sharp point tip",
+        "cutting edge",
+        "handle grip",
+        "crossguard"
+      ],
+      "must_not_replace_with": [
+        "gun",
+        "greatsword",
+        "dagger",
+        "curved scimitar",
+        "umbrella"
+      ]
+    },
+    "confidence": 0.9,
+    "affordance": {
+      "handle_length": "short",
+      "body_length": "long",
+      "grip_topology": "one_hand_handle",
+      "rigidity": "rigid",
+      "mass_distribution": "balanced",
+      "contact_surface": "edge",
+      "secondary_contact_surface": "point",
+      "has_point": true,
+      "has_edge": true,
+      "has_broad_face": false,
+      "has_barrel": false,
+      "has_stock": false,
+      "confidence": 0.9,
+      "evidence_parts": [
+        "long slender blade",
+        "sharp tip",
+        "cutting edge",
+        "handle grip",
+        "crossguard"
+      ]
+    }
+  },
+  "exactly_one_legal_tool_use": true,
+  "sole_content_is_tool_use": true,
+  "usage": {
+    "input_tokens": 6141,
+    "output_tokens": 798,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0
+  },
+  "stop_reason": "tool_use",
+  "status": "VALID",
+  "failure_reason": "",
+  "schema_valid": true,
+  "cross_field_valid": true,
+  "validated_blueprint": {
+    "identity": {
+      "canonical_name_zh": "长剑",
+      "canonical_name_en": "longsword",
+      "display_name_zh": "细长长剑",
+      "display_name_en": "Slender Longsword",
+      "category": "traditional_weapon",
+      "required_identity_parts": [
+        "slender straight blade",
+        "sharp point tip",
+        "cutting edge",
+        "handle grip",
+        "crossguard"
+      ],
+      "material_hints": [
+        "steel"
+      ],
+      "silhouette_hints": [
+        "long slender straight blade with tapering tip",
+        "narrow elongated profile"
+      ],
+      "optional_decorations": [
+        "engraved fuller",
+        "polished pommel ornament"
+      ]
+    },
+    "combat": {
+      "behavior_family": "heavy_melee",
+      "delivery": "melee_swing",
+      "impact_mode": "strike_edge",
+      "effect_type": "normal",
+      "drawback": "long_recovery",
+      "cadence_hint": "slow_heavy"
+    },
+    "visual": {
+      "prompt_en": "A slender longsword with a long straight tapering blade, sharp point tip, keen cutting edge, simple crossguard, and a handle grip suited for one or two hands, steel material, isolated object, side view, complete object visible, minimalist fantasy forge adaptation on the hilt",
+      "negative_prompt_en": "do not depict a gun, do not depict a greatsword, do not depict a curved scimitar, do not depict a dagger, no modern firearm parts, no umbrella",
+      "must_preserve": [
+        "slender straight blade",
+        "sharp point tip",
+        "cutting edge",
+        "handle grip",
+        "crossguard"
+      ],
+      "must_not_replace_with": [
+        "gun",
+        "greatsword",
+        "dagger",
+        "curved scimitar",
+        "umbrella"
+      ]
+    },
+    "confidence": 0.9,
+    "affordance": {
+      "handle_length": "short",
+      "body_length": "long",
+      "grip_topology": "one_hand_handle",
+      "rigidity": "rigid",
+      "mass_distribution": "balanced",
+      "contact_surface": "edge",
+      "secondary_contact_surface": "point",
+      "has_point": true,
+      "has_edge": true,
+      "has_broad_face": false,
+      "has_barrel": false,
+      "has_stock": false,
+      "confidence": 0.9,
+      "evidence_parts": [
+        "long slender blade",
+        "sharp tip",
+        "cutting edge",
+        "handle grip",
+        "crossguard"
+      ]
+    }
+  },
+  "completed_at": "2026-08-08T07:46:26.898Z",
+  "elapsed_ms": 7984
+}

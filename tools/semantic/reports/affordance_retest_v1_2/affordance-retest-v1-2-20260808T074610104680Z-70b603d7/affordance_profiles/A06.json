@@ -1,0 +1,21 @@
+{
+  "handle_length": "medium",
+  "body_length": "medium",
+  "grip_topology": "two_hand_handle",
+  "rigidity": "rigid",
+  "mass_distribution": "front",
+  "contact_surface": "broad",
+  "secondary_contact_surface": "none",
+  "has_point": false,
+  "has_edge": false,
+  "has_broad_face": true,
+  "has_barrel": true,
+  "has_stock": false,
+  "confidence": 0.9,
+  "evidence_parts": [
+    "tapered narrow handle for two-hand grip",
+    "knob end to prevent slipping",
+    "thick cylindrical barrel for impact",
+    "wood construction giving rigidity"
+  ]
+}

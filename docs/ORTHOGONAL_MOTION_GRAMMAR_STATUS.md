@@ -9,8 +9,8 @@ one identity-free, score-based composer over orthogonal affordance axes.
 Current status:
 
 - **OFFLINE TECHNICAL PASS**
-- **REAL AI AFFORDANCE VALIDATION PENDING**
-- **HUMAN FEEL RETEST PENDING**
+- **REAL AI AFFORDANCE VALIDATION NEEDS WORK (8/12 strict-valid)**
+- **HUMAN FEEL RETEST BLOCKED**
 
 The earlier three-sample 5/5 result is preserved as historical evidence and is
 marked `SUPERSEDED` by the adjacent supersession ledger. It is not evidence for
@@ -24,9 +24,11 @@ run IDs. Invalid, contradictory, incomplete, or low-confidence profiles fail
 closed with `UNSUPPORTED_AFFORDANCE_FOR_SLICE_1A` / `AFFORDANCE_NOT_READY`.
 
 The frozen semantic v1.1 contract remains the default Open Playtest contract.
-`forge-semantic-v1.2-candidate` is an offline candidate only. Its sidecar can be
-published atomically only after strict validation. No Anthropic, FLUX,
-BiRefNet, or ComfyUI call was made for this implementation.
+`forge-semantic-v1.2-candidate` remains a non-default candidate. A bounded
+12-call Anthropic retest was executed after explicit approval with the frozen
+`claude-sonnet-5` model: eight results passed the strict candidate contract and
+compiled through the existing `MeleeMotionCompiler`; four were rejected. FLUX,
+BiRefNet, ComfyUI, and the new BlindComparison were not started.
 
 The manual runtime boundary is exposed as
 `scripts/run_combat_feel_slice.ps1 -OpenPlaytestRound <path> -RequireAffordanceGrammar`.
@@ -53,18 +55,18 @@ not be presented as AI output.
 
 | Case | Object | Model affordance | Dominant mechanism axes | Compiled combo | State |
 |---|---|---|---|---|---|
-| A01 | kitchen knife | — | — | — | PENDING REAL CALL |
-| A02 | longsword | — | — | — | PENDING REAL CALL |
-| A03 | fire axe | — | — | — | PENDING REAL CALL |
-| A04 | spear | — | — | — | PENDING REAL CALL |
-| A05 | hammer | — | — | — | PENDING REAL CALL |
-| A06 | baseball bat | — | — | — | PENDING REAL CALL |
-| A07 | chair | — | — | — | PENDING REAL CALL |
-| A08 | fire extinguisher | — | — | — | PENDING REAL CALL |
-| A09 | shield | — | — | — | PENDING REAL CALL |
-| A10 | giant chicken leg | — | — | — | PENDING REAL CALL |
-| A11 | folding stool | — | — | — | PENDING REAL CALL |
-| A12 | fishing rod | — | — | — | PENDING REAL CALL |
+| A01 | kitchen knife | strict-valid | short/front/edge | sweep → bash → slam | COMPILED |
+| A02 | longsword | strict-valid | short+long/balanced/edge+point | sweep → thrust → slam | COMPILED |
+| A03 | fire axe | rejected by canonical `fire` false-positive | — | — | CONTRACT/RUNNER NEEDS WORK |
+| A04 | spear | strict-valid | long/front/point | thrust → thrust → slam | COMPILED |
+| A05 | hammer | strict-valid | long/front/broad | bash → slam → sweep | COMPILED |
+| A06 | baseball bat | strict-valid | medium/front/broad | bash → slam → bash | COMPILED |
+| A07 | chair | unknown extra field | — | — | MODEL SCHEMA FAILURE |
+| A08 | fire extinguisher | rejected by canonical `fire` false-positive | — | — | CONTRACT/RUNNER NEEDS WORK |
+| A09 | shield | contradictory body-grip/short-handle pair | — | — | MODEL CROSS-FIELD FAILURE |
+| A10 | giant chicken leg | strict-valid | short/front/broad | bash → slam → bash | COMPILED |
+| A11 | folding stool | strict-valid | none/front/broad | bash → slam → bash | COMPILED |
+| A12 | fishing rod | strict-valid | medium+long/rear/flexible whole-body | sweep → spin → slam | COMPILED |
 
 ## Acceptance implications
 
@@ -74,6 +76,7 @@ reach, Mop has the widest contact coverage, and the barrel/stock structure has
 the greatest root-motion total. No exact multiplier or legacy sequence is an
 acceptance requirement.
 
-The next authorized step is a bounded v1.2 real-model affordance retest for the
-12 frozen inputs, followed by one new BlindComparison. Until both are reviewed,
-the orthogonal composer must not be promoted to the default player flow.
+The next step is an offline contract/runner correction for the four failed
+paths. A maximum four-call targeted retest requires new approval after those
+offline regressions pass. The new BlindComparison remains blocked; the
+orthogonal composer must not be promoted to the default player flow.

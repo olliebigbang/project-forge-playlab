@@ -1,0 +1,70 @@
+{
+  "identity": {
+    "canonical_name_zh": "长矛",
+    "canonical_name_en": "spear",
+    "display_name_zh": "长矛",
+    "display_name_en": "Spear",
+    "category": "traditional_weapon",
+    "required_identity_parts": [
+      "long shaft",
+      "pointed spearhead",
+      "shaft grip section"
+    ],
+    "material_hints": [
+      "wood shaft",
+      "metal spearhead"
+    ],
+    "silhouette_hints": [
+      "long straight pole with a narrow pointed tip at one end"
+    ],
+    "optional_decorations": [
+      "wrapped cord grip",
+      "metal collar at head base"
+    ]
+  },
+  "combat": {
+    "behavior_family": "heavy_melee",
+    "delivery": "melee_swing",
+    "impact_mode": "strike_point",
+    "effect_type": "normal",
+    "drawback": "long_recovery",
+    "cadence_hint": "slow_heavy"
+  },
+  "visual": {
+    "prompt_en": "A spear, full object visible in side view, isolated on plain background, long straight wooden shaft with a sharp pointed metal spearhead at one end, wrapped cord grip section along the shaft, clean simple craftsmanship, single object, clear silhouette",
+    "negative_prompt_en": "not a gun, not a sword, not a staff without a point, not a fantasy blob, no extra weapon heads, no scene background, no multiple objects",
+    "must_preserve": [
+      "long shaft",
+      "pointed spearhead",
+      "shaft grip section"
+    ],
+    "must_not_replace_with": [
+      "gun",
+      "sword",
+      "staff",
+      "polearm with no point",
+      "throwing dart"
+    ]
+  },
+  "confidence": 0.9,
+  "affordance": {
+    "handle_length": "long",
+    "body_length": "long",
+    "grip_topology": "two_hand_handle",
+    "rigidity": "rigid",
+    "mass_distribution": "front",
+    "contact_surface": "point",
+    "secondary_contact_surface": "none",
+    "has_point": true,
+    "has_edge": false,
+    "has_broad_face": false,
+    "has_barrel": false,
+    "has_stock": false,
+    "confidence": 0.9,
+    "evidence_parts": [
+      "long shaft held with two hands",
+      "pointed spearhead for thrusting",
+      "front-weighted head mass"
+    ]
+  }
+}

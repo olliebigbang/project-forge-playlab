@@ -1,0 +1,176 @@
+{
+  "case_id": "A05",
+  "ordinal": 5,
+  "contract_version": "forge-semantic-v1.2-candidate",
+  "provider": "anthropic",
+  "endpoint": "https://api.anthropic.com/v1/messages",
+  "model_id": "claude-sonnet-5",
+  "local_request_id": "fbdd1abc-6afb-4451-aa41-6796cf05c5b9",
+  "input_sha256": "e521c8c86cc9c46a2c643b7e7ed34afce425f6a8ab01c8a5af7a378e0d440653",
+  "request_body_sha256": "815115bd2afd7ce2a36926367bb4c13bf7307c69fc83280a630da3cc9fa13462",
+  "started_at": "2026-08-08T07:46:45.881Z",
+  "retry_count": 0,
+  "repair_applied": false,
+  "unwrap_applied": false,
+  "coercion_applied": false,
+  "defaults_applied": false,
+  "api_status": 200,
+  "request_id": "msg_011CdpuoArHT1qa1qdt4r9Wj",
+  "response_model_id": "claude-sonnet-5",
+  "tool_name": "submit_forge_semantic_blueprint",
+  "tool_input_received": {
+    "identity": {
+      "canonical_name_zh": "大铁锤",
+      "canonical_name_en": "large iron hammer",
+      "display_name_zh": "大铁锤",
+      "display_name_en": "Large Iron Hammer",
+      "category": "tool",
+      "required_identity_parts": [
+        "long handle",
+        "heavy hammer head",
+        "flat striking face"
+      ],
+      "material_hints": [
+        "iron",
+        "wood handle"
+      ],
+      "silhouette_hints": [
+        "long straight shaft with a large heavy block-like head at one end"
+      ],
+      "optional_decorations": [
+        "metal bands on handle",
+        "worn scratches on head"
+      ]
+    },
+    "combat": {
+      "behavior_family": "heavy_melee",
+      "delivery": "whole_object_strike",
+      "impact_mode": "strike_point",
+      "effect_type": "normal",
+      "drawback": "slow_movement",
+      "cadence_hint": "slow_heavy"
+    },
+    "visual": {
+      "prompt_en": "A large iron hammer, side view, complete object visible, isolated on plain background, long wooden handle gripped in the middle, heavy rectangular iron hammer head at one end with a flat striking face, sturdy forged construction, realistic material texture, single object, no background clutter",
+      "negative_prompt_en": "not a sword, not a greatsword, not a gun, not an umbrella, no additional characters, no background scenery, do not replace hammer head with blade or barrel",
+      "must_preserve": [
+        "long handle",
+        "heavy hammer head",
+        "flat striking face"
+      ],
+      "must_not_replace_with": [
+        "sword",
+        "greatsword",
+        "gun",
+        "umbrella",
+        "axe"
+      ]
+    },
+    "confidence": 0.9,
+    "affordance": {
+      "handle_length": "long",
+      "body_length": "medium",
+      "grip_topology": "two_hand_handle",
+      "rigidity": "rigid",
+      "mass_distribution": "front",
+      "contact_surface": "broad",
+      "secondary_contact_surface": "none",
+      "has_point": false,
+      "has_edge": false,
+      "has_broad_face": true,
+      "has_barrel": false,
+      "has_stock": false,
+      "confidence": 0.9,
+      "evidence_parts": [
+        "long wooden handle",
+        "heavy iron hammer head",
+        "flat striking face"
+      ]
+    }
+  },
+  "exactly_one_legal_tool_use": true,
+  "sole_content_is_tool_use": true,
+  "usage": {
+    "input_tokens": 6138,
+    "output_tokens": 762,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0
+  },
+  "stop_reason": "tool_use",
+  "status": "VALID",
+  "failure_reason": "",
+  "schema_valid": true,
+  "cross_field_valid": true,
+  "validated_blueprint": {
+    "identity": {
+      "canonical_name_zh": "大铁锤",
+      "canonical_name_en": "large iron hammer",
+      "display_name_zh": "大铁锤",
+      "display_name_en": "Large Iron Hammer",
+      "category": "tool",
+      "required_identity_parts": [
+        "long handle",
+        "heavy hammer head",
+        "flat striking face"
+      ],
+      "material_hints": [
+        "iron",
+        "wood handle"
+      ],
+      "silhouette_hints": [
+        "long straight shaft with a large heavy block-like head at one end"
+      ],
+      "optional_decorations": [
+        "metal bands on handle",
+        "worn scratches on head"
+      ]
+    },
+    "combat": {
+      "behavior_family": "heavy_melee",
+      "delivery": "whole_object_strike",
+      "impact_mode": "strike_point",
+      "effect_type": "normal",
+      "drawback": "slow_movement",
+      "cadence_hint": "slow_heavy"
+    },
+    "visual": {
+      "prompt_en": "A large iron hammer, side view, complete object visible, isolated on plain background, long wooden handle gripped in the middle, heavy rectangular iron hammer head at one end with a flat striking face, sturdy forged construction, realistic material texture, single object, no background clutter",
+      "negative_prompt_en": "not a sword, not a greatsword, not a gun, not an umbrella, no additional characters, no background scenery, do not replace hammer head with blade or barrel",
+      "must_preserve": [
+        "long handle",
+        "heavy hammer head",
+        "flat striking face"
+      ],
+      "must_not_replace_with": [
+        "sword",
+        "greatsword",
+        "gun",
+        "umbrella",
+        "axe"
+      ]
+    },
+    "confidence": 0.9,
+    "affordance": {
+      "handle_length": "long",
+      "body_length": "medium",
+      "grip_topology": "two_hand_handle",
+      "rigidity": "rigid",
+      "mass_distribution": "front",
+      "contact_surface": "broad",
+      "secondary_contact_surface": "none",
+      "has_point": false,
+      "has_edge": false,
+      "has_broad_face": true,
+      "has_barrel": false,
+      "has_stock": false,
+      "confidence": 0.9,
+      "evidence_parts": [
+        "long wooden handle",
+        "heavy iron hammer head",
+        "flat striking face"
+      ]
+    }
+  },
+  "completed_at": "2026-08-08T07:46:54.152Z",
+  "elapsed_ms": 8265
+}

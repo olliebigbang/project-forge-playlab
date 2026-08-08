@@ -1,0 +1,75 @@
+{
+  "identity": {
+    "canonical_name_zh": "巨大鸡腿",
+    "canonical_name_en": "giant chicken drumstick",
+    "display_name_zh": "巨大鸡腿重锤",
+    "display_name_en": "Giant Chicken Drumstick Bludgeon",
+    "category": "food",
+    "required_identity_parts": [
+      "bone handle end",
+      "meaty rounded body",
+      "tapered bone shaft",
+      "roasted skin texture"
+    ],
+    "material_hints": [
+      "roasted meat",
+      "bone",
+      "crispy skin"
+    ],
+    "silhouette_hints": [
+      "classic drumstick outline with narrow bone end and bulbous meat end"
+    ],
+    "optional_decorations": [
+      "grill marks",
+      "glistening juice sheen",
+      "small herb garnish"
+    ]
+  },
+  "combat": {
+    "behavior_family": "heavy_melee",
+    "delivery": "melee_swing",
+    "impact_mode": "whole_body_collision",
+    "effect_type": "normal",
+    "drawback": "slow_movement",
+    "cadence_hint": "slow_heavy"
+  },
+  "visual": {
+    "prompt_en": "A giant chicken drumstick, side view, isolated on plain background, held by its narrow bone end as a handle, with a large bulbous roasted meat body at the striking end, crispy golden-brown skin texture, glistening surface, tapered bone shaft, complete object fully visible, realistic food weapon adaptation with a slightly reinforced bone grip",
+    "negative_prompt_en": "do not depict a hammer, mace, club, sword, gun, or any generic weapon shape; do not remove the bone handle; do not remove the meat body; not a cartoon mascot character",
+    "must_preserve": [
+      "bone handle end",
+      "meaty rounded body",
+      "tapered bone shaft",
+      "roasted skin texture"
+    ],
+    "must_not_replace_with": [
+      "hammer",
+      "mace",
+      "club",
+      "generic weapon",
+      "sword"
+    ]
+  },
+  "confidence": 0.88,
+  "affordance": {
+    "handle_length": "short",
+    "body_length": "medium",
+    "grip_topology": "one_hand_handle",
+    "rigidity": "semi_rigid",
+    "mass_distribution": "front",
+    "contact_surface": "broad",
+    "secondary_contact_surface": "none",
+    "has_point": false,
+    "has_edge": false,
+    "has_broad_face": true,
+    "has_barrel": false,
+    "has_stock": false,
+    "confidence": 0.82,
+    "evidence_parts": [
+      "narrow bone shaft as handle",
+      "bulbous meat mass at striking end",
+      "semi-rigid meat and bone structure",
+      "front-heavy weight distribution"
+    ]
+  }
+}

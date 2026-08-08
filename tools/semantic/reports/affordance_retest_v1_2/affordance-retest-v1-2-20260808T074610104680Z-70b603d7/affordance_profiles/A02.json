@@ -1,0 +1,22 @@
+{
+  "handle_length": "short",
+  "body_length": "long",
+  "grip_topology": "one_hand_handle",
+  "rigidity": "rigid",
+  "mass_distribution": "balanced",
+  "contact_surface": "edge",
+  "secondary_contact_surface": "point",
+  "has_point": true,
+  "has_edge": true,
+  "has_broad_face": false,
+  "has_barrel": false,
+  "has_stock": false,
+  "confidence": 0.9,
+  "evidence_parts": [
+    "long slender blade",
+    "sharp tip",
+    "cutting edge",
+    "handle grip",
+    "crossguard"
+  ]
+}

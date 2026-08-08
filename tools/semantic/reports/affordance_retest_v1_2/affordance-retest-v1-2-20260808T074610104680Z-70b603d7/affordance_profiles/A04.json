@@ -1,0 +1,20 @@
+{
+  "handle_length": "long",
+  "body_length": "long",
+  "grip_topology": "two_hand_handle",
+  "rigidity": "rigid",
+  "mass_distribution": "front",
+  "contact_surface": "point",
+  "secondary_contact_surface": "none",
+  "has_point": true,
+  "has_edge": false,
+  "has_broad_face": false,
+  "has_barrel": false,
+  "has_stock": false,
+  "confidence": 0.9,
+  "evidence_parts": [
+    "long shaft held with two hands",
+    "pointed spearhead for thrusting",
+    "front-weighted head mass"
+  ]
+}

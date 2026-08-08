@@ -1,0 +1,21 @@
+{
+  "handle_length": "medium",
+  "body_length": "long",
+  "grip_topology": "two_hand_handle",
+  "rigidity": "flexible",
+  "mass_distribution": "rear",
+  "contact_surface": "whole_body",
+  "secondary_contact_surface": "point",
+  "has_point": true,
+  "has_edge": false,
+  "has_broad_face": false,
+  "has_barrel": false,
+  "has_stock": false,
+  "confidence": 0.75,
+  "evidence_parts": [
+    "long flexible rod shaft",
+    "cork handle grip",
+    "rod tip",
+    "reel mounted near handle"
+  ]
+}

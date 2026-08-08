@@ -1,0 +1,76 @@
+{
+  "identity": {
+    "canonical_name_zh": "长剑",
+    "canonical_name_en": "longsword",
+    "display_name_zh": "细长长剑",
+    "display_name_en": "Slender Longsword",
+    "category": "traditional_weapon",
+    "required_identity_parts": [
+      "slender straight blade",
+      "sharp point tip",
+      "cutting edge",
+      "handle grip",
+      "crossguard"
+    ],
+    "material_hints": [
+      "steel"
+    ],
+    "silhouette_hints": [
+      "long slender straight blade with tapering tip",
+      "narrow elongated profile"
+    ],
+    "optional_decorations": [
+      "engraved fuller",
+      "polished pommel ornament"
+    ]
+  },
+  "combat": {
+    "behavior_family": "heavy_melee",
+    "delivery": "melee_swing",
+    "impact_mode": "strike_edge",
+    "effect_type": "normal",
+    "drawback": "long_recovery",
+    "cadence_hint": "slow_heavy"
+  },
+  "visual": {
+    "prompt_en": "A slender longsword with a long straight tapering blade, sharp point tip, keen cutting edge, simple crossguard, and a handle grip suited for one or two hands, steel material, isolated object, side view, complete object visible, minimalist fantasy forge adaptation on the hilt",
+    "negative_prompt_en": "do not depict a gun, do not depict a greatsword, do not depict a curved scimitar, do not depict a dagger, no modern firearm parts, no umbrella",
+    "must_preserve": [
+      "slender straight blade",
+      "sharp point tip",
+      "cutting edge",
+      "handle grip",
+      "crossguard"
+    ],
+    "must_not_replace_with": [
+      "gun",
+      "greatsword",
+      "dagger",
+      "curved scimitar",
+      "umbrella"
+    ]
+  },
+  "confidence": 0.9,
+  "affordance": {
+    "handle_length": "short",
+    "body_length": "long",
+    "grip_topology": "one_hand_handle",
+    "rigidity": "rigid",
+    "mass_distribution": "balanced",
+    "contact_surface": "edge",
+    "secondary_contact_surface": "point",
+    "has_point": true,
+    "has_edge": true,
+    "has_broad_face": false,
+    "has_barrel": false,
+    "has_stock": false,
+    "confidence": 0.9,
+    "evidence_parts": [
+      "long slender blade",
+      "sharp tip",
+      "cutting edge",
+      "handle grip",
+      "crossguard"
+    ]
+  }
+}

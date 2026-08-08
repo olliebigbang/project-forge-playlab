@@ -1,0 +1,1748 @@
+{
+  "anchor_basis": "one frozen neutral anchor/bounds basis for all 12 cases",
+  "compiler": "MeleeMotionCompiler",
+  "compiler_resource": "res://scripts/combat_feel/melee_motion_compiler.gd",
+  "identity_inputs_used": false,
+  "records": [
+    {
+      "case_id": "A01",
+      "mechanism_axes": {
+        "body_length": "short",
+        "confidence": 0.88,
+        "contact_surface": "edge",
+        "evidence_parts": [
+          "wide rectangular blade",
+          "straight cutting edge",
+          "short wooden handle",
+          "blade tip",
+          "flat blade face"
+        ],
+        "grip_topology": "one_hand_handle",
+        "handle_length": "short",
+        "has_barrel": false,
+        "has_broad_face": true,
+        "has_edge": true,
+        "has_point": true,
+        "has_stock": false,
+        "mass_distribution": "front",
+        "rigidity": "rigid",
+        "secondary_contact_surface": "point"
+      },
+      "primitive_scores": {
+        "bash": 3.344,
+        "slam": 3.45,
+        "spin": 0.4,
+        "sweep": 4.1,
+        "thrust": 2.638
+      },
+      "primitive_sequence": [
+        "sweep",
+        "bash",
+        "slam"
+      ],
+      "recipe": {
+        "charge_attack": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.2688,
+          "contact_anchor": "tip",
+          "end_angle": 1.04,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.886,
+          "hitbox_multiplier": 1.036,
+          "hitbox_width_multiplier": 0.88,
+          "hitstop_multiplier": 1.2688,
+          "knockback_multiplier": 1.2932,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "slam",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.8416,
+          "reach_multiplier": 0.9016,
+          "recovery_multiplier": 1.3992,
+          "root_motion_distance": 9.5424,
+          "stagger_multiplier": 1.342,
+          "start_angle": -1.82,
+          "startup_multiplier": 1.352
+        },
+        "compile_reason": "orthogonal affordance composition: {\"body_length\":\"short\",\"confidence\":0.88,\"contact_surface\":\"edge\",\"evidence_parts\":[\"wide rectangular blade\",\"straight cutting edge\",\"short wooden handle\",\"blade tip\",\"flat blade face\"],\"grip_topology\":\"one_hand_handle\",\"handle_length\":\"short\",\"has_barrel\":false,\"has_broad_face\":true,\"has_edge\":true,\"has_point\":true,\"has_stock\":false,\"mass_distribution\":\"front\",\"rigidity\":\"rigid\",\"secondary_contact_surface\":\"point\"}",
+        "dodge_attack": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.04,
+          "contact_anchor": "tip",
+          "end_angle": 1.1,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.886,
+          "hitbox_multiplier": 1.036,
+          "hitbox_width_multiplier": 0.88,
+          "hitstop_multiplier": 1.04,
+          "knockback_multiplier": 1.06,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "sweep",
+          "movement_allowed_ratio": 0.082,
+          "movement_multiplier": 0.8416,
+          "reach_multiplier": 0.9016,
+          "recovery_multiplier": 0.8268,
+          "root_motion_distance": 10.9056,
+          "stagger_multiplier": 1.1,
+          "start_angle": -1.28,
+          "startup_multiplier": 0.7488
+        },
+        "hit_1": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.04,
+          "contact_anchor": "tip",
+          "end_angle": 1.1,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.886,
+          "hitbox_multiplier": 1.036,
+          "hitbox_width_multiplier": 0.88,
+          "hitstop_multiplier": 1.04,
+          "knockback_multiplier": 1.06,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "sweep",
+          "movement_allowed_ratio": 0.082,
+          "movement_multiplier": 0.8416,
+          "reach_multiplier": 0.9016,
+          "recovery_multiplier": 0.9328,
+          "root_motion_distance": 7.1568,
+          "stagger_multiplier": 1.1,
+          "start_angle": -1.28,
+          "startup_multiplier": 0.9152
+        },
+        "hit_2": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.04,
+          "contact_anchor": "tip",
+          "end_angle": 0.62,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.886,
+          "hitbox_multiplier": 1.036,
+          "hitbox_width_multiplier": 0.88,
+          "hitstop_multiplier": 1.04,
+          "knockback_multiplier": 1.06,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "bash",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.8416,
+          "reach_multiplier": 0.9016,
+          "recovery_multiplier": 1.0388,
+          "root_motion_distance": 8.52,
+          "stagger_multiplier": 1.1,
+          "start_angle": 0.3,
+          "startup_multiplier": 0.9984
+        },
+        "hit_3": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.2688,
+          "contact_anchor": "tip",
+          "end_angle": 1.04,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.886,
+          "hitbox_multiplier": 1.036,
+          "hitbox_width_multiplier": 0.88,
+          "hitstop_multiplier": 1.2688,
+          "knockback_multiplier": 1.2932,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "slam",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.8416,
+          "reach_multiplier": 0.9016,
+          "recovery_multiplier": 1.3144,
+          "root_motion_distance": 10.224,
+          "stagger_multiplier": 1.342,
+          "start_angle": -1.82,
+          "startup_multiplier": 1.2272
+        },
+        "mechanism_axes": {
+          "body_length": "short",
+          "confidence": 0.88,
+          "contact_surface": "edge",
+          "evidence_parts": [
+            "wide rectangular blade",
+            "straight cutting edge",
+            "short wooden handle",
+            "blade tip",
+            "flat blade face"
+          ],
+          "grip_topology": "one_hand_handle",
+          "handle_length": "short",
+          "has_barrel": false,
+          "has_broad_face": true,
+          "has_edge": true,
+          "has_point": true,
+          "has_stock": false,
+          "mass_distribution": "front",
+          "rigidity": "rigid",
+          "secondary_contact_surface": "point"
+        },
+        "primitive_scores": {
+          "bash": 3.344,
+          "slam": 3.45,
+          "spin": 0.4,
+          "sweep": 4.1,
+          "thrust": 2.638
+        },
+        "recipe_signature": "37f8065efa1f45eef15cae130b14deb95c42429d33b7e5589fd80d381d6c96d3"
+      },
+      "recipe_signature": "37f8065efa1f45eef15cae130b14deb95c42429d33b7e5589fd80d381d6c96d3",
+      "status": "COMPILED"
+    },
+    {
+      "case_id": "A02",
+      "mechanism_axes": {
+        "body_length": "long",
+        "confidence": 0.9,
+        "contact_surface": "edge",
+        "evidence_parts": [
+          "long slender blade",
+          "sharp tip",
+          "cutting edge",
+          "handle grip",
+          "crossguard"
+        ],
+        "grip_topology": "one_hand_handle",
+        "handle_length": "short",
+        "has_barrel": false,
+        "has_broad_face": false,
+        "has_edge": true,
+        "has_point": true,
+        "has_stock": false,
+        "mass_distribution": "balanced",
+        "rigidity": "rigid",
+        "secondary_contact_surface": "point"
+      },
+      "primitive_scores": {
+        "bash": 1.544,
+        "slam": 1.75,
+        "spin": 1.1,
+        "sweep": 5.1,
+        "thrust": 3.788
+      },
+      "primitive_sequence": [
+        "sweep",
+        "thrust",
+        "slam"
+      ],
+      "recipe": {
+        "charge_attack": {
+          "active_multiplier": 1.044,
+          "camera_kick_multiplier": 1.159,
+          "contact_anchor": "tip",
+          "end_angle": 1.1,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 1.003,
+          "hitbox_multiplier": 1.036,
+          "hitbox_width_multiplier": 0.88,
+          "hitstop_multiplier": 1.14802,
+          "knockback_multiplier": 1.19438,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "sweep",
+          "movement_allowed_ratio": 0.121,
+          "movement_multiplier": 0.9508,
+          "reach_multiplier": 1.0108,
+          "recovery_multiplier": 1.2804,
+          "root_motion_distance": 16.5312,
+          "stagger_multiplier": 1.2322,
+          "start_angle": -1.28,
+          "startup_multiplier": 1.2584
+        },
+        "compile_reason": "orthogonal affordance composition: {\"body_length\":\"long\",\"confidence\":0.9,\"contact_surface\":\"edge\",\"evidence_parts\":[\"long slender blade\",\"sharp tip\",\"cutting edge\",\"handle grip\",\"crossguard\"],\"grip_topology\":\"one_hand_handle\",\"handle_length\":\"short\",\"has_barrel\":false,\"has_broad_face\":false,\"has_edge\":true,\"has_point\":true,\"has_stock\":false,\"mass_distribution\":\"balanced\",\"rigidity\":\"rigid\",\"secondary_contact_surface\":\"point\"}",
+        "dodge_attack": {
+          "active_multiplier": 1.044,
+          "camera_kick_multiplier": 0.95,
+          "contact_anchor": "tip",
+          "end_angle": 1.1,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 1.003,
+          "hitbox_multiplier": 1.036,
+          "hitbox_width_multiplier": 0.88,
+          "hitstop_multiplier": 0.941,
+          "knockback_multiplier": 0.979,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "sweep",
+          "movement_allowed_ratio": 0.121,
+          "movement_multiplier": 0.9508,
+          "reach_multiplier": 1.0108,
+          "recovery_multiplier": 0.7566,
+          "root_motion_distance": 18.8928,
+          "stagger_multiplier": 1.01,
+          "start_angle": -1.28,
+          "startup_multiplier": 0.69696
+        },
+        "hit_1": {
+          "active_multiplier": 1.044,
+          "camera_kick_multiplier": 0.95,
+          "contact_anchor": "tip",
+          "end_angle": 1.1,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 1.003,
+          "hitbox_multiplier": 1.036,
+          "hitbox_width_multiplier": 0.88,
+          "hitstop_multiplier": 0.941,
+          "knockback_multiplier": 0.979,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "sweep",
+          "movement_allowed_ratio": 0.121,
+          "movement_multiplier": 0.9508,
+          "reach_multiplier": 1.0108,
+          "recovery_multiplier": 0.8536,
+          "root_motion_distance": 12.3984,
+          "stagger_multiplier": 1.01,
+          "start_angle": -1.28,
+          "startup_multiplier": 0.85184
+        },
+        "hit_2": {
+          "active_multiplier": 1.044,
+          "camera_kick_multiplier": 0.95,
+          "contact_anchor": "tip",
+          "end_angle": -0.06,
+          "extension_pixels": 37.42,
+          "hitbox_length_multiplier": 1.003,
+          "hitbox_multiplier": 1.036,
+          "hitbox_width_multiplier": 0.88,
+          "hitstop_multiplier": 0.941,
+          "knockback_multiplier": 0.979,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "thrust",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.9508,
+          "reach_multiplier": 1.0108,
+          "recovery_multiplier": 0.9506,
+          "root_motion_distance": 14.76,
+          "stagger_multiplier": 1.01,
+          "start_angle": -0.06,
+          "startup_multiplier": 0.92928
+        },
+        "hit_3": {
+          "active_multiplier": 1.044,
+          "camera_kick_multiplier": 1.159,
+          "contact_anchor": "tip",
+          "end_angle": 1.04,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 1.003,
+          "hitbox_multiplier": 1.036,
+          "hitbox_width_multiplier": 0.88,
+          "hitstop_multiplier": 1.14802,
+          "knockback_multiplier": 1.19438,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "slam",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.9508,
+          "reach_multiplier": 1.0108,
+          "recovery_multiplier": 1.2028,
+          "root_motion_distance": 17.712,
+          "stagger_multiplier": 1.2322,
+          "start_angle": -1.82,
+          "startup_multiplier": 1.14224
+        },
+        "mechanism_axes": {
+          "body_length": "long",
+          "confidence": 0.9,
+          "contact_surface": "edge",
+          "evidence_parts": [
+            "long slender blade",
+            "sharp tip",
+            "cutting edge",
+            "handle grip",
+            "crossguard"
+          ],
+          "grip_topology": "one_hand_handle",
+          "handle_length": "short",
+          "has_barrel": false,
+          "has_broad_face": false,
+          "has_edge": true,
+          "has_point": true,
+          "has_stock": false,
+          "mass_distribution": "balanced",
+          "rigidity": "rigid",
+          "secondary_contact_surface": "point"
+        },
+        "primitive_scores": {
+          "bash": 1.544,
+          "slam": 1.75,
+          "spin": 1.1,
+          "sweep": 5.1,
+          "thrust": 3.788
+        },
+        "recipe_signature": "4d8b004e9ee92e5b2d82b5344eaf06f6a820b76c4ef5d3aefe935de39b1ed68a"
+      },
+      "recipe_signature": "4d8b004e9ee92e5b2d82b5344eaf06f6a820b76c4ef5d3aefe935de39b1ed68a",
+      "status": "COMPILED"
+    },
+    {
+      "case_id": "A03",
+      "failure_reason": "profile unavailable",
+      "status": "NO_VALID_AFFORDANCE"
+    },
+    {
+      "case_id": "A04",
+      "mechanism_axes": {
+        "body_length": "long",
+        "confidence": 0.9,
+        "contact_surface": "point",
+        "evidence_parts": [
+          "long shaft held with two hands",
+          "pointed spearhead for thrusting",
+          "front-weighted head mass"
+        ],
+        "grip_topology": "two_hand_handle",
+        "handle_length": "long",
+        "has_barrel": false,
+        "has_broad_face": false,
+        "has_edge": false,
+        "has_point": true,
+        "has_stock": false,
+        "mass_distribution": "front",
+        "rigidity": "rigid",
+        "secondary_contact_surface": "none"
+      },
+      "primitive_scores": {
+        "bash": 1.55,
+        "slam": 1.55,
+        "spin": 1.15,
+        "sweep": 1.85,
+        "thrust": 6.85
+      },
+      "primitive_sequence": [
+        "thrust",
+        "thrust",
+        "slam"
+      ],
+      "recipe": {
+        "charge_attack": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.2688,
+          "contact_anchor": "tip",
+          "end_angle": -0.06,
+          "extension_pixels": 46.0,
+          "hitbox_length_multiplier": 1.12,
+          "hitbox_multiplier": 0.992,
+          "hitbox_width_multiplier": 0.66,
+          "hitstop_multiplier": 1.2688,
+          "knockback_multiplier": 1.2932,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "thrust",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 1.06,
+          "reach_multiplier": 1.12,
+          "recovery_multiplier": 1.3992,
+          "root_motion_distance": 23.52,
+          "stagger_multiplier": 1.342,
+          "start_angle": -0.06,
+          "startup_multiplier": 1.352
+        },
+        "compile_reason": "orthogonal affordance composition: {\"body_length\":\"long\",\"confidence\":0.9,\"contact_surface\":\"point\",\"evidence_parts\":[\"long shaft held with two hands\",\"pointed spearhead for thrusting\",\"front-weighted head mass\"],\"grip_topology\":\"two_hand_handle\",\"handle_length\":\"long\",\"has_barrel\":false,\"has_broad_face\":false,\"has_edge\":false,\"has_point\":true,\"has_stock\":false,\"mass_distribution\":\"front\",\"rigidity\":\"rigid\",\"secondary_contact_surface\":\"none\"}",
+        "dodge_attack": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.04,
+          "contact_anchor": "tip",
+          "end_angle": -0.06,
+          "extension_pixels": 46.0,
+          "hitbox_length_multiplier": 1.12,
+          "hitbox_multiplier": 0.992,
+          "hitbox_width_multiplier": 0.66,
+          "hitstop_multiplier": 1.04,
+          "knockback_multiplier": 1.06,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "thrust",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 1.06,
+          "reach_multiplier": 1.12,
+          "recovery_multiplier": 0.8268,
+          "root_motion_distance": 26.88,
+          "stagger_multiplier": 1.1,
+          "start_angle": -0.06,
+          "startup_multiplier": 0.7488
+        },
+        "hit_1": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.04,
+          "contact_anchor": "tip",
+          "end_angle": -0.06,
+          "extension_pixels": 46.0,
+          "hitbox_length_multiplier": 1.12,
+          "hitbox_multiplier": 0.992,
+          "hitbox_width_multiplier": 0.66,
+          "hitstop_multiplier": 1.04,
+          "knockback_multiplier": 1.06,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "thrust",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 1.06,
+          "reach_multiplier": 1.12,
+          "recovery_multiplier": 0.9328,
+          "root_motion_distance": 17.64,
+          "stagger_multiplier": 1.1,
+          "start_angle": -0.06,
+          "startup_multiplier": 0.9152
+        },
+        "hit_2": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.04,
+          "contact_anchor": "tip",
+          "end_angle": -0.06,
+          "extension_pixels": 46.0,
+          "hitbox_length_multiplier": 1.12,
+          "hitbox_multiplier": 0.992,
+          "hitbox_width_multiplier": 0.66,
+          "hitstop_multiplier": 1.04,
+          "knockback_multiplier": 1.06,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "thrust",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 1.06,
+          "reach_multiplier": 1.12,
+          "recovery_multiplier": 1.0388,
+          "root_motion_distance": 21.0,
+          "stagger_multiplier": 1.1,
+          "start_angle": -0.06,
+          "startup_multiplier": 0.9984
+        },
+        "hit_3": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.2688,
+          "contact_anchor": "tip",
+          "end_angle": 1.04,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 1.12,
+          "hitbox_multiplier": 0.992,
+          "hitbox_width_multiplier": 0.66,
+          "hitstop_multiplier": 1.2688,
+          "knockback_multiplier": 1.2932,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "slam",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 1.06,
+          "reach_multiplier": 1.12,
+          "recovery_multiplier": 1.3144,
+          "root_motion_distance": 25.2,
+          "stagger_multiplier": 1.342,
+          "start_angle": -1.82,
+          "startup_multiplier": 1.2272
+        },
+        "mechanism_axes": {
+          "body_length": "long",
+          "confidence": 0.9,
+          "contact_surface": "point",
+          "evidence_parts": [
+            "long shaft held with two hands",
+            "pointed spearhead for thrusting",
+            "front-weighted head mass"
+          ],
+          "grip_topology": "two_hand_handle",
+          "handle_length": "long",
+          "has_barrel": false,
+          "has_broad_face": false,
+          "has_edge": false,
+          "has_point": true,
+          "has_stock": false,
+          "mass_distribution": "front",
+          "rigidity": "rigid",
+          "secondary_contact_surface": "none"
+        },
+        "primitive_scores": {
+          "bash": 1.55,
+          "slam": 1.55,
+          "spin": 1.15,
+          "sweep": 1.85,
+          "thrust": 6.85
+        },
+        "recipe_signature": "83f6eb8abd388d14f001d3b1ba4d979b102f7549e6eba96aaa013005f5877a64"
+      },
+      "recipe_signature": "83f6eb8abd388d14f001d3b1ba4d979b102f7549e6eba96aaa013005f5877a64",
+      "status": "COMPILED"
+    },
+    {
+      "case_id": "A05",
+      "mechanism_axes": {
+        "body_length": "medium",
+        "confidence": 0.9,
+        "contact_surface": "broad",
+        "evidence_parts": [
+          "long wooden handle",
+          "heavy iron hammer head",
+          "flat striking face"
+        ],
+        "grip_topology": "two_hand_handle",
+        "handle_length": "long",
+        "has_barrel": false,
+        "has_broad_face": true,
+        "has_edge": false,
+        "has_point": false,
+        "has_stock": false,
+        "mass_distribution": "front",
+        "rigidity": "rigid",
+        "secondary_contact_surface": "none"
+      },
+      "primitive_scores": {
+        "bash": 4.7,
+        "slam": 4.1,
+        "spin": 0.65,
+        "sweep": 2.65,
+        "thrust": 1.85
+      },
+      "primitive_sequence": [
+        "bash",
+        "slam",
+        "sweep"
+      ],
+      "recipe": {
+        "charge_attack": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.2688,
+          "contact_anchor": "tip",
+          "end_angle": 0.3,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 1.057,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.2688,
+          "knockback_multiplier": 1.2932,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "bash",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 1.0012,
+          "reach_multiplier": 1.0612,
+          "recovery_multiplier": 1.3992,
+          "root_motion_distance": 19.7568,
+          "stagger_multiplier": 1.342,
+          "start_angle": -0.62,
+          "startup_multiplier": 1.352
+        },
+        "compile_reason": "orthogonal affordance composition: {\"body_length\":\"medium\",\"confidence\":0.9,\"contact_surface\":\"broad\",\"evidence_parts\":[\"long wooden handle\",\"heavy iron hammer head\",\"flat striking face\"],\"grip_topology\":\"two_hand_handle\",\"handle_length\":\"long\",\"has_barrel\":false,\"has_broad_face\":true,\"has_edge\":false,\"has_point\":false,\"has_stock\":false,\"mass_distribution\":\"front\",\"rigidity\":\"rigid\",\"secondary_contact_surface\":\"none\"}",
+        "dodge_attack": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.04,
+          "contact_anchor": "tip",
+          "end_angle": 0.3,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 1.057,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.04,
+          "knockback_multiplier": 1.06,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "bash",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 1.0012,
+          "reach_multiplier": 1.0612,
+          "recovery_multiplier": 0.8268,
+          "root_motion_distance": 22.5792,
+          "stagger_multiplier": 1.1,
+          "start_angle": -0.62,
+          "startup_multiplier": 0.7488
+        },
+        "hit_1": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.04,
+          "contact_anchor": "tip",
+          "end_angle": 0.3,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 1.057,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.04,
+          "knockback_multiplier": 1.06,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "bash",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 1.0012,
+          "reach_multiplier": 1.0612,
+          "recovery_multiplier": 0.9328,
+          "root_motion_distance": 14.8176,
+          "stagger_multiplier": 1.1,
+          "start_angle": -0.62,
+          "startup_multiplier": 0.9152
+        },
+        "hit_2": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.04,
+          "contact_anchor": "tip",
+          "end_angle": 1.04,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 1.057,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.04,
+          "knockback_multiplier": 1.06,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "slam",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 1.0012,
+          "reach_multiplier": 1.0612,
+          "recovery_multiplier": 1.0388,
+          "root_motion_distance": 17.64,
+          "stagger_multiplier": 1.1,
+          "start_angle": -1.82,
+          "startup_multiplier": 0.9984
+        },
+        "hit_3": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.2688,
+          "contact_anchor": "tip",
+          "end_angle": 1.1,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 1.057,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.2688,
+          "knockback_multiplier": 1.2932,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "sweep",
+          "movement_allowed_ratio": 0.139,
+          "movement_multiplier": 1.0012,
+          "reach_multiplier": 1.0612,
+          "recovery_multiplier": 1.3144,
+          "root_motion_distance": 21.168,
+          "stagger_multiplier": 1.342,
+          "start_angle": -1.28,
+          "startup_multiplier": 1.2272
+        },
+        "mechanism_axes": {
+          "body_length": "medium",
+          "confidence": 0.9,
+          "contact_surface": "broad",
+          "evidence_parts": [
+            "long wooden handle",
+            "heavy iron hammer head",
+            "flat striking face"
+          ],
+          "grip_topology": "two_hand_handle",
+          "handle_length": "long",
+          "has_barrel": false,
+          "has_broad_face": true,
+          "has_edge": false,
+          "has_point": false,
+          "has_stock": false,
+          "mass_distribution": "front",
+          "rigidity": "rigid",
+          "secondary_contact_surface": "none"
+        },
+        "primitive_scores": {
+          "bash": 4.7,
+          "slam": 4.1,
+          "spin": 0.65,
+          "sweep": 2.65,
+          "thrust": 1.85
+        },
+        "recipe_signature": "c74aef97436d4ba2929c9fadc1a51fe6aa505d4212713f4f653b909fe7204d27"
+      },
+      "recipe_signature": "c74aef97436d4ba2929c9fadc1a51fe6aa505d4212713f4f653b909fe7204d27",
+      "status": "COMPILED"
+    },
+    {
+      "case_id": "A06",
+      "mechanism_axes": {
+        "body_length": "medium",
+        "confidence": 0.9,
+        "contact_surface": "broad",
+        "evidence_parts": [
+          "tapered narrow handle for two-hand grip",
+          "knob end to prevent slipping",
+          "thick cylindrical barrel for impact",
+          "wood construction giving rigidity"
+        ],
+        "grip_topology": "two_hand_handle",
+        "handle_length": "medium",
+        "has_barrel": true,
+        "has_broad_face": true,
+        "has_edge": false,
+        "has_point": false,
+        "has_stock": false,
+        "mass_distribution": "front",
+        "rigidity": "rigid",
+        "secondary_contact_surface": "none"
+      },
+      "primitive_scores": {
+        "bash": 5.05,
+        "slam": 4.1,
+        "spin": 0.0,
+        "sweep": 2.15,
+        "thrust": 2.15
+      },
+      "primitive_sequence": [
+        "bash",
+        "slam",
+        "bash"
+      ],
+      "recipe": {
+        "charge_attack": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.2688,
+          "contact_anchor": "tip",
+          "end_angle": 0.3,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.994,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.2688,
+          "knockback_multiplier": 1.2932,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "bash",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.9424,
+          "reach_multiplier": 1.0024,
+          "recovery_multiplier": 1.3992,
+          "root_motion_distance": 23.8336,
+          "stagger_multiplier": 1.342,
+          "start_angle": -0.62,
+          "startup_multiplier": 1.352
+        },
+        "compile_reason": "orthogonal affordance composition: {\"body_length\":\"medium\",\"confidence\":0.9,\"contact_surface\":\"broad\",\"evidence_parts\":[\"tapered narrow handle for two-hand grip\",\"knob end to prevent slipping\",\"thick cylindrical barrel for impact\",\"wood construction giving rigidity\"],\"grip_topology\":\"two_hand_handle\",\"handle_length\":\"medium\",\"has_barrel\":true,\"has_broad_face\":true,\"has_edge\":false,\"has_point\":false,\"has_stock\":false,\"mass_distribution\":\"front\",\"rigidity\":\"rigid\",\"secondary_contact_surface\":\"none\"}",
+        "dodge_attack": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.04,
+          "contact_anchor": "tip",
+          "end_angle": 0.3,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.994,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.04,
+          "knockback_multiplier": 1.06,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "bash",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.9424,
+          "reach_multiplier": 1.0024,
+          "recovery_multiplier": 0.8268,
+          "root_motion_distance": 27.2384,
+          "stagger_multiplier": 1.1,
+          "start_angle": -0.62,
+          "startup_multiplier": 0.7488
+        },
+        "hit_1": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.04,
+          "contact_anchor": "tip",
+          "end_angle": 0.3,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.994,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.04,
+          "knockback_multiplier": 1.06,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "bash",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.9424,
+          "reach_multiplier": 1.0024,
+          "recovery_multiplier": 0.9328,
+          "root_motion_distance": 17.8752,
+          "stagger_multiplier": 1.1,
+          "start_angle": -0.62,
+          "startup_multiplier": 0.9152
+        },
+        "hit_2": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.04,
+          "contact_anchor": "tip",
+          "end_angle": 1.04,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.994,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.04,
+          "knockback_multiplier": 1.06,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "slam",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.9424,
+          "reach_multiplier": 1.0024,
+          "recovery_multiplier": 1.0388,
+          "root_motion_distance": 21.28,
+          "stagger_multiplier": 1.1,
+          "start_angle": -1.82,
+          "startup_multiplier": 0.9984
+        },
+        "hit_3": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.2688,
+          "contact_anchor": "tip",
+          "end_angle": 0.3,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.994,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.2688,
+          "knockback_multiplier": 1.2932,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "bash",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.9424,
+          "reach_multiplier": 1.0024,
+          "recovery_multiplier": 1.3144,
+          "root_motion_distance": 25.536,
+          "stagger_multiplier": 1.342,
+          "start_angle": -0.62,
+          "startup_multiplier": 1.2272
+        },
+        "mechanism_axes": {
+          "body_length": "medium",
+          "confidence": 0.9,
+          "contact_surface": "broad",
+          "evidence_parts": [
+            "tapered narrow handle for two-hand grip",
+            "knob end to prevent slipping",
+            "thick cylindrical barrel for impact",
+            "wood construction giving rigidity"
+          ],
+          "grip_topology": "two_hand_handle",
+          "handle_length": "medium",
+          "has_barrel": true,
+          "has_broad_face": true,
+          "has_edge": false,
+          "has_point": false,
+          "has_stock": false,
+          "mass_distribution": "front",
+          "rigidity": "rigid",
+          "secondary_contact_surface": "none"
+        },
+        "primitive_scores": {
+          "bash": 5.05,
+          "slam": 4.1,
+          "spin": 0.0,
+          "sweep": 2.15,
+          "thrust": 2.15
+        },
+        "recipe_signature": "679f713680fdf5340567ca6466a7af46b7df6d02cb99d790ac5c622f39f0df5b"
+      },
+      "recipe_signature": "679f713680fdf5340567ca6466a7af46b7df6d02cb99d790ac5c622f39f0df5b",
+      "status": "COMPILED"
+    },
+    {
+      "case_id": "A07",
+      "failure_reason": "profile unavailable",
+      "status": "NO_VALID_AFFORDANCE"
+    },
+    {
+      "case_id": "A08",
+      "failure_reason": "profile unavailable",
+      "status": "NO_VALID_AFFORDANCE"
+    },
+    {
+      "case_id": "A09",
+      "failure_reason": "profile unavailable",
+      "status": "NO_VALID_AFFORDANCE"
+    },
+    {
+      "case_id": "A10",
+      "mechanism_axes": {
+        "body_length": "medium",
+        "confidence": 0.82,
+        "contact_surface": "broad",
+        "evidence_parts": [
+          "narrow bone shaft as handle",
+          "bulbous meat mass at striking end",
+          "semi-rigid meat and bone structure",
+          "front-heavy weight distribution"
+        ],
+        "grip_topology": "one_hand_handle",
+        "handle_length": "short",
+        "has_barrel": false,
+        "has_broad_face": true,
+        "has_edge": false,
+        "has_point": false,
+        "has_stock": false,
+        "mass_distribution": "front",
+        "rigidity": "semi_rigid",
+        "secondary_contact_surface": "none"
+      },
+      "primitive_scores": {
+        "bash": 5.0,
+        "slam": 4.15,
+        "spin": 0.5,
+        "sweep": 1.9,
+        "thrust": 0.0
+      },
+      "primitive_sequence": [
+        "bash",
+        "slam",
+        "bash"
+      ],
+      "recipe": {
+        "charge_attack": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.2688,
+          "contact_anchor": "tip",
+          "end_angle": 0.3,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.94,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.2688,
+          "knockback_multiplier": 1.2932,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "bash",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.892,
+          "reach_multiplier": 0.952,
+          "recovery_multiplier": 1.3992,
+          "root_motion_distance": 12.768,
+          "stagger_multiplier": 1.342,
+          "start_angle": -0.62,
+          "startup_multiplier": 1.352
+        },
+        "compile_reason": "orthogonal affordance composition: {\"body_length\":\"medium\",\"confidence\":0.82,\"contact_surface\":\"broad\",\"evidence_parts\":[\"narrow bone shaft as handle\",\"bulbous meat mass at striking end\",\"semi-rigid meat and bone structure\",\"front-heavy weight distribution\"],\"grip_topology\":\"one_hand_handle\",\"handle_length\":\"short\",\"has_barrel\":false,\"has_broad_face\":true,\"has_edge\":false,\"has_point\":false,\"has_stock\":false,\"mass_distribution\":\"front\",\"rigidity\":\"semi_rigid\",\"secondary_contact_surface\":\"none\"}",
+        "dodge_attack": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.04,
+          "contact_anchor": "tip",
+          "end_angle": 0.3,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.94,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.04,
+          "knockback_multiplier": 1.06,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "bash",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.892,
+          "reach_multiplier": 0.952,
+          "recovery_multiplier": 0.8268,
+          "root_motion_distance": 14.592,
+          "stagger_multiplier": 1.1,
+          "start_angle": -0.62,
+          "startup_multiplier": 0.7488
+        },
+        "hit_1": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.04,
+          "contact_anchor": "tip",
+          "end_angle": 0.3,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.94,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.04,
+          "knockback_multiplier": 1.06,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "bash",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.892,
+          "reach_multiplier": 0.952,
+          "recovery_multiplier": 0.9328,
+          "root_motion_distance": 9.576,
+          "stagger_multiplier": 1.1,
+          "start_angle": -0.62,
+          "startup_multiplier": 0.9152
+        },
+        "hit_2": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.04,
+          "contact_anchor": "tip",
+          "end_angle": 1.04,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.94,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.04,
+          "knockback_multiplier": 1.06,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "slam",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.892,
+          "reach_multiplier": 0.952,
+          "recovery_multiplier": 1.0388,
+          "root_motion_distance": 11.4,
+          "stagger_multiplier": 1.1,
+          "start_angle": -1.82,
+          "startup_multiplier": 0.9984
+        },
+        "hit_3": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.2688,
+          "contact_anchor": "tip",
+          "end_angle": 0.3,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.94,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.2688,
+          "knockback_multiplier": 1.2932,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "bash",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.892,
+          "reach_multiplier": 0.952,
+          "recovery_multiplier": 1.3144,
+          "root_motion_distance": 13.68,
+          "stagger_multiplier": 1.342,
+          "start_angle": -0.62,
+          "startup_multiplier": 1.2272
+        },
+        "mechanism_axes": {
+          "body_length": "medium",
+          "confidence": 0.82,
+          "contact_surface": "broad",
+          "evidence_parts": [
+            "narrow bone shaft as handle",
+            "bulbous meat mass at striking end",
+            "semi-rigid meat and bone structure",
+            "front-heavy weight distribution"
+          ],
+          "grip_topology": "one_hand_handle",
+          "handle_length": "short",
+          "has_barrel": false,
+          "has_broad_face": true,
+          "has_edge": false,
+          "has_point": false,
+          "has_stock": false,
+          "mass_distribution": "front",
+          "rigidity": "semi_rigid",
+          "secondary_contact_surface": "none"
+        },
+        "primitive_scores": {
+          "bash": 5.0,
+          "slam": 4.15,
+          "spin": 0.5,
+          "sweep": 1.9,
+          "thrust": 0.0
+        },
+        "recipe_signature": "56777e49da4ee8737bba15e8bacf513cceaeb3c571f1871a40fa8199e1357e7b"
+      },
+      "recipe_signature": "56777e49da4ee8737bba15e8bacf513cceaeb3c571f1871a40fa8199e1357e7b",
+      "status": "COMPILED"
+    },
+    {
+      "case_id": "A11",
+      "mechanism_axes": {
+        "body_length": "short",
+        "confidence": 0.8,
+        "contact_surface": "broad",
+        "evidence_parts": [
+          "flat seat surface as striking face",
+          "folding legs as grip point",
+          "rigid leg frame",
+          "seat mass offset from hand grip"
+        ],
+        "grip_topology": "clamp_grip",
+        "handle_length": "none",
+        "has_barrel": false,
+        "has_broad_face": true,
+        "has_edge": false,
+        "has_point": false,
+        "has_stock": false,
+        "mass_distribution": "front",
+        "rigidity": "rigid",
+        "secondary_contact_surface": "none"
+      },
+      "primitive_scores": {
+        "bash": 6.1,
+        "slam": 4.85,
+        "spin": 0.35,
+        "sweep": 1.1,
+        "thrust": 0.7
+      },
+      "primitive_sequence": [
+        "bash",
+        "slam",
+        "bash"
+      ],
+      "recipe": {
+        "charge_attack": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.2688,
+          "contact_anchor": "tip",
+          "end_angle": 0.3,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.853,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.2688,
+          "knockback_multiplier": 1.2932,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "bash",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.8108,
+          "reach_multiplier": 0.8708,
+          "recovery_multiplier": 1.3992,
+          "root_motion_distance": 7.5712,
+          "stagger_multiplier": 1.342,
+          "start_angle": -0.62,
+          "startup_multiplier": 1.352
+        },
+        "compile_reason": "orthogonal affordance composition: {\"body_length\":\"short\",\"confidence\":0.8,\"contact_surface\":\"broad\",\"evidence_parts\":[\"flat seat surface as striking face\",\"folding legs as grip point\",\"rigid leg frame\",\"seat mass offset from hand grip\"],\"grip_topology\":\"clamp_grip\",\"handle_length\":\"none\",\"has_barrel\":false,\"has_broad_face\":true,\"has_edge\":false,\"has_point\":false,\"has_stock\":false,\"mass_distribution\":\"front\",\"rigidity\":\"rigid\",\"secondary_contact_surface\":\"none\"}",
+        "dodge_attack": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.04,
+          "contact_anchor": "tip",
+          "end_angle": 0.3,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.853,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.04,
+          "knockback_multiplier": 1.06,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "bash",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.8108,
+          "reach_multiplier": 0.8708,
+          "recovery_multiplier": 0.8268,
+          "root_motion_distance": 8.6528,
+          "stagger_multiplier": 1.1,
+          "start_angle": -0.62,
+          "startup_multiplier": 0.7488
+        },
+        "hit_1": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.04,
+          "contact_anchor": "tip",
+          "end_angle": 0.3,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.853,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.04,
+          "knockback_multiplier": 1.06,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "bash",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.8108,
+          "reach_multiplier": 0.8708,
+          "recovery_multiplier": 0.9328,
+          "root_motion_distance": 5.6784,
+          "stagger_multiplier": 1.1,
+          "start_angle": -0.62,
+          "startup_multiplier": 0.9152
+        },
+        "hit_2": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.04,
+          "contact_anchor": "tip",
+          "end_angle": 1.04,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.853,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.04,
+          "knockback_multiplier": 1.06,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "slam",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.8108,
+          "reach_multiplier": 0.8708,
+          "recovery_multiplier": 1.0388,
+          "root_motion_distance": 6.76,
+          "stagger_multiplier": 1.1,
+          "start_angle": -1.82,
+          "startup_multiplier": 0.9984
+        },
+        "hit_3": {
+          "active_multiplier": 1.08,
+          "camera_kick_multiplier": 1.2688,
+          "contact_anchor": "tip",
+          "end_angle": 0.3,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 0.853,
+          "hitbox_multiplier": 1.096,
+          "hitbox_width_multiplier": 1.18,
+          "hitstop_multiplier": 1.2688,
+          "knockback_multiplier": 1.2932,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "bash",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 0.8108,
+          "reach_multiplier": 0.8708,
+          "recovery_multiplier": 1.3144,
+          "root_motion_distance": 8.112,
+          "stagger_multiplier": 1.342,
+          "start_angle": -0.62,
+          "startup_multiplier": 1.2272
+        },
+        "mechanism_axes": {
+          "body_length": "short",
+          "confidence": 0.8,
+          "contact_surface": "broad",
+          "evidence_parts": [
+            "flat seat surface as striking face",
+            "folding legs as grip point",
+            "rigid leg frame",
+            "seat mass offset from hand grip"
+          ],
+          "grip_topology": "clamp_grip",
+          "handle_length": "none",
+          "has_barrel": false,
+          "has_broad_face": true,
+          "has_edge": false,
+          "has_point": false,
+          "has_stock": false,
+          "mass_distribution": "front",
+          "rigidity": "rigid",
+          "secondary_contact_surface": "none"
+        },
+        "primitive_scores": {
+          "bash": 6.1,
+          "slam": 4.85,
+          "spin": 0.35,
+          "sweep": 1.1,
+          "thrust": 0.7
+        },
+        "recipe_signature": "44a87662db848a65af1ea73be087eb307b5cb739bf203cf37ad7a024c2d276b5"
+      },
+      "recipe_signature": "44a87662db848a65af1ea73be087eb307b5cb739bf203cf37ad7a024c2d276b5",
+      "status": "COMPILED"
+    },
+    {
+      "case_id": "A12",
+      "mechanism_axes": {
+        "body_length": "long",
+        "confidence": 0.75,
+        "contact_surface": "whole_body",
+        "evidence_parts": [
+          "long flexible rod shaft",
+          "cork handle grip",
+          "rod tip",
+          "reel mounted near handle"
+        ],
+        "grip_topology": "two_hand_handle",
+        "handle_length": "medium",
+        "has_barrel": false,
+        "has_broad_face": false,
+        "has_edge": false,
+        "has_point": true,
+        "has_stock": false,
+        "mass_distribution": "rear",
+        "rigidity": "flexible",
+        "secondary_contact_surface": "point"
+      },
+      "primitive_scores": {
+        "bash": 1.844,
+        "slam": 2.1,
+        "spin": 4.05,
+        "sweep": 4.6,
+        "thrust": 3.138
+      },
+      "primitive_sequence": [
+        "sweep",
+        "spin",
+        "slam"
+      ],
+      "recipe": {
+        "charge_attack": {
+          "active_multiplier": 1.0576,
+          "camera_kick_multiplier": 1.20048,
+          "contact_anchor": "whole_body",
+          "end_angle": 1.1,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 1.057,
+          "hitbox_multiplier": 1.116,
+          "hitbox_width_multiplier": 1.28,
+          "hitstop_multiplier": 1.193648,
+          "knockback_multiplier": 1.231712,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "sweep",
+          "movement_allowed_ratio": 0.139,
+          "movement_multiplier": 1.0012,
+          "reach_multiplier": 1.0612,
+          "recovery_multiplier": 1.32528,
+          "root_motion_distance": 19.7568,
+          "stagger_multiplier": 1.27368,
+          "start_angle": -1.28,
+          "startup_multiplier": 1.29376
+        },
+        "compile_reason": "orthogonal affordance composition: {\"body_length\":\"long\",\"confidence\":0.75,\"contact_surface\":\"whole_body\",\"evidence_parts\":[\"long flexible rod shaft\",\"cork handle grip\",\"rod tip\",\"reel mounted near handle\"],\"grip_topology\":\"two_hand_handle\",\"handle_length\":\"medium\",\"has_barrel\":false,\"has_broad_face\":false,\"has_edge\":false,\"has_point\":true,\"has_stock\":false,\"mass_distribution\":\"rear\",\"rigidity\":\"flexible\",\"secondary_contact_surface\":\"point\"}",
+        "dodge_attack": {
+          "active_multiplier": 1.0576,
+          "camera_kick_multiplier": 0.984,
+          "contact_anchor": "whole_body",
+          "end_angle": 1.1,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 1.057,
+          "hitbox_multiplier": 1.116,
+          "hitbox_width_multiplier": 1.28,
+          "hitstop_multiplier": 0.9784,
+          "knockback_multiplier": 1.0096,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "sweep",
+          "movement_allowed_ratio": 0.139,
+          "movement_multiplier": 1.0012,
+          "reach_multiplier": 1.0612,
+          "recovery_multiplier": 0.78312,
+          "root_motion_distance": 22.5792,
+          "stagger_multiplier": 1.044,
+          "start_angle": -1.28,
+          "startup_multiplier": 0.716544
+        },
+        "hit_1": {
+          "active_multiplier": 1.0576,
+          "camera_kick_multiplier": 0.984,
+          "contact_anchor": "whole_body",
+          "end_angle": 1.1,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 1.057,
+          "hitbox_multiplier": 1.116,
+          "hitbox_width_multiplier": 1.28,
+          "hitstop_multiplier": 0.9784,
+          "knockback_multiplier": 1.0096,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "sweep",
+          "movement_allowed_ratio": 0.139,
+          "movement_multiplier": 1.0012,
+          "reach_multiplier": 1.0612,
+          "recovery_multiplier": 0.88352,
+          "root_motion_distance": 14.8176,
+          "stagger_multiplier": 1.044,
+          "start_angle": -1.28,
+          "startup_multiplier": 0.875776
+        },
+        "hit_2": {
+          "active_multiplier": 1.0576,
+          "camera_kick_multiplier": 0.984,
+          "contact_anchor": "whole_body",
+          "end_angle": 3.25,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 1.057,
+          "hitbox_multiplier": 1.116,
+          "hitbox_width_multiplier": 1.28,
+          "hitstop_multiplier": 0.9784,
+          "knockback_multiplier": 1.0096,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "spin",
+          "movement_allowed_ratio": 0.139,
+          "movement_multiplier": 1.0012,
+          "reach_multiplier": 1.0612,
+          "recovery_multiplier": 0.98392,
+          "root_motion_distance": 17.64,
+          "stagger_multiplier": 1.044,
+          "start_angle": -2.85,
+          "startup_multiplier": 0.955392
+        },
+        "hit_3": {
+          "active_multiplier": 1.0576,
+          "camera_kick_multiplier": 1.20048,
+          "contact_anchor": "whole_body",
+          "end_angle": 1.04,
+          "extension_pixels": 0.0,
+          "hitbox_length_multiplier": 1.057,
+          "hitbox_multiplier": 1.116,
+          "hitbox_width_multiplier": 1.28,
+          "hitstop_multiplier": 1.193648,
+          "knockback_multiplier": 1.231712,
+          "local_end_offset": [
+            0.0,
+            0.0
+          ],
+          "local_start_offset": [
+            0.0,
+            0.0
+          ],
+          "motion_family": "slam",
+          "movement_allowed_ratio": 0.04,
+          "movement_multiplier": 1.0012,
+          "reach_multiplier": 1.0612,
+          "recovery_multiplier": 1.24496,
+          "root_motion_distance": 21.168,
+          "stagger_multiplier": 1.27368,
+          "start_angle": -1.82,
+          "startup_multiplier": 1.174336
+        },
+        "mechanism_axes": {
+          "body_length": "long",
+          "confidence": 0.75,
+          "contact_surface": "whole_body",
+          "evidence_parts": [
+            "long flexible rod shaft",
+            "cork handle grip",
+            "rod tip",
+            "reel mounted near handle"
+          ],
+          "grip_topology": "two_hand_handle",
+          "handle_length": "medium",
+          "has_barrel": false,
+          "has_broad_face": false,
+          "has_edge": false,
+          "has_point": true,
+          "has_stock": false,
+          "mass_distribution": "rear",
+          "rigidity": "flexible",
+          "secondary_contact_surface": "point"
+        },
+        "primitive_scores": {
+          "bash": 1.844,
+          "slam": 2.1,
+          "spin": 4.05,
+          "sweep": 4.6,
+          "thrust": 3.138
+        },
+        "recipe_signature": "6ded1b398e592d4471690bcf09250ab0e01d6bc386e002a5a591cc0b77958a0f"
+      },
+      "recipe_signature": "6ded1b398e592d4471690bcf09250ab0e01d6bc386e002a5a591cc0b77958a0f",
+      "status": "COMPILED"
+    }
+  ]
+}

@@ -1,0 +1,180 @@
+{
+  "case_id": "A06",
+  "ordinal": 6,
+  "contract_version": "forge-semantic-v1.2-candidate",
+  "provider": "anthropic",
+  "endpoint": "https://api.anthropic.com/v1/messages",
+  "model_id": "claude-sonnet-5",
+  "local_request_id": "50c4f9d0-5115-43c6-87ec-52bb62b6f318",
+  "input_sha256": "b76a716a20d9370b45c85b597723c15b4828b36e415eb531c9785e8f96be91b2",
+  "request_body_sha256": "df7324c44ef5dc6f1b0f59dd35c9bbab4aa07e6494747ef66023be41b60c0f5e",
+  "started_at": "2026-08-08T07:46:54.221Z",
+  "retry_count": 0,
+  "repair_applied": false,
+  "unwrap_applied": false,
+  "coercion_applied": false,
+  "defaults_applied": false,
+  "api_status": 200,
+  "request_id": "msg_011CdpuophbujwX5rvw81xK4",
+  "response_model_id": "claude-sonnet-5",
+  "tool_name": "submit_forge_semantic_blueprint",
+  "tool_input_received": {
+    "identity": {
+      "canonical_name_zh": "木制棒球棒",
+      "canonical_name_en": "wooden baseball bat",
+      "display_name_zh": "木制棒球棒",
+      "display_name_en": "Wooden Baseball Bat",
+      "category": "tool",
+      "required_identity_parts": [
+        "tapered handle",
+        "cylindrical barrel body",
+        "knob end",
+        "gradually widening bat shape"
+      ],
+      "material_hints": [
+        "wood"
+      ],
+      "silhouette_hints": [
+        "long tapered cylinder that widens from a narrow handle to a thicker barrel end"
+      ],
+      "optional_decorations": [
+        "engraved wood grain",
+        "brand stamp near handle"
+      ]
+    },
+    "combat": {
+      "behavior_family": "heavy_melee",
+      "delivery": "melee_swing",
+      "impact_mode": "whole_body_collision",
+      "effect_type": "normal",
+      "drawback": "long_recovery",
+      "cadence_hint": "slow_heavy"
+    },
+    "visual": {
+      "prompt_en": "A wooden baseball bat, full object visible, side view, isolated on plain background, smooth tapered wooden shaft narrowing to a gripped handle with a round knob end, gradually widening into a thicker cylindrical barrel at the striking end, natural wood grain texture, single cohesive object, realistic proportions",
+      "negative_prompt_en": "not a sword, not a club with spikes, not a bat with metal barrel, not a gun, no attached blades, no armor plating, not a hammer",
+      "must_preserve": [
+        "tapered handle",
+        "cylindrical barrel body",
+        "knob end",
+        "gradually widening bat shape"
+      ],
+      "must_not_replace_with": [
+        "sword",
+        "hammer",
+        "metal bat",
+        "gun",
+        "spiked club"
+      ]
+    },
+    "confidence": 0.9,
+    "affordance": {
+      "handle_length": "medium",
+      "body_length": "medium",
+      "grip_topology": "two_hand_handle",
+      "rigidity": "rigid",
+      "mass_distribution": "front",
+      "contact_surface": "broad",
+      "secondary_contact_surface": "none",
+      "has_point": false,
+      "has_edge": false,
+      "has_broad_face": true,
+      "has_barrel": true,
+      "has_stock": false,
+      "confidence": 0.9,
+      "evidence_parts": [
+        "tapered narrow handle for two-hand grip",
+        "knob end to prevent slipping",
+        "thick cylindrical barrel for impact",
+        "wood construction giving rigidity"
+      ]
+    }
+  },
+  "exactly_one_legal_tool_use": true,
+  "sole_content_is_tool_use": true,
+  "usage": {
+    "input_tokens": 6135,
+    "output_tokens": 840,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0
+  },
+  "stop_reason": "tool_use",
+  "status": "VALID",
+  "failure_reason": "",
+  "schema_valid": true,
+  "cross_field_valid": true,
+  "validated_blueprint": {
+    "identity": {
+      "canonical_name_zh": "木制棒球棒",
+      "canonical_name_en": "wooden baseball bat",
+      "display_name_zh": "木制棒球棒",
+      "display_name_en": "Wooden Baseball Bat",
+      "category": "tool",
+      "required_identity_parts": [
+        "tapered handle",
+        "cylindrical barrel body",
+        "knob end",
+        "gradually widening bat shape"
+      ],
+      "material_hints": [
+        "wood"
+      ],
+      "silhouette_hints": [
+        "long tapered cylinder that widens from a narrow handle to a thicker barrel end"
+      ],
+      "optional_decorations": [
+        "engraved wood grain",
+        "brand stamp near handle"
+      ]
+    },
+    "combat": {
+      "behavior_family": "heavy_melee",
+      "delivery": "melee_swing",
+      "impact_mode": "whole_body_collision",
+      "effect_type": "normal",
+      "drawback": "long_recovery",
+      "cadence_hint": "slow_heavy"
+    },
+    "visual": {
+      "prompt_en": "A wooden baseball bat, full object visible, side view, isolated on plain background, smooth tapered wooden shaft narrowing to a gripped handle with a round knob end, gradually widening into a thicker cylindrical barrel at the striking end, natural wood grain texture, single cohesive object, realistic proportions",
+      "negative_prompt_en": "not a sword, not a club with spikes, not a bat with metal barrel, not a gun, no attached blades, no armor plating, not a hammer",
+      "must_preserve": [
+        "tapered handle",
+        "cylindrical barrel body",
+        "knob end",
+        "gradually widening bat shape"
+      ],
+      "must_not_replace_with": [
+        "sword",
+        "hammer",
+        "metal bat",
+        "gun",
+        "spiked club"
+      ]
+    },
+    "confidence": 0.9,
+    "affordance": {
+      "handle_length": "medium",
+      "body_length": "medium",
+      "grip_topology": "two_hand_handle",
+      "rigidity": "rigid",
+      "mass_distribution": "front",
+      "contact_surface": "broad",
+      "secondary_contact_surface": "none",
+      "has_point": false,
+      "has_edge": false,
+      "has_broad_face": true,
+      "has_barrel": true,
+      "has_stock": false,
+      "confidence": 0.9,
+      "evidence_parts": [
+        "tapered narrow handle for two-hand grip",
+        "knob end to prevent slipping",
+        "thick cylindrical barrel for impact",
+        "wood construction giving rigidity"
+      ]
+    }
+  },
+  "completed_at": "2026-08-08T07:47:03.926Z",
+  "elapsed_ms": 9703
+}

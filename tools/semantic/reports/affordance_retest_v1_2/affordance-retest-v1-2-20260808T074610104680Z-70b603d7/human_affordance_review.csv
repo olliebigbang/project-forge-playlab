@@ -1,0 +1,13 @@
+﻿case_id,frozen_identity,frozen_review_parts,model_canonical_identity,model_evidence_parts,affordance_semantically_correct,at_least_two_identity_parts_supported,review_notes
+A01,菜刀,blade | handle,kitchen cleaver,wide rectangular blade | straight cutting edge | short wooden handle | blade tip | flat blade face,UNREVIEWED,UNREVIEWED,
+A02,长剑,long blade | point | hilt,longsword,long slender blade | sharp tip | cutting edge | handle grip | crossguard,UNREVIEWED,UNREVIEWED,
+A03,消防斧,axe head | cutting edge | long handle,,,UNREVIEWED,UNREVIEWED,
+A04,长矛,spear point | long shaft,spear,long shaft held with two hands | pointed spearhead for thrusting | front-weighted head mass,UNREVIEWED,UNREVIEWED,
+A05,铁锤,hammer head | handle,large iron hammer,long wooden handle | heavy iron hammer head | flat striking face,UNREVIEWED,UNREVIEWED,
+A06,棒球棒,thick striking end | tapered grip,wooden baseball bat,tapered narrow handle for two-hand grip | knob end to prevent slipping | thick cylindrical barrel for impact | wood construction giving rigidity,UNREVIEWED,UNREVIEWED,
+A07,木椅,seat | backrest | legs,,,UNREVIEWED,UNREVIEWED,
+A08,灭火器,cylinder body | top valve | hose,,,UNREVIEWED,UNREVIEWED,
+A09,圆盾,round shield body | rear grip,,,UNREVIEWED,UNREVIEWED,
+A10,巨大鸡腿,bone grip | large meat body,giant chicken drumstick,narrow bone shaft as handle | bulbous meat mass at striking end | semi-rigid meat and bone structure | front-heavy weight distribution,UNREVIEWED,UNREVIEWED,
+A11,折叠凳,seat | folding legs | hinges,folding stool,flat seat surface as striking face | folding legs as grip point | rigid leg frame | seat mass offset from hand grip,UNREVIEWED,UNREVIEWED,
+A12,钓鱼竿,grip | flexible rod | reel,fishing rod,long flexible rod shaft | cork handle grip | rod tip | reel mounted near handle,UNREVIEWED,UNREVIEWED,

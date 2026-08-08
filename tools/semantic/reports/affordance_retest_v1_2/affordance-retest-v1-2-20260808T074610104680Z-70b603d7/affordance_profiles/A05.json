@@ -1,0 +1,20 @@
+{
+  "handle_length": "long",
+  "body_length": "medium",
+  "grip_topology": "two_hand_handle",
+  "rigidity": "rigid",
+  "mass_distribution": "front",
+  "contact_surface": "broad",
+  "secondary_contact_surface": "none",
+  "has_point": false,
+  "has_edge": false,
+  "has_broad_face": true,
+  "has_barrel": false,
+  "has_stock": false,
+  "confidence": 0.9,
+  "evidence_parts": [
+    "long wooden handle",
+    "heavy iron hammer head",
+    "flat striking face"
+  ]
+}

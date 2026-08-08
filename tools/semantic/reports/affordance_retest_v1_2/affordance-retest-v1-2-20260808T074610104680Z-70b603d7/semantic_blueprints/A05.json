@@ -1,0 +1,70 @@
+{
+  "identity": {
+    "canonical_name_zh": "大铁锤",
+    "canonical_name_en": "large iron hammer",
+    "display_name_zh": "大铁锤",
+    "display_name_en": "Large Iron Hammer",
+    "category": "tool",
+    "required_identity_parts": [
+      "long handle",
+      "heavy hammer head",
+      "flat striking face"
+    ],
+    "material_hints": [
+      "iron",
+      "wood handle"
+    ],
+    "silhouette_hints": [
+      "long straight shaft with a large heavy block-like head at one end"
+    ],
+    "optional_decorations": [
+      "metal bands on handle",
+      "worn scratches on head"
+    ]
+  },
+  "combat": {
+    "behavior_family": "heavy_melee",
+    "delivery": "whole_object_strike",
+    "impact_mode": "strike_point",
+    "effect_type": "normal",
+    "drawback": "slow_movement",
+    "cadence_hint": "slow_heavy"
+  },
+  "visual": {
+    "prompt_en": "A large iron hammer, side view, complete object visible, isolated on plain background, long wooden handle gripped in the middle, heavy rectangular iron hammer head at one end with a flat striking face, sturdy forged construction, realistic material texture, single object, no background clutter",
+    "negative_prompt_en": "not a sword, not a greatsword, not a gun, not an umbrella, no additional characters, no background scenery, do not replace hammer head with blade or barrel",
+    "must_preserve": [
+      "long handle",
+      "heavy hammer head",
+      "flat striking face"
+    ],
+    "must_not_replace_with": [
+      "sword",
+      "greatsword",
+      "gun",
+      "umbrella",
+      "axe"
+    ]
+  },
+  "confidence": 0.9,
+  "affordance": {
+    "handle_length": "long",
+    "body_length": "medium",
+    "grip_topology": "two_hand_handle",
+    "rigidity": "rigid",
+    "mass_distribution": "front",
+    "contact_surface": "broad",
+    "secondary_contact_surface": "none",
+    "has_point": false,
+    "has_edge": false,
+    "has_broad_face": true,
+    "has_barrel": false,
+    "has_stock": false,
+    "confidence": 0.9,
+    "evidence_parts": [
+      "long wooden handle",
+      "heavy iron hammer head",
+      "flat striking face"
+    ]
+  }
+}

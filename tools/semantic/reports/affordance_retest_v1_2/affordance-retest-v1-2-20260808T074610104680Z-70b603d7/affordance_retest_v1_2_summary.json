@@ -1,0 +1,19 @@
+{
+  "run_id": "affordance-retest-v1-2-20260808T074610104680Z-70b603d7",
+  "status": "NEEDS_WORK",
+  "contract_version": "forge-semantic-v1.2-candidate",
+  "provider": "anthropic",
+  "endpoint": "https://api.anthropic.com/v1/messages",
+  "model_id": "claude-sonnet-5",
+  "call_count": 12,
+  "retry_count": 0,
+  "api_success_count": 10,
+  "exactly_one_tool_use_count": 10,
+  "schema_and_cross_field_valid_count": 8,
+  "offline_recipe_compile_count": 8,
+  "human_affordance_review_complete": false,
+  "blind_comparison_executed": false,
+  "flux_started": false,
+  "birefnet_started": false,
+  "comfyui_started": false
+}

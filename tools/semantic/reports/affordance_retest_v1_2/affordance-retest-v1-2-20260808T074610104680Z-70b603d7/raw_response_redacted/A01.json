@@ -1,0 +1,113 @@
+{
+  "case_id": "A01",
+  "response": {
+    "model": "claude-sonnet-5",
+    "id": "msg_011CdpukYWgd6RMd17XnBZzZ",
+    "type": "message",
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "toolu_01V7CYbN222d9hjXTAf9JW1Q",
+        "name": "submit_forge_semantic_blueprint",
+        "input": {
+          "identity": {
+            "canonical_name_zh": "菜刀",
+            "canonical_name_en": "kitchen cleaver",
+            "display_name_zh": "宽刃战斗菜刀",
+            "display_name_en": "Broad-Blade Battle Cleaver",
+            "category": "tool",
+            "required_identity_parts": [
+              "broad rectangular blade",
+              "straight cutting edge",
+              "short handle",
+              "blade spine"
+            ],
+            "material_hints": [
+              "steel blade",
+              "wood handle"
+            ],
+            "silhouette_hints": [
+              "wide flat rectangular blade tapering slightly at tip",
+              "short handle at one end of a broad blade"
+            ],
+            "optional_decorations": [
+              "reinforced rivets on handle",
+              "polished blade surface",
+              "engraved maker mark"
+            ]
+          },
+          "combat": {
+            "behavior_family": "heavy_melee",
+            "delivery": "melee_swing",
+            "impact_mode": "strike_edge",
+            "effect_type": "normal",
+            "drawback": "long_recovery",
+            "cadence_hint": "slow_heavy"
+          },
+          "visual": {
+            "prompt_en": "A kitchen cleaver with a wide, flat rectangular steel blade and a short wooden handle, forge-adapted with a reinforced grip wrap for combat use, isolated single object, side view, full object visible, clean studio lighting, realistic material texture",
+            "negative_prompt_en": "not a sword, not a greatsword, not an axe, not a machete, not a katana, no second blade, no gun parts, no scabbard",
+            "must_preserve": [
+              "broad rectangular blade",
+              "straight cutting edge",
+              "short handle",
+              "blade spine"
+            ],
+            "must_not_replace_with": [
+              "sword",
+              "greatsword",
+              "axe",
+              "machete",
+              "cleaver-shaped gun"
+            ]
+          },
+          "confidence": 0.9,
+          "affordance": {
+            "handle_length": "short",
+            "body_length": "short",
+            "grip_topology": "one_hand_handle",
+            "rigidity": "rigid",
+            "mass_distribution": "front",
+            "contact_surface": "edge",
+            "secondary_contact_surface": "point",
+            "has_point": true,
+            "has_edge": true,
+            "has_broad_face": true,
+            "has_barrel": false,
+            "has_stock": false,
+            "confidence": 0.88,
+            "evidence_parts": [
+              "wide rectangular blade",
+              "straight cutting edge",
+              "short wooden handle",
+              "blade tip",
+              "flat blade face"
+            ]
+          }
+        },
+        "caller": {
+          "type": "direct"
+        }
+      }
+    ],
+    "stop_reason": "tool_use",
+    "stop_sequence": null,
+    "stop_details": null,
+    "usage": {
+      "input_tokens": 6140,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "cache_creation": {
+        "ephemeral_5m_input_tokens": 0,
+        "ephemeral_1h_input_tokens": 0
+      },
+      "output_tokens": 820,
+      "output_tokens_details": {
+        "thinking_tokens": 0
+      },
+      "service_tier": "standard",
+      "inference_geo": "global"
+    }
+  }
+}

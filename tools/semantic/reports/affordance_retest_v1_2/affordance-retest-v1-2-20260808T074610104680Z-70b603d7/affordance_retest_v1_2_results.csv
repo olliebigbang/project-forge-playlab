@@ -1,0 +1,13 @@
+﻿case_id,api_status,tool_name,status,schema_valid,cross_field_valid,elapsed_ms,failure_reason,primitive_sequence,recipe_signature
+A01,200,submit_forge_semantic_blueprint,VALID,True,True,8781,,sweep -> bash -> slam,37f8065efa1f45eef15cae130b14deb95c42429d33b7e5589fd80d381d6c96d3
+A02,200,submit_forge_semantic_blueprint,VALID,True,True,7984,,sweep -> thrust -> slam,4d8b004e9ee92e5b2d82b5344eaf06f6a820b76c4ef5d3aefe935de39b1ed68a
+A03,,,FAILED,,,10219,LOCAL_FAILURE: $.identity.canonical_name_en: canonical identity contains combat/effect modifiers: fire,,
+A04,200,submit_forge_semantic_blueprint,VALID,True,True,8703,,thrust -> thrust -> slam,83f6eb8abd388d14f001d3b1ba4d979b102f7549e6eba96aaa013005f5877a64
+A05,200,submit_forge_semantic_blueprint,VALID,True,True,8265,,bash -> slam -> sweep,c74aef97436d4ba2929c9fadc1a51fe6aa505d4212713f4f653b909fe7204d27
+A06,200,submit_forge_semantic_blueprint,VALID,True,True,9703,,bash -> slam -> bash,679f713680fdf5340567ca6466a7af46b7df6d02cb99d790ac5c622f39f0df5b
+A07,200,submit_forge_semantic_blueprint,FAILED,False,False,8406,/: fields mismatch missing=[] extra=['has_broad_face_evidence'],,
+A08,,,FAILED,,,8985,LOCAL_FAILURE: $.identity.canonical_name_en: canonical identity contains combat/effect modifiers: fire,,
+A09,200,submit_forge_semantic_blueprint,FAILED,False,False,10063,/grip_topology: body_grip requires handle_length none,,
+A10,200,submit_forge_semantic_blueprint,VALID,True,True,10672,,bash -> slam -> bash,56777e49da4ee8737bba15e8bacf513cceaeb3c571f1871a40fa8199e1357e7b
+A11,200,submit_forge_semantic_blueprint,VALID,True,True,8969,,bash -> slam -> bash,44a87662db848a65af1ea73be087eb307b5cb739bf203cf37ad7a024c2d276b5
+A12,200,submit_forge_semantic_blueprint,VALID,True,True,8891,,sweep -> spin -> slam,6ded1b398e592d4471690bcf09250ab0e01d6bc386e002a5a591cc0b77958a0f

@@ -1,0 +1,107 @@
+{
+  "case_id": "A11",
+  "response": {
+    "model": "claude-sonnet-5",
+    "id": "msg_011CdpusNJU886W5nb1ogLdt",
+    "type": "message",
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "toolu_01HQhK8tgM93gqAauyoKqG5E",
+        "name": "submit_forge_semantic_blueprint",
+        "input": {
+          "identity": {
+            "canonical_name_zh": "折叠凳",
+            "canonical_name_en": "folding stool",
+            "display_name_zh": "折叠凳",
+            "display_name_en": "Folding Stool",
+            "category": "furniture",
+            "required_identity_parts": [
+              "flat seat surface",
+              "folding legs",
+              "leg hinge joints"
+            ],
+            "material_hints": [
+              "wood",
+              "metal"
+            ],
+            "silhouette_hints": [
+              "small low stool with X-shaped folding leg frame beneath a flat seat"
+            ],
+            "optional_decorations": [
+              "worn paint edges",
+              "metal rivets on hinges"
+            ]
+          },
+          "combat": {
+            "behavior_family": "heavy_melee",
+            "delivery": "melee_swing",
+            "impact_mode": "whole_body_collision",
+            "effect_type": "normal",
+            "drawback": "slow_movement",
+            "cadence_hint": "slow_heavy"
+          },
+          "visual": {
+            "prompt_en": "A folding stool used as a melee weapon, gripped by its folding legs, side view, complete object visible, flat seat surface facing outward as the striking face, X-shaped folding leg frame beneath, wood and metal construction, one isolated object, simple background, realistic proportions",
+            "negative_prompt_en": "not a hammer, not a club, not a bat, not a shield, no gun, no sword, do not replace stool with generic weapon",
+            "must_preserve": [
+              "flat seat surface",
+              "folding legs",
+              "leg hinge joints"
+            ],
+            "must_not_replace_with": [
+              "hammer",
+              "club",
+              "baseball bat",
+              "shield"
+            ]
+          },
+          "confidence": 0.85,
+          "affordance": {
+            "handle_length": "none",
+            "body_length": "short",
+            "grip_topology": "clamp_grip",
+            "rigidity": "rigid",
+            "mass_distribution": "front",
+            "contact_surface": "broad",
+            "secondary_contact_surface": "none",
+            "has_point": false,
+            "has_edge": false,
+            "has_broad_face": true,
+            "has_barrel": false,
+            "has_stock": false,
+            "confidence": 0.8,
+            "evidence_parts": [
+              "flat seat surface as striking face",
+              "folding legs as grip point",
+              "rigid leg frame",
+              "seat mass offset from hand grip"
+            ]
+          }
+        },
+        "caller": {
+          "type": "direct"
+        }
+      }
+    ],
+    "stop_reason": "tool_use",
+    "stop_sequence": null,
+    "stop_details": null,
+    "usage": {
+      "input_tokens": 6138,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "cache_creation": {
+        "ephemeral_5m_input_tokens": 0,
+        "ephemeral_1h_input_tokens": 0
+      },
+      "output_tokens": 768,
+      "output_tokens_details": {
+        "thinking_tokens": 0
+      },
+      "service_tier": "standard",
+      "inference_geo": "global"
+    }
+  }
+}
