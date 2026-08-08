@@ -1,0 +1,21 @@
+{
+  "handle_length": "medium",
+  "body_length": "long",
+  "grip_topology": "two_hand_handle",
+  "rigidity": "rigid",
+  "mass_distribution": "rear",
+  "contact_surface": "point",
+  "secondary_contact_surface": "broad",
+  "has_point": true,
+  "has_edge": false,
+  "has_broad_face": false,
+  "has_barrel": true,
+  "has_stock": true,
+  "confidence": 1.0,
+  "evidence_parts": [
+    "long rigid main axis",
+    "forward barrel end",
+    "rear stock contact"
+  ],
+  "real_length_cm": 100.0
+}

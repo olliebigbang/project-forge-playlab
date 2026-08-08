@@ -22,22 +22,37 @@ by `rescale_to_real_length.py`, which applies the same scale formula to a lossy 
 
 ## Reproduce
 
+Lengths come from the affordance sidecars in `affordance_v1_3/`, which carry
+`real_length_cm` under contract v1.3 (decision P05). Those four values are hand-authored
+placeholders — see the note below.
+
 ```bash
 A=data/combat_feel/live_assets
 PP=tools/comfyui/postprocess
 OUT=artifacts/real_scale_poc
+AF=$OUT/affordance_v1_3
+
+python tools/semantic/bridge/author_v1_3_sidecars.py $AF
 
 python $PP/process_sprite.py \
   $A/motion_grammar_slice_1a/shotgun_melee_regenerated_20260807/raw.png \
   $OUT/shotgun_melee.png artifacts/real_scale_poc_masks/shotgun_melee_alpha.png \
-  --object-id shotgun_melee
+  --affordance-profile $AF/shotgun_melee/object_affordance_profile.json
 
-python $PP/rescale_to_real_length.py $A/recipe_slice_1b/frying_pan/processed_sprite.png    $OUT/frying_pan.png         --object-id frying_pan
-python $PP/rescale_to_real_length.py $A/revision_a/giant_wooden_spoon/processed_sprite.png $OUT/giant_wooden_spoon.png --object-id giant_wooden_spoon
-python $PP/rescale_to_real_length.py $A/recipe_slice_1b/old_mop/processed_sprite.png       $OUT/old_mop.png            --object-id old_mop
+python $PP/rescale_to_real_length.py $A/recipe_slice_1b/frying_pan/processed_sprite.png    $OUT/frying_pan.png         --affordance-profile $AF/frying_pan/object_affordance_profile.json
+python $PP/rescale_to_real_length.py $A/revision_a/giant_wooden_spoon/processed_sprite.png $OUT/giant_wooden_spoon.png --affordance-profile $AF/giant_wooden_spoon/object_affordance_profile.json
+python $PP/rescale_to_real_length.py $A/recipe_slice_1b/old_mop/processed_sprite.png       $OUT/old_mop.png            --affordance-profile $AF/old_mop/object_affordance_profile.json
 ```
 
 Requires `numpy`, `pillow`, `opencv-python`.
+
+## The lengths are placeholders
+
+`author_v1_3_sidecars.py` hand-authors the four `real_length_cm` values so the pipeline
+can be wired and tested offline. They are **not** model output, so they are evidence that
+the plumbing works and nothing more. `tools/semantic/bridge/estimate_real_length.py` asks
+the model the same question and writes the same file; running it (needs an API key) is
+what would turn this into evidence about whether the model can estimate object size.
 
 ## Result
 

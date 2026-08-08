@@ -169,3 +169,39 @@ applies the same scale formula. Those three come from a lossy source and are lab
 such. They are written to `artifacts/`, never over `data/` — the frozen assets are
 SHA-256 pinned in `index.json` and overwriting them breaks the hash chain and the sample
 loads.
+
+## P05 — real length is a contract field, and it is a number
+
+*2026-08-09.* Replaces the hard-coded four-object table P01 shipped as a stand-in.
+
+`real_length_cm` is now required by affordance contract **v1.3**, and the postprocessor
+reads it from the sidecar rather than a table in its own source.
+
+**Why a number and not another bucket.** The profile already carries `body_length` as a
+three-value ordinal, and it already collides: `old_mop` and `giant_wooden_spoon` are both
+`"long"` while measuring 150cm and 60cm. A fourth bucket set would be T51 and T76's
+mistake again, in the size dimension — buckets add, and the thing being modelled (reach)
+is continuous. `tools/semantic/tests/test_affordance_contract_v1_3.py` pins that
+collision as a test so the reasoning cannot quietly rot.
+
+**Why the model has to supply it.** A generated image cannot. Generators fill the canvas
+whatever the subject, so pixel length describes the framing, not the object. This is the
+split T73/T74 asked for — measure what geometry can see, ask the model only for what it
+cannot.
+
+**Why a new version instead of editing v1.2.** v1.1, v1.2 and v1.2.1 are frozen, and the
+four shipped sidecars are SHA-256 pinned. v1.3 is a new module alongside them, mirroring
+how v1.2.1 was added; existing profiles stay valid under the version they were authored
+against and nothing under `data/` is edited.
+
+**Bounds describe the world, not the frame.** 5–400cm. The 96px frame at 0.56 px/cm can
+only represent roughly 145–170cm — the exact ceiling depends on how the object sits, as a
+diagonal object fits more length than an upright one. A legal length the pipeline cannot
+draw fails closed at `REAL_LENGTH_EXCEEDS_SPRITE_FRAME` rather than having the contract
+pretend long objects don't exist. Representing a pike means a bigger frame or a smaller
+`PX_PER_CM`, not a narrower contract.
+
+**Still owed:** the four values are hand-authored placeholders from
+`author_v1_3_sidecars.py`, not model output. `estimate_real_length.py` asks the model the
+same question and writes the same file; running it is what turns "the plumbing works"
+into evidence about whether the model can actually estimate object size.
