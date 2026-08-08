@@ -11,6 +11,16 @@ cd "C:\Users\Eddie L\Documents\project-forge-playlab"
 .\scripts\run_open_playtest.ps1
 ```
 
+上面仍使用冻结的默认 `forge-semantic-v1.1`，不会生成 Motion Grammar
+Affordance。要显式启动已批准的 Affordance Grammar 实验模式，使用：
+
+```powershell
+.\scripts\run_open_playtest.ps1 -AffordanceGrammar
+```
+
+实验模式固定使用 `forge-semantic-v1.2.1-candidate`。模式在整个试玩会话中锁定，
+不能由单个输入或模型输出切换；界面会持续显示当前合同。
+
 脚本会先执行离线测试和安全预检，再启动只监听 `127.0.0.1:8190` 的 ComfyUI、只监听 `127.0.0.1:8771` 的本地桥接层，最后打开独立 Godot 场景。
 
 Anthropic Key 每个试玩窗口最多输入一次，不是每个点子输入一次。Key 只存在于当前入口进程环境，不写入 `.env`、Git、JSON、CSV、截图或日志；关闭 Godot 后脚本会清除环境并停止本次拥有的服务。模型 ID 固定为 `claude-sonnet-5`，不能在界面更换。
@@ -29,7 +39,7 @@ Anthropic Key 每个试玩窗口最多输入一次，不是每个点子输入一
 ## Motion Grammar 交接边界
 
 Combat Feel 入口现在严格失败关闭：只有轮次中存在通过
-`forge-semantic-v1.2-candidate` 完整校验的 `affordance` 对象时，才会显示并允许
+`forge-semantic-v1.2.1-candidate` 完整校验的 `affordance` 对象时，才会显示并允许
 进入近战手感测试。该对象会随轮次原子交付为
 `object_affordance_profile.json`，Combat Feel 同时使用
 `--require-affordance-grammar`，因此不会静默退回旧近战编译器。
@@ -37,7 +47,7 @@ Combat Feel 入口现在严格失败关闭：只有轮次中存在通过
 默认 Open Playtest 语义合同仍冻结为 `forge-semantic-v1.1`。普通 v1.1 轮次仍可
 完成身份、锚点和基础训练预览，但不会声称已经进入 Motion Grammar 战斗。
 系统不会根据物件名称或玩家原文推断 Affordance。将候选合同用于新的实时输入，
-仍需另行明确批准。
+必须通过上面的 `-AffordanceGrammar` 显式启动参数；默认入口不会自动启用。
 
 ## 基础预览与近战手感测试
 

@@ -50,6 +50,14 @@ has no affordance sidecar, remains usable in the basic preview, and cannot be
 misrepresented as Motion Grammar combat. No identity-derived approximation is
 inserted.
 
+The approved runtime promotion is explicit rather than default. Launching
+`scripts/run_open_playtest.ps1 -AffordanceGrammar` pins the whole session to
+`forge-semantic-v1.2.1-candidate`, its frozen additive prompts, its closed tool
+Schema, and the existing `claude-sonnet-5` model ID. The launcher without that
+switch remains v1.1. Neither mode retries or falls back to Mock, and the model
+returns semantic data only; the existing GDScript compiler still selects the
+recipe afterward.
+
 ## Current real-asset compile table
 
 | Asset | Affordance axes that dominate | Hit 1 → Hit 2 → Hit 3 | Status |

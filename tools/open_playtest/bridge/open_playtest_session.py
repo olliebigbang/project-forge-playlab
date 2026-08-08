@@ -38,9 +38,22 @@ if str(SEMANTIC_BRIDGE) not in sys.path:
 
 import live_orchestrator as live  # noqa: E402
 import affordance_contract_v1_2 as affordance_contract  # noqa: E402
+import affordance_contract_v1_2_1 as affordance_contract_v1_2_1  # noqa: E402
 
 
 OPEN_CONTRACT = "forge-open-playtest-mode-v1"
+SEMANTIC_MODE_V1_1 = "v1_1"
+SEMANTIC_MODE_AFFORDANCE = "affordance_v1_2_1"
+SEMANTIC_MODES = frozenset({SEMANTIC_MODE_V1_1, SEMANTIC_MODE_AFFORDANCE})
+AFFORDANCE_EXPERIMENT_HASHES = {
+    "base_prompt": "a2d42b808175988267cf51193f2a4e43b2cc258bc1647887fe5c238d006bed12",
+    "affordance_prompt": "9c055d1013b3962322504c6676250e4b3b92bd9ffd3835e951ec98cbf780a835",
+    "correction_prompt": "91c4c4702178801ec7ea1f8055c0590b0b449ef46efd0ce47aa0c7cf657278cb",
+    "combined_prompt": "0d2ad06d2ba512bda973d0ddf30f2ce67d47cdd3fc77e31e4cf544e510c29499",
+    "tool_schema": "fa0a473661f9ead65f395063b2498aa86676f2a3892826b97467766988dbdd3c",
+    "v1_2_validator": "0736cf446bc931defbd4c0038ef93246f9a0bda5b14e8758096cc0fcbd843edf",
+    "v1_2_1_validator": "8f2e55cee8a8541cadcc91c2990d82aa0041586f712ee90c5222dd79b84b223b",
+}
 TERMINAL_STAGES = frozenset({"identity_rejected", "completed", "failed"})
 PIPELINE_STAGES = (
     "semantic_compiling",
@@ -80,7 +93,58 @@ HISTORY_FIELDS = [
     "status",
     "failure_stage",
     "failure_reason",
+    "semantic_mode",
+    "semantic_contract",
 ]
+
+
+def _semantic_compiler_inputs(semantic_mode: str) -> tuple[str, Mapping[str, Any], str]:
+    base_path = live.SEMANTIC_ROOT / "prompts" / "semantic_compiler_system_prompt.md"
+    base_prompt = base_path.read_text(encoding="utf-8")
+    if semantic_mode == SEMANTIC_MODE_V1_1:
+        return base_prompt, live.FORGE_SEMANTIC_BLUEPRINT_SCHEMA, "forge-semantic-v1.1"
+    if semantic_mode != SEMANTIC_MODE_AFFORDANCE:
+        raise live.LivePipelineError("preflight", "SEMANTIC_MODE_INVALID")
+    affordance_path = live.SEMANTIC_ROOT / "prompts" / "affordance_v1_2_candidate_addendum.md"
+    correction_path = live.SEMANTIC_ROOT / "prompts" / "affordance_v1_2_1_candidate_addendum.md"
+    validator_paths = {
+        "v1_2_validator": live.SEMANTIC_ROOT / "bridge" / "affordance_contract_v1_2.py",
+        "v1_2_1_validator": live.SEMANTIC_ROOT / "bridge" / "affordance_contract_v1_2_1.py",
+    }
+    file_paths = {
+        "base_prompt": base_path,
+        "affordance_prompt": affordance_path,
+        "correction_prompt": correction_path,
+        **validator_paths,
+    }
+    for label, path in file_paths.items():
+        if hashlib.sha256(path.read_bytes()).hexdigest() != AFFORDANCE_EXPERIMENT_HASHES[label]:
+            raise live.LivePipelineError(
+                "preflight", f"AFFORDANCE_EXPERIMENT_INPUT_HASH_MISMATCH:{label}"
+            )
+    prompt_parts = [
+        base_prompt,
+        affordance_path.read_text(encoding="utf-8"),
+        correction_path.read_text(encoding="utf-8"),
+    ]
+    prompt = "\n\n".join(value.strip() for value in prompt_parts) + "\n"
+    if hashlib.sha256(prompt.encode("utf-8")).hexdigest() != AFFORDANCE_EXPERIMENT_HASHES["combined_prompt"]:
+        raise live.LivePipelineError(
+            "preflight", "AFFORDANCE_EXPERIMENT_INPUT_HASH_MISMATCH:combined_prompt"
+        )
+    schema = affordance_contract_v1_2_1.candidate_tool_schema_v1_2_1()
+    canonical_schema = json.dumps(
+        schema, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    if hashlib.sha256(canonical_schema).hexdigest() != AFFORDANCE_EXPERIMENT_HASHES["tool_schema"]:
+        raise live.LivePipelineError(
+            "preflight", "AFFORDANCE_EXPERIMENT_INPUT_HASH_MISMATCH:tool_schema"
+        )
+    return (
+        prompt,
+        schema,
+        affordance_contract_v1_2_1.CONTRACT_VERSION,
+    )
 
 
 def _json_bytes(value: Any) -> bytes:
@@ -212,7 +276,14 @@ class OpenRound:
 class OpenPlaytestSession(live.LiveSession):
     """One explicit local session supporting sequential arbitrary inputs."""
 
-    def __init__(self, *, session_id: str, preflight_file: Path, config_file: Path) -> None:
+    def __init__(
+        self,
+        *,
+        session_id: str,
+        preflight_file: Path,
+        config_file: Path,
+        semantic_mode: str = SEMANTIC_MODE_V1_1,
+    ) -> None:
         self.config = json.loads(config_file.read_text(encoding="utf-8"))
         if self.config.get("contract") != OPEN_CONTRACT:
             raise live.LivePipelineError("preflight", "OPEN_CONFIG_CONTRACT_INVALID")
@@ -226,6 +297,12 @@ class OpenPlaytestSession(live.LiveSession):
             raise live.LivePipelineError("preflight", "MODEL_ID_CHANGED")
         if self.config.get("semantic_contract") != "forge-semantic-v1.1":
             raise live.LivePipelineError("preflight", "SEMANTIC_CONTRACT_CHANGED")
+        if self.config.get("default_semantic_mode") != SEMANTIC_MODE_V1_1:
+            raise live.LivePipelineError("preflight", "DEFAULT_SEMANTIC_MODE_CHANGED")
+        if self.config.get("affordance_experiment_contract") != affordance_contract_v1_2_1.CONTRACT_VERSION:
+            raise live.LivePipelineError("preflight", "AFFORDANCE_EXPERIMENT_CONTRACT_CHANGED")
+        if semantic_mode not in SEMANTIC_MODES:
+            raise live.LivePipelineError("preflight", "SEMANTIC_MODE_INVALID")
         if self.config.get("bridge_base") != "http://127.0.0.1:8771" or self.config.get("comfyui_base") != "http://127.0.0.1:8190":
             raise live.LivePipelineError("preflight", "LOOPBACK_CONFIG_INVALID")
         if self.config.get("training_only") is not True or self.config.get("sketch_enabled") is not False:
@@ -240,6 +317,10 @@ class OpenPlaytestSession(live.LiveSession):
             or preflight.get("default_player_mode") != "MOCK"
         ):
             raise live.LivePipelineError("preflight", "PREFLIGHT_EVIDENCE_INVALID")
+        self.semantic_mode = semantic_mode
+        semantic_prompt, semantic_schema, self.semantic_contract = _semantic_compiler_inputs(
+            semantic_mode
+        )
         self.session_id = session_id
         self.run_id = session_id
         self.preflight_file = preflight_file.resolve()
@@ -255,8 +336,8 @@ class OpenPlaytestSession(live.LiveSession):
         self.active_round_id: str | None = None
         self.request_ids: set[str] = set()
         base_compiler = live.AnthropicSemanticCompiler(
-            system_prompt=(live.SEMANTIC_ROOT / "prompts" / "semantic_compiler_system_prompt.md").read_text(encoding="utf-8"),
-            blueprint_schema=live.FORGE_SEMANTIC_BLUEPRINT_SCHEMA,
+            system_prompt=semantic_prompt,
+            blueprint_schema=semantic_schema,
             clarification_schema=live.CLARIFICATION_REQUEST_SCHEMA,
             call_limiter=live.CallLimiter(max_calls=int(self.config["session_call_limit"])),
         )
@@ -277,6 +358,8 @@ class OpenPlaytestSession(live.LiveSession):
                 "default_player_mode": "MOCK",
                 "explicit_launch_required": True,
                 "model_id": self.config["approved_model_id"],
+                "semantic_mode": self.semantic_mode,
+                "semantic_contract": self.semantic_contract,
                 "providers": self.config["providers"],
                 "retry_limit": 0,
                 "mock_fallback": False,
@@ -298,7 +381,20 @@ class OpenPlaytestSession(live.LiveSession):
             "retry_limit": 0,
             "mock_fallback": False,
             "default_player_mode": "MOCK",
+            "semantic_mode": self.semantic_mode,
+            "semantic_contract": self.semantic_contract,
         }
+
+    def _validate_semantic_tool_input(
+        self, tool_name: str, tool_input: Any
+    ) -> dict[str, Any]:
+        if self.semantic_mode == SEMANTIC_MODE_V1_1:
+            return super()._validate_semantic_tool_input(tool_name, tool_input)
+        if tool_name != live.SUBMIT_BLUEPRINT_TOOL:
+            raise affordance_contract.AffordanceContractError(
+                f"unexpected semantic tool: {tool_name}"
+            )
+        return affordance_contract_v1_2_1.validate_candidate_blueprint_v1_2_1(tool_input)
 
     def _notify_pipeline_stage(self, state: live.CaseState, stage: str) -> None:
         with self.lock:
@@ -575,6 +671,8 @@ class OpenPlaytestSession(live.LiveSession):
             "identity_rejected_count": sum(item.get("status") == "identity_rejected" for item in records),
             "failed_count": sum(item.get("status") == "failed" for item in records),
             "semantic_calls": self.compiler.calls_made,
+            "semantic_mode": self.semantic_mode,
+            "semantic_contract": self.semantic_contract,
             "retry_count": 0,
             "mock_fallback": False,
             "active_stage_at_close": self.rounds[self.active_round_id].state.stage if self.active_round_id else None,
@@ -614,6 +712,8 @@ class OpenPlaytestSession(live.LiveSession):
             "total_forge_seconds": state.metrics.get("total_forge_seconds"),
             "round_output_path": str(open_round.output_dir.resolve()) if open_round.output_dir else "",
             "affordance_grammar_ready": bool(state.config.get("affordance_grammar_ready", False)),
+            "semantic_mode": self.semantic_mode,
+            "semantic_contract": self.semantic_contract,
         }
 
     @staticmethod
@@ -624,7 +724,9 @@ class OpenPlaytestSession(live.LiveSession):
         if "affordance" not in semantic_blueprint:
             return None
         try:
-            validated = affordance_contract.validate_candidate_blueprint(semantic_blueprint)
+            validated = affordance_contract_v1_2_1.validate_candidate_blueprint_v1_2_1(
+                semantic_blueprint
+            )
         except ValueError as exc:
             raise live.LivePipelineError("semantic", "AFFORDANCE_CONTRACT_INVALID") from exc
         return copy.deepcopy(validated["affordance"])
@@ -721,6 +823,8 @@ class OpenPlaytestSession(live.LiveSession):
             "failure_stage": state.failure_stage,
             "failure_reason": state.failure_reason,
             "affordance_grammar_ready": bool(state.config.get("affordance_grammar_ready", False)),
+            "semantic_mode": self.semantic_mode,
+            "semantic_contract": self.semantic_contract,
         }
 
     def _upsert_history(self, open_round: OpenRound) -> None:

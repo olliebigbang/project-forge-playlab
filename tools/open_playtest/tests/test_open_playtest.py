@@ -45,6 +45,8 @@ def _make_session(root: Path) -> open_session.OpenPlaytestSession:
     session.active_round_id = None
     session.request_ids = set()
     session.compiler = _FakeCompiler()
+    session.semantic_mode = open_session.SEMANTIC_MODE_V1_1
+    session.semantic_contract = "forge-semantic-v1.1"
     session.technical_contract = "forge-open-playtest-technical-v1"
     session.flux_output_group = "open_playtest_stage"
     session.biref_output_namespace = "ForgeOpenPlaytest"
@@ -108,6 +110,50 @@ class OpenPlaytestTests(unittest.TestCase):
         self.assertEqual(config["retry_limit"], 0)
         self.assertTrue(config["training_only"])
         self.assertFalse(config["sketch_enabled"])
+        self.assertEqual(config["default_semantic_mode"], "v1_1")
+        self.assertEqual(
+            config["affordance_experiment_contract"],
+            "forge-semantic-v1.2.1-candidate",
+        )
+
+    def test_semantic_modes_are_pinned_and_default_stays_v1_1(self) -> None:
+        base_prompt, base_schema, base_contract = open_session._semantic_compiler_inputs(
+            open_session.SEMANTIC_MODE_V1_1
+        )
+        experiment_prompt, experiment_schema, experiment_contract = (
+            open_session._semantic_compiler_inputs(open_session.SEMANTIC_MODE_AFFORDANCE)
+        )
+        self.assertEqual(base_contract, "forge-semantic-v1.1")
+        self.assertNotIn("Physical affordance fields", base_prompt)
+        self.assertNotIn("affordance", base_schema["required"])
+        self.assertEqual(experiment_contract, "forge-semantic-v1.2.1-candidate")
+        self.assertIn("Physical affordance fields", experiment_prompt)
+        self.assertIn("contract clarification", experiment_prompt)
+        self.assertIn("affordance", experiment_schema["required"])
+        self.assertEqual(
+            set(experiment_schema["properties"]),
+            {"identity", "combat", "visual", "confidence", "affordance"},
+        )
+
+    def test_experiment_validator_accepts_frozen_candidate_without_repair(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            session = _make_session(Path(temp))
+            candidate_path = (
+                PLAYLAB / "tools" / "semantic" / "reports" / "affordance_retest_v1_2"
+                / "affordance-retest-v1-2-20260808T074610104680Z-70b603d7"
+                / "semantic_blueprints" / "A12.json"
+            )
+            candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+            frozen = json.dumps(candidate, ensure_ascii=False, sort_keys=True)
+            session.semantic_mode = open_session.SEMANTIC_MODE_AFFORDANCE
+            validated = session._validate_semantic_tool_input(
+                live.SUBMIT_BLUEPRINT_TOOL, candidate
+            )
+            self.assertIs(validated, candidate)
+            self.assertEqual(json.dumps(candidate, ensure_ascii=False, sort_keys=True), frozen)
+            session.semantic_mode = open_session.SEMANTIC_MODE_V1_1
+            with self.assertRaises(ValueError):
+                session._validate_semantic_tool_input(live.SUBMIT_BLUEPRINT_TOOL, candidate)
 
     def test_project_default_scene_and_mock_provider_are_unchanged(self) -> None:
         project = (PLAYLAB / "project.godot").read_text(encoding="utf-8")
@@ -377,6 +423,19 @@ class OpenPlaytestTests(unittest.TestCase):
         self.assertIn("Remove-Item Env:\\FORGE_SEMANTIC_MODEL", launcher)
         self.assertNotIn("Set-Content", launcher)
         self.assertNotIn(".env", launcher)
+
+    def test_affordance_experiment_requires_an_explicit_launcher_switch(self) -> None:
+        wrapper = (PLAYLAB / "scripts" / "run_open_playtest.ps1").read_text(encoding="utf-8")
+        launcher = (OPEN_ROOT / "scripts" / "run_open_playtest_interactive.ps1").read_text(encoding="utf-8")
+        server = (OPEN_ROOT / "bridge" / "open_playtest_server.py").read_text(encoding="utf-8")
+        ui = (OPEN_ROOT / "godot" / "open_playtest.gd").read_text(encoding="utf-8")
+        self.assertIn("[switch]$AffordanceGrammar", wrapper)
+        self.assertIn("-AffordanceGrammar:$AffordanceGrammar", wrapper)
+        self.assertIn('"affordance_v1_2_1"', launcher)
+        self.assertIn('"--semantic-mode", $SemanticMode', launcher)
+        self.assertIn('"--open-semantic-mode=$SemanticMode"', launcher)
+        self.assertIn('parser.add_argument("--semantic-mode"', server)
+        self.assertIn("AFFORDANCE GRAMMAR", ui)
 
     def test_launcher_owns_loopback_services_and_stops_them(self) -> None:
         launcher = (OPEN_ROOT / "scripts" / "run_open_playtest_interactive.ps1").read_text(encoding="utf-8")

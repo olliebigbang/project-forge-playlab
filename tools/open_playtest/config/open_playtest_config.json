@@ -5,6 +5,8 @@
   "explicit_launch_argument": "--forge-open-playtest",
   "approved_model_id": "claude-sonnet-5",
   "semantic_contract": "forge-semantic-v1.1",
+  "default_semantic_mode": "v1_1",
+  "affordance_experiment_contract": "forge-semantic-v1.2.1-candidate",
   "providers": ["Claude", "FLUX.2 Klein 4B", "BiRefNet"],
   "bridge_base": "http://127.0.0.1:8771",
   "comfyui_base": "http://127.0.0.1:8190",

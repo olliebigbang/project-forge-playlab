@@ -1,5 +1,7 @@
 [CmdletBinding()]
-param()
+param(
+    [switch]$AffordanceGrammar
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
@@ -12,6 +14,7 @@ $PythonPath = "C:\AI\ComfyUI-ForgeFlux2\.venv\Scripts\python.exe"
 $GodotPath = Join-Path $DocumentsRoot "project forge\.tools\Godot_v4.7.1-stable_win64.exe"
 $GodotConsolePath = Join-Path $DocumentsRoot "project forge\.tools\Godot_v4.7.1-stable_win64_console.exe"
 $ExpectedModel = "claude-sonnet-5"
+$SemanticMode = if ($AffordanceGrammar) { "affordance_v1_2_1" } else { "v1_1" }
 $SessionId = "open-{0}-{1}" -f [DateTime]::UtcNow.ToString("yyyyMMddTHHmmssfffZ").ToLowerInvariant(), [Guid]::NewGuid().ToString("N").Substring(0, 8)
 $SessionRoot = Join-Path $OpenRoot "runtime\$SessionId"
 $SessionOutput = Join-Path $OpenRoot "output\sessions\$SessionId"
@@ -93,6 +96,12 @@ try {
         Write-Host "Using ANTHROPIC_API_KEY already present in this process; it will never be printed or persisted."
     }
     Write-Host "Approved semantic model fixed by contract: $ExpectedModel"
+    if ($AffordanceGrammar) {
+        Write-Host "Explicit semantic experiment: forge-semantic-v1.2.1-candidate (Affordance Grammar enabled)"
+    }
+    else {
+        Write-Host "Default semantic contract: forge-semantic-v1.1 (Affordance Grammar disabled)"
+    }
 
     $preflightArgs = @(
         (Join-Path $LiveRoot "bridge\live_preflight.py"),
@@ -115,6 +124,7 @@ try {
         "--session-id", $SessionId,
         "--preflight-file", $PreflightPath,
         "--config-file", $ConfigPath,
+        "--semantic-mode", $SemanticMode,
         "--port", "8771"
     )
     $BridgeProcess = Start-Process -FilePath $PythonPath -ArgumentList (($bridgeArguments | ForEach-Object {
@@ -129,7 +139,8 @@ try {
         "--",
         "--forge-open-playtest",
         "--open-bridge=http://127.0.0.1:8771",
-        "--open-session=$SessionId"
+        "--open-session=$SessionId",
+        "--open-semantic-mode=$SemanticMode"
     )
     $GodotProcess = Start-Process -FilePath $GodotPath -ArgumentList (($godotArguments | ForEach-Object {
         if ([string]$_ -match '\s') { '"{0}"' -f [string]$_ } else { [string]$_ }
