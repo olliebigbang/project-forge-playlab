@@ -76,7 +76,8 @@ reach, Mop has the widest contact coverage, and the barrel/stock structure has
 the greatest root-motion total. No exact multiplier or legacy sequence is an
 acceptance requirement.
 
-The next step is an offline contract/runner correction for the four failed
-paths. A maximum four-call targeted retest requires new approval after those
-offline regressions pass. The new BlindComparison remains blocked; the
-orthogonal composer must not be promoted to the default player flow.
+The additive v1.2.1 offline contract/runner correction now passes its concentrated
+regressions. A maximum four-call targeted retest for A03/A07/A08/A09 requires
+new approval; no call has been made by the correction. The new BlindComparison
+remains blocked, and the orthogonal composer must not be promoted to the default
+player flow.
