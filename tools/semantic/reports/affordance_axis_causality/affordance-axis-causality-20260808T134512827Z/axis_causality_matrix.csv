@@ -1,0 +1,26 @@
+id,axis,changes,expected,passed,classification,score_effect,runtime_effect,sequence_effect,contact_anchor_effect,baseline_sequence,scenario_sequence,changed_runtime_path_count
+handle_short,handle_length,"{""handle_length"":""short""}",runtime_effect,True,SEQUENCE_EFFECT,True,True,True,False,bash -> sweep -> slam,bash -> slam -> bash,30
+handle_long,handle_length,"{""handle_length"":""long""}",runtime_effect,True,PARAMETER_EFFECT,True,True,False,False,bash -> sweep -> slam,bash -> sweep -> slam,25
+body_short,body_length,"{""body_length"":""short""}",runtime_effect,True,PARAMETER_EFFECT,True,True,False,False,bash -> sweep -> slam,bash -> sweep -> slam,24
+body_long,body_length,"{""body_length"":""long""}",runtime_effect,True,PARAMETER_EFFECT,True,True,False,False,bash -> sweep -> slam,bash -> sweep -> slam,26
+grip_two_hand,grip_topology,"{""grip_topology"":""two_hand_handle""}",runtime_effect,True,PARAMETER_EFFECT,True,True,False,False,bash -> sweep -> slam,bash -> sweep -> slam,1
+grip_clamp,grip_topology,"{""grip_topology"":""clamp_grip""}",runtime_effect,True,PARAMETER_EFFECT,True,True,False,False,bash -> sweep -> slam,bash -> sweep -> slam,15
+grip_handleless_body,grip_mode,"{""grip_topology"":""body_grip"",""handle_length"":""none""}",runtime_effect,True,SEQUENCE_EFFECT,True,True,True,False,bash -> sweep -> slam,bash -> slam -> bash,36
+rigidity_semi,rigidity,"{""rigidity"":""semi_rigid""}",runtime_effect,True,PARAMETER_EFFECT,True,True,False,False,bash -> sweep -> slam,bash -> sweep -> slam,1
+rigidity_flexible,rigidity,"{""rigidity"":""flexible""}",runtime_effect,True,PARAMETER_EFFECT,True,True,False,False,bash -> sweep -> slam,bash -> sweep -> slam,7
+mass_rear,mass_distribution,"{""mass_distribution"":""rear""}",runtime_effect,True,PARAMETER_EFFECT,True,True,False,False,bash -> sweep -> slam,bash -> sweep -> slam,35
+mass_front,mass_distribution,"{""mass_distribution"":""front""}",runtime_effect,True,SEQUENCE_EFFECT,True,True,True,False,bash -> sweep -> slam,bash -> slam -> bash,47
+primary_point,contact_surface,"{""contact_surface"":""point""}",runtime_effect,True,SEQUENCE_EFFECT,True,True,True,False,bash -> sweep -> slam,thrust -> sweep -> bash,33
+primary_edge,contact_surface,"{""contact_surface"":""edge""}",runtime_effect,True,SEQUENCE_EFFECT,True,True,True,False,bash -> sweep -> slam,sweep -> thrust -> slam,35
+primary_whole_body,contact_surface,"{""contact_surface"":""whole_body""}",runtime_effect,True,SEQUENCE_EFFECT,True,True,True,True,bash -> sweep -> slam,sweep -> spin -> slam,38
+secondary_point,secondary_contact_surface,"{""secondary_contact_surface"":""point""}",runtime_effect,True,SEQUENCE_EFFECT,True,True,True,False,bash -> sweep -> slam,bash -> thrust -> slam,6
+secondary_edge,secondary_contact_surface,"{""secondary_contact_surface"":""edge""}",runtime_effect,True,PARAMETER_EFFECT,True,True,False,False,bash -> sweep -> slam,bash -> sweep -> slam,1
+secondary_broad,secondary_contact_surface,"{""secondary_contact_surface"":""broad""}",runtime_effect,True,PARAMETER_EFFECT,True,True,False,False,bash -> sweep -> slam,bash -> sweep -> slam,1
+secondary_whole_body,secondary_contact_surface,"{""secondary_contact_surface"":""whole_body""}",runtime_effect,True,PARAMETER_EFFECT,True,True,False,False,bash -> sweep -> slam,bash -> sweep -> slam,1
+feature_point,has_point,"{""has_point"":true}",runtime_effect,True,PARAMETER_EFFECT,True,True,False,False,bash -> sweep -> slam,bash -> sweep -> slam,1
+feature_edge,has_edge,"{""has_edge"":true}",runtime_effect,True,PARAMETER_EFFECT,True,True,False,False,bash -> sweep -> slam,bash -> sweep -> slam,1
+feature_broad_face,has_broad_face,"{""has_broad_face"":true}",runtime_effect,True,PARAMETER_EFFECT,True,True,False,False,bash -> sweep -> slam,bash -> sweep -> slam,1
+feature_barrel,has_barrel,"{""has_barrel"":true}",runtime_effect,True,PARAMETER_EFFECT,True,True,False,False,bash -> sweep -> slam,bash -> sweep -> slam,5
+feature_stock,has_stock,"{""has_stock"":true}",runtime_effect,True,PARAMETER_EFFECT,True,True,False,False,bash -> sweep -> slam,bash -> sweep -> slam,1
+confidence_high,confidence,"{""confidence"":0.95}",invariant,True,INVARIANT_PASS,False,False,False,False,bash -> sweep -> slam,bash -> sweep -> slam,0
+evidence_changed,evidence_parts,"{""evidence_parts"":[""different anonymous evidence wording""]}",invariant,True,INVARIANT_PASS,False,False,False,False,bash -> sweep -> slam,bash -> sweep -> slam,0

@@ -1,0 +1,10 @@
+{
+  "algorithm": "SHA-256",
+  "run_id": "affordance-axis-causality-20260808T134512827Z",
+  "files": {
+    "AFFORDANCE_AXIS_CAUSALITY_REPORT.md": "5d89614ee38da6b9e86973d6c4ddee73088f1dce5eacb7f26a17a9140168ff36",
+    "axis_causality_matrix.csv": "2c98832a897c03337014ea0962e8f563338b56ffac11f9a129a39bfb15582674",
+    "axis_causality_summary.json": "f5f1f43c4f15a91423bcd307f742b1c86713ed07995101f21bc81ffd277c2039",
+    "axis_probe_output.json": "d5b4136beaa344b517163d6e20f9eeeeb1a7c4a2e36e1d33706a5ce8a6320629"
+  }
+}

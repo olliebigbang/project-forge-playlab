@@ -352,3 +352,29 @@ evidence and complete probe matrix are frozen under
 No weights or runtime behavior were changed by this audit. A future correction
 must couple those generic axes to continuous runtime parameters or another
 identity-free composition mechanism; it must not tune a named sample.
+
+## Generic continuous-coupling correction
+
+The correction kept Primitive scoring and winner weights unchanged. It added
+identity-free parameter coupling only where the anonymous audit had found local
+threshold masking:
+
+- an available point contributes bounded reach;
+- an available edge and semi-rigid/flexible structure contribute swing arc;
+- a broad face contributes hitbox thickness;
+- a clamp grip contributes bounded startup, recovery, and movement commitment;
+- a secondary contact surface contributes bounded control strength.
+
+These fields are consumed by the existing `CombatFeelSlice0` collision and
+`ImpactFeedbackProfile` paths. No object name, asset ID, prompt, model result,
+or sample-specific Recipe branch is involved. The three derived Recipe JSON
+files were regenerated from the same Compiler; their ComboRecipe signatures did
+not change because this correction affects profile-level continuous parameters,
+not the selected Primitive sequence or its winner weights.
+
+The non-overwriting follow-up audit at
+`tools/semantic/reports/affordance_axis_causality/affordance-axis-causality-20260808T134512827Z/`
+reports **PASS**: 23/23 mechanism probes changed actual runtime parameters,
+0 were score-only masked, 0 were silent, and both non-mechanical controls
+remained invariant. This is a technical causality result only; the governing
+human verdict remains **FEEL NEEDS WORK** until a new approved comparison.

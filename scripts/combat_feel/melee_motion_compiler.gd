@@ -223,6 +223,12 @@ func _synthesize_primitive(family: String, stage: String, affordance_profile: Re
 	var stage_weight: float = {"hit_1": 0.84, "hit_2": 1.00, "hit_3": 1.20, "charge": 1.12, "dodge": 1.28}[stage]
 	var startup: float = (0.88 + mass_axis * 0.16) * float({"hit_1": 0.88, "hit_2": 0.96, "hit_3": 1.18, "charge": 1.30, "dodge": 0.72}[stage])
 	var recovery: float = (0.86 + mass_axis * 0.20) * float({"hit_1": 0.88, "hit_2": 0.98, "hit_3": 1.24, "charge": 1.32, "dodge": 0.78}[stage])
+	var clamp_grip: bool = affordance_profile.grip_topology == "clamp_grip"
+	if clamp_grip:
+		# Clamp grips favor a short, restrained commitment without enlarging the
+		# object's physical contact geometry.
+		startup *= 0.94
+		recovery *= 0.96
 	var contact_anchor := _contact_anchor_for(family, stage, affordance_profile)
 	var active_surface: String = affordance_profile.secondary_contact_surface \
 		if contact_anchor == "rear_contact" else affordance_profile.contact_surface
@@ -230,6 +236,8 @@ func _synthesize_primitive(family: String, stage: String, affordance_profile: Re
 	var root_distance: float = (5.0 + length_axis * 16.0 + (7.0 if affordance_profile.has_barrel else 0.0)) * stage_weight
 	var extension: float = (24.0 + 22.0 * length_axis) if family == "thrust" else 0.0
 	var movement_allowed := clampf((0.06 + 0.10 * length_axis) if family in ["sweep", "spin"] else 0.04, 0.0, 0.30)
+	if clamp_grip:
+		movement_allowed *= 0.85
 	var finisher := 1.0 if stage not in ["hit_3", "charge"] else 1.22
 	return _primitive(family, float(angle_data[0]), float(angle_data[1]), extension, startup, 1.0 + 0.08 * mass_axis, recovery, 0.84 + 0.28 * length_axis, 0.78 + 0.28 * length_axis, 0.86 + 0.20 * contact_width, {
 		"contact_anchor": contact_anchor,
@@ -297,20 +305,37 @@ func _legacy_contact_mode(surface: String) -> String:
 func _general_reach(affordance_profile: Resource, anchor_data: Dictionary, alpha_bounds: Rect2i) -> float:
 	var axis := _length_axis(affordance_profile)
 	var measured := _strike_span(anchor_data) * 0.48 + float(maxi(alpha_bounds.size.x, alpha_bounds.size.y)) * 0.56
-	return clampf(68.0 + 66.0 * axis + measured * 0.12, 72.0, 148.0)
+	# A protruding point remains mechanically legible even when it does not win
+	# the discrete Primitive selection for this particular structure.
+	var point_extension := 4.0 if affordance_profile.has_point else 0.0
+	return clampf(68.0 + 66.0 * axis + measured * 0.12 + point_extension, 72.0, 148.0)
 
 
 func _general_arc(affordance_profile: Resource) -> float:
 	var surface_bonus: float = {"point": -70.0, "edge": 28.0, "broad": 6.0, "whole_body": 58.0}[affordance_profile.contact_surface]
-	return clampf(112.0 + 42.0 * _length_axis(affordance_profile) + surface_bonus, 22.0, 220.0)
+	# Rigidity and an available edge alter the usable rotational envelope without
+	# forcing the selected Primitive to cross an argmax boundary.
+	var rigidity_bonus: float = {"rigid": 0.0, "semi_rigid": 8.0, "flexible": 18.0}[affordance_profile.rigidity]
+	var edge_bonus := 10.0 if affordance_profile.has_edge else 0.0
+	return clampf(112.0 + 42.0 * _length_axis(affordance_profile) + surface_bonus + rigidity_bonus + edge_bonus, 22.0, 220.0)
 
 
 func _general_hitbox_thickness(affordance_profile: Resource) -> float:
-	return {"point": 36.0, "edge": 44.0, "broad": 58.0, "whole_body": 66.0}[affordance_profile.contact_surface]
+	var thickness: float = {"point": 36.0, "edge": 44.0, "broad": 58.0, "whole_body": 66.0}[affordance_profile.contact_surface]
+	# A broad face remains visible in collision breadth even when the same
+	# Primitive still wins.
+	if affordance_profile.has_broad_face:
+		thickness += 5.0
+	return thickness
 
 
 func _general_control_strength(affordance_profile: Resource) -> float:
-	return 1.22 if affordance_profile.contact_surface == "whole_body" else (1.08 if affordance_profile.body_length == "long" else 0.92)
+	var strength := 1.22 if affordance_profile.contact_surface == "whole_body" else (1.08 if affordance_profile.body_length == "long" else 0.92)
+	# A secondary usable surface contributes continuously to displacement and
+	# control. It does not select an identity-specific move or require a named
+	# rear-contact special case.
+	strength += float({"none": 0.0, "point": 0.02, "edge": 0.04, "broad": 0.07, "whole_body": 0.10}[affordance_profile.secondary_contact_surface])
+	return clampf(strength, 0.85, 1.42)
 
 
 func _general_impact_sharpness(affordance_profile: Resource) -> float:

@@ -1,0 +1,151 @@
+{
+  "status": "PASS",
+  "baseline_metrics": {
+    "sequence": "bash -> sweep -> slam",
+    "contact_anchors": "tip -> tip -> tip",
+    "root_motion_total": 43.411199999999994,
+    "hitbox_width_average": 1.18,
+    "hitstop_total": 3.03002,
+    "startup_total": 0.5554384,
+    "recovery_total": 0.75175,
+    "reach_pixels": 114.7664,
+    "swing_arc_degrees": 142.36,
+    "hitbox_thickness": 58.0,
+    "control_strength": 0.92,
+    "impact_sharpness": 1.08,
+    "tempo": "balanced",
+    "weight_class": "medium",
+    "grip_mode": "one_hand"
+  },
+  "scenario_count": 25,
+  "mechanism_probe_count": 23,
+  "mechanism_runtime_effect_count": 23,
+  "mechanism_score_only_masked_count": 0,
+  "mechanism_silent_count": 0,
+  "invariant_probe_count": 2,
+  "invariant_pass_count": 2,
+  "failed_mechanism_probe_ids": [],
+  "failed_invariant_probe_ids": [],
+  "axis_results": [
+    {
+      "axis": "body_length",
+      "state": "ACTIVE",
+      "probe_count": 2,
+      "runtime_effect_count": 2,
+      "score_only_count": 0,
+      "failed_probe_ids": []
+    },
+    {
+      "axis": "confidence",
+      "state": "INVARIANT_PASS",
+      "probe_count": 1,
+      "runtime_effect_count": 0,
+      "score_only_count": 0,
+      "failed_probe_ids": []
+    },
+    {
+      "axis": "contact_surface",
+      "state": "ACTIVE",
+      "probe_count": 3,
+      "runtime_effect_count": 3,
+      "score_only_count": 0,
+      "failed_probe_ids": []
+    },
+    {
+      "axis": "evidence_parts",
+      "state": "INVARIANT_PASS",
+      "probe_count": 1,
+      "runtime_effect_count": 0,
+      "score_only_count": 0,
+      "failed_probe_ids": []
+    },
+    {
+      "axis": "grip_mode",
+      "state": "ACTIVE",
+      "probe_count": 1,
+      "runtime_effect_count": 1,
+      "score_only_count": 0,
+      "failed_probe_ids": []
+    },
+    {
+      "axis": "grip_topology",
+      "state": "ACTIVE",
+      "probe_count": 2,
+      "runtime_effect_count": 2,
+      "score_only_count": 0,
+      "failed_probe_ids": []
+    },
+    {
+      "axis": "handle_length",
+      "state": "ACTIVE",
+      "probe_count": 2,
+      "runtime_effect_count": 2,
+      "score_only_count": 0,
+      "failed_probe_ids": []
+    },
+    {
+      "axis": "has_barrel",
+      "state": "ACTIVE",
+      "probe_count": 1,
+      "runtime_effect_count": 1,
+      "score_only_count": 0,
+      "failed_probe_ids": []
+    },
+    {
+      "axis": "has_broad_face",
+      "state": "ACTIVE",
+      "probe_count": 1,
+      "runtime_effect_count": 1,
+      "score_only_count": 0,
+      "failed_probe_ids": []
+    },
+    {
+      "axis": "has_edge",
+      "state": "ACTIVE",
+      "probe_count": 1,
+      "runtime_effect_count": 1,
+      "score_only_count": 0,
+      "failed_probe_ids": []
+    },
+    {
+      "axis": "has_point",
+      "state": "ACTIVE",
+      "probe_count": 1,
+      "runtime_effect_count": 1,
+      "score_only_count": 0,
+      "failed_probe_ids": []
+    },
+    {
+      "axis": "has_stock",
+      "state": "ACTIVE",
+      "probe_count": 1,
+      "runtime_effect_count": 1,
+      "score_only_count": 0,
+      "failed_probe_ids": []
+    },
+    {
+      "axis": "mass_distribution",
+      "state": "ACTIVE",
+      "probe_count": 2,
+      "runtime_effect_count": 2,
+      "score_only_count": 0,
+      "failed_probe_ids": []
+    },
+    {
+      "axis": "rigidity",
+      "state": "ACTIVE",
+      "probe_count": 2,
+      "runtime_effect_count": 2,
+      "score_only_count": 0,
+      "failed_probe_ids": []
+    },
+    {
+      "axis": "secondary_contact_surface",
+      "state": "ACTIVE",
+      "probe_count": 4,
+      "runtime_effect_count": 4,
+      "score_only_count": 0,
+      "failed_probe_ids": []
+    }
+  ]
+}

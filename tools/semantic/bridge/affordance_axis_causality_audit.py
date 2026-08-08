@@ -329,17 +329,25 @@ def _report_text(summary: Mapping[str, Any]) -> str:
         lines.append(
             f"| {row['id']} | {row['axis']} | `{row['changes']}` | {row['classification']} | `{row['scenario_sequence']}` | {row['changed_runtime_path_count']} |"
         )
-    lines.extend(
-        [
-            "",
-            "## Interpretation",
-            "",
-            "`SCORE_ONLY_MASKED` means the input axis changed internal primitive scores but produced no change in the runtime profile or MotionPrimitive specs for this neutral structure. This is threshold masking, not proof that the field is globally unused. It is nevertheless a failed local causal probe because a player would receive the same mechanics for that one-axis change.",
-            "",
-            "This audit does not authorize sample-specific tuning. Any future correction must make generic axes influence continuous runtime parameters or selection in anonymous profiles, then rerun this same matrix before another human test.",
-            "",
-        ]
-    )
+    lines.extend(["", "## Interpretation", ""])
+    if summary["status"] == "PASS":
+        lines.extend(
+            [
+                "All mechanism probes now alter an actual runtime profile or MotionPrimitive field, while confidence and evidence wording remain mechanically inert. The correction uses identity-free continuous coupling and does not change Primitive winner weights for a named sample.",
+                "",
+                "This technical result does not replace the separate human feel verdict. A new human comparison is required before promoting the Composer.",
+                "",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                "`SCORE_ONLY_MASKED` means the input axis changed internal primitive scores but produced no change in the runtime profile or MotionPrimitive specs for this neutral structure. This is threshold masking, not proof that the field is globally unused. It is nevertheless a failed local causal probe because a player would receive the same mechanics for that one-axis change.",
+                "",
+                "This audit does not authorize sample-specific tuning. Any future correction must make generic axes influence continuous runtime parameters or selection in anonymous profiles, then rerun this same matrix before another human test.",
+                "",
+            ]
+        )
     return "\n".join(lines)
 
 

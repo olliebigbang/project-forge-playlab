@@ -11,7 +11,7 @@ Current status:
 - **OFFLINE TECHNICAL PASS**
 - **REAL AI AFFORDANCE COVERAGE PASS WITH VERSIONED EVIDENCE**
 - **12-PROFILE COMPOSER COVERAGE PASS (7 sequences, all 5 primitives)**
-- **ANONYMOUS LOCAL AXIS CAUSALITY NEEDS WORK (15/23 runtime effects)**
+- **ANONYMOUS LOCAL AXIS CAUSALITY PASS AFTER GENERIC COUPLING (23/23)**
 - **HUMAN FEEL RETEST NEEDS WORK (3/5)**
 
 The earlier three-sample 5/5 result is preserved as historical evidence and is
@@ -99,6 +99,15 @@ and evidence-text controls correctly remained mechanically invariant (2/2).
 The frozen audit is in
 `tools/semantic/reports/affordance_axis_causality/affordance-axis-causality-20260808T133454359Z/`.
 
+That failure evidence remains frozen. A generic correction then coupled the
+masked structural facts to already-consumed continuous mechanics without
+changing Primitive winner weights: point to reach, edge and rigidity to swing
+arc, broad face to hitbox thickness, clamp grip to timing and movement, and
+secondary contact to control strength. The follow-up anonymous matrix passed 23/23 mechanism probes,
+with zero score-only or silent probes and both non-mechanical controls still
+invariant. Its evidence is frozen in
+`tools/semantic/reports/affordance_axis_causality/affordance-axis-causality-20260808T134512827Z/`.
+
 The approved orthogonal-composer BlindComparison was completed as session
 `blind-20260808T130540547Z-65f7d463`. It scored **3/5**. Pan was correctly felt
 as shortest and Mop as widest/best for control, but Shotgun stock was not felt
@@ -107,12 +116,10 @@ Shotgun confirmation was also `no`. Runtime evidence recorded Shotgun Hit 2 at
 1/6 successful contacts and Hit 3 at 2/4, which is consistent with the failed
 feel read rather than a semantic or asset-identity failure.
 
-The governing state is therefore **TECHNICAL PASS / FEEL NEEDS WORK**. The
-orthogonal composer must not be promoted to the default player flow. The next
-change, if separately approved, must audit or calibrate generic causal axis
-effects with anonymous counterfactual profiles. The audit is now complete and
-shows that score-only fields need a generic continuous parameter coupling or a
-similarly identity-free composition rule so their effect survives even when
-the winning Primitive does not change. It must not target Shotgun, Pan, Mop,
-any case ID, or any identity label, and it must not silently tune until the
-questionnaire passes.
+The governing state remains **TECHNICAL PASS / FEEL NEEDS WORK**. The anonymous
+causality defect is corrected, but that technical result cannot replace the
+existing 3/5 human comparison. The orthogonal composer must not be promoted to
+the default player flow until a separately approved human retest verifies that
+the parameter differences are perceptible. Any such retest must use the generic
+Composer unchanged and must not tune Shotgun, Pan, Mop, a case ID, or an
+identity label to make the questionnaire pass.

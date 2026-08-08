@@ -38,11 +38,27 @@ class AffordanceAxisCausalityAuditTests(unittest.TestCase):
         self.assertEqual(self.summary["invariant_pass_count"], 2)
         self.assertEqual(self.summary["failed_invariant_probe_ids"], [])
 
-    def test_score_only_changes_are_not_misreported_as_runtime_effects(self) -> None:
-        self.assertEqual(self.summary["status"], "NEEDS_WORK")
-        self.assertGreater(self.summary["mechanism_score_only_masked_count"], 0)
-        self.assertIn("feature_point", self.summary["failed_mechanism_probe_ids"])
-        self.assertIn("secondary_broad", self.summary["failed_mechanism_probe_ids"])
+    def test_every_mechanism_probe_changes_runtime_without_score_only_credit(self) -> None:
+        self.assertEqual(self.summary["status"], "PASS")
+        self.assertEqual(self.summary["mechanism_runtime_effect_count"], 23)
+        self.assertEqual(self.summary["mechanism_score_only_masked_count"], 0)
+        self.assertEqual(self.summary["mechanism_silent_count"], 0)
+        self.assertEqual(self.summary["failed_mechanism_probe_ids"], [])
+
+    def test_previously_masked_axes_now_change_consumed_runtime_parameters(self) -> None:
+        rows = {row["id"]: row for row in self.summary["rows"]}
+        for probe_id in (
+            "grip_clamp",
+            "rigidity_semi",
+            "secondary_edge",
+            "secondary_broad",
+            "secondary_whole_body",
+            "feature_point",
+            "feature_edge",
+            "feature_broad_face",
+        ):
+            self.assertTrue(rows[probe_id]["runtime_effect"], probe_id)
+            self.assertEqual(rows[probe_id]["classification"], "PARAMETER_EFFECT", probe_id)
 
     def test_runtime_effects_include_parameter_only_changes(self) -> None:
         rows = {row["id"]: row for row in self.summary["rows"]}
