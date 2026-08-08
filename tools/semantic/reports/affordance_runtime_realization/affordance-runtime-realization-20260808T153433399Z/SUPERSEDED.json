@@ -1,0 +1,6 @@
+{
+  "status": "SUPERSEDED_AFTER_GENERIC_CORRECTION",
+  "reason": "The frozen 21/23 diagnostic identified rear-mass direction and stock runtime-consumption defects; both were corrected without identity-specific tuning.",
+  "successor": "../affordance-runtime-realization-20260808T154441435Z",
+  "historical_files_overwritten": false
+}

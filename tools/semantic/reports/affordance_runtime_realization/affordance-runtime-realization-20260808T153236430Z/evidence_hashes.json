@@ -1,0 +1,12 @@
+{
+  "algorithm": "SHA-256",
+  "run_id": "affordance-runtime-realization-20260808T153236430Z",
+  "files": {
+    "AFFORDANCE_RUNTIME_REALIZATION_REPORT.md": "cbde736019d3dd9671d0095ca83b2c716fd53b0f472c3253e4d985972bbe0ae4",
+    "frozen_input_hashes.json": "62b26237fe39a51a6da61921c3fc17861df2a88be0402c2a06450f7cd6c649dc",
+    "frozen_profile_runtime_matrix.csv": "fd9e6d90d9f1d6b21d5b7b612f159904b922d5e0fe3634f1b80bd05b04667e0d",
+    "runtime_probe_output.json": "5f5f406193effade7d808ba6530c4d741f8c088e64154306bd8aab15eeb97bbd",
+    "runtime_realization_matrix.csv": "bd754ac652643601b811f313868668b23cccf5d88b36616ac9bf75eb219e633e",
+    "runtime_realization_summary.json": "d18373c49eea971b255fa1177634d7290cfabde02c4658c2ca61f96ae5a3fdba"
+  }
+}

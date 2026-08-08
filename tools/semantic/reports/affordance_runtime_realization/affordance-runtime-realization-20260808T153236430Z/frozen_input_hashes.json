@@ -1,0 +1,19 @@
+{
+  "source_directory": "C:\\Users\\Eddie L\\Documents\\project-forge-playlab\\tools\\semantic\\reports\\affordance_combined_handoff_v1_2_1\\affordance-combined-v1-2-1-20260808T132129343Z",
+  "role": "coverage_evidence_not_tuning_targets",
+  "files": {
+    "case_order.json": "6899f7bb4a53612e78a70c8912c89ece429a7f12c7cdba0a5521288718699956",
+    "affordance_profiles/A01.json": "50bf63ae35f67397da52cfc5339921b59f07c877ad08de2f7954718841d9da44",
+    "affordance_profiles/A02.json": "43360a87fe2b9de1c4f615741847594ead009d75a195e8bb40ec7a9142a2f0cf",
+    "affordance_profiles/A03.json": "f06f144960567c2787ecb5bc919e08ec5416bf1ee5a90769a0f93f2c1e96913f",
+    "affordance_profiles/A04.json": "30342acaa30cced99e0e23c72c3a39e25e6bfd75d3a26dd68c805b384d744d8d",
+    "affordance_profiles/A05.json": "6a7cf8ec96cf94b84a447c2e9ce8cbb9476d90f8a3cad825ec35d685e1fcbfcf",
+    "affordance_profiles/A06.json": "1cec7f61bdd33cf2f3e6e396177fd2e1ec165c72ce2600b79aaa883295073865",
+    "affordance_profiles/A07.json": "a30dd123f352fbb02fe7776ac7ba4656183d99ed49fc0d86ca97c39622b76606",
+    "affordance_profiles/A08.json": "f36007dcb4abda87660f2e66951fccbca7a6158b64bd3b358e96a73f1474c948",
+    "affordance_profiles/A09.json": "7cdb67e498a40696c69ddba1e21c7d162d8237a2f1e3ed5832904adf98111203",
+    "affordance_profiles/A10.json": "fd5dec6ed74232fae194945b7fde1444acab792ca366c17fc5b782d0eec556e0",
+    "affordance_profiles/A11.json": "24c1d054648ae50f34b165cddf8f9d8f2636c128d2fa0087ab43fd0aeebe6dba",
+    "affordance_profiles/A12.json": "373cb85146217983ba1d60e8f5cdcf99646d22feded3f2bdd013c32c0608173e"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "run_id": "affordance-runtime-realization-20260808T153433399Z",
+  "status": "NEEDS_WORK",
+  "evidence_sha256": "c276696ff728759b9370b0a276eb3fb9de106f48318d1930262354d57f4c8688",
+  "completed_at": "2026-08-08T15:35:00.584Z",
+  "network_calls": 0,
+  "grammar_weights_modified": false
+}

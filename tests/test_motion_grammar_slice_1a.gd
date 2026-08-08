@@ -38,6 +38,7 @@ func _run() -> void:
 	_test_rule_c_contact_reliability()
 	_test_per_hit_attempt_stats_contract()
 	_test_handleless_affordance_loader_contract()
+	_test_anonymous_rear_mass_and_stock_runtime_axes()
 	print("MOTION_GRAMMAR_SLICE_1A_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -388,6 +389,67 @@ func _test_handleless_affordance_loader_contract() -> void:
 	var asset := loaded.get("asset") as WeaponVisualAsset
 	var compiled: Variant = COMPILER.new().compile(valid, asset.anchors_dict(), asset.opaque_bounds)
 	_check(valid is Resource and invalid == null and compiled is Resource, "20 handle_length none is accepted only with body or clamp grip across loader and compiler")
+
+
+func _test_anonymous_rear_mass_and_stock_runtime_axes() -> void:
+	var baseline: Variant = AFFORDANCE.new()
+	baseline.handle_length = "medium"
+	baseline.body_length = "medium"
+	baseline.grip_topology = "one_hand_handle"
+	baseline.rigidity = "rigid"
+	baseline.mass_distribution = "balanced"
+	baseline.contact_surface = "broad"
+	baseline.secondary_contact_surface = "none"
+	baseline.confidence = 1.0
+	baseline.evidence_parts = PackedStringArray(["anonymous structural probe"])
+	var rear: Resource = _copy_affordance(baseline)
+	rear.mass_distribution = "rear"
+	var stock: Resource = _copy_affordance(baseline)
+	stock.has_stock = true
+	var anchors := {
+		"GripPrimary": [24.0, 48.0], "GripSecondary": [38.0, 48.0],
+		"StrikePoint": [78.0, 48.0], "Muzzle": [82.0, 48.0],
+	}
+	var bounds := Rect2i(8, 28, 80, 40)
+	var baseline_profile: Resource = COMPILER.new().compile(baseline, anchors, bounds)
+	var rear_profile: Resource = COMPILER.new().compile(rear, anchors, bounds)
+	var stock_profile: Resource = COMPILER.new().compile(stock, anchors, bounds)
+	var baseline_first: Resource = baseline_profile.combo_recipe.hit_1
+	var rear_first: Resource = rear_profile.combo_recipe.hit_1
+	var baseline_timing: Dictionary = baseline_profile.timing_for("normal", 1, baseline_first)
+	var rear_timing: Dictionary = rear_profile.timing_for("normal", 1, rear_first)
+	var baseline_feedback: Resource = FEEDBACK.for_attack(baseline_profile, "normal", 1, baseline_first)
+	var rear_feedback: Resource = FEEDBACK.for_attack(rear_profile, "normal", 1, rear_first)
+	var stock_third: Resource = stock_profile.combo_recipe.hit_3
+	var neutral_asset := WeaponVisualAsset.new()
+	neutral_asset.canvas_size = Vector2i(96, 96)
+	neutral_asset.opaque_bounds = bounds
+	neutral_asset.grip_primary = Vector2(24.0, 48.0)
+	neutral_asset.grip_secondary = Vector2(38.0, 48.0)
+	neutral_asset.tip = Vector2(78.0, 48.0)
+	neutral_asset.muzzle = Vector2(82.0, 48.0)
+	neutral_asset.rear_contact = neutral_asset.grip_primary
+	var controller: Variant = CONTROLLER.new()
+	controller.configure(stock_profile)
+	controller.attack_kind = "normal"
+	controller.combo_index = 3
+	controller.current_primitive = stock_third
+	controller.phase = "active"
+	controller.phase_duration = 1.0
+	controller.phase_elapsed = 0.5
+	var arena: Variant = SLICE.new()
+	arena.asset = neutral_asset
+	arena.motion_profile = stock_profile
+	arena.controller = controller
+	arena.player_position = Vector2.ZERO
+	arena.player_facing = 1.0
+	var rear_contact: Vector2 = arena._resolved_rear_contact()
+	var ok: bool = float(rear_timing["startup"]) < float(baseline_timing["startup"])
+	ok = ok and rear_feedback.knockback_strength < baseline_feedback.knockback_strength
+	ok = ok and stock_third.motion_family == "bash" and stock_third.contact_anchor == "rear_contact"
+	ok = ok and rear_contact.x < neutral_asset.grip_primary.x
+	arena.free()
+	_check(ok, "21 anonymous rear mass and stock axes reach timing feedback and rear contact without identity input")
 
 
 func _compiled(asset_id: String) -> Variant:

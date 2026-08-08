@@ -12,6 +12,7 @@ Current status:
 - **REAL AI AFFORDANCE COVERAGE PASS WITH VERSIONED EVIDENCE**
 - **12-PROFILE COMPOSER COVERAGE PASS (7 sequences, all 5 primitives)**
 - **ANONYMOUS LOCAL AXIS CAUSALITY PASS AFTER GENERIC COUPLING (23/23)**
+- **ANONYMOUS COMBAT-RUNTIME REALIZATION PASS AFTER GENERIC CORRECTION (23/23)**
 - **HUMAN FEEL RETEST NEEDS WORK (3/5)**
 
 The earlier three-sample 5/5 result is preserved as historical evidence and is
@@ -123,3 +124,68 @@ the default player flow until a separately approved human retest verifies that
 the parameter differences are perceptible. Any such retest must use the generic
 Composer unchanged and must not tune Shotgun, Pan, Mop, a case ID, or an
 identity label to make the questionnaire pass.
+
+## Anonymous combat-runtime realization audit
+
+The earlier 23/23 causality result proves that every mechanical field changes a
+compiled `CombatMotionProfile` or `MotionPrimitive`. It does not prove that the
+changed value survives the selected Primitive and reaches collision, timing,
+movement, feedback, or the rendered character pose. A second anonymous audit
+therefore instantiated the existing `CombatFeelSlice0` directly and measured:
+
+- the real `_attack_contains()` collision result across each active trajectory;
+- `CombatMotionProfile.timing_for()`;
+- root motion and movement allowance;
+- `ImpactFeedbackProfile.for_attack()`;
+- the current Primitive-driven character pose.
+
+The diagnostic high-resolution run passed **21/23** mechanical property probes
+and **2/2** non-mechanical invariants. It found two generic defects:
+
+- `mass_distribution = rear` produces slower startup and stronger knockback
+  than the neutral balanced profile, the opposite of the declared rear-loaded
+  monotonic property;
+- `has_stock = true` changes the compiled profile but produces no measured
+  combat-runtime difference when varied alone.
+
+The `has_point` probe initially appeared to fail under an 8-pixel extent grid.
+A non-overwriting successor run refined the affected hit's forward boundary to
+one-pixel precision and measured the expected increase from 170 to 174 pixels.
+The preliminary run is retained with an explicit supersession marker.
+
+All twelve frozen affordance profiles were also executed through the same
+neutral runtime harness as coverage witnesses. They were not used as tuning
+targets. No Grammar weights, named-asset branches, model contracts, assets, or
+combat runtime behavior were changed by this audit.
+
+Formal result: **RUNTIME REALIZATION NEEDS WORK (21/23)**. The next correction
+must address only the two failed generic axes, then rerun this same matrix before
+any new real-asset human blind test. The corrected evidence is frozen under
+`tools/semantic/reports/affordance_runtime_realization/affordance-runtime-realization-20260808T153433399Z/`.
+
+### Generic runtime-consumer correction
+
+The two remaining defects were corrected without reading an identity or tuning
+a retained sample:
+
+- the continuous mass axis is now ordered `rear < balanced < front`, so mass
+  closer to the grip reduces startup commitment and delivered contact feedback;
+- `has_stock` now independently makes a rear `bash` available for a finisher,
+  with an explicitly declared secondary surface refining its width rather than
+  being required for the stock to exist mechanically;
+- when a generated asset has no explicit rear-contact anchor, the existing
+  combat runtime derives it generically by searching the Alpha body opposite
+  the Grip-to-function axis, then falls back to the opaque-bounds intersection.
+
+The non-overwriting rerun passed **23/23** mechanical monotonic contracts and
+**2/2** invariant controls. The rear-mass probe changed total startup from
+0.5554 to 0.5371 and total knockback from 454.65 to 437.93. The stock-only probe
+changed the normal combo from `bash -> sweep -> slam` to
+`bash -> sweep -> bash`, with Hit 3 using `rear_contact`.
+
+Only the affected derived Shotgun Recipe JSON changed after regeneration; Pan
+and Mop Recipe bytes remained unchanged. The 21/23 evidence is preserved and
+marked superseded. Current formal result: **RUNTIME REALIZATION PASS (23/23)**.
+This remains a technical property result, not a human claim that the game feels
+good. Evidence:
+`tools/semantic/reports/affordance_runtime_realization/affordance-runtime-realization-20260808T154441435Z/`.

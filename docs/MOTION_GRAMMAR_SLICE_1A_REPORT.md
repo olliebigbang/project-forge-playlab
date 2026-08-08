@@ -435,3 +435,42 @@ Formal result: **TECHNICAL PASS / FEEL NEEDS WORK**.
 The exact comparison record, all three A/B/C run records, and their hashes are
 frozen under
 `data/combat_feel/live_assets/motion_grammar_generalization_v1/evidence/generalization_blind_20260808T140834789Z/`.
+
+## Runtime-realization follow-up
+
+An anonymous one-axis runtime audit now exercises the existing collision,
+timing, root-motion, feedback, and character-pose consumers rather than treating
+a changed compiled field as sufficient proof. The high-resolution frozen run
+passed 21/23 mechanical monotonic contracts and both invariant controls.
+
+The remaining generic failures are `mass_distribution = rear` (runtime changes
+in the wrong direction relative to balanced) and `has_stock = true` (compiled
+profile change with no measured combat-runtime result when varied alone). The
+point-feature reach increase was confirmed at one-pixel resolution and is not a
+remaining failure.
+
+No named asset, identity, Recipe fixture, Compiler weight, model, or combat
+behavior was changed. The three generalization assets and the twelve frozen
+profiles remain evidence only, not tuning samples. Until the two anonymous
+consumer defects are corrected, the runtime-realization status is
+**NEEDS WORK**, independently of earlier per-profile causality and feel results.
+
+Evidence:
+`tools/semantic/reports/affordance_runtime_realization/affordance-runtime-realization-20260808T153433399Z/`.
+
+### Generic correction result
+
+The two failed anonymous consumers were corrected generically. Rear-distributed
+mass is now ordered below balanced mass for startup and contact force. A stock
+now provides a rear finisher contact without requiring an additional secondary
+surface declaration, and a missing rear anchor is resolved from Alpha/bounds
+opposite the Grip-to-function axis.
+
+The non-overwriting follow-up passed **23/23** mechanical properties and both
+invariants. It used the same anonymous scenarios, neutral asset harness, frozen
+12-profile coverage set, and real combat consumers. No identity branch, model
+call, new Primitive, enemy, room, or parallel controller was introduced.
+
+Current runtime-realization result: **PASS**. This does not overwrite the
+separate generalization human verdict of **FEEL NEEDS WORK**. Evidence:
+`tools/semantic/reports/affordance_runtime_realization/affordance-runtime-realization-20260808T154441435Z/`.

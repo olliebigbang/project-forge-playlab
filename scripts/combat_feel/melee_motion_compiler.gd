@@ -197,9 +197,10 @@ func _select_primitive(base_scores: Dictionary, stage: String, used: Array[Strin
 	if stage == "hit_3":
 		for family: String in used:
 			scores[family] = float(scores[family]) - 3.00
-		if affordance_profile.has_stock and affordance_profile.secondary_contact_surface != "none":
-			# A secondary rear contact is a structural finisher affordance. This is
-			# independent of whether the object is a firearm, tool, or prop.
+		if affordance_profile.has_stock:
+			# A stock is itself a usable structural rear contact. A separately
+			# declared secondary surface may refine its breadth, but is not required
+			# to make the stock mechanically real.
 			scores["bash"] = float(scores["bash"]) + 2.70
 	var selected := PRIMITIVE_ORDER[0]
 	var selected_score := -INF
@@ -230,8 +231,10 @@ func _synthesize_primitive(family: String, stage: String, affordance_profile: Re
 		startup *= 0.94
 		recovery *= 0.96
 	var contact_anchor := _contact_anchor_for(family, stage, affordance_profile)
-	var active_surface: String = affordance_profile.secondary_contact_surface \
-		if contact_anchor == "rear_contact" else affordance_profile.contact_surface
+	var active_surface: String = affordance_profile.contact_surface
+	if contact_anchor == "rear_contact":
+		active_surface = affordance_profile.secondary_contact_surface \
+			if affordance_profile.secondary_contact_surface != "none" else "broad"
 	var contact_width: float = {"point": 0.66, "edge": 0.88, "broad": 1.18, "whole_body": 1.28}[active_surface]
 	var root_distance: float = (5.0 + length_axis * 16.0 + (7.0 if affordance_profile.has_barrel else 0.0)) * stage_weight
 	var extension: float = (24.0 + 22.0 * length_axis) if family == "thrust" else 0.0
@@ -255,8 +258,7 @@ func _synthesize_primitive(family: String, stage: String, affordance_profile: Re
 func _contact_anchor_for(family: String, stage: String, affordance_profile: Resource) -> String:
 	if family == "spin" or affordance_profile.contact_surface == "whole_body":
 		return "whole_body"
-	if family == "bash" and stage in ["hit_3", "charge"] and affordance_profile.has_stock \
-		and affordance_profile.secondary_contact_surface != "none":
+	if family == "bash" and stage in ["hit_3", "charge"] and affordance_profile.has_stock:
 		return "rear_contact"
 	if family == "thrust" and affordance_profile.has_barrel:
 		return "muzzle"
@@ -273,7 +275,10 @@ func _length_axis(affordance_profile: Resource) -> float:
 
 
 func _mass_axis(affordance_profile: Resource) -> float:
-	return {"rear": 0.72, "balanced": 0.55, "front": 1.0}[affordance_profile.mass_distribution]
+	# Mass closer to the grip reduces rotational commitment and delivered contact
+	# force; mass farther forward increases both. Keep this ordering independent
+	# of identity, selected Primitive, and any retained sample Recipe.
+	return {"rear": 0.35, "balanced": 0.55, "front": 1.0}[affordance_profile.mass_distribution]
 
 
 func _reach_class(affordance_profile: Resource) -> String:

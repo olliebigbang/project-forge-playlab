@@ -806,7 +806,7 @@ func _primitive_contact_world(primitive: Variant, hand: Vector2) -> Vector2:
 	var anchor: Vector2
 	match str(primitive.contact_anchor):
 		"muzzle": anchor = asset.muzzle
-		"rear_contact": anchor = asset.rear_contact
+		"rear_contact": anchor = _resolved_rear_contact()
 		"whole_body": anchor = Vector2(asset.opaque_bounds.get_center())
 		_: anchor = asset.tip
 	var pose: Dictionary = _weapon_pose()
@@ -816,6 +816,46 @@ func _primitive_contact_world(primitive: Variant, hand: Vector2) -> Vector2:
 	var local_anchor := anchor - asset.grip_primary
 	local_anchor = Vector2(local_anchor.x * player_facing, local_anchor.y) * motion_profile.render_scale
 	return hand + offset + local_anchor.rotated(float(pose["angle"]))
+
+
+func _resolved_rear_contact() -> Vector2:
+	if asset == null:
+		return Vector2.ZERO
+	if asset.rear_contact != asset.grip_primary and asset.rear_contact != Vector2.ZERO:
+		return asset.rear_contact
+	var function_anchor := asset.muzzle if asset.muzzle != asset.grip_primary else asset.tip
+	var forward_axis: Vector2 = function_anchor - asset.grip_primary
+	if forward_axis.length() < 0.5:
+		forward_axis = Vector2.RIGHT
+	var rear_axis := -forward_axis.normalized()
+	var diagonal := Vector2(asset.opaque_bounds.size).length() + 4.0
+	var farthest_opaque := asset.grip_primary
+	if asset.source_image != null and not asset.source_image.is_empty():
+		for step: int in range(1, ceili(diagonal) + 1):
+			var sample := asset.grip_primary + rear_axis * float(step)
+			var pixel := Vector2i(roundi(sample.x), roundi(sample.y))
+			if pixel.x < 0 or pixel.y < 0 or pixel.x >= asset.source_image.get_width() or pixel.y >= asset.source_image.get_height():
+				break
+			if asset.source_image.get_pixelv(pixel).a >= 0.12:
+				farthest_opaque = Vector2(pixel)
+	if farthest_opaque != asset.grip_primary:
+		return farthest_opaque
+	var bounds := Rect2(asset.opaque_bounds)
+	var distances: Array[float] = []
+	if absf(rear_axis.x) > 0.0001:
+		var x_edge := bounds.end.x if rear_axis.x > 0.0 else bounds.position.x
+		var x_distance := (x_edge - asset.grip_primary.x) / rear_axis.x
+		if x_distance >= 0.0:
+			distances.append(x_distance)
+	if absf(rear_axis.y) > 0.0001:
+		var y_edge := bounds.end.y if rear_axis.y > 0.0 else bounds.position.y
+		var y_distance := (y_edge - asset.grip_primary.y) / rear_axis.y
+		if y_distance >= 0.0:
+			distances.append(y_distance)
+	if distances.is_empty():
+		return asset.grip_primary
+	var rear_distance: float = distances.min()
+	return asset.grip_primary + rear_axis * minf(rear_distance, diagonal)
 
 func _draw() -> void:
 	draw_rect(Rect2(0, 0, 1280, 720), Color("071018"), true)
