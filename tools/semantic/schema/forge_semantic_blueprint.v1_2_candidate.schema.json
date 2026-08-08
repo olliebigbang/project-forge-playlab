@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-semantic-v1.2-candidate",
+  "title": "Forge Semantic Blueprint v1.2 Candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["identity", "combat", "visual", "confidence", "affordance"],
+  "properties": {
+    "identity": {"$ref": "forge_semantic_blueprint.schema.json#/properties/identity"},
+    "combat": {"$ref": "forge_semantic_blueprint.schema.json#/properties/combat"},
+    "visual": {"$ref": "forge_semantic_blueprint.schema.json#/properties/visual"},
+    "confidence": {"$ref": "forge_semantic_blueprint.schema.json#/properties/confidence"},
+    "affordance": {"$ref": "object_affordance_profile.v1_2_candidate.schema.json"}
+  }
+}

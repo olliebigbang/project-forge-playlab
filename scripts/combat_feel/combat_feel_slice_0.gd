@@ -130,7 +130,7 @@ func _load_requested_weapon() -> bool:
 		result = asset_loader.load_live(sprite_path, blueprint_path, anchors_path)
 	elif not open_round_path.is_empty():
 		launched_from_open_playtest = true
-		result = asset_loader.load_open_playtest_round(open_round_path)
+		result = asset_loader.load_open_playtest_round(open_round_path, _has_argument("--require-affordance-grammar"))
 	elif not requested_fixture.is_empty():
 		result = asset_loader.load_fixture(requested_fixture)
 	elif requested_live_id.is_empty():
@@ -1090,3 +1090,7 @@ func _argument_value(prefix: String, fallback: String) -> String:
 	for argument: String in OS.get_cmdline_user_args():
 		if argument.begins_with(prefix): return argument.trim_prefix(prefix)
 	return fallback
+
+
+func _has_argument(expected: String) -> bool:
+	return expected in OS.get_cmdline_user_args()

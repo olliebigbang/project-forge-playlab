@@ -197,7 +197,7 @@ func _test_23_no_v2_entry() -> void:
 
 func _test_24_default_is_real_live_asset() -> void:
 	var loaded: Dictionary = LOADER.new().load_default_live()
-	_check(bool(loaded.get("ok", false)) and not bool(loaded.get("fixture", true)) and str(loaded.get("asset_id", "")) == "giant_wooden_spoon" and str(loaded.get("notice", "")).contains("REAL LIVE FORGE"), "24 default is frozen real Live Forge asset")
+	_check(bool(loaded.get("ok", false)) and not bool(loaded.get("fixture", true)) and str(loaded.get("asset_id", "")) == "giant_wooden_spoon" and str(loaded.get("notice", "")).contains("REAL LIVE FORGE") and loaded.get("affordance_profile") is Resource, "24 default is frozen real Live Forge asset with an explicit affordance sidecar")
 
 func _test_25_live_asset_integrity_and_anchor() -> void:
 	var loaded: Dictionary = LOADER.new().load_frozen_live("giant_wooden_spoon")
@@ -252,11 +252,12 @@ func _test_31_missing_real_assets_are_not_misrepresented() -> void:
 
 func _test_32_open_playtest_round_direct_handoff() -> void:
 	var round_directory := ProjectSettings.globalize_path("res://data/combat_feel/live_assets/revision_a/giant_wooden_spoon")
-	var loaded: Dictionary = LOADER.new().load_open_playtest_round(round_directory)
+	var loaded: Dictionary = LOADER.new().load_open_playtest_round(round_directory, true)
 	var loaded_blueprint := loaded.get("blueprint") as WeaponBlueprint
 	var loaded_asset := loaded.get("asset") as WeaponVisualAsset
-	var profile: Variant = COMPILER.new().compile(loaded_blueprint, loaded_asset)
-	_check(bool(loaded.get("ok", false)) and not bool(loaded.get("fixture", true)) and loaded_blueprint != null and loaded_blueprint.behavior_family == "heavy_melee" and profile is Resource and profile.combo_recipe != null, "32 finalized Open Playtest directory loads and compiles without affordance sidecar")
+	var affordance := loaded.get("affordance_profile") as Resource
+	var profile: Variant = COMPILER.new().compile(affordance, loaded_asset.anchors_dict(), loaded_asset.opaque_bounds)
+	_check(bool(loaded.get("ok", false)) and not bool(loaded.get("fixture", true)) and loaded_blueprint != null and loaded_blueprint.behavior_family == "heavy_melee" and affordance != null and profile is Resource and profile.combo_recipe != null, "32 explicit orthogonal Open Playtest handoff requires and compiles its validated affordance sidecar")
 
 func _test_33_open_playtest_ui_exposes_heavy_only_launch() -> void:
 	var godot_source := _text("res://tools/open_playtest/godot/open_playtest.gd")

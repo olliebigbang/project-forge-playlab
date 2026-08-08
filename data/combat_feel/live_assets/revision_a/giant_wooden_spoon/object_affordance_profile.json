@@ -1,7 +1,7 @@
 {
-  "handle_length": "short",
-  "body_length": "short",
-  "grip_topology": "one_hand_handle",
+  "handle_length": "long",
+  "body_length": "long",
+  "grip_topology": "two_hand_handle",
   "rigidity": "rigid",
   "mass_distribution": "front",
   "contact_surface": "broad",
@@ -12,5 +12,5 @@
   "has_barrel": false,
   "has_stock": false,
   "confidence": 1.0,
-  "evidence_parts": ["short handle", "broad pan body", "front-weighted contact face"]
+  "evidence_parts": ["long wooden handle", "broad spoon bowl", "front-weighted bowl"]
 }

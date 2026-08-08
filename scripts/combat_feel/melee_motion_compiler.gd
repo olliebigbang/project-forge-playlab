@@ -14,11 +14,14 @@ const IMPACT_TO_MOTION := {
 }
 
 const UNSUPPORTED := "UNSUPPORTED_AFFORDANCE_FOR_SLICE_1A"
-const HANDLE_LENGTHS: PackedStringArray = ["short", "medium", "long"]
+const HANDLE_LENGTHS: PackedStringArray = ["none", "short", "medium", "long"]
 const BODY_LENGTHS: PackedStringArray = ["short", "medium", "long"]
+const GRIP_TOPOLOGIES: PackedStringArray = ["one_hand_handle", "two_hand_handle", "body_grip", "clamp_grip"]
 const MASS_DISTRIBUTIONS: PackedStringArray = ["rear", "balanced", "front"]
 const CONTACT_SURFACES: PackedStringArray = ["point", "edge", "broad", "whole_body"]
+const SECONDARY_CONTACT_SURFACES: PackedStringArray = ["none", "point", "edge", "broad", "whole_body"]
 const RIGIDITIES: PackedStringArray = ["rigid", "semi_rigid", "flexible"]
+const PRIMITIVE_ORDER: PackedStringArray = ["bash", "sweep", "thrust", "slam", "spin"]
 
 
 func compile(source: Variant, detail: Variant, alpha_bounds: Rect2i = Rect2i()) -> Variant:
@@ -32,13 +35,7 @@ func compile(source: Variant, detail: Variant, alpha_bounds: Rect2i = Rect2i()) 
 func _compile_affordance(affordance_profile: Resource, anchor_data: Dictionary, alpha_bounds: Rect2i) -> Variant:
 	if not _inputs_are_valid(affordance_profile, anchor_data, alpha_bounds):
 		return UNSUPPORTED
-	if _matches_barrel_stock(affordance_profile):
-		return _compile_barrel_stock(affordance_profile, anchor_data, alpha_bounds)
-	if _matches_short_front_broad(affordance_profile):
-		return _compile_short_front_broad(affordance_profile, anchor_data, alpha_bounds)
-	if _matches_long_broad(affordance_profile):
-		return _compile_long_broad(affordance_profile, anchor_data, alpha_bounds)
-	return UNSUPPORTED
+	return _compose_orthogonal_profile(affordance_profile, anchor_data, alpha_bounds)
 
 
 func _compile_legacy(blueprint: WeaponBlueprint, asset: WeaponVisualAsset) -> Resource:
@@ -87,148 +84,245 @@ func _compile_legacy_combo_recipe(base_family: String) -> Resource:
 	return recipe
 
 
-func _compile_short_front_broad(
+func _compose_orthogonal_profile(
 	affordance_profile: Resource,
 	anchor_data: Dictionary,
 	alpha_bounds: Rect2i
 ) -> Resource:
 	var profile: Variant = _base_profile(affordance_profile, anchor_data, alpha_bounds)
-	profile.motion_family = "slam"
-	profile.weight_class = "heavy"
-	profile.reach_class = "short"
-	profile.tempo = "committed"
-	profile.contact_mode = "whole_body"
-	profile.combo_style = "bash_reverse_slam"
-	profile.charge_style = "overhead_ground_impact"
-	profile.dodge_attack_style = "advancing_slap"
-	profile.configure_timing_from_tempo()
-	profile.reach_pixels = _short_reach(anchor_data, alpha_bounds)
-	profile.swing_arc_degrees = 88.0
-	profile.hitbox_thickness = 52.0
-	profile.control_strength = 0.96
-	profile.impact_sharpness = 1.30
-	profile.render_scale = 1.14
+	var base_scores := _score_primitives(affordance_profile)
+	var used: Array[String] = []
+	var selected := {}
+	for stage: String in ["hit_1", "hit_2", "hit_3", "charge", "dodge"]:
+		var family := _select_primitive(base_scores, stage, used, affordance_profile)
+		selected[stage] = family
+		if stage.begins_with("hit_"):
+			used.append(family)
 	var recipe: Variant = RECIPE.new()
-	recipe.compile_reason = "short handle + front mass + broad face"
-	recipe.hit_1 = _primitive("bash", -0.74, 0.32, 0.0, 0.42, 0.85, 0.48, 0.78, 0.42, 0.76, {
-		"root_motion_distance": 4.0, "hitbox_width_multiplier": 0.86, "hitbox_length_multiplier": 0.70,
-		"hitstop_multiplier": 1.20, "camera_kick_multiplier": 1.12, "movement_allowed_ratio": 0.05,
-	})
-	recipe.hit_2 = _primitive("bash", 0.64, -0.40, 0.0, 0.46, 0.90, 0.52, 0.82, 0.38, 0.80, {
-		"root_motion_distance": 4.0, "hitbox_width_multiplier": 0.88, "hitbox_length_multiplier": 0.74,
-		"hitstop_multiplier": 1.20, "camera_kick_multiplier": 1.12, "movement_allowed_ratio": 0.05,
-	})
-	recipe.hit_3 = _primitive("slam", -1.78, 1.05, 0.0, 0.90, 1.15, 1.15, 0.90, 0.28, 1.02, {
-		"root_motion_distance": 7.0, "hitbox_width_multiplier": 1.00, "hitbox_length_multiplier": 0.82,
-		"knockback_multiplier": 1.12, "stagger_multiplier": 1.18, "hitstop_multiplier": 1.22,
-		"camera_kick_multiplier": 1.22, "movement_allowed_ratio": 0.0,
-	})
-	recipe.charge_attack = _primitive("slam", -1.92, 1.12, 0.0, 1.0, 1.18, 1.24, 1.04, 0.30, 1.08)
-	recipe.dodge_attack = _primitive("bash", -0.52, 0.28, 8.0, 0.72, 0.90, 0.78, 0.92, 1.10, 0.84)
+	recipe.compile_reason = "orthogonal affordance composition: %s" % JSON.stringify(_mechanism_axes(affordance_profile))
+	recipe.mechanism_axes = _mechanism_axes(affordance_profile)
+	recipe.primitive_scores = base_scores.duplicate(true)
+	recipe.hit_1 = _synthesize_primitive(str(selected["hit_1"]), "hit_1", affordance_profile)
+	recipe.hit_2 = _synthesize_primitive(str(selected["hit_2"]), "hit_2", affordance_profile)
+	recipe.hit_3 = _synthesize_primitive(str(selected["hit_3"]), "hit_3", affordance_profile)
+	recipe.charge_attack = _synthesize_primitive(str(selected["charge"]), "charge", affordance_profile)
+	recipe.dodge_attack = _synthesize_primitive(str(selected["dodge"]), "dodge", affordance_profile)
 	profile.combo_recipe = recipe
+	profile.motion_family = _legacy_family(str(selected["charge"]))
+	profile.reach_class = _reach_class(affordance_profile)
+	profile.weight_class = _weight_class(affordance_profile)
+	profile.tempo = _tempo_for_axes(affordance_profile)
+	profile.contact_mode = _legacy_contact_mode(affordance_profile.contact_surface)
+	profile.combo_style = "orthogonal_per_hit"
+	profile.charge_style = str(selected["charge"])
+	profile.dodge_attack_style = str(selected["dodge"])
+	profile.configure_timing_from_tempo()
+	profile.reach_pixels = _general_reach(affordance_profile, anchor_data, alpha_bounds)
+	profile.swing_arc_degrees = _general_arc(affordance_profile)
+	profile.hitbox_thickness = _general_hitbox_thickness(affordance_profile)
+	profile.control_strength = _general_control_strength(affordance_profile)
+	profile.impact_sharpness = _general_impact_sharpness(affordance_profile)
+	profile.render_scale = 1.10 + 0.08 * _length_axis(affordance_profile)
+	profile.mechanism_axes = recipe.mechanism_axes.duplicate(true)
+	profile.primitive_scores = recipe.primitive_scores.duplicate(true)
+	profile.compile_trace = {
+		"composer": "orthogonal_affordance_v1",
+		"selected": selected.duplicate(true),
+		"identity_inputs_used": false,
+	}
 	return profile
 
 
-func _compile_long_broad(
-	affordance_profile: Resource,
-	anchor_data: Dictionary,
-	alpha_bounds: Rect2i
-) -> Resource:
-	var profile: Variant = _base_profile(affordance_profile, anchor_data, alpha_bounds)
-	profile.motion_family = "sweep"
-	profile.weight_class = "medium"
-	profile.reach_class = "long"
-	profile.tempo = "balanced"
-	profile.contact_mode = "whole_body"
-	profile.combo_style = "sweep_push_spin"
-	profile.charge_style = "wide_commitment"
-	profile.dodge_attack_style = "sliding_sweep"
-	profile.configure_timing_from_tempo()
-	profile.reach_pixels = _long_reach(anchor_data, alpha_bounds)
-	profile.swing_arc_degrees = 210.0
-	profile.hitbox_thickness = 64.0
-	profile.control_strength = 1.38
-	profile.impact_sharpness = 0.96
-	profile.render_scale = 1.28
-	var recipe: Variant = RECIPE.new()
-	recipe.compile_reason = "long handle + long body + broad whole-body contact without barrel"
-	recipe.hit_1 = _primitive("sweep", -1.35, 1.15, 0.0, 0.95, 1.00, 0.92, 1.08, 1.12, 1.15, {
-		"root_motion_distance": 18.0, "hitbox_width_multiplier": 1.25, "hitbox_length_multiplier": 1.12,
-		"knockback_multiplier": 1.20, "hitstop_multiplier": 0.75, "camera_kick_multiplier": 0.82,
-		"movement_allowed_ratio": 0.25,
-	})
-	recipe.hit_2 = _primitive("thrust", -0.05, -0.05, 42.0, 1.08, 0.92, 0.98, 1.18, 1.35, 1.05, {
-		"root_motion_distance": 24.0, "hitbox_width_multiplier": 0.82, "hitbox_length_multiplier": 1.18,
-		"knockback_multiplier": 1.18, "hitstop_multiplier": 0.78, "movement_allowed_ratio": 0.20,
-	})
-	recipe.hit_3 = _primitive("spin", -2.85, 3.25, 0.0, 1.18, 1.18, 1.22, 1.32, 1.18, 1.35, {
-		"root_motion_distance": 16.0, "contact_anchor": "whole_body", "hitbox_width_multiplier": 1.25,
-		"hitbox_length_multiplier": 1.20, "knockback_multiplier": 1.28, "hitstop_multiplier": 0.78,
-		"camera_kick_multiplier": 0.92, "movement_allowed_ratio": 0.20,
-	})
-	recipe.charge_attack = _primitive("sweep", -1.72, 1.42, 0.0, 1.12, 1.22, 1.28, 1.25, 0.82, 1.25)
-	recipe.dodge_attack = _primitive("sweep", -1.10, 0.92, 0.0, 0.72, 0.94, 0.76, 1.12, 1.28, 1.12)
-	profile.combo_recipe = recipe
-	return profile
+func _score_primitives(affordance_profile: Resource) -> Dictionary:
+	var scores := {"bash": 0.0, "sweep": 0.0, "thrust": 0.0, "slam": 0.0, "spin": 0.0}
+	_apply_contact_scores(scores, affordance_profile.contact_surface, 1.0)
+	if affordance_profile.secondary_contact_surface != "none":
+		_apply_contact_scores(scores, affordance_profile.secondary_contact_surface, 0.32)
+	match affordance_profile.handle_length:
+		"none": _add_scores(scores, {"bash": 0.55, "slam": 0.45, "spin": 0.35})
+		"short": _add_scores(scores, {"bash": 0.85, "slam": 0.65})
+		"medium": _add_scores(scores, {"bash": 0.35, "sweep": 0.35, "thrust": 0.30})
+		"long": _add_scores(scores, {"sweep": 0.85, "thrust": 0.75, "spin": 0.65})
+	match affordance_profile.body_length:
+		"short": _add_scores(scores, {"bash": 0.45, "slam": 0.30})
+		"medium": _add_scores(scores, {"bash": 0.20, "sweep": 0.25})
+		"long": _add_scores(scores, {"thrust": 0.75, "sweep": 0.55, "spin": 0.50})
+	match affordance_profile.rigidity:
+		"rigid": _add_scores(scores, {"thrust": 0.70, "bash": 0.55, "slam": 0.30})
+		"semi_rigid": _add_scores(scores, {"sweep": 0.55, "spin": 0.50})
+		"flexible": _add_scores(scores, {"spin": 1.00, "sweep": 0.85, "thrust": -0.45})
+	match affordance_profile.mass_distribution:
+		"front": _add_scores(scores, {"slam": 0.95, "bash": 0.55})
+		"rear": _add_scores(scores, {"bash": 0.85, "thrust": 0.20})
+		"balanced": _add_scores(scores, {"sweep": 0.45, "thrust": 0.40, "spin": 0.20})
+	match affordance_profile.grip_topology:
+		"two_hand_handle": _add_scores(scores, {"sweep": 0.45, "thrust": 0.40, "slam": 0.30})
+		"body_grip": _add_scores(scores, {"spin": 0.55, "bash": 0.45})
+		"clamp_grip": _add_scores(scores, {"bash": 0.60, "slam": 0.30})
+	if affordance_profile.has_point: _add_scores(scores, {"thrust": 0.85})
+	if affordance_profile.has_edge: _add_scores(scores, {"sweep": 0.85})
+	if affordance_profile.has_broad_face: _add_scores(scores, {"bash": 0.80, "slam": 0.45})
+	if affordance_profile.has_barrel: _add_scores(scores, {"thrust": 0.75})
+	if affordance_profile.has_stock: _add_scores(scores, {"bash": 0.90})
+	return scores
 
 
-func _compile_barrel_stock(
-	affordance_profile: Resource,
-	anchor_data: Dictionary,
-	alpha_bounds: Rect2i
-) -> Resource:
-	var profile: Variant = _base_profile(affordance_profile, anchor_data, alpha_bounds)
-	profile.motion_family = "thrust"
-	profile.weight_class = "heavy"
-	profile.reach_class = "long"
-	profile.tempo = "committed"
-	profile.contact_mode = "point"
-	profile.combo_style = "front_thrust_body_sweep_rear_bash"
-	profile.charge_style = "rear_stock_commitment"
-	profile.dodge_attack_style = "advancing_thrust"
-	profile.configure_timing_from_tempo()
-	profile.reach_pixels = _long_reach(anchor_data, alpha_bounds)
-	profile.swing_arc_degrees = 132.0
-	profile.hitbox_thickness = 46.0
-	profile.control_strength = 1.04
-	profile.impact_sharpness = 1.18
-	profile.render_scale = 1.26
-	var recipe: Variant = RECIPE.new()
-	recipe.compile_reason = "long rigid body + barrel + stock"
-	recipe.hit_1 = _primitive("thrust", -0.06, -0.06, 52.0, 0.88, 1.15, 0.94, 1.24, 1.32, 0.82, {
-		"contact_anchor": "muzzle", "root_motion_distance": 42.0,
-		"hitbox_width_multiplier": 0.95, "hitbox_length_multiplier": 1.24,
-		"knockback_multiplier": 0.92, "hitstop_multiplier": 0.88, "movement_allowed_ratio": 0.12,
+func _apply_contact_scores(scores: Dictionary, surface: String, scale: float) -> void:
+	match surface:
+		"point": _add_scores(scores, {"thrust": 3.40 * scale, "bash": 0.45 * scale})
+		"edge": _add_scores(scores, {"sweep": 3.25 * scale, "slam": 0.80 * scale, "spin": 0.40 * scale})
+		"broad": _add_scores(scores, {"bash": 2.60 * scale, "slam": 2.10 * scale, "sweep": 1.10 * scale})
+		"whole_body": _add_scores(scores, {"spin": 2.55 * scale, "sweep": 2.40 * scale, "slam": 1.80 * scale, "bash": 0.50 * scale})
+
+
+func _add_scores(scores: Dictionary, additions: Dictionary) -> void:
+	for key: Variant in additions:
+		scores[str(key)] = float(scores.get(str(key), 0.0)) + float(additions[key])
+
+
+func _select_primitive(base_scores: Dictionary, stage: String, used: Array[String], affordance_profile: Resource) -> String:
+	var scores: Dictionary = base_scores.duplicate(true)
+	var biases := {
+		"hit_1": {"bash": 0.75, "thrust": 0.70, "sweep": 0.45, "slam": -0.45, "spin": -0.65},
+		"hit_2": {"sweep": 0.65, "spin": 0.55, "thrust": 0.35, "bash": 0.10, "slam": -0.25},
+		"hit_3": {"slam": 1.20, "spin": 1.00, "bash": 0.90, "sweep": 0.20, "thrust": 0.10},
+		"charge": {"slam": 1.35, "bash": 0.75, "sweep": 0.60, "spin": 0.35, "thrust": 0.20},
+		"dodge": {"thrust": 1.20, "sweep": 0.80, "bash": 0.50, "spin": 0.15, "slam": -0.30},
+	}
+	_add_scores(scores, biases[stage])
+	if stage == "hit_2" and not used.is_empty():
+		# A continuation should prefer a different available mechanism instead of
+		# replaying the opener merely because one axis has a dominant raw score.
+		scores[used[0]] = float(scores[used[0]]) - 4.00
+	if stage == "hit_3":
+		for family: String in used:
+			scores[family] = float(scores[family]) - 3.00
+		if affordance_profile.has_stock and affordance_profile.secondary_contact_surface != "none":
+			# A secondary rear contact is a structural finisher affordance. This is
+			# independent of whether the object is a firearm, tool, or prop.
+			scores["bash"] = float(scores["bash"]) + 2.70
+	var selected := PRIMITIVE_ORDER[0]
+	var selected_score := -INF
+	for family: String in PRIMITIVE_ORDER:
+		var score := float(scores[family])
+		if score > selected_score:
+			selected = family
+			selected_score = score
+	return selected
+
+
+func _synthesize_primitive(family: String, stage: String, affordance_profile: Resource) -> Resource:
+	var angle_data: Array = {
+		"bash": [-0.62, 0.30], "sweep": [-1.28, 1.10], "thrust": [-0.06, -0.06],
+		"slam": [-1.82, 1.04], "spin": [-2.85, 3.25],
+	}[family]
+	if stage == "hit_2" and family in ["bash", "sweep"]:
+		angle_data = [float(angle_data[1]), -float(angle_data[0])]
+	var length_axis := _length_axis(affordance_profile)
+	var mass_axis := _mass_axis(affordance_profile)
+	var stage_weight: float = {"hit_1": 0.84, "hit_2": 1.00, "hit_3": 1.20, "charge": 1.12, "dodge": 1.28}[stage]
+	var startup: float = (0.88 + mass_axis * 0.16) * float({"hit_1": 0.88, "hit_2": 0.96, "hit_3": 1.18, "charge": 1.30, "dodge": 0.72}[stage])
+	var recovery: float = (0.86 + mass_axis * 0.20) * float({"hit_1": 0.88, "hit_2": 0.98, "hit_3": 1.24, "charge": 1.32, "dodge": 0.78}[stage])
+	var contact_anchor := _contact_anchor_for(family, stage, affordance_profile)
+	var active_surface: String = affordance_profile.secondary_contact_surface \
+		if contact_anchor == "rear_contact" else affordance_profile.contact_surface
+	var contact_width: float = {"point": 0.66, "edge": 0.88, "broad": 1.18, "whole_body": 1.28}[active_surface]
+	var root_distance: float = (5.0 + length_axis * 16.0 + (7.0 if affordance_profile.has_barrel else 0.0)) * stage_weight
+	var extension: float = (24.0 + 22.0 * length_axis) if family == "thrust" else 0.0
+	var movement_allowed := clampf((0.06 + 0.10 * length_axis) if family in ["sweep", "spin"] else 0.04, 0.0, 0.30)
+	var finisher := 1.0 if stage not in ["hit_3", "charge"] else 1.22
+	return _primitive(family, float(angle_data[0]), float(angle_data[1]), extension, startup, 1.0 + 0.08 * mass_axis, recovery, 0.84 + 0.28 * length_axis, 0.78 + 0.28 * length_axis, 0.86 + 0.20 * contact_width, {
+		"contact_anchor": contact_anchor,
+		"root_motion_distance": root_distance,
+		"hitbox_width_multiplier": contact_width,
+		"hitbox_length_multiplier": 0.82 + 0.30 * length_axis,
+		"knockback_multiplier": (0.88 + 0.18 * mass_axis) * finisher,
+		"stagger_multiplier": (0.90 + 0.20 * mass_axis) * finisher,
+		"hitstop_multiplier": (0.82 + 0.22 * mass_axis) * finisher,
+		"camera_kick_multiplier": (0.84 + 0.20 * mass_axis) * finisher,
+		"movement_allowed_ratio": movement_allowed,
 	})
-	recipe.hit_2 = _primitive("sweep", -1.05, 0.92, 0.0, 0.98, 1.02, 1.00, 1.04, 1.14, 1.05, {
-		"contact_anchor": "whole_body", "root_motion_distance": 34.0,
-		"hitbox_width_multiplier": 1.05, "hitbox_length_multiplier": 1.02,
-		"knockback_multiplier": 1.06, "movement_allowed_ratio": 0.10,
-	})
-	recipe.hit_3 = _primitive("bash", 1.82, 3.08, 0.0, 1.16, 1.25, 1.40, 0.98, 1.20, 1.30, {
-		"contact_anchor": "rear_contact", "root_motion_distance": 44.0,
-		"hitbox_width_multiplier": 1.25, "hitbox_length_multiplier": 0.90,
-		"knockback_multiplier": 1.55, "stagger_multiplier": 1.55, "hitstop_multiplier": 1.55,
-		"camera_kick_multiplier": 1.50, "movement_allowed_ratio": 0.0,
-	})
-	recipe.charge_attack = _primitive("bash", 1.62, 3.08, 0.0, 1.18, 1.18, 1.28, 1.02, 0.86, 1.14, {
-		"contact_anchor": "rear_contact", "root_motion_distance": 48.0,
-		"stagger_multiplier": 1.38, "hitstop_multiplier": 1.32,
-	})
-	recipe.dodge_attack = _primitive("thrust", -0.04, -0.04, 52.0, 0.72, 0.92, 0.78, 1.24, 1.42, 0.78, {
-		"contact_anchor": "muzzle", "root_motion_distance": 54.0,
-		"hitbox_width_multiplier": 0.68, "hitbox_length_multiplier": 1.24,
-	})
-	profile.combo_recipe = recipe
-	return profile
+
+
+func _contact_anchor_for(family: String, stage: String, affordance_profile: Resource) -> String:
+	if family == "spin" or affordance_profile.contact_surface == "whole_body":
+		return "whole_body"
+	if family == "bash" and stage in ["hit_3", "charge"] and affordance_profile.has_stock \
+		and affordance_profile.secondary_contact_surface != "none":
+		return "rear_contact"
+	if family == "thrust" and affordance_profile.has_barrel:
+		return "muzzle"
+	return "tip"
+
+
+func _mechanism_axes(affordance_profile: Resource) -> Dictionary:
+	return affordance_profile.to_dict()
+
+
+func _length_axis(affordance_profile: Resource) -> float:
+	var values := {"none": 0.0, "short": 0.22, "medium": 0.58, "long": 1.0}
+	return (float(values[affordance_profile.handle_length]) + float(values[affordance_profile.body_length])) * 0.5
+
+
+func _mass_axis(affordance_profile: Resource) -> float:
+	return {"rear": 0.72, "balanced": 0.55, "front": 1.0}[affordance_profile.mass_distribution]
+
+
+func _reach_class(affordance_profile: Resource) -> String:
+	var axis := _length_axis(affordance_profile)
+	return "short" if axis < 0.38 else ("long" if axis > 0.78 else "medium")
+
+
+func _weight_class(affordance_profile: Resource) -> String:
+	if affordance_profile.mass_distribution == "front" or affordance_profile.has_stock:
+		return "heavy"
+	if affordance_profile.rigidity == "flexible":
+		return "light"
+	return "medium"
+
+
+func _tempo_for_axes(affordance_profile: Resource) -> String:
+	var axis := _length_axis(affordance_profile) + _mass_axis(affordance_profile)
+	return "rapid" if axis < 0.85 else ("committed" if axis > 1.55 else "balanced")
+
+
+func _legacy_family(family: String) -> String:
+	return {"bash": "slam", "slam": "slam", "thrust": "thrust", "sweep": "sweep", "spin": "sweep"}[family]
+
+
+func _legacy_contact_mode(surface: String) -> String:
+	return {"point": "point", "edge": "edge", "broad": "whole_body", "whole_body": "whole_body"}[surface]
+
+
+func _general_reach(affordance_profile: Resource, anchor_data: Dictionary, alpha_bounds: Rect2i) -> float:
+	var axis := _length_axis(affordance_profile)
+	var measured := _strike_span(anchor_data) * 0.48 + float(maxi(alpha_bounds.size.x, alpha_bounds.size.y)) * 0.56
+	return clampf(68.0 + 66.0 * axis + measured * 0.12, 72.0, 148.0)
+
+
+func _general_arc(affordance_profile: Resource) -> float:
+	var surface_bonus: float = {"point": -70.0, "edge": 28.0, "broad": 6.0, "whole_body": 58.0}[affordance_profile.contact_surface]
+	return clampf(112.0 + 42.0 * _length_axis(affordance_profile) + surface_bonus, 22.0, 220.0)
+
+
+func _general_hitbox_thickness(affordance_profile: Resource) -> float:
+	return {"point": 36.0, "edge": 44.0, "broad": 58.0, "whole_body": 66.0}[affordance_profile.contact_surface]
+
+
+func _general_control_strength(affordance_profile: Resource) -> float:
+	return 1.22 if affordance_profile.contact_surface == "whole_body" else (1.08 if affordance_profile.body_length == "long" else 0.92)
+
+
+func _general_impact_sharpness(affordance_profile: Resource) -> float:
+	return {"point": 1.22, "edge": 1.16, "broad": 1.08, "whole_body": 0.92}[affordance_profile.contact_surface]
 
 
 func _base_profile(affordance_profile: Resource, anchor_data: Dictionary, alpha_bounds: Rect2i) -> Resource:
 	var profile: Variant = PROFILE.new()
 	var bounds_area := float(alpha_bounds.size.x * alpha_bounds.size.y)
 	profile.silhouette_fill_ratio = bounds_area / (96.0 * 96.0)
-	profile.contact_bulk_ratio = 0.62 if affordance_profile.contact_surface == "whole_body" else 0.48
-	profile.grip_mode = "two_hand" if _grip_span(anchor_data) >= 15.0 else "one_hand"
+	profile.contact_bulk_ratio = {"point": 0.18, "edge": 0.30, "broad": 0.52, "whole_body": 0.62}[affordance_profile.contact_surface]
+	profile.grip_mode = "two_hand" if affordance_profile.grip_topology == "two_hand_handle" or _grip_span(anchor_data) >= 15.0 else ("center" if affordance_profile.handle_length == "none" else "one_hand")
 	return profile
 
 
@@ -270,48 +364,18 @@ func _inputs_are_valid(affordance_profile: Resource, anchor_data: Dictionary, al
 		return false
 	if affordance_profile.body_length not in BODY_LENGTHS:
 		return false
+	if affordance_profile.grip_topology not in GRIP_TOPOLOGIES:
+		return false
 	if affordance_profile.mass_distribution not in MASS_DISTRIBUTIONS:
 		return false
 	if affordance_profile.contact_surface not in CONTACT_SURFACES:
+		return false
+	if affordance_profile.secondary_contact_surface not in SECONDARY_CONTACT_SURFACES:
 		return false
 	if affordance_profile.rigidity not in RIGIDITIES:
 		return false
 	return _anchor_point(anchor_data, ["GripPrimary", "grip_primary"]) != Vector2.INF \
 		and _anchor_point(anchor_data, ["StrikePoint", "strike_point", "tip"]) != Vector2.INF
-
-
-func _matches_short_front_broad(affordance_profile: Resource) -> bool:
-	return affordance_profile.handle_length == "short" \
-		and affordance_profile.body_length == "short" \
-		and affordance_profile.mass_distribution == "front" \
-		and affordance_profile.contact_surface == "broad" \
-		and affordance_profile.has_broad_face
-
-
-func _matches_long_broad(affordance_profile: Resource) -> bool:
-	return affordance_profile.handle_length == "long" \
-		and affordance_profile.body_length == "long" \
-		and affordance_profile.contact_surface in ["broad", "whole_body"] \
-		and not affordance_profile.has_barrel
-
-
-func _matches_barrel_stock(affordance_profile: Resource) -> bool:
-	return affordance_profile.body_length == "long" \
-		and affordance_profile.rigidity == "rigid" \
-		and affordance_profile.has_barrel \
-		and affordance_profile.has_stock
-
-
-func _short_reach(anchor_data: Dictionary, alpha_bounds: Rect2i) -> float:
-	var anchor_span := _strike_span(anchor_data)
-	var major_axis := float(maxi(alpha_bounds.size.x, alpha_bounds.size.y))
-	return clampf(anchor_span * 0.30 + major_axis * 0.45, 72.0, 80.0)
-
-
-func _long_reach(anchor_data: Dictionary, alpha_bounds: Rect2i) -> float:
-	var anchor_span := _strike_span(anchor_data)
-	var major_axis := float(maxi(alpha_bounds.size.x, alpha_bounds.size.y))
-	return clampf(anchor_span * 0.70 + major_axis * 0.82, 126.0, 148.0)
 
 
 func _strike_span(anchor_data: Dictionary) -> float:

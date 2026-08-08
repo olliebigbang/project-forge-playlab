@@ -3,6 +3,7 @@ param(
     [ValidateSet("", "M01", "M02", "M03", "THRUST")]
     [string]$DeveloperFixture = "",
     [string]$OpenPlaytestRound = "",
+    [switch]$RequireAffordanceGrammar,
     [string]$SpritePath = "",
     [string]$BlueprintPath = "",
     [string]$AnchorsPath = ""
@@ -20,6 +21,7 @@ $Arguments = @(
 )
 if (-not [string]::IsNullOrWhiteSpace($DeveloperFixture)) { $Arguments += "--developer-fixture=$DeveloperFixture" }
 if (-not [string]::IsNullOrWhiteSpace($OpenPlaytestRound)) { $Arguments += "--open-playtest-round=$OpenPlaytestRound" }
+if ($RequireAffordanceGrammar) { $Arguments += "--require-affordance-grammar" }
 if (-not [string]::IsNullOrWhiteSpace($SpritePath)) { $Arguments += "--combat-sprite=$SpritePath" }
 if (-not [string]::IsNullOrWhiteSpace($BlueprintPath)) { $Arguments += "--combat-blueprint=$BlueprintPath" }
 if (-not [string]::IsNullOrWhiteSpace($AnchorsPath)) { $Arguments += "--combat-anchors=$AnchorsPath" }

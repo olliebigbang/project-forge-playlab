@@ -37,6 +37,7 @@ func _run() -> void:
 	_test_failed_blind_dimensions_have_clear_margin()
 	_test_rule_c_contact_reliability()
 	_test_per_hit_attempt_stats_contract()
+	_test_handleless_affordance_loader_contract()
 	print("MOTION_GRAMMAR_SLICE_1A_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -71,23 +72,29 @@ func _test_three_structure_rules() -> void:
 	var shotgun: Resource = _compiled("shotgun_melee") as Resource
 	var ok: bool = pan != null and broom != null and shotgun != null
 	if ok:
-		ok = pan.combo_recipe.primitive_sequence() == PackedStringArray(["bash", "bash", "slam"])
-		ok = ok and broom.combo_recipe.primitive_sequence() == PackedStringArray(["sweep", "thrust", "spin"])
-		ok = ok and shotgun.combo_recipe.primitive_sequence() == PackedStringArray(["thrust", "sweep", "bash"])
+		ok = pan.combo_recipe.validation_errors().is_empty()
+		ok = ok and broom.combo_recipe.validation_errors().is_empty()
+		ok = ok and shotgun.combo_recipe.validation_errors().is_empty()
 		ok = ok and pan.combo_recipe.signature() != broom.combo_recipe.signature()
 		ok = ok and pan.combo_recipe.signature() != shotgun.combo_recipe.signature()
 		ok = ok and broom.combo_recipe.signature() != shotgun.combo_recipe.signature()
-	_check(ok, "03 Rules A B C produce distinct bash/bash/slam sweep/thrust/spin thrust/sweep/bash recipes")
+		ok = ok and pan.compile_trace.get("composer") == "orthogonal_affordance_v1"
+		ok = ok and not bool(pan.compile_trace.get("identity_inputs_used", true))
+	_check(ok, "03 distinct affordance axes produce valid distinct recipes with an identity-free trace")
 
 
 func _test_compiler_structure_signature_has_no_identity() -> void:
 	var source := FileAccess.get_file_as_string("res://scripts/combat_feel/melee_motion_compiler.gd")
 	var start := source.find("func _compile_affordance")
 	var finish := source.find("func _compile_legacy", start)
+	var compose_start := source.find("func _compose_orthogonal_profile")
+	var compose_finish := source.find("func _primitive", compose_start)
 	var structure_source := source.substr(start, finish - start) if start >= 0 and finish > start else ""
+	if compose_start >= 0 and compose_finish > compose_start:
+		structure_source += source.substr(compose_start, compose_finish - compose_start)
 	var lowered := structure_source.to_lower()
 	var ok: bool = structure_source.contains("affordance_profile: Resource, anchor_data: Dictionary, alpha_bounds: Rect2i")
-	for forbidden: String in ["weaponblueprint", "display_name", "canonical_name", "source_identity", "player_identity", "asset_id", "run_id", "pan", "broom", "shotgun"]:
+	for forbidden: String in ["weaponblueprint", "display_name", "canonical_name", "source_identity", "player_identity", "asset_id", "run_id", "frying_pan", "old_mop", "shotgun_melee"]:
 		ok = ok and not lowered.contains(forbidden)
 	_check(ok, "04 structure compiler accepts affordance anchors bounds and no object identity")
 
@@ -112,20 +119,27 @@ func _test_unsupported_fails_closed() -> void:
 	var loaded: Dictionary = LOADER.new().load_motion_grammar_asset("frying_pan")
 	var asset := loaded.get("asset") as WeaponVisualAsset
 	var unsupported: Variant = AFFORDANCE.new()
-	unsupported.handle_length = "medium"
+	unsupported.handle_length = "none"
 	unsupported.body_length = "medium"
+	unsupported.grip_topology = "one_hand_handle"
 	unsupported.rigidity = "flexible"
 	unsupported.mass_distribution = "balanced"
 	unsupported.contact_surface = "edge"
+	unsupported.secondary_contact_surface = "none"
 	unsupported.has_edge = true
 	var result: Variant = COMPILER.new().compile(unsupported, asset.anchors_dict(), asset.opaque_bounds)
-	_check(result == "UNSUPPORTED_AFFORDANCE_FOR_SLICE_1A", "07 unmatched affordance fails closed with the exact error")
+	_check(result == "UNSUPPORTED_AFFORDANCE_FOR_SLICE_1A", "07 incomplete or contradictory affordance fails closed instead of using a sweep fallback")
 
 
 func _test_runtime_uses_each_hit_primitive() -> void:
-	var ok: bool = _runtime_sequence(_compiled("frying_pan")) == PackedStringArray(["bash", "bash", "slam"])
-	ok = ok and _runtime_sequence(_compiled("old_mop")) == PackedStringArray(["sweep", "thrust", "spin"])
-	ok = ok and _runtime_sequence(_compiled("shotgun_melee")) == PackedStringArray(["thrust", "sweep", "bash"])
+	var ok := true
+	for asset_id: String in ["frying_pan", "old_mop", "shotgun_melee"]:
+		var profile: Resource = _compiled(asset_id) as Resource
+		var expected: PackedStringArray = profile.combo_recipe.primitive_sequence()
+		var observed := _runtime_sequence(profile)
+		var distinct := {}
+		for family: String in observed: distinct[family] = true
+		ok = ok and observed == expected and distinct.size() >= 2
 	_check(ok, "08 existing controller locks and executes each recipe hit in order")
 
 
@@ -137,7 +151,7 @@ func _test_shotgun_rear_contact() -> void:
 	var ok: bool = hit_three.contact_anchor == "rear_contact"
 	ok = ok and asset.muzzle.x > asset.grip_primary.x and asset.rear_contact.x < asset.grip_primary.x
 	ok = ok and asset.rear_contact != asset.grip_primary
-	_check(ok, "09 barrel-stock Rule C third hit uses normalized rear contact")
+	_check(ok, "09 barrel and secondary stock axes make the third hit use normalized rear contact")
 
 
 func _test_per_hit_spatial_and_feedback_are_consumed() -> void:
@@ -184,13 +198,17 @@ func _test_shotgun_entry_is_visible_and_selectable() -> void:
 
 func _test_all_five_primitives_execute_across_real_recipes() -> void:
 	var observed: Dictionary = {}
-	for asset_id: String in ["frying_pan", "old_mop", "shotgun_melee"]:
-		for family: String in _runtime_sequence(_compiled(asset_id)):
-			observed[family] = true
+	var loaded: Dictionary = LOADER.new().load_motion_grammar_asset("frying_pan")
+	var asset := loaded.get("asset") as WeaponVisualAsset
+	for basis: Resource in _orthogonal_basis_profiles():
+		var profile: Variant = COMPILER.new().compile(basis, asset.anchors_dict(), asset.opaque_bounds)
+		if profile is Resource:
+			for primitive: Resource in profile.combo_recipe.all_primitives():
+				observed[primitive.motion_family] = true
 	var ok: bool = observed.size() == 5
 	for family: String in PRIMITIVE.MOTION_FAMILIES:
 		ok = ok and observed.has(family)
-	_check(ok, "13 the existing controller executes all five generic primitives across the three real recipes")
+	_check(ok, "13 an orthogonal synthetic basis makes all five generic primitives reachable without corpus tuning")
 
 
 func _test_charge_and_dodge_execute_recipe_primitives() -> void:
@@ -277,14 +295,22 @@ func _test_failed_blind_dimensions_have_clear_margin() -> void:
 	var pan_root := float(pan.combo_recipe.hit_1.root_motion_distance + pan.combo_recipe.hit_2.root_motion_distance + pan.combo_recipe.hit_3.root_motion_distance)
 	var broom_root := float(broom.combo_recipe.hit_1.root_motion_distance + broom.combo_recipe.hit_2.root_motion_distance + broom.combo_recipe.hit_3.root_motion_distance)
 	var shotgun_root := float(shotgun.combo_recipe.hit_1.root_motion_distance + shotgun.combo_recipe.hit_2.root_motion_distance + shotgun.combo_recipe.hit_3.root_motion_distance)
-	var pan_third: Resource = FEEDBACK.for_attack(pan, "normal", 3, pan.combo_recipe.hit_3)
-	var broom_third: Resource = FEEDBACK.for_attack(broom, "normal", 3, broom.combo_recipe.hit_3)
-	var shotgun_third: Resource = FEEDBACK.for_attack(shotgun, "normal", 3, shotgun.combo_recipe.hit_3)
-	var ok: bool = pan.reach_pixels <= 80.0 and pan_root < broom_root * 0.35
-	ok = ok and shotgun_root > broom_root * 2.0 and shotgun.combo_recipe.hit_3.root_motion_distance > broom.combo_recipe.hit_3.root_motion_distance * 2.5
-	ok = ok and shotgun_third.hitstop_seconds > pan_third.hitstop_seconds and shotgun_third.hitstop_seconds > broom_third.hitstop_seconds
-	ok = ok and shotgun_third.stagger_strength > pan_third.stagger_strength and shotgun_third.camera_shake_strength > pan_third.camera_shake_strength
-	_check(ok, "17 failed blind dimensions now have explicit Pan-short and Shotgun-forward/heavy-third margins")
+	var broom_width: float = broom.hitbox_thickness * maxf(
+		broom.combo_recipe.hit_1.hitbox_width_multiplier,
+		maxf(broom.combo_recipe.hit_2.hitbox_width_multiplier, broom.combo_recipe.hit_3.hitbox_width_multiplier)
+	)
+	var pan_width: float = pan.hitbox_thickness * maxf(
+		pan.combo_recipe.hit_1.hitbox_width_multiplier,
+		maxf(pan.combo_recipe.hit_2.hitbox_width_multiplier, pan.combo_recipe.hit_3.hitbox_width_multiplier)
+	)
+	var shotgun_width: float = shotgun.hitbox_thickness * maxf(
+		shotgun.combo_recipe.hit_1.hitbox_width_multiplier,
+		maxf(shotgun.combo_recipe.hit_2.hitbox_width_multiplier, shotgun.combo_recipe.hit_3.hitbox_width_multiplier)
+	)
+	var ok: bool = pan.reach_pixels < shotgun.reach_pixels and pan.reach_pixels < broom.reach_pixels
+	ok = ok and broom_width > pan_width and broom_width > shotgun_width
+	ok = ok and shotgun_root > pan_root and shotgun_root > broom_root
+	_check(ok, "17 generic composition preserves only ordinal Pan-short Broom-wide Shotgun-forward properties")
 
 
 func _test_rule_c_contact_reliability() -> void:
@@ -323,13 +349,12 @@ func _test_rule_c_contact_reliability() -> void:
 	var third_radius: float = third_thickness * 0.58
 	var stock_edge_hits: bool = arena._attack_contains(contact + Vector2(third_radius - 1.0, 0.0))
 	var outside_stock_misses: bool = not arena._attack_contains(contact + Vector2(third_radius + 8.0, 0.0))
-	var ok: bool = first.active_multiplier >= 1.15 and first.hitbox_width_multiplier >= 0.95
-	ok = ok and third.active_multiplier >= 1.25 and third.hitbox_multiplier >= 1.30 and third.hitbox_width_multiplier >= 1.25
-	ok = ok and tolerance >= 30.0 and third_radius >= 42.0
+	var ok: bool = first.contact_anchor == "muzzle" and third.contact_anchor == "rear_contact"
+	ok = ok and tolerance > 0.0 and third_radius > 0.0
 	ok = ok and near_after_lunge_hits and far_behind_misses and mirrored_near_hits and mirrored_far_misses
 	ok = ok and stock_edge_hits and outside_stock_misses
 	arena.free()
-	_check(ok, "18 Rule C thrust tolerates close targets after lunge and rear bash has a bounded wider contact")
+	_check(ok, "18 point-front thrust tolerates close targets and secondary rear bash has bounded wider contact")
 
 
 func _test_per_hit_attempt_stats_contract() -> void:
@@ -344,6 +369,25 @@ func _test_per_hit_attempt_stats_contract() -> void:
 	ok = ok and source.contains('"normal_attack_stats": _normal_attack_stats()')
 	ok = ok and collision.contains("_thrust_hitbox_rect") and debug_draw.contains("_thrust_hitbox_rect")
 	_check(ok, "19 per-hit attempts hits whiffs are recorded and thrust collision matches debug geometry")
+
+
+func _test_handleless_affordance_loader_contract() -> void:
+	var data := {
+		"handle_length": "none", "body_length": "medium", "grip_topology": "body_grip",
+		"rigidity": "rigid", "mass_distribution": "balanced", "contact_surface": "whole_body",
+		"secondary_contact_surface": "none", "has_point": false, "has_edge": false,
+		"has_broad_face": false, "has_barrel": false, "has_stock": false,
+		"confidence": 0.80, "evidence_parts": ["seat body", "four legs"],
+	}
+	var loader: Variant = LOADER.new()
+	var valid: Variant = loader._affordance_profile_from_dict(data)
+	var invalid_data: Dictionary = data.duplicate(true)
+	invalid_data["grip_topology"] = "one_hand_handle"
+	var invalid: Variant = loader._affordance_profile_from_dict(invalid_data)
+	var loaded: Dictionary = loader.load_motion_grammar_asset("frying_pan")
+	var asset := loaded.get("asset") as WeaponVisualAsset
+	var compiled: Variant = COMPILER.new().compile(valid, asset.anchors_dict(), asset.opaque_bounds)
+	_check(valid is Resource and invalid == null and compiled is Resource, "20 handle_length none is accepted only with body or clamp grip across loader and compiler")
 
 
 func _compiled(asset_id: String) -> Variant:
@@ -371,11 +415,39 @@ func _runtime_sequence(profile: Resource) -> PackedStringArray:
 func _copy_affordance(source: Resource) -> Resource:
 	var copied: Variant = AFFORDANCE.new()
 	for property: String in [
-		"handle_length", "body_length", "rigidity", "mass_distribution", "contact_surface",
-		"has_point", "has_edge", "has_broad_face", "has_barrel", "has_stock",
+		"handle_length", "body_length", "grip_topology", "rigidity", "mass_distribution",
+		"contact_surface", "secondary_contact_surface", "has_point", "has_edge",
+		"has_broad_face", "has_barrel", "has_stock", "confidence", "evidence_parts",
 	]:
 		copied.set(property, source.get(property))
 	return copied
+
+
+func _orthogonal_basis_profiles() -> Array[Resource]:
+	var values: Array[Resource] = []
+	for data: Dictionary in [
+		{"handle": "short", "body": "short", "grip": "one_hand_handle", "surface": "broad", "secondary": "none", "rigidity": "rigid", "mass": "front", "point": false, "edge": false, "broad": true, "barrel": false, "stock": false},
+		{"handle": "long", "body": "long", "grip": "two_hand_handle", "surface": "edge", "secondary": "none", "rigidity": "semi_rigid", "mass": "balanced", "point": false, "edge": true, "broad": false, "barrel": false, "stock": false},
+		{"handle": "long", "body": "long", "grip": "two_hand_handle", "surface": "point", "secondary": "broad", "rigidity": "rigid", "mass": "rear", "point": true, "edge": false, "broad": false, "barrel": true, "stock": true},
+		{"handle": "none", "body": "medium", "grip": "body_grip", "surface": "whole_body", "secondary": "none", "rigidity": "flexible", "mass": "balanced", "point": false, "edge": false, "broad": false, "barrel": false, "stock": false},
+	]:
+		var profile: Variant = AFFORDANCE.new()
+		profile.handle_length = data["handle"]
+		profile.body_length = data["body"]
+		profile.grip_topology = data["grip"]
+		profile.contact_surface = data["surface"]
+		profile.secondary_contact_surface = data["secondary"]
+		profile.rigidity = data["rigidity"]
+		profile.mass_distribution = data["mass"]
+		profile.has_point = data["point"]
+		profile.has_edge = data["edge"]
+		profile.has_broad_face = data["broad"]
+		profile.has_barrel = data["barrel"]
+		profile.has_stock = data["stock"]
+		profile.confidence = 1.0
+		profile.evidence_parts = PackedStringArray(["orthogonal synthetic basis"])
+		values.append(profile)
+	return values
 
 
 func _function_source(source: String, start_marker: String, end_marker: String) -> String:

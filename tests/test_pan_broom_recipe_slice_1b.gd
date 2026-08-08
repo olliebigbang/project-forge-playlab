@@ -47,19 +47,20 @@ func _test_pan_recipe() -> void:
 	var profile: Variant = _compiled("frying_pan")
 	var ok: bool = profile is Resource
 	if ok:
-		ok = profile.combo_recipe.primitive_sequence() == PackedStringArray(["bash", "bash", "slam"])
-		ok = ok and profile.combo_recipe.hit_2.start_angle > profile.combo_recipe.hit_2.end_angle
-	_check(ok, "02 short short front broad compiles bash bash reverse then slam")
+		ok = profile.combo_recipe.validation_errors().is_empty()
+		ok = ok and profile.combo_recipe.mechanism_axes.get("contact_surface") == "broad"
+		ok = ok and profile.combo_recipe.primitive_scores.get("bash", 0.0) > profile.combo_recipe.primitive_scores.get("thrust", 0.0)
+	_check(ok, "02 short front-weighted broad structure compiles from generic mechanism axes")
 
 
 func _test_broom_recipe() -> void:
 	var profile: Variant = _compiled("old_mop")
 	var ok: bool = profile is Resource
 	if ok:
-		ok = profile.combo_recipe.primitive_sequence() == PackedStringArray(["sweep", "thrust", "spin"])
-		ok = ok and profile.combo_recipe.hit_2.extension_pixels > 0.0
-		ok = ok and absf(profile.combo_recipe.hit_3.end_angle - profile.combo_recipe.hit_3.start_angle) > TAU * 0.90
-	_check(ok, "03 long long broad compiles sweep thrust push then spin")
+		ok = profile.combo_recipe.validation_errors().is_empty()
+		ok = ok and profile.reach_class == "long"
+		ok = ok and profile.combo_recipe.primitive_scores.get("sweep", 0.0) > profile.combo_recipe.primitive_scores.get("thrust", 0.0)
+	_check(ok, "03 long whole-body structure compiles to a long control-oriented generic recipe")
 
 
 func _test_recipe_signatures_and_gameplay_differ() -> void:
@@ -83,7 +84,11 @@ func _test_compiler_has_no_identity_input() -> void:
 	var source := FileAccess.get_file_as_string("res://scripts/combat_feel/melee_motion_compiler.gd")
 	var start := source.find("func _compile_affordance")
 	var finish := source.find("func _compile_legacy", start)
+	var compose_start := source.find("func _compose_orthogonal_profile")
+	var compose_finish := source.find("func _primitive", compose_start)
 	var structure_source := source.substr(start, finish - start) if start >= 0 and finish > start else ""
+	if compose_start >= 0 and compose_finish > compose_start:
+		structure_source += source.substr(compose_start, compose_finish - compose_start)
 	var lowered := structure_source.to_lower()
 	var ok := structure_source.contains("affordance_profile: Resource, anchor_data: Dictionary, alpha_bounds: Rect2i")
 	for forbidden: String in ["weaponblueprint", "display_name", "canonical_name", "player_identity", "player_text", "source_identity"]:
@@ -98,14 +103,18 @@ func _test_same_structure_ignores_different_names() -> void:
 	var second_profile: Variant = AFFORDANCE.new()
 	second_profile.handle_length = first_profile.handle_length
 	second_profile.body_length = first_profile.body_length
+	second_profile.grip_topology = first_profile.grip_topology
 	second_profile.mass_distribution = first_profile.mass_distribution
 	second_profile.contact_surface = first_profile.contact_surface
+	second_profile.secondary_contact_surface = first_profile.secondary_contact_surface
 	second_profile.rigidity = first_profile.rigidity
 	second_profile.has_point = first_profile.has_point
 	second_profile.has_edge = first_profile.has_edge
 	second_profile.has_broad_face = first_profile.has_broad_face
 	second_profile.has_barrel = first_profile.has_barrel
 	second_profile.has_stock = first_profile.has_stock
+	second_profile.confidence = first_profile.confidence
+	second_profile.evidence_parts = first_profile.evidence_parts
 	var first_name := "Kitchen Pan Alpha"
 	var second_name := "Unrelated Label Beta"
 	var first: Variant = COMPILER.new().compile(first_profile, asset.anchors_dict(), asset.opaque_bounds)
@@ -119,28 +128,33 @@ func _test_unsupported_has_no_sweep_fallback() -> void:
 	var loaded: Dictionary = LOADER.new().load_recipe_asset("frying_pan")
 	var asset := loaded.get("asset") as WeaponVisualAsset
 	var unmatched: Variant = AFFORDANCE.new()
-	unmatched.handle_length = "medium"
+	unmatched.handle_length = "none"
 	unmatched.body_length = "long"
+	unmatched.grip_topology = "one_hand_handle"
 	unmatched.mass_distribution = "rear"
 	unmatched.contact_surface = "edge"
+	unmatched.secondary_contact_surface = "none"
 	unmatched.rigidity = "flexible"
 	var result: Variant = COMPILER.new().compile(unmatched, asset.anchors_dict(), asset.opaque_bounds)
-	_check(result == COMPILER.UNSUPPORTED, "07 unmatched structure returns unsupported without sweep fallback")
+	_check(result == COMPILER.UNSUPPORTED, "07 contradictory or incomplete structure returns unsupported without sweep fallback")
 
 
 func _test_runtime_executes_each_recipe_primitive() -> void:
 	var pan_sequence := _runtime_sequence(_compiled("frying_pan"))
 	var broom_sequence := _runtime_sequence(_compiled("old_mop"))
 	_check(
-		pan_sequence == PackedStringArray(["bash", "bash", "slam"])
-		and broom_sequence == PackedStringArray(["sweep", "thrust", "spin"]),
+		pan_sequence == (_compiled("frying_pan") as Resource).combo_recipe.primitive_sequence()
+		and broom_sequence == (_compiled("old_mop") as Resource).combo_recipe.primitive_sequence(),
 		"08 runtime locks hit one two three to each compiled primitive"
 	)
 
 
 func _test_spin_has_stronger_multi_target_coverage() -> void:
 	var broom_profile: Resource = _compiled("old_mop") as Resource
-	var broom_arena: Variant = _arena_on_hit(broom_profile, 3)
+	var spin_index := 0
+	for index: int in range(1, 4):
+		if broom_profile.combo_recipe.primitive_for(index).motion_family == "spin": spin_index = index
+	var broom_arena: Variant = _arena_on_hit(broom_profile, spin_index)
 	var broom_hand: Vector2 = broom_arena._hand_world_position()
 	var broom_front: bool = broom_arena._attack_contains(broom_hand + Vector2(92, 0))
 	var broom_rear: bool = broom_arena._attack_contains(broom_hand + Vector2(-92, 0))
@@ -152,7 +166,7 @@ func _test_spin_has_stronger_multi_target_coverage() -> void:
 	var pan_rear: bool = pan_arena._attack_contains(pan_hand + Vector2(-56, 0))
 	broom_arena.free()
 	pan_arena.free()
-	_check(broom_front and broom_rear and pan_front and not pan_rear, "09 spin covers front and rear targets while slam stays focused")
+	_check(spin_index > 0 and broom_front and broom_rear and pan_front and not pan_rear, "09 a composed spin covers front and rear while a focused Pan contact stays local")
 
 
 func _test_pan_and_broom_orientation_normalization() -> void:

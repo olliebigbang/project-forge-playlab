@@ -1,12 +1,16 @@
 {
   "handle_length": "long",
   "body_length": "long",
+  "grip_topology": "two_hand_handle",
   "rigidity": "semi_rigid",
   "mass_distribution": "front",
   "contact_surface": "whole_body",
+  "secondary_contact_surface": "broad",
   "has_point": false,
   "has_edge": false,
   "has_broad_face": true,
   "has_barrel": false,
-  "has_stock": false
+  "has_stock": false,
+  "confidence": 1.0,
+  "evidence_parts": ["long shaft", "broad mop head", "two-hand grip span"]
 }

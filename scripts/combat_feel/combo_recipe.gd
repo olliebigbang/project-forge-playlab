@@ -7,6 +7,8 @@ extends Resource
 @export var charge_attack: Resource
 @export var dodge_attack: Resource
 @export var compile_reason := ""
+@export var mechanism_axes: Dictionary = {}
+@export var primitive_scores: Dictionary = {}
 var recipe_signature: String:
 	get:
 		return signature()
@@ -89,6 +91,11 @@ func validation_errors() -> Array[String]:
 			errors.append("%s_%s" % [str(entry["name"]), error])
 	if compile_reason.is_empty():
 		errors.append("MISSING_COMPILE_REASON")
+	if compile_reason.begins_with("orthogonal affordance composition"):
+		if mechanism_axes.is_empty():
+			errors.append("MISSING_MECHANISM_AXES")
+		if primitive_scores.is_empty():
+			errors.append("MISSING_PRIMITIVE_SCORES")
 	return errors
 
 
@@ -104,4 +111,6 @@ func to_dict() -> Dictionary:
 		"dodge_attack": dodge_attack.to_dict() if dodge_attack != null else null,
 		"recipe_signature": signature(),
 		"compile_reason": compile_reason,
+		"mechanism_axes": mechanism_axes.duplicate(true),
+		"primitive_scores": primitive_scores.duplicate(true),
 	}

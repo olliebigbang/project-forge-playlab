@@ -17,7 +17,7 @@
         "processed_sprite.png": "98a07ae3680cc84f6b023923283384884677cb27c447f59ec79eda581029fcf1",
         "semantic_blueprint.json": "929c477585c946c75f09d7829bd21ccb77cd43647d85528019a087b2eaefe04c",
         "anchors.json": "08eb8193ec33393df2c6db260ef879bb6ad47e8745072dcbced71eee90a0e75b",
-        "object_affordance_profile.json": "9e48fba3b54b4d0767929df70e814ea2aa7d1145d6da5bdbd85941d93260529f",
+        "object_affordance_profile.json": "2e1cdaaca32ef46c3f321e1304f862cbbcfedaa4ba3288c94304f671e6c262bd",
         "open_playtest_round.json": "16cb68398043599fe328a79c5cbd648c1e66687530813afea0a1fbd5e875fe39"
       }
     },
@@ -36,7 +36,7 @@
         "processed_sprite.png": "97ee2a79673c429de3a36a9940a60a1dfe18b1361d34afb38bee9c3fb9136481",
         "semantic_blueprint.json": "d9acd664878436e7ad7877ef979ff227032ad4a2b008cd90f30b4280f1e12d0d",
         "anchors.json": "1f42cace02d28201b28a335cad79daa57917a6fa4c08f56132afccf14d7fbdce",
-        "object_affordance_profile.json": "4157464194ce5427f465fa9d8b653989e91a1d66506bfa24cf6c837ce901446c",
+        "object_affordance_profile.json": "b2d97e0efa4bd464b2525080aa76f022eb5e86e7ffb87faccce2bb763ace62e3",
         "open_playtest_round.json": "7b1aa6ae56c489eb96be9fe7588f6cd9b7c7ab12cbe98c53f335bd4c176a150d"
       }
     }

@@ -18,6 +18,9 @@ const GRIP_MODES: PackedStringArray = ["one_hand", "two_hand", "center"]
 @export var charge_style := "wide_commitment"
 @export var dodge_attack_style := "advancing_strike"
 @export var combo_recipe: Resource
+@export var mechanism_axes: Dictionary = {}
+@export var primitive_scores: Dictionary = {}
+@export var compile_trace: Dictionary = {}
 
 # Slice-only starting values. They stay centralized instead of being spread
 # through player, enemy, or fixture-specific scripts.
@@ -111,6 +114,9 @@ func to_dict() -> Dictionary:
 		"reach_class": reach_class, "tempo": tempo, "contact_mode": contact_mode,
 		"grip_mode": grip_mode, "combo_style": combo_style,
 		"charge_style": charge_style, "dodge_attack_style": dodge_attack_style,
+		"mechanism_axes": mechanism_axes.duplicate(true),
+		"primitive_scores": primitive_scores.duplicate(true),
+		"compile_trace": compile_trace.duplicate(true),
 		"combo_recipe": recipe.to_dict() if recipe != null else null,
 		"startup": startup_seconds, "active": active_seconds,
 		"recovery": recovery_seconds, "combo_window": combo_window_seconds,

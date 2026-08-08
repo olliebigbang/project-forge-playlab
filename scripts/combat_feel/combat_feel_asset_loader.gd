@@ -175,17 +175,31 @@ func load_frozen_live(asset_id: String) -> Dictionary:
 		loaded["source_kind"] = str(entry.get("source_kind", "frozen_live"))
 		loaded["source_run_id"] = str(entry.get("source_run_id", ""))
 		loaded["notice"] = str(index.get("notice", "FROZEN REAL LIVE FORGE RESULT"))
+		var affordance_profile := _affordance_profile_from_dict(_read_json(str(entry.get("affordance_profile", ""))))
+		if affordance_profile == null:
+			return {"ok": false, "error": "LIVE_AFFORDANCE_PROFILE_INVALID:%s" % asset_id}
+		loaded["affordance_profile"] = affordance_profile
 		return loaded
 	return {"ok": false, "error": "FROZEN_LIVE_ASSET_NOT_FOUND:%s" % asset_id}
 
-func load_open_playtest_round(round_directory: String) -> Dictionary:
+func load_open_playtest_round(round_directory: String, require_affordance_grammar: bool = false) -> Dictionary:
 	if round_directory.is_empty():
 		return {"ok": false, "error": "OPEN_PLAYTEST_ROUND_PATH_REQUIRED"}
-	return load_live(
+	var loaded := load_live(
 		round_directory.path_join("processed_sprite.png"),
 		round_directory.path_join("semantic_blueprint.json"),
 		round_directory.path_join("anchors.json")
 	)
+	if not bool(loaded.get("ok", false)):
+		return loaded
+	var affordance_path := round_directory.path_join("object_affordance_profile.json")
+	if not FileAccess.file_exists(affordance_path):
+		return {"ok": false, "error": "AFFORDANCE_NOT_READY"} if require_affordance_grammar else loaded
+	var affordance_profile := _affordance_profile_from_dict(_read_json(affordance_path))
+	if affordance_profile == null:
+		return {"ok": false, "error": "AFFORDANCE_CONTRACT_INVALID"}
+	loaded["affordance_profile"] = affordance_profile
+	return loaded
 
 func load_fixture(fixture_id: String) -> Dictionary:
 	var data := _read_json(FIXTURE_PATH)
@@ -357,6 +371,7 @@ func _verify_entry_hashes(entry: Dictionary) -> String:
 		"processed_sprite.png": str(entry.get("sprite", "")),
 		"semantic_blueprint.json": str(entry.get("blueprint", "")),
 		"anchors.json": str(entry.get("anchors", "")),
+		"object_affordance_profile.json": str(entry.get("affordance_profile", "")),
 		"result_manifest.json": str(entry.get("manifest", "")),
 	}
 	for filename: String in paths:
@@ -425,29 +440,50 @@ func _verify_override_source_hashes(override: Dictionary) -> String:
 	return ""
 
 func _affordance_profile_from_dict(data: Dictionary) -> Resource:
+	var required_fields := [
+		"handle_length", "body_length", "grip_topology", "mass_distribution",
+		"contact_surface", "secondary_contact_surface", "rigidity", "has_point",
+		"has_edge", "has_broad_face", "has_barrel", "has_stock", "confidence",
+		"evidence_parts",
+	]
+	for field: String in required_fields:
+		if not data.has(field):
+			return null
 	var handle_length := str(data.get("handle_length", ""))
 	var body_length := str(data.get("body_length", ""))
+	var grip_topology := str(data.get("grip_topology", ""))
 	var mass_distribution := str(data.get("mass_distribution", ""))
 	var contact_surface := str(data.get("contact_surface", ""))
+	var secondary_contact_surface := str(data.get("secondary_contact_surface", ""))
 	var rigidity := str(data.get("rigidity", ""))
-	if handle_length not in ["short", "medium", "long"] \
+	var confidence := float(data.get("confidence", -1.0))
+	var evidence_value: Variant = data.get("evidence_parts", [])
+	if handle_length not in ["none", "short", "medium", "long"] \
 		or body_length not in ["short", "medium", "long"] \
+		or grip_topology not in ["one_hand_handle", "two_hand_handle", "body_grip", "clamp_grip"] \
 		or mass_distribution not in ["rear", "balanced", "front"] \
 		or contact_surface not in ["point", "edge", "broad", "whole_body"] \
-		or rigidity not in ["rigid", "semi_rigid", "flexible"]:
+		or secondary_contact_surface not in ["none", "point", "edge", "broad", "whole_body"] \
+		or rigidity not in ["rigid", "semi_rigid", "flexible"] \
+		or confidence < 0.65 or confidence > 1.0 \
+		or not evidence_value is Array or (evidence_value as Array).is_empty():
 		return null
 	var profile: Variant = AFFORDANCE_PROFILE.new()
 	profile.handle_length = handle_length
 	profile.body_length = body_length
+	profile.grip_topology = grip_topology
 	profile.mass_distribution = mass_distribution
 	profile.contact_surface = contact_surface
+	profile.secondary_contact_surface = secondary_contact_surface
 	profile.rigidity = rigidity
-	profile.has_point = bool(data.get("has_point", contact_surface == "point"))
-	profile.has_edge = bool(data.get("has_edge", contact_surface == "edge"))
-	profile.has_broad_face = bool(data.get("has_broad_face", contact_surface == "broad"))
-	profile.has_barrel = bool(data.get("has_barrel", false))
-	profile.has_stock = bool(data.get("has_stock", false))
-	return profile
+	profile.has_point = bool(data.get("has_point"))
+	profile.has_edge = bool(data.get("has_edge"))
+	profile.has_broad_face = bool(data.get("has_broad_face"))
+	profile.has_barrel = bool(data.get("has_barrel"))
+	profile.has_stock = bool(data.get("has_stock"))
+	profile.confidence = confidence
+	profile.evidence_parts = PackedStringArray(evidence_value)
+	return null if not profile.validation_errors().is_empty() else profile
 
 func _sha256_file(path: String) -> String:
 	var file := FileAccess.open(path, FileAccess.READ)

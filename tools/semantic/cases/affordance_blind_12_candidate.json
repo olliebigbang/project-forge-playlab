@@ -1,0 +1,20 @@
+{
+  "contract_version": "forge-affordance-blind-12-cases-v1",
+  "semantic_contract_candidate": "forge-semantic-v1.2-candidate",
+  "freeze_policy": "Inputs and structural review concepts are frozen before any future real-model call. Runtime mappings are forbidden.",
+  "case_order": ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10", "A11", "A12"],
+  "cases": [
+    {"case_id": "A01", "prompt_zh": "一把宽刃菜刀，我要拿它近距离连续劈砍敌人。", "identity": "菜刀", "review_parts": ["blade", "handle"]},
+    {"case_id": "A02", "prompt_zh": "一把细长的长剑，我要用剑尖突刺并用剑刃挥砍。", "identity": "长剑", "review_parts": ["long blade", "point", "hilt"]},
+    {"case_id": "A03", "prompt_zh": "一把消防斧，我要握住长柄用斧刃重劈。", "identity": "消防斧", "review_parts": ["axe head", "cutting edge", "long handle"]},
+    {"case_id": "A04", "prompt_zh": "一根长矛，我要双手握住矛杆向前连续突刺。", "identity": "长矛", "review_parts": ["spear point", "long shaft"]},
+    {"case_id": "A05", "prompt_zh": "一把大铁锤，我要握住锤柄用沉重锤头砸击。", "identity": "铁锤", "review_parts": ["hammer head", "handle"]},
+    {"case_id": "A06", "prompt_zh": "一根木制棒球棒，我要双手握住细端大力挥击。", "identity": "棒球棒", "review_parts": ["thick striking end", "tapered grip"]},
+    {"case_id": "A07", "prompt_zh": "一把木椅，我要抓住椅背，把整把椅子当作近战武器。", "identity": "木椅", "review_parts": ["seat", "backrest", "legs"]},
+    {"case_id": "A08", "prompt_zh": "一个灭火器，我要抱住罐体近距离撞击敌人。", "identity": "灭火器", "review_parts": ["cylinder body", "top valve", "hose"]},
+    {"case_id": "A09", "prompt_zh": "一面圆盾，我要抓住背面的握把推撞并拍击敌人。", "identity": "圆盾", "review_parts": ["round shield body", "rear grip"]},
+    {"case_id": "A10", "prompt_zh": "一只巨大鸡腿，我要抓住骨头端用肉质部分重击。", "identity": "巨大鸡腿", "review_parts": ["bone grip", "large meat body"]},
+    {"case_id": "A11", "prompt_zh": "一张折叠凳，我要抓住凳腿用整个凳面砸击。", "identity": "折叠凳", "review_parts": ["seat", "folding legs", "hinges"]},
+    {"case_id": "A12", "prompt_zh": "一根钓鱼竿，我要握住手柄用柔韧长竿横扫。", "identity": "钓鱼竿", "review_parts": ["grip", "flexible rod", "reel"]}
+  ]
+}

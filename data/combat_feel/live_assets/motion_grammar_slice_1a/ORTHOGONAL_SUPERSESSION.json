@@ -1,0 +1,16 @@
+{
+  "contract": "forge-motion-grammar-orthogonal-supersession-v1",
+  "baseline_commit": "8f71566f20e88cf5f45d51345915b31b08984d96",
+  "superseded_conclusion": "TECHNICAL PASS / FEEL PASS (5/5)",
+  "supersession_status": "SUPERSEDED_FOR_ORTHOGONAL_COMPOSER_ACCEPTANCE",
+  "evidence_policy": "Historical files remain byte-for-byte unchanged. This ledger changes only which conclusion governs future acceptance.",
+  "historical_evidence": {
+    "directory": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/evidence/final_blind_20260807T234515908Z",
+    "blind_comparison_result_sha256": "9940ba750078c4aebb556f792826ca6cf79bb68705c838cf51cd3f7bc7e1819d",
+    "blind_run_A_sha256": "2966331f084a61b3719c1f4374e9de5104dacd74f98bcff7e3a717a0706f707f",
+    "blind_run_B_sha256": "6ed3a9646661e216524ca027b73771aa357a1d1e14822cf25e41715ea5741991",
+    "blind_run_C_sha256": "3bf6b9288f8f158c9f2352940f9c665ebf965685a77eb18230d58337bcd479d9",
+    "evidence_hashes_sha256": "ca7471ddf1100afdf6107247873e87140b442a858abc35f6cddc74beba9f8147"
+  },
+  "new_acceptance_state": "OFFLINE TECHNICAL PASS / REAL AI AFFORDANCE VALIDATION PENDING / HUMAN FEEL RETEST PENDING"
+}

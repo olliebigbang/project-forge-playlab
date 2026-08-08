@@ -1,0 +1,22 @@
+{
+  "contract": "forge-affordance-v1.2-candidate-freeze-v1",
+  "status": "OFFLINE_ONLY_REAL_MODEL_CALLS_NOT_AUTHORIZED",
+  "base_semantic_contract": "forge-semantic-v1.1",
+  "base_schema_sha256": "9f404c7894b32a46c8f319ed1a95724fc3e623fa2fec384ce00375d0facb631d",
+  "candidate_extension_schema": "tools/semantic/schema/object_affordance_profile.v1_2_candidate.schema.json",
+  "candidate_extension_schema_sha256": "fa8834e4c91023484210cf5c9f7e290b39e0c3c7624d0f64a79b52f39b3cd1e5",
+  "candidate_blueprint_schema": "tools/semantic/schema/forge_semantic_blueprint.v1_2_candidate.schema.json",
+  "candidate_blueprint_schema_sha256": "5648bd168edab36f35fb6f8efd7ce652a46f0e64f086333c1d20d328ab584ffa",
+  "offline_validator": "tools/semantic/bridge/affordance_contract_v1_2.py",
+  "offline_validator_sha256": "0736cf446bc931defbd4c0038ef93246f9a0bda5b14e8758096cc0fcbd843edf",
+  "blind_cases": "tools/semantic/cases/affordance_blind_12_candidate.json",
+  "blind_cases_sha256": "50a40153ac29c61722e8b281614d7f0239334507fb96ccf1aae220ad4f422529",
+  "call_count": 0,
+  "retry_count": 0,
+  "providers_contacted": [],
+  "promotion_blockers": [
+    "candidate schema has not been validated by a real model run",
+    "12-case affordance-to-combo table is pending",
+    "new human BlindComparison is pending"
+  ]
+}
