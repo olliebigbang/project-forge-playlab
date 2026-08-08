@@ -32,7 +32,7 @@ func _run() -> void:
 	_test_shotgun_entry_is_visible_and_selectable()
 	_test_all_five_primitives_execute_across_real_recipes()
 	_test_charge_and_dodge_execute_recipe_primitives()
-	_test_press_response_and_five_body_poses()
+	_test_press_response_and_visible_articulated_poses()
 	_test_blind_comparison_contract()
 	_test_failed_blind_dimensions_have_clear_margin()
 	_test_rule_c_contact_reliability()
@@ -203,7 +203,7 @@ func _test_charge_and_dodge_execute_recipe_primitives() -> void:
 	_check(charge_ok and dodge_ok, "14 Charge and Dodge execute their compiled Recipe primitives")
 
 
-func _test_press_response_and_five_body_poses() -> void:
+func _test_press_response_and_visible_articulated_poses() -> void:
 	var profile: Resource = _compiled("old_mop") as Resource
 	var controller: Variant = CONTROLLER.new(); controller.configure(profile)
 	controller.press_attack()
@@ -213,16 +213,50 @@ func _test_press_response_and_five_body_poses() -> void:
 	arena.controller = controller
 	arena.player_facing = 1.0
 	var pose_signatures: Dictionary = {}
+	var visible_amplitude := true
 	for family: String in PRIMITIVE.MOTION_FAMILIES:
 		var primitive: Variant = PRIMITIVE.new()
 		primitive.motion_family = family
 		controller.current_primitive = primitive
 		controller.phase = "active"
 		controller.phase_duration = 1.0
-		controller.phase_elapsed = 0.5
-		pose_signatures[JSON.stringify(arena._character_pose())] = true
+		controller.phase_elapsed = 0.55
+		var pose: Dictionary = arena._character_pose()
+		pose_signatures[JSON.stringify(pose)] = true
+		match family:
+			"sweep":
+				visible_amplitude = visible_amplitude and absf(float(pose["torso_rotation"])) >= 0.35
+				visible_amplitude = visible_amplitude and Vector2(pose["main_elbow_local"]).x >= 20.0
+			"bash":
+				visible_amplitude = visible_amplitude and Vector2(pose["body_offset"]).x >= 12.0
+				visible_amplitude = visible_amplitude and Vector2(pose["hand_local"]).x >= 31.0
+			"thrust":
+				visible_amplitude = visible_amplitude and Vector2(pose["hand_local"]).x >= 38.0
+				visible_amplitude = visible_amplitude and Vector2(pose["front_foot_local"]).x >= 20.0
+			"spin":
+				visible_amplitude = visible_amplitude and absf(float(pose["torso_rotation"])) >= 0.55
+				visible_amplitude = visible_amplitude and float(pose["crouch"]) >= 8.0
+	controller.current_primitive = PRIMITIVE.new()
+	controller.current_primitive.motion_family = "slam"
+	controller.phase = "startup"
+	controller.phase_duration = 1.0
+	controller.phase_elapsed = 0.70
+	var slam_windup: Dictionary = arena._character_pose()
+	controller.phase = "active"
+	controller.phase_elapsed = 0.55
+	var slam_contact: Dictionary = arena._character_pose()
+	visible_amplitude = visible_amplitude and Vector2(slam_windup["hand_local"]).y <= -38.0
+	visible_amplitude = visible_amplitude and Vector2(slam_contact["hand_local"]).y >= 4.0
+	visible_amplitude = visible_amplitude and float(slam_contact["crouch"]) >= 10.0
+	var slice_source := FileAccess.get_file_as_string(SLICE_PATH)
+	var articulated_render := slice_source.contains("draw_line(main_shoulder, main_elbow")
+	articulated_render = articulated_render and slice_source.contains("draw_line(main_elbow, weapon_origin")
+	articulated_render = articulated_render and slice_source.contains("draw_line(support_shoulder, support_elbow")
+	articulated_render = articulated_render and slice_source.contains("draw_line(support_elbow, second_hand")
+	articulated_render = articulated_render and slice_source.contains("--pose-capture-dir=")
+	articulated_render = articulated_render and slice_source.contains("func _capture_pose_visibility")
 	arena.free()
-	_check(immediate and pose_signatures.size() == 5, "15 press immediately enters startup and all five primitives produce distinct body poses")
+	_check(immediate and pose_signatures.size() == 5 and visible_amplitude and articulated_render, "15 press responds immediately and five primitives drive visibly large torso stance and shoulder-elbow-hand poses")
 
 
 func _test_blind_comparison_contract() -> void:

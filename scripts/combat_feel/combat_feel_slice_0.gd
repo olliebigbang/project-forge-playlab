@@ -7,6 +7,7 @@ const MOTION_COMPILER := preload("res://scripts/combat_feel/melee_motion_compile
 const CONTROLLER := preload("res://scripts/combat_feel/melee_combat_controller.gd")
 const ENEMY := preload("res://scripts/combat_feel/combat_feel_enemy.gd")
 const FEEDBACK := preload("res://scripts/combat_feel/impact_feedback_profile.gd")
+const MOTION_PRIMITIVE := preload("res://scripts/combat_feel/motion_primitive.gd")
 
 var asset_loader: Variant
 var compiler: Variant
@@ -53,6 +54,7 @@ var blind_comparison := false
 var blind_label := ""
 var blind_run_completed := false
 var blind_result_path := ""
+var capture_pose_only := false
 
 var ui_layer: CanvasLayer
 var title_label: Label
@@ -100,7 +102,9 @@ func _ready() -> void:
 	var smoke_seconds := float(_argument_value("--smoke-seconds=", "0"))
 	if smoke_seconds > 0.0: _quit_after(smoke_seconds)
 	var capture_dir := _argument_value("--capture-dir=", "")
-	if not capture_dir.is_empty(): call_deferred("_capture_evidence", capture_dir)
+	var pose_capture_dir := _argument_value("--pose-capture-dir=", "")
+	if not pose_capture_dir.is_empty(): call_deferred("_capture_pose_visibility", pose_capture_dir)
+	elif not capture_dir.is_empty(): call_deferred("_capture_evidence", capture_dir)
 
 
 func _compile_loaded_weapon() -> Variant:
@@ -678,42 +682,97 @@ func _attack_motion_ratio() -> float:
 
 
 func _character_pose() -> Dictionary:
-	var result := {"body_offset": Vector2.ZERO, "hand_offset": Vector2.ZERO, "torso_twist": 0.0, "crouch": 0.0}
+	var result := {
+		"body_offset": Vector2.ZERO,
+		"hand_local": Vector2(20.0, -12.0),
+		"torso_rotation": 0.0,
+		"crouch": 0.0,
+		"head_tilt": 0.0,
+		"main_shoulder_local": Vector2(9.0, -8.0),
+		"main_elbow_local": Vector2(16.0, -5.0),
+		"support_shoulder_local": Vector2(-6.0, -6.0),
+		"support_elbow_local": Vector2(7.0, -1.0),
+		"back_foot_local": Vector2(-9.0, 45.0),
+		"front_foot_local": Vector2(10.0, 45.0),
+	}
 	var primitive: Variant = _current_attack_primitive()
 	if primitive == null:
 		return result
 	var motion_ratio := _attack_motion_ratio()
-	var pulse := sin(motion_ratio * PI)
+	var contact := smoothstep(0.22, 0.62, motion_ratio)
+	var recovery := smoothstep(0.82, 1.0, motion_ratio)
+	var pose_weight := 1.0 - recovery
 	match str(primitive.motion_family):
 		"sweep":
-			result.body_offset = Vector2(4.0 * pulse * player_facing, 0.0)
-			result.hand_offset = Vector2(5.0 * pulse * player_facing, -4.0 * cos(motion_ratio * PI))
-			result.torso_twist = sin(motion_ratio * TAU) * 8.0
+			result.body_offset = Vector2(lerpf(-5.0, 8.0, contact) * player_facing, 0.0)
+			result.hand_local = Vector2(-6.0, -23.0).lerp(Vector2(34.0, -3.0), contact)
+			result.torso_rotation = lerpf(-0.30, 0.42, contact) * player_facing
+			result.head_tilt = result.torso_rotation * 0.45
+			result.main_elbow_local = Vector2(-2.0, -16.0).lerp(Vector2(23.0, 3.0), contact)
+			result.support_elbow_local = Vector2(-9.0, -7.0).lerp(Vector2(15.0, 6.0), contact)
+			result.back_foot_local = Vector2(-17.0, 45.0)
+			result.front_foot_local = Vector2(17.0, 45.0)
 		"bash":
-			result.body_offset = Vector2(7.0 * pulse * player_facing, pulse)
-			result.hand_offset = Vector2(11.0 * pulse * player_facing, pulse)
-			result.torso_twist = 4.0 * pulse * player_facing
+			result.body_offset = Vector2(lerpf(2.0, 15.0, contact) * player_facing, lerpf(0.0, 3.0, contact))
+			result.hand_local = Vector2(10.0, -15.0).lerp(Vector2(34.0, -6.0), contact)
+			result.torso_rotation = lerpf(-0.10, 0.24, contact) * player_facing
+			result.head_tilt = result.torso_rotation * 0.55
+			result.main_elbow_local = Vector2(8.0, -7.0).lerp(Vector2(23.0, -4.0), contact)
+			result.support_elbow_local = Vector2(2.0, -2.0).lerp(Vector2(17.0, 2.0), contact)
+			result.crouch = 3.0 * contact
+			result.back_foot_local = Vector2(-13.0, 45.0)
+			result.front_foot_local = Vector2(15.0, 44.0)
 		"thrust":
-			result.body_offset = Vector2(10.0 * pulse * player_facing, 0.0)
-			result.hand_offset = Vector2(16.0 * pulse * player_facing, 0.0)
-			result.torso_twist = 6.0 * pulse * player_facing
+			result.body_offset = Vector2(lerpf(-2.0, 18.0, contact) * player_facing, 2.0 * contact)
+			result.hand_local = Vector2(8.0, -14.0).lerp(Vector2(43.0, -10.0), contact)
+			result.torso_rotation = lerpf(-0.12, 0.22, contact) * player_facing
+			result.head_tilt = result.torso_rotation * 0.50
+			result.main_elbow_local = Vector2(5.0, -7.0).lerp(Vector2(29.0, -9.0), contact)
+			result.support_elbow_local = Vector2(0.0, -2.0).lerp(Vector2(22.0, -4.0), contact)
+			result.crouch = 3.0 * contact
+			result.back_foot_local = Vector2(-15.0, 45.0)
+			result.front_foot_local = Vector2(24.0, 43.0)
 		"slam":
-			var lift := clampf(1.0 - motion_ratio / 0.30, 0.0, 1.0)
-			var drop := clampf((motion_ratio - 0.30) / 0.52, 0.0, 1.0)
-			result.body_offset = Vector2(4.0 * drop * player_facing, -5.0 * lift + 7.0 * drop)
-			result.hand_offset = Vector2(2.0 * player_facing, -14.0 * lift + 9.0 * drop)
-			result.crouch = 7.0 * drop
+			result.body_offset = Vector2(lerpf(-3.0, 7.0, contact) * player_facing, lerpf(-7.0, 11.0, contact))
+			result.hand_local = Vector2(1.0, -43.0).lerp(Vector2(25.0, 8.0), contact)
+			result.torso_rotation = lerpf(-0.34, 0.38, contact) * player_facing
+			result.head_tilt = result.torso_rotation * 0.60
+			result.main_elbow_local = Vector2(-7.0, -27.0).lerp(Vector2(18.0, -1.0), contact)
+			result.support_elbow_local = Vector2(-13.0, -20.0).lerp(Vector2(10.0, 4.0), contact)
+			result.crouch = 12.0 * contact
+			result.back_foot_local = Vector2(-18.0, 44.0)
+			result.front_foot_local = Vector2(18.0, 44.0)
 		"spin":
-			result.body_offset = Vector2(0.0, 5.0 * pulse)
-			result.hand_offset = Vector2(sin(motion_ratio * TAU) * 8.0 * player_facing, 3.0 * pulse)
-			result.torso_twist = sin(motion_ratio * TAU) * 12.0
-			result.crouch = 5.0 * pulse
+			result.body_offset = Vector2(0.0, lerpf(2.0, 9.0, contact))
+			result.hand_local = Vector2(-25.0, -5.0).lerp(Vector2(31.0, 1.0), contact)
+			result.torso_rotation = lerpf(-0.56, 0.66, contact) * player_facing
+			result.head_tilt = result.torso_rotation * 0.72
+			result.main_elbow_local = Vector2(-17.0, -9.0).lerp(Vector2(22.0, 5.0), contact)
+			result.support_elbow_local = Vector2(-20.0, 2.0).lerp(Vector2(13.0, -8.0), contact)
+			result.crouch = 10.0 * contact
+			result.back_foot_local = Vector2(-21.0, 43.0)
+			result.front_foot_local = Vector2(21.0, 43.0)
+	if pose_weight < 1.0:
+		result.body_offset = Vector2(result.body_offset) * pose_weight
+		result.hand_local = Vector2(20.0, -12.0).lerp(Vector2(result.hand_local), pose_weight)
+		result.torso_rotation = float(result.torso_rotation) * pose_weight
+		result.crouch = float(result.crouch) * pose_weight
+		result.head_tilt = float(result.head_tilt) * pose_weight
+		result.main_elbow_local = Vector2(16.0, -5.0).lerp(Vector2(result.main_elbow_local), pose_weight)
+		result.support_elbow_local = Vector2(7.0, -1.0).lerp(Vector2(result.support_elbow_local), pose_weight)
+		result.back_foot_local = Vector2(-9.0, 45.0).lerp(Vector2(result.back_foot_local), pose_weight)
+		result.front_foot_local = Vector2(10.0, 45.0).lerp(Vector2(result.front_foot_local), pose_weight)
 	return result
 
 
 func _hand_world_position() -> Vector2:
 	var character_pose := _character_pose()
-	return player_position + Vector2(20.0 * player_facing, -12.0) + Vector2(character_pose["body_offset"]) + Vector2(character_pose["hand_offset"])
+	var base := player_position + Vector2(character_pose["body_offset"])
+	return _pose_local_point(base, Vector2(character_pose["hand_local"]), float(character_pose["torso_rotation"]) * 0.35)
+
+
+func _pose_local_point(base: Vector2, local_point: Vector2, rotation: float = 0.0) -> Vector2:
+	return base + Vector2(local_point.x * player_facing, local_point.y).rotated(rotation)
 
 
 func _weapon_pose() -> Dictionary:
@@ -768,7 +827,7 @@ func _draw() -> void:
 			var spark_pos := Vector2(particle["pos"])
 			var velocity := Vector2(particle["vel"])
 			draw_line(spark_pos, spark_pos - velocity.normalized() * float(particle["size"]) * 2.4, Color(particle["color"]), float(particle["size"]))
-	if motion_profile != null and controller.phase == "active": _draw_active_hitbox()
+	if motion_profile != null and controller.phase == "active" and not capture_pose_only: _draw_active_hitbox()
 
 func _draw_player() -> void:
 	if asset == null: return
@@ -776,29 +835,58 @@ func _draw_player() -> void:
 	var run_bob := sin(elapsed_seconds * 12.0) * 2.0 if Input.get_vector("move_left", "move_right", "move_up", "move_down").length() > 0.1 else 0.0
 	var character_pose := _character_pose()
 	var body_offset: Vector2 = character_pose["body_offset"]
-	var torso_twist: float = float(character_pose["torso_twist"])
+	var torso_rotation: float = float(character_pose["torso_rotation"])
 	var crouch: float = float(character_pose["crouch"])
 	var base := player_position + Vector2(0, run_bob) + body_offset
-	draw_circle(base + Vector2(0, -29), 13.0, Color("e4c8a8"))
-	draw_colored_polygon(PackedVector2Array([
-		base + Vector2(-16 + torso_twist * 0.35, -15 + crouch * 0.30),
-		base + Vector2(14 + torso_twist * 0.35, -15 + crouch * 0.30),
-		base + Vector2(20 - torso_twist * 0.25, 25 + crouch),
-		base + Vector2(-18 - torso_twist * 0.25, 25 + crouch),
-	]), hurt_color)
-	draw_colored_polygon(PackedVector2Array([base + Vector2(-16, -20), base + Vector2(4, -45), base + Vector2(16, -22)]), Color("d3843e"))
-	draw_circle(base + Vector2(7 * player_facing, -31), 4.0, Color("b8f4ee"))
-	var leg_spread := 7.0 if controller.dodge_motion_seconds <= 0.0 else 14.0
-	draw_line(base + Vector2(-7, 22 + crouch), base + Vector2(-leg_spread - torso_twist * 0.20, 45), Color("7f93a2"), 8.0)
-	draw_line(base + Vector2(7, 22 + crouch), base + Vector2(leg_spread + torso_twist * 0.20, 45), Color("7f93a2"), 8.0)
-	var hand := _hand_world_position()
+	var back_foot_local: Vector2 = character_pose["back_foot_local"]
+	var front_foot_local: Vector2 = character_pose["front_foot_local"]
+	if controller.dodge_motion_seconds > 0.0:
+		back_foot_local.x -= 7.0
+		front_foot_local.x += 7.0
+	var back_hip := _pose_local_point(base, Vector2(-7.0, 21.0 + crouch * 0.45), torso_rotation * 0.30)
+	var front_hip := _pose_local_point(base, Vector2(7.0, 21.0 + crouch * 0.45), torso_rotation * 0.30)
+	var back_foot := _pose_local_point(base, back_foot_local)
+	var front_foot := _pose_local_point(base, front_foot_local)
+	draw_line(back_hip, back_foot, Color("7f93a2"), 8.0)
+	draw_line(front_hip, front_foot, Color("7f93a2"), 8.0)
+
+	var hand := _hand_world_position() + Vector2(0.0, run_bob)
 	var pose := _weapon_pose()
 	var local_offset: Vector2 = pose.get("local_offset", Vector2.ZERO)
 	var weapon_origin := hand + Vector2(float(pose["extension"]) * player_facing + local_offset.x * player_facing, local_offset.y)
 	var secondary_delta: Vector2 = Vector2((asset.grip_secondary.x - asset.grip_primary.x) * player_facing, asset.grip_secondary.y - asset.grip_primary.y) * motion_profile.render_scale
 	var second_hand: Vector2 = weapon_origin + secondary_delta.rotated(float(pose["angle"]))
-	draw_line(base + Vector2((8.0 + torso_twist * 0.25) * player_facing, -8 + crouch * 0.35), weapon_origin, Color("e4c8a8"), 7.0)
-	if motion_profile.grip_mode == "two_hand": draw_line(base + Vector2((-5.0 + torso_twist * 0.20) * player_facing, -6 + crouch * 0.35), second_hand, Color("e4c8a8"), 7.0)
+	var main_shoulder := _pose_local_point(base, Vector2(character_pose["main_shoulder_local"]) + Vector2(0.0, crouch * 0.28), torso_rotation)
+	var main_elbow := _pose_local_point(base, Vector2(character_pose["main_elbow_local"]) + Vector2(0.0, crouch * 0.24), torso_rotation * 0.55)
+	var support_shoulder := _pose_local_point(base, Vector2(character_pose["support_shoulder_local"]) + Vector2(0.0, crouch * 0.28), torso_rotation)
+	var support_elbow := _pose_local_point(base, Vector2(character_pose["support_elbow_local"]) + Vector2(0.0, crouch * 0.24), torso_rotation * 0.45)
+	if motion_profile.grip_mode == "two_hand":
+		draw_line(support_shoulder, support_elbow, Color("d7b994"), 7.0)
+		draw_line(support_elbow, second_hand, Color("e4c8a8"), 7.0)
+		draw_circle(support_elbow, 4.0, Color("e4c8a8"))
+
+	var torso_points := PackedVector2Array([
+		_pose_local_point(base, Vector2(-16.0, -15.0 + crouch * 0.24), torso_rotation),
+		_pose_local_point(base, Vector2(14.0, -15.0 + crouch * 0.24), torso_rotation),
+		_pose_local_point(base, Vector2(19.0, 25.0 + crouch), torso_rotation * 0.35),
+		_pose_local_point(base, Vector2(-18.0, 25.0 + crouch), torso_rotation * 0.35),
+	])
+	draw_colored_polygon(torso_points, hurt_color)
+
+	var head_tilt: float = float(character_pose["head_tilt"])
+	var head_center := _pose_local_point(base, Vector2(0.0, -30.0 + crouch * 0.16), torso_rotation * 0.42)
+	draw_circle(head_center, 13.0, Color("e4c8a8"))
+	draw_colored_polygon(PackedVector2Array([
+		head_center + Vector2(-16.0, 9.0).rotated(head_tilt),
+		head_center + Vector2(4.0, -16.0).rotated(head_tilt),
+		head_center + Vector2(16.0, 7.0).rotated(head_tilt),
+	]), Color("d3843e"))
+	draw_circle(head_center + Vector2(7.0 * player_facing, -2.0).rotated(head_tilt), 4.0, Color("b8f4ee"))
+
+	draw_line(main_shoulder, main_elbow, Color("d7b994"), 7.0)
+	draw_line(main_elbow, weapon_origin, Color("e4c8a8"), 7.0)
+	draw_circle(main_shoulder, 4.0, Color("d7b994"))
+	draw_circle(main_elbow, 4.5, Color("e4c8a8"))
 	draw_set_transform(weapon_origin, float(pose["angle"]), Vector2(player_facing * motion_profile.render_scale, motion_profile.render_scale))
 	draw_texture_rect(asset.texture, Rect2(-asset.grip_primary, Vector2(asset.canvas_size)), false)
 	draw_set_transform(Vector2.ZERO)
@@ -891,6 +979,49 @@ func _capture_evidence(directory: String) -> void:
 	capture_caption = "Third-hit finisher"; await _capture_frame(directory.path_join("third_hit_feedback.png"))
 	_cleanup_enemies(); particles.clear(); controller.phase = "idle"; capture_comparison = true; capture_caption = "Frozen real Live Forge weapon handoff"
 	await _capture_frame(directory.path_join("real_weapon_comparison.png"))
+	get_tree().quit()
+
+
+func _capture_pose_visibility(directory: String) -> void:
+	game_active = false
+	capture_pose_only = true
+	var directory_error := DirAccess.make_dir_recursive_absolute(directory)
+	if directory_error != OK:
+		push_error("COMBAT_FEEL_POSE_CAPTURE_DIRECTORY_FAILED:%s:%s" % [directory, error_string(directory_error)])
+		get_tree().quit(1)
+		return
+	_cleanup_enemies()
+	player_position = Vector2(640.0, 410.0)
+	player_facing = 1.0
+	var pose_specs := {
+		"sweep": Vector3(-1.35, 1.15, 12.0),
+		"bash": Vector3(-0.74, 0.32, 18.0),
+		"thrust": Vector3(-0.06, -0.06, 36.0),
+		"slam": Vector3(-1.78, 1.05, 16.0),
+		"spin": Vector3(-2.85, 3.25, 20.0),
+	}
+	for family: String in ["sweep", "bash", "thrust", "slam", "spin"]:
+		var primitive: Variant = MOTION_PRIMITIVE.new()
+		var spec: Vector3 = pose_specs[family]
+		primitive.motion_family = family
+		primitive.start_angle = spec.x
+		primitive.end_angle = spec.y
+		primitive.extension_pixels = spec.z
+		controller.attack_kind = "normal"
+		controller.combo_index = 1
+		controller.current_primitive = primitive
+		controller.phase = "startup"
+		controller.phase_duration = 1.0
+		controller.phase_elapsed = 0.70
+		capture_caption = "%s — visible windup pose" % family.to_upper()
+		await _capture_frame(directory.path_join("%s_windup.png" % family))
+		controller.phase = "active"
+		controller.phase_duration = 1.0
+		controller.phase_elapsed = 0.55
+		capture_caption = "%s — visible contact pose" % family.to_upper()
+		await _capture_frame(directory.path_join("%s_contact.png" % family))
+	controller.phase = "idle"
+	controller.current_primitive = null
 	get_tree().quit()
 
 func _capture_frame(path: String) -> void:

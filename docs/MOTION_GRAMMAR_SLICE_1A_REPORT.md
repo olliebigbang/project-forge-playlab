@@ -1,6 +1,6 @@
 # Forge Motion Grammar Slice 1A — Per-Hit Combo Recipes
 
-Status: **TECHNICAL PASS / FEEL PASS**
+Status: **COMBO GRAMMAR TECHNICAL PASS / WEAPON FEEL PASS / CHARACTER POSE VISIBILITY PENDING HUMAN CHECK**
 
 This is the bounded Motion Grammar Slice 1A result. The technical chain is complete, but the randomized human comparison scored 2/5. The Slice therefore does not pass its feel gate and does not claim that the melee reskin problem is solved.
 
@@ -65,6 +65,21 @@ The existing part-based player now has minimum procedural participation for all 
 - `spin`: body rotation and lowered center of mass.
 
 These are procedural test poses, not production frame animation.
+
+### Character Pose Visibility Revision
+
+The first implementation changed pose values, but the visible body displacement at gameplay scale was too small and the arms were still rendered as single shoulder-to-hand lines. The player correctly rejected that as insufficient evidence for section 9.
+
+The bounded revision keeps the same combat controller and procedural renderer, but now:
+
+- renders main and support arms as articulated shoulder-elbow-hand chains;
+- applies visible torso rotation, head follow, stance width, stepping, forward lean, and crouch;
+- gives `slam` separate raised windup and dropped contact silhouettes;
+- gives `sweep`, `bash`, `thrust`, and `spin` visibly different torso, arm, and foot placement;
+- provides a deterministic `--pose-capture-dir` evidence mode with windup/contact frames for all five primitives;
+- tests minimum visible pose amplitude instead of accepting five merely different dictionaries.
+
+This revision does not alter Recipe selection, timing data, collision rules, damage, feedback tuning, enemies, rooms, or model pipelines. Automated pose evidence is available, but the status remains **CHARACTER POSE VISIBILITY PENDING HUMAN CHECK** until the revised live animation is viewed by the player.
 
 ## Direction normalization
 
@@ -216,6 +231,7 @@ The exact final comparison record and its three A/B/C run records are frozen und
 - Pan/Mop Recipe and orientation tests: **11/11 passed**.
 - Motion Grammar Slice 1A tests: **19/19 passed**.
 - Playlab deterministic baseline: **32/32 passed**.
+- Character pose visibility captures: **10/10 windup/contact PNGs generated for five primitives**.
 - Legacy, Pan, Mop, and ShotgunMelee scene smoke launches: **passed**.
 - Human BlindComparison: **initial 2/5, bounded-tuning retest 3/5, final contact-reliability retest 5/5; FEEL PASS**.
 - `git diff --check`: **passed**.
@@ -226,10 +242,10 @@ The exact final comparison record and its three A/B/C run records are frozen und
 
 Remaining risks:
 
-- procedural body poses may still be too subtle at gameplay scale;
+- the revised procedural body poses have automated amplitude and screenshot evidence but still require live human visibility confirmation;
 - the three Recipes can be numerically different yet still feel similar;
 - the five-question result can be affected by enemy spacing and player execution;
 - the Slice uses developer-authored Affordance sidecars, not a production authoring path;
 - the Shotgun melee intent remains a developer-only test override.
 
-The final unchanged three-asset BlindComparison passed at 5/5 with all qualitative confirmations. Motion Grammar Slice 1A is complete at **TECHNICAL PASS / FEEL PASS**. Development stops here; the remaining risks above belong to separately approved future work.
+The final unchanged three-asset BlindComparison passed at 5/5 with all qualitative weapon confirmations. Combo Grammar remains **TECHNICAL PASS** and weapon differentiation remains **FEEL PASS**. Character pose visibility is a separately tracked **PENDING HUMAN CHECK** item after the bounded visibility revision; no broader development is authorized.
