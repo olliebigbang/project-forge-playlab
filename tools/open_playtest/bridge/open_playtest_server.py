@@ -13,7 +13,12 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Mapping
 
-from open_playtest_session import OPEN_CONTRACT, OpenPlaytestSession, evidence_hashes
+from open_playtest_session import (
+    OPEN_CONTRACT,
+    SEMANTIC_MODES,
+    OpenPlaytestSession,
+    evidence_hashes,
+)
 
 import live_orchestrator as live
 
@@ -121,6 +126,7 @@ def main() -> int:
     parser.add_argument("--session-id", required=True)
     parser.add_argument("--preflight-file", type=Path, required=True)
     parser.add_argument("--config-file", type=Path, required=True)
+    parser.add_argument("--semantic-mode", choices=sorted(SEMANTIC_MODES), default="v1_1")
     parser.add_argument("--port", type=int, default=8771)
     args = parser.parse_args()
     if not re.fullmatch(r"open-[a-z0-9-]{8,80}", args.session_id):
@@ -137,6 +143,7 @@ def main() -> int:
             session_id=args.session_id,
             preflight_file=args.preflight_file,
             config_file=args.config_file,
+            semantic_mode=args.semantic_mode,
         )
         server = OpenPlaytestServer(("127.0.0.1", args.port), session)
     except (OSError, ValueError, live.LivePipelineError) as exc:
@@ -148,6 +155,8 @@ def main() -> int:
         "session_id": args.session_id,
         "listen": f"127.0.0.1:{args.port}",
         "mock_fallback": False,
+        "semantic_mode": args.semantic_mode,
+        "semantic_contract": session.semantic_contract,
     }, ensure_ascii=False), flush=True)
     try:
         server.serve_forever(poll_interval=0.25)

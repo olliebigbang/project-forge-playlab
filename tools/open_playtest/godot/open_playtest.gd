@@ -36,6 +36,8 @@ const RESUMABLE_STAGES: Array[String] = [
 
 var bridge_base := ""
 var session_id := ""
+var semantic_mode := ""
+var semantic_contract := ""
 var current_round_id := ""
 var revision := 0
 var current_input := ""
@@ -91,7 +93,8 @@ func _ready() -> void:
 		return
 	bridge_base = _argument_value(arguments, "--open-bridge=", "")
 	session_id = _argument_value(arguments, "--open-session=", "")
-	if bridge_base != EXPECTED_BRIDGE or session_id.is_empty():
+	semantic_mode = _argument_value(arguments, "--open-semantic-mode=", "")
+	if bridge_base != EXPECTED_BRIDGE or session_id.is_empty() or semantic_mode not in ["v1_1", "affordance_v1_2_1"]:
 		_show_fatal("Open Playtest 启动参数无效；没有调用任何模型。")
 		return
 	_show_wait("正在验证本地试玩桥接层……")
@@ -100,9 +103,11 @@ func _ready() -> void:
 		_show_fatal("本地试玩桥接层不可用：%s" % str(health.get("failure_reason", "HEALTH_FAILED")))
 		return
 	var body: Dictionary = health["body"]
-	if str(body.get("session_id", "")) != session_id or bool(body.get("mock_fallback", true)):
+	var expected_contract := "forge-semantic-v1.2.1-candidate" if semantic_mode == "affordance_v1_2_1" else "forge-semantic-v1.1"
+	if str(body.get("session_id", "")) != session_id or bool(body.get("mock_fallback", true)) or str(body.get("semantic_mode", "")) != semantic_mode or str(body.get("semantic_contract", "")) != expected_contract:
 		_show_fatal("试玩会话边界验证失败；未使用 Mock 回退。")
 		return
+	semantic_contract = str(body.get("semantic_contract", ""))
 	_show_intro()
 
 
@@ -130,6 +135,7 @@ func _show_intro() -> void:
 	var box := _vbox(_panel(), 100, 55, 1080, 650)
 	box.add_child(_title("Forge Open Playtest Mode"))
 	box.add_child(_label("开放中文输入 → Claude → FLUX.2 Klein 4B → BiRefNet → 96×96 → 玩家确认 → 训练区", 21, Color("67e8f9")))
+	box.add_child(_label(_semantic_mode_label(), 20, Color("a7f3d0") if semantic_mode == "affordance_v1_2_1" else Color("94a3b8")))
 	box.add_child(_label("当前是实验版试玩模式：\n• 图像与基础攻击可验证\n• 数值、完整特效、敌人平衡和正式玩法尚未完成", 22, Color("fbbf24")))
 	box.add_child(_label("边界：只进入训练区；不接入战斗房间；不启用草图；失败不重试，也不会自动回退 Mock。", 19))
 	box.add_child(_label("当前 Provider：Claude / FLUX.2 Klein 4B / BiRefNet\n默认玩家模式仍为：MOCK", 19, Color("94a3b8")))
@@ -156,6 +162,7 @@ func _show_forge_screen(clear_input: bool) -> void:
 	columns.add_child(left)
 	left.add_child(_title("OPEN PLAYTEST MODE"))
 	left.add_child(_label("Provider：Claude / FLUX.2 Klein 4B / BiRefNet　|　仅训练区", 18, Color("67e8f9")))
+	left.add_child(_label(_semantic_mode_label(), 17, Color("a7f3d0") if semantic_mode == "affordance_v1_2_1" else Color("94a3b8")))
 	left.add_child(_label("当前是实验版：图像与基础攻击可验证；数值、完整特效、敌人平衡和正式玩法尚未完成。", 17, Color("fbbf24")))
 	left.add_child(_label("输入任意新的中文物件与动作描述（最多 500 字）：", 20))
 	input_edit = TextEdit.new()
@@ -930,6 +937,12 @@ func _image_card(caption: String, texture: Texture2D, size: Vector2, color: Colo
 	preview.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 10)
 	background.add_child(preview)
 	return box
+
+
+func _semantic_mode_label() -> String:
+	if semantic_mode == "affordance_v1_2_1":
+		return "显式实验语义模式：AFFORDANCE GRAMMAR · %s" % semantic_contract
+	return "默认语义模式：%s · 不生成 Motion Grammar Affordance" % semantic_contract
 
 
 func _stage_text(active: String) -> String:

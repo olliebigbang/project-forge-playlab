@@ -27,7 +27,9 @@
 | `status` | string | 当前/最终状态 |
 | `failure_stage` | string | 失败阶段；成功为空 |
 | `failure_reason` | string | 本地错误代码；成功为空 |
+| `semantic_mode` | enum | `v1_1` 或显式的 `affordance_v1_2_1` 会话模式 |
+| `semantic_contract` | string | 本轮锁定的语义合同版本 |
 
-每轮目录还保存 `semantic_blueprint.json`、脱敏语义响应、`flux_raw.png`、FLUX manifest、BiRefNet RGBA/Mask、`processed_sprite.png`、后处理指标、身份审阅、`anchors.json`、训练审阅和 `open_playtest_round.json`。运行失败只交付已完成的脱敏文件和 `failure_manifest.json`，不会伪造透明 Sprite。
+每轮目录还保存 `semantic_blueprint.json`、脱敏语义响应、`flux_raw.png`、FLUX manifest、BiRefNet RGBA/Mask、`processed_sprite.png`、后处理指标、身份审阅、`anchors.json`、训练审阅和 `open_playtest_round.json`。显式 Affordance Grammar 会话还保存经过严格校验的 `object_affordance_profile.json`。运行失败只交付已完成的脱敏文件和 `failure_manifest.json`，不会伪造透明 Sprite。
 
 Key、请求头和未脱敏 API 响应不属于日志合同，禁止写入上述文件。

@@ -457,6 +457,12 @@ class LiveSession:
             "mock_fallback": False,
         }
 
+    def _validate_semantic_tool_input(
+        self, tool_name: str, tool_input: Any
+    ) -> dict[str, Any]:
+        """Extension point; frozen Live E2E keeps the v1.1 validator by default."""
+        return validate_tool_input(tool_name, tool_input)
+
     def _run_technical(self, state: CaseState, player_input: str) -> None:
         case_id = state.config["case_id"]
         stage = self.pipeline_root / f".{case_id}.{uuid.uuid4().hex}.tmp"
@@ -477,8 +483,10 @@ class LiveSession:
             if parsed.get("tool_name") != SUBMIT_BLUEPRINT_TOOL:
                 raise LivePipelineError("semantic", "EXPECTED_SUBMIT_BLUEPRINT_TOOL")
             try:
-                blueprint = validate_tool_input(str(parsed["tool_name"]), parsed.get("tool_input"))
-            except ContractValidationError as exc:
+                blueprint = self._validate_semantic_tool_input(
+                    str(parsed["tool_name"]), parsed.get("tool_input")
+                )
+            except ValueError as exc:
                 raise LivePipelineError("semantic", f"CONTRACT_VALIDATION_FAILED:{exc}") from exc
             state.semantic_blueprint = blueprint
             state.semantic_redacted = {
