@@ -12,6 +12,7 @@ func _run() -> void:
 	root.add_child(screen_root)
 	var open_playtest_ui := OPEN_PLAYTEST_UI.new()
 	open_playtest_ui.set("screen_root", screen_root)
+	open_playtest_ui.set("current_response", {"affordance_grammar_ready": true})
 	open_playtest_ui.call("_show_heavy_melee_entry_prompt")
 	var dialog: ConfirmationDialog = null
 	for child: Node in screen_root.get_children():

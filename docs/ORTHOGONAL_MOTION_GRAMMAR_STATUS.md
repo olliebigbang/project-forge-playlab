@@ -13,6 +13,7 @@ Current status:
 - **12-PROFILE COMPOSER COVERAGE PASS (7 sequences, all 5 primitives)**
 - **ANONYMOUS LOCAL AXIS CAUSALITY PASS AFTER GENERIC COUPLING (23/23)**
 - **ANONYMOUS COMBAT-RUNTIME REALIZATION PASS AFTER GENERIC CORRECTION (23/23)**
+- **OPEN PLAYTEST AFFORDANCE HANDOFF FAILS CLOSED**
 - **HUMAN FEEL RETEST NEEDS WORK (3/5)**
 
 The earlier three-sample 5/5 result is preserved as historical evidence and is
@@ -39,6 +40,15 @@ BiRefNet, and ComfyUI were not started.
 The manual runtime boundary is exposed as
 `scripts/run_combat_feel_slice.ps1 -OpenPlaytestRound <path> -RequireAffordanceGrammar`.
 That switch rejects a missing sidecar instead of entering the legacy compiler.
+
+Open Playtest now preserves that same boundary. If a semantic result contains a
+complete candidate `affordance`, the bridge validates the entire candidate
+blueprint and atomically writes `object_affordance_profile.json` beside the
+round asset. The UI exposes Combat Feel only for that validated handoff and
+always launches it with `--require-affordance-grammar`. A default v1.1 result
+has no affordance sidecar, remains usable in the basic preview, and cannot be
+misrepresented as Motion Grammar combat. No identity-derived approximation is
+inserted.
 
 ## Current real-asset compile table
 

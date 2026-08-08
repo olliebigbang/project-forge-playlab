@@ -263,9 +263,10 @@ func _test_33_open_playtest_ui_exposes_heavy_only_launch() -> void:
 	var godot_source := _text("res://tools/open_playtest/godot/open_playtest.gd")
 	var server_source := _text("res://tools/open_playtest/bridge/open_playtest_session.py")
 	var ok: bool = godot_source.contains("进入近战手感测试") and godot_source.contains("_can_launch_current_heavy_melee") and godot_source.contains("--open-playtest-round=")
-	ok = ok and godot_source.contains('behavior_family", "")) == "heavy_melee"') and godot_source.contains("and training_asset != null")
+	ok = ok and godot_source.contains('behavior_family", "")) == "heavy_melee"') and godot_source.contains("and _affordance_grammar_ready()") and godot_source.contains("and training_asset != null")
+	ok = ok and godot_source.contains("--require-affordance-grammar")
 	ok = ok and server_source.contains("round_output_path") and not godot_source.contains("--fixture=")
-	_check(ok, "33 Open Playtest exposes direct handoff only for heavy melee")
+	_check(ok, "33 Open Playtest exposes direct handoff only for heavy melee with validated affordance grammar")
 
 func _test_34_compiler_outputs_three_valid_independent_primitives() -> void:
 	var loaded: Dictionary = LOADER.new().load_fixture("M01")

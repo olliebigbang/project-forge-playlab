@@ -260,8 +260,55 @@ class OpenPlaytestTests(unittest.TestCase):
         self.assertNotIn("dialog.custom_minimum_size", ui)
         self.assertIn('primary_action.call_deferred("grab_focus")', ui)
         self.assertIn('"--open-playtest-round=%s" % round_output_path', ui)
+        self.assertIn('"--require-affordance-grammar"', ui)
+        self.assertIn("and _affordance_grammar_ready()", ui)
         self.assertIn("and training_asset != null", ui)
         self.assertNotIn("--fixture=", ui)
+
+    def test_candidate_affordance_is_strictly_validated_and_atomically_published(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            session = _make_session(root)
+            value = _add_round(session, root, "confirm_identity")
+            value.output_dir.rmdir()
+            value.output_dir = None
+            candidate_path = (
+                PLAYLAB / "tools" / "semantic" / "reports" / "affordance_retest_v1_2"
+                / "affordance-retest-v1-2-20260808T074610104680Z-70b603d7"
+                / "semantic_blueprints" / "A12.json"
+            )
+            value.state.semantic_blueprint = json.loads(candidate_path.read_text(encoding="utf-8"))
+            affordance = session._validated_candidate_affordance(value.state.semantic_blueprint)
+            self.assertIsNotNone(affordance)
+            value.state.config["affordance_grammar_ready"] = True
+            value.state.config["validated_affordance_profile"] = affordance
+            technical = root / "technical"
+            technical.mkdir()
+            (technical / "semantic_blueprint.json").write_text(
+                json.dumps(value.state.semantic_blueprint), encoding="utf-8"
+            )
+            value.state.technical_dir = technical
+            session._publish_technical(value)
+            sidecar = value.output_dir / "object_affordance_profile.json"
+            self.assertEqual(json.loads(sidecar.read_text(encoding="utf-8")), affordance)
+            self.assertFalse(list(sidecar.parent.parent.glob(".*.tmp")))
+
+    def test_missing_affordance_is_not_inferred_and_invalid_candidate_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            session = _make_session(root)
+            value = _add_round(session, root, "confirm_identity")
+            self.assertIsNone(session._validated_candidate_affordance(value.state.semantic_blueprint))
+            invalid = dict(value.state.semantic_blueprint)
+            invalid["affordance"] = {"handle_length": "short"}
+            with self.assertRaisesRegex(live.LivePipelineError, "AFFORDANCE_CONTRACT_INVALID"):
+                session._validated_candidate_affordance(invalid)
+            source = (OPEN_ROOT / "bridge" / "open_playtest_session.py").read_text(encoding="utf-8").lower()
+            helper_start = source.index("def _validated_candidate_affordance")
+            helper_end = source.index("def _publish_technical", helper_start)
+            helper = source[helper_start:helper_end]
+            for forbidden in ("canonical_name", "display_name", "player_input"):
+                self.assertNotIn(forbidden, helper)
 
     def test_round_in_progress_can_resume_without_another_model_request(self) -> None:
         ui = (OPEN_ROOT / "godot" / "open_playtest.gd").read_text(encoding="utf-8")
