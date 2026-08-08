@@ -317,3 +317,38 @@ does not reduce the twelve frozen inputs to one reskinned attack. It does not
 override the separate 3/5 human result. The next investigation must concern
 generic causal axis readability across anonymous profiles, not Shotgun-specific
 or other identity-specific tuning.
+
+## Anonymous local-axis causality audit
+
+The follow-up audit used one anonymous neutral Affordance profile, fixed neutral
+anchors and alpha bounds, and 25 legal counterfactuals. Twenty-three probes
+changed mechanism inputs one axis at a time; two controls changed only
+confidence or evidence wording and were required to remain mechanically
+invariant. Object names, case IDs, assets, prompts, and model calls were absent.
+
+The audit compares actual `CombatMotionProfile` fields and all five generated
+`MotionPrimitive` specs after removing scores, trace text, confidence, evidence
+wording, and report metadata. A changed primitive score by itself is not counted
+as a runtime effect.
+
+Result: **NEEDS WORK**.
+
+- 15/23 mechanism probes changed runtime mechanics;
+- 8/23 changed scores only and were masked by selection thresholds;
+- 0/23 were completely unread by the scorer;
+- 2/2 non-mechanical invariant controls passed;
+- active axes included handle/body length, primary contact, mass distribution,
+  handleless body grip, barrel, and stock;
+- partially masked axes included grip topology, rigidity, and secondary contact;
+- point, edge, and broad-face feature flags were score-only on the neutral
+  baseline.
+
+This explains how corpus-level diversity can coexist with weak perceptual
+control: the Composer creates several Recipes globally, but some legitimate
+one-axis changes disappear locally unless they cross an argmax boundary. The
+evidence and complete probe matrix are frozen under
+`tools/semantic/reports/affordance_axis_causality/affordance-axis-causality-20260808T133454359Z/`.
+
+No weights or runtime behavior were changed by this audit. A future correction
+must couple those generic axes to continuous runtime parameters or another
+identity-free composition mechanism; it must not tune a named sample.

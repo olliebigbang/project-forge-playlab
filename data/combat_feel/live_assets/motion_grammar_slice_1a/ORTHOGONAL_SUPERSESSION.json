@@ -20,6 +20,8 @@
     "blind_verdict": "TECHNICAL PASS / FEEL NEEDS WORK",
     "directory": "res://data/combat_feel/live_assets/motion_grammar_slice_1a/evidence/orthogonal_blind_20260808T130540547Z",
     "combined_coverage_run": "affordance-combined-v1-2-1-20260808T132129343Z",
-    "combined_coverage_result": "12/12 compiled; 7 normal-combo sequences; 12 mechanical recipes; all 5 primitives; max sequence concentration 25%"
+    "combined_coverage_result": "12/12 compiled; 7 normal-combo sequences; 12 mechanical recipes; all 5 primitives; max sequence concentration 25%",
+    "axis_causality_run": "affordance-axis-causality-20260808T133454359Z",
+    "axis_causality_result": "NEEDS WORK; 15/23 mechanism probes changed runtime; 8/23 were score-only threshold-masked; invariant controls 2/2"
   }
 }

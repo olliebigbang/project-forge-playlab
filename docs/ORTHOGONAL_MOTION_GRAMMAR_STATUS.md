@@ -11,6 +11,7 @@ Current status:
 - **OFFLINE TECHNICAL PASS**
 - **REAL AI AFFORDANCE COVERAGE PASS WITH VERSIONED EVIDENCE**
 - **12-PROFILE COMPOSER COVERAGE PASS (7 sequences, all 5 primitives)**
+- **ANONYMOUS LOCAL AXIS CAUSALITY NEEDS WORK (15/23 runtime effects)**
 - **HUMAN FEEL RETEST NEEDS WORK (3/5)**
 
 The earlier three-sample 5/5 result is preserved as historical evidence and is
@@ -88,6 +89,16 @@ most frequent sequence appears in 3/12 cases (25%), so the corpus has not
 collapsed to one default combo. The complete reproducible matrix is frozen in
 `tools/semantic/reports/affordance_combined_handoff_v1_2_1/affordance-combined-v1-2-1-20260808T132129343Z/`.
 
+A stricter anonymous local-causality audit then changed one legal structural
+axis at a time against a neutral profile. Only 15/23 mechanism probes changed
+the actual runtime profile or MotionPrimitive specs. Eight probes changed
+internal scores but were swallowed by winner-selection thresholds: clamp grip,
+semi-rigid, secondary edge/broad/whole-body contact, and the point/edge/broad-
+face feature flags. No probe was fully unread by the scorer, and the confidence
+and evidence-text controls correctly remained mechanically invariant (2/2).
+The frozen audit is in
+`tools/semantic/reports/affordance_axis_causality/affordance-axis-causality-20260808T133454359Z/`.
+
 The approved orthogonal-composer BlindComparison was completed as session
 `blind-20260808T130540547Z-65f7d463`. It scored **3/5**. Pan was correctly felt
 as shortest and Mop as widest/best for control, but Shotgun stock was not felt
@@ -99,6 +110,9 @@ feel read rather than a semantic or asset-identity failure.
 The governing state is therefore **TECHNICAL PASS / FEEL NEEDS WORK**. The
 orthogonal composer must not be promoted to the default player flow. The next
 change, if separately approved, must audit or calibrate generic causal axis
-effects with anonymous counterfactual profiles (for example point-front versus
-rear-broad contact). It must not target Shotgun, Pan, Mop, any case ID, or any
-identity label, and it must not silently tune until the questionnaire passes.
+effects with anonymous counterfactual profiles. The audit is now complete and
+shows that score-only fields need a generic continuous parameter coupling or a
+similarly identity-free composition rule so their effect survives even when
+the winning Primitive does not change. It must not target Shotgun, Pan, Mop,
+any case ID, or any identity label, and it must not silently tune until the
+questionnaire passes.
