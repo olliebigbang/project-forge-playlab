@@ -421,6 +421,9 @@ func _submit_identity(confirmed: bool) -> void:
 
 func _show_heavy_melee_entry_prompt() -> void:
 	launch_combat_after_anchors = false
+	if not _affordance_grammar_ready():
+		_show_anchor_confirmation()
+		return
 	var dialog := ConfirmationDialog.new()
 	dialog.title = "完整近战手感测试"
 	dialog.dialog_text = "该武器支持完整近战手感测试。\n训练区只提供基础挥动预览。\n是否现在进入近战手感测试？\n\n选择进入后，先确认握持点与作用点，再直接载入当前真实生成武器。"
@@ -464,6 +467,8 @@ func _show_anchor_confirmation() -> void:
 	var right := VBoxContainer.new()
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	columns.add_child(right)
+	if str(current_response.get("behavior_family", "")) == "heavy_melee" and not _affordance_grammar_ready():
+		right.add_child(_label("当前语义结果没有经过验证的 Affordance 机制轴；本轮只提供基础训练预览，不会静默回退旧近战动作。", 17, Color("fb923c")))
 	right.add_child(_title("确认锚点"))
 	var instruction := _label("", 24, Color("fbbf24"))
 	instruction.name = "AnchorInstruction"
@@ -667,6 +672,7 @@ func _launch_combat_feel() -> void:
 	var arguments := PackedStringArray([
 		"--path", ProjectSettings.globalize_path("res://"), COMBAT_FEEL_SCENE,
 		"--", "--mode=combat-feel-slice-0", "--open-playtest-round=%s" % round_output_path,
+		"--require-affordance-grammar",
 	])
 	var process_id := OS.create_process(OS.get_executable_path(), arguments)
 	if process_id <= 0:
@@ -679,9 +685,14 @@ func _can_launch_current_heavy_melee() -> bool:
 	return (
 		identity_confirmed_for_round
 		and str(current_response.get("behavior_family", "")) == "heavy_melee"
+		and _affordance_grammar_ready()
 		and training_asset != null
 		and calibration != null
 	)
+
+
+func _affordance_grammar_ready() -> bool:
+	return bool(current_response.get("affordance_grammar_ready", false))
 
 
 func _set_combat_launch_status(message: String, is_error: bool) -> void:

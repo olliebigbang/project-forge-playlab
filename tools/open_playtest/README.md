@@ -26,6 +26,19 @@ Anthropic Key 每个试玩窗口最多输入一次，不是每个点子输入一
 7. `heavy_melee` 在身份确认后会明确询问是否进入完整近战手感测试。选择进入时，先确认真实锚点，随后把当前生成资产直接交给 `Combat Feel Slice`；选择稍后则继续基础训练预览。
 8. 结束基础训练后可评分、标记是否保留点子，并执行 `SAVE THIS RESULT`、`RETRY THIS IDEA` 或 `FORGE NEW IDEA`。对于已确认的 `heavy_melee`，完成页的首要操作是 **进入近战手感测试**。
 
+## Motion Grammar 交接边界
+
+Combat Feel 入口现在严格失败关闭：只有轮次中存在通过
+`forge-semantic-v1.2-candidate` 完整校验的 `affordance` 对象时，才会显示并允许
+进入近战手感测试。该对象会随轮次原子交付为
+`object_affordance_profile.json`，Combat Feel 同时使用
+`--require-affordance-grammar`，因此不会静默退回旧近战编译器。
+
+默认 Open Playtest 语义合同仍冻结为 `forge-semantic-v1.1`。普通 v1.1 轮次仍可
+完成身份、锚点和基础训练预览，但不会声称已经进入 Motion Grammar 战斗。
+系统不会根据物件名称或玩家原文推断 Affordance。将候选合同用于新的实时输入，
+仍需另行明确批准。
+
 ## 基础预览与近战手感测试
 
 - **Open Playtest 基础训练预览**：握持、基础挥动、锚点、是否保留点子。

@@ -32,7 +32,12 @@ LIVE_BRIDGE = PLAYLAB_ROOT / "tools" / "live_e2e" / "bridge"
 if str(LIVE_BRIDGE) not in sys.path:
     sys.path.insert(0, str(LIVE_BRIDGE))
 
+SEMANTIC_BRIDGE = PLAYLAB_ROOT / "tools" / "semantic" / "bridge"
+if str(SEMANTIC_BRIDGE) not in sys.path:
+    sys.path.insert(0, str(SEMANTIC_BRIDGE))
+
 import live_orchestrator as live  # noqa: E402
+import affordance_contract_v1_2 as affordance_contract  # noqa: E402
 
 
 OPEN_CONTRACT = "forge-open-playtest-mode-v1"
@@ -381,12 +386,15 @@ class OpenPlaytestSession(live.LiveSession):
             parts = identity.get("required_identity_parts")
             if not isinstance(parts, list) or len(parts) < 2:
                 raise live.LivePipelineError("semantic", "REQUIRED_IDENTITY_PARTS_INVALID")
+            affordance = self._validated_candidate_affordance(state.semantic_blueprint)
             state.config.update(
                 {
                     "required_identity_parts": [str(item) for item in parts],
                     "second_anchor_type": second_anchor,
                     "second_anchor_question": question,
                     "expected_behavior_family": family,
+                    "affordance_grammar_ready": affordance is not None,
+                    "validated_affordance_profile": affordance,
                 }
             )
             self._finish_observed_stage(open_round)
@@ -605,7 +613,21 @@ class OpenPlaytestSession(live.LiveSession):
             "stage_timings": copy.deepcopy(open_round.stage_timings),
             "total_forge_seconds": state.metrics.get("total_forge_seconds"),
             "round_output_path": str(open_round.output_dir.resolve()) if open_round.output_dir else "",
+            "affordance_grammar_ready": bool(state.config.get("affordance_grammar_ready", False)),
         }
+
+    @staticmethod
+    def _validated_candidate_affordance(
+        semantic_blueprint: Mapping[str, Any],
+    ) -> dict[str, Any] | None:
+        """Accept only a complete candidate contract; never infer axes from identity text."""
+        if "affordance" not in semantic_blueprint:
+            return None
+        try:
+            validated = affordance_contract.validate_candidate_blueprint(semantic_blueprint)
+        except ValueError as exc:
+            raise live.LivePipelineError("semantic", "AFFORDANCE_CONTRACT_INVALID") from exc
+        return copy.deepcopy(validated["affordance"])
 
     def _publish_technical(self, open_round: OpenRound) -> None:
         state = open_round.state
@@ -616,6 +638,9 @@ class OpenPlaytestSession(live.LiveSession):
         if final.exists():
             raise live.LivePipelineError("delivery", "ROUND_OUTPUT_ALREADY_EXISTS")
         shutil.copytree(state.technical_dir, stage)
+        affordance = state.config.get("validated_affordance_profile")
+        if affordance is not None:
+            live.write_json_new(stage / affordance_contract.SIDECAR_NAME, affordance)
         os.replace(stage, final)
         open_round.output_dir = final
         self._write_round_state(open_round)
@@ -695,6 +720,7 @@ class OpenPlaytestSession(live.LiveSession):
             "status": state.stage,
             "failure_stage": state.failure_stage,
             "failure_reason": state.failure_reason,
+            "affordance_grammar_ready": bool(state.config.get("affordance_grammar_ready", False)),
         }
 
     def _upsert_history(self, open_round: OpenRound) -> None:
