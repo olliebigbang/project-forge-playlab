@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-object-affordance-v1.4-candidate",
+  "title": "Forge Object Affordance Profile v1.4 Candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "handle_length",
+    "body_length",
+    "real_length_cm",
+    "real_mass_kg",
+    "grip_topology",
+    "rigidity",
+    "mass_distribution",
+    "contact_surface",
+    "secondary_contact_surface",
+    "has_point",
+    "has_edge",
+    "has_broad_face",
+    "has_barrel",
+    "has_stock",
+    "confidence",
+    "evidence_parts"
+  ],
+  "properties": {
+    "handle_length": {"type": "string", "enum": ["none", "short", "medium", "long"]},
+    "body_length": {"type": "string", "enum": ["short", "medium", "long"]},
+    "real_length_cm": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "minimum": 5,
+      "maximum": 400,
+      "description": "Longest real-world dimension of the object in centimetres. A rendered image cannot supply this: generators fill the canvas whatever the subject, so a 40cm pan and a 150cm mop arrive the same size. Estimate the real object, not the picture."
+    },
+    "real_mass_kg": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "minimum": 0.05,
+      "maximum": 50,
+      "description": "Mass of the real object in kilograms. Independent of real_length_cm and of mass_distribution: length is how far it reaches, mass_distribution is where the weight sits, this is how much there is. A wooden spoon and an iron bar of the same length differ here by an order of magnitude. Estimate the real object, not the picture."
+    },
+    "grip_topology": {"type": "string", "enum": ["one_hand_handle", "two_hand_handle", "body_grip", "clamp_grip"]},
+    "rigidity": {"type": "string", "enum": ["rigid", "semi_rigid", "flexible"]},
+    "mass_distribution": {"type": "string", "enum": ["rear", "balanced", "front"]},
+    "contact_surface": {"type": "string", "enum": ["point", "edge", "broad", "whole_body"]},
+    "secondary_contact_surface": {"type": "string", "enum": ["none", "point", "edge", "broad", "whole_body"]},
+    "has_point": {"type": "boolean"},
+    "has_edge": {"type": "boolean"},
+    "has_broad_face": {"type": "boolean"},
+    "has_barrel": {"type": "boolean"},
+    "has_stock": {"type": "boolean"},
+    "confidence": {"type": "number", "minimum": 0.65, "maximum": 1.0},
+    "evidence_parts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "items": {"type": "string", "minLength": 1, "maxLength": 100}
+    }
+  }
+}
