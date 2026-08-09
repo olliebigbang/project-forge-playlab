@@ -154,7 +154,7 @@ func _load_requested_weapon() -> bool:
 		# Playtest hook: swap in a profile that carries real_length_cm without touching
 		# the frozen, hash-pinned one. Marked unverified so a run using it can never be
 		# mistaken for a validated load.
-		var override_profile := asset_loader.load_affordance_override(affordance_override_path)
+		var override_profile: Resource = asset_loader.load_affordance_override(affordance_override_path)
 		if override_profile == null:
 			source_notice = "AFFORDANCE_OVERRIDE_INVALID:%s" % affordance_override_path
 			return false

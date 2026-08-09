@@ -327,7 +327,7 @@ func _general_reach(affordance_profile: Resource, anchor_data: Dictionary, alpha
 	var point_extension := 4.0 if affordance_profile.has_point else 0.0
 	if USE_REAL_LENGTH_REACH and affordance_profile.has_real_length():
 		# Reach is a property of the object, not of which bucket it landed in.
-		var from_length := REACH_CM_BASE + REACH_CM_SLOPE * affordance_profile.real_length_cm
+		var from_length: float = REACH_CM_BASE + REACH_CM_SLOPE * float(affordance_profile.real_length_cm)
 		return clampf(from_length + point_extension, 72.0, 148.0)
 	var axis := _length_axis(affordance_profile)
 	var measured := _strike_span(anchor_data) * 0.48 + float(maxi(alpha_bounds.size.x, alpha_bounds.size.y)) * 0.56
