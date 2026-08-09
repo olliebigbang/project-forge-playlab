@@ -45,6 +45,17 @@ const USE_REAL_LENGTH_RENDER_SCALE := true
 # old_mop keeps the scale it has today; everything else lands in proportion to it.
 const RENDER_SCALE_REFERENCE_CM := 140.0
 const RENDER_SCALE_AT_REFERENCE := 1.18
+
+# Straight proportionality is physically honest and reads badly: a 45cm pan drew at 33px
+# against a ~90px character and looked like a toy. Compressing by this exponent keeps the
+# ordering strictly monotonic while pulling the short end up.
+#
+# It also fixes a second problem rather than trading against it. Reach is affine
+# (a constant plus a term in cm), so a strictly proportional drawing diverged from it at
+# the short end -- reach/drawn ran 1.35 for the mop and 2.61 for the pan, meaning the pan
+# struck from well beyond its visible tip. Under the square root the same ratios sit
+# inside 1.34-1.48, because a root is the right shape to track an affine curve here.
+const RENDER_SCALE_LENGTH_EXPONENT := 0.5
 # Legibility bounds only. This re-introduces the ceiling problem for extreme objects, the
 # same way the reach clamp does: a 400cm object cannot draw 3.4x without filling the
 # arena, so beyond these bounds length stops being visible again.
@@ -359,8 +370,8 @@ func _general_reach(affordance_profile: Resource, anchor_data: Dictionary, alpha
 func _general_render_scale(affordance_profile: Resource) -> float:
 	if USE_REAL_LENGTH_RENDER_SCALE and affordance_profile.has_real_length():
 		var length_cm: float = float(affordance_profile.real_length_cm)
-		var scaled: float = RENDER_SCALE_AT_REFERENCE * length_cm / RENDER_SCALE_REFERENCE_CM
-		return clampf(scaled, RENDER_SCALE_MIN, RENDER_SCALE_MAX)
+		var ratio: float = pow(length_cm / RENDER_SCALE_REFERENCE_CM, RENDER_SCALE_LENGTH_EXPONENT)
+		return clampf(RENDER_SCALE_AT_REFERENCE * ratio, RENDER_SCALE_MIN, RENDER_SCALE_MAX)
 	return 1.10 + 0.08 * _length_axis(affordance_profile)
 
 
