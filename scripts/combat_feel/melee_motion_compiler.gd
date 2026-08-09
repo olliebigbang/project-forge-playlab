@@ -61,6 +61,40 @@ const RENDER_SCALE_LENGTH_EXPONENT := 0.5
 # arena, so beyond these bounds length stops being visible again.
 const RENDER_SCALE_MIN := 0.30
 const RENDER_SCALE_MAX := 2.00
+
+# Set false to restore the pre-v1.4 mass axis exactly. This is the A/B switch for
+# playtesting, matching the two length switches above: with it off, the axis is driven by
+# `mass_distribution`, which records where the weight sits and not how much of it there
+# is -- so all four shipped objects read `front` or carry a stock, three of four compile
+# to a mass axis of exactly 1.0, and a chicken leg swings slower than a sledgehammer
+# because a drumstick is front-heavy. With it on, the axis follows the object's real mass.
+# Profiles without a real mass (pre-v1.4) take the old path either way.
+const USE_REAL_MASS_AXIS := true
+
+# Set false to restore the pre-v1.4 weight class. Separate from the axis switch so the
+# two can be judged independently: the axis moves timing and impact continuously, while
+# this picks one of three labels that other systems branch on.
+const USE_REAL_MASS_WEIGHT_CLASS := true
+
+# The band is the one the three-value ordinal already spanned (rear 0.35 .. front 1.0),
+# kept deliberately. Every downstream consumer is tuned against it -- the tempo
+# thresholds, startup and recovery, knockback, stagger, hitstop and camera kick -- so real
+# mass changes which object lands where inside the band, never how wide the band is. That
+# is decision P08's middle layer: the real quantity fixes the ordering, game design fixes
+# the usable range, and neither one gets to move the other.
+const MASS_AXIS_MIN := 0.35
+const MASS_AXIS_MAX := 1.00
+
+# Ends of the compression curve, in kilograms, read off the probed object set: a chicken
+# leg sits on the floor and a full fire extinguisher on the ceiling. Everything the game
+# realistically sees lands between them.
+const MASS_AXIS_FLOOR_KG := 0.15
+const MASS_AXIS_CEILING_KG := 8.0
+
+# Boundaries for the three-value label, in kilograms. Below the first is something you
+# flick, above the second is something you heave.
+const WEIGHT_CLASS_LIGHT_MAX_KG := 0.5
+const WEIGHT_CLASS_HEAVY_MIN_KG := 3.0
 const HANDLE_LENGTHS: PackedStringArray = ["none", "short", "medium", "long"]
 const BODY_LENGTHS: PackedStringArray = ["short", "medium", "long"]
 const GRIP_TOPOLOGIES: PackedStringArray = ["one_hand_handle", "two_hand_handle", "body_grip", "clamp_grip"]
@@ -322,10 +356,30 @@ func _length_axis(affordance_profile: Resource) -> float:
 
 
 func _mass_axis(affordance_profile: Resource) -> float:
+	if USE_REAL_MASS_AXIS and affordance_profile.has_real_mass():
+		# How heavy the object is, not where its weight sits. The two are independent,
+		# and only the second was ever available here.
+		return _mass_axis_from_kg(float(affordance_profile.real_mass_kg))
 	# Mass closer to the grip reduces rotational commitment and delivered contact
 	# force; mass farther forward increases both. Keep this ordering independent
 	# of identity, selected Primitive, and any retained sample Recipe.
 	return {"rear": 0.35, "balanced": 0.55, "front": 1.0}[affordance_profile.mass_distribution]
+
+
+## Compress real kilograms onto the axis band the rest of the compiler is tuned against.
+##
+## Logarithmic, not proportional, and this is the axis where that matters most. Legal
+## masses span a thousandfold and the objects actually drawn span about fiftyfold, while
+## the band they feed spans 2.9x. Straight proportionality would pin everything under a
+## kilogram to the floor and everything over three to the ceiling, leaving the middle --
+## where nearly every hand weapon lives -- flat. That is the failure P07 caught on the
+## length axis, where a proportional render scale drew the 45cm pan at 33px and had to
+## become a square root. A root is not enough compression for a span this wide.
+func _mass_axis_from_kg(mass_kg: float) -> float:
+	var floor_log := log(MASS_AXIS_FLOOR_KG)
+	var span := log(MASS_AXIS_CEILING_KG) - floor_log
+	var position := clampf((log(maxf(mass_kg, MASS_AXIS_FLOOR_KG * 0.01)) - floor_log) / span, 0.0, 1.0)
+	return MASS_AXIS_MIN + position * (MASS_AXIS_MAX - MASS_AXIS_MIN)
 
 
 func _reach_class(affordance_profile: Resource) -> String:
@@ -334,6 +388,13 @@ func _reach_class(affordance_profile: Resource) -> String:
 
 
 func _weight_class(affordance_profile: Resource) -> String:
+	if USE_REAL_MASS_WEIGHT_CLASS and affordance_profile.has_real_mass():
+		var mass_kg: float = float(affordance_profile.real_mass_kg)
+		if mass_kg < WEIGHT_CLASS_LIGHT_MAX_KG:
+			return "light"
+		return "heavy" if mass_kg >= WEIGHT_CLASS_HEAVY_MIN_KG else "medium"
+	# Pre-v1.4: "front-weighted" and "has a stock" were the only mass signals available,
+	# and neither is a quantity -- every shipped object satisfies one of them.
 	if affordance_profile.mass_distribution == "front" or affordance_profile.has_stock:
 		return "heavy"
 	if affordance_profile.rigidity == "flexible":

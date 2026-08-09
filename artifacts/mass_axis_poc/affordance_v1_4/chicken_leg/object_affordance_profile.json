@@ -1,0 +1,21 @@
+{
+  "handle_length": "short",
+  "body_length": "short",
+  "grip_topology": "one_hand_handle",
+  "rigidity": "rigid",
+  "mass_distribution": "front",
+  "contact_surface": "broad",
+  "secondary_contact_surface": "none",
+  "has_point": false,
+  "has_edge": false,
+  "has_broad_face": true,
+  "has_barrel": false,
+  "has_stock": false,
+  "confidence": 1.0,
+  "evidence_parts": [
+    "meaty drumstick end",
+    "narrow bone handle"
+  ],
+  "real_length_cm": 13.0,
+  "real_mass_kg": 0.15
+}

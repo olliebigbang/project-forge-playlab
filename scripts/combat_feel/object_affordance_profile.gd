@@ -31,9 +31,19 @@ const RIGIDITIES: PackedStringArray = ["rigid", "semi_rigid", "flexible"]
 # measuring 140, 120 and 100cm.
 @export var real_length_cm := 0.0
 
+# Mass of the real object in kilograms (affordance contract v1.4). 0.0 means the profile
+# predates v1.4 and carries no mass, so consumers must fall back rather than treat it as
+# a weightless object. mass_distribution cannot substitute: it says where the weight sits,
+# not how much there is, and all four shipped objects answer it the same way.
+@export var real_mass_kg := 0.0
+
 
 func has_real_length() -> bool:
 	return is_finite(real_length_cm) and real_length_cm > 0.0
+
+
+func has_real_mass() -> bool:
+	return is_finite(real_mass_kg) and real_mass_kg > 0.0
 
 
 func validation_errors() -> Array[String]:
@@ -64,6 +74,8 @@ func validation_errors() -> Array[String]:
 	# nonsensical length is an error.
 	if not is_finite(real_length_cm) or real_length_cm < 0.0:
 		errors.append("INVALID_REAL_LENGTH_CM")
+	if not is_finite(real_mass_kg) or real_mass_kg < 0.0:
+		errors.append("INVALID_REAL_MASS_KG")
 	return errors
 
 
@@ -84,4 +96,5 @@ func to_dict() -> Dictionary:
 		"confidence": confidence,
 		"evidence_parts": Array(evidence_parts),
 		"real_length_cm": real_length_cm,
+		"real_mass_kg": real_mass_kg,
 	}

@@ -555,6 +555,8 @@ func _affordance_profile_from_dict(data: Dictionary) -> Resource:
 	profile.evidence_parts = PackedStringArray(evidence_value)
 	# Optional so pre-v1.3 profiles keep loading unchanged; absent stays 0.0.
 	profile.real_length_cm = float(data.get("real_length_cm", 0.0))
+	# Same for mass and pre-v1.4 profiles.
+	profile.real_mass_kg = float(data.get("real_mass_kg", 0.0))
 	return null if not profile.validation_errors().is_empty() else profile
 
 ## Developer-only: read an affordance profile from an arbitrary path, outside the index

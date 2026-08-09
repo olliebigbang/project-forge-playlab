@@ -1,0 +1,22 @@
+{
+  "handle_length": "long",
+  "body_length": "long",
+  "grip_topology": "two_hand_handle",
+  "rigidity": "rigid",
+  "mass_distribution": "front",
+  "contact_surface": "broad",
+  "secondary_contact_surface": "none",
+  "has_point": false,
+  "has_edge": false,
+  "has_broad_face": true,
+  "has_barrel": false,
+  "has_stock": false,
+  "confidence": 1.0,
+  "evidence_parts": [
+    "long wooden handle",
+    "broad spoon bowl",
+    "front-weighted bowl"
+  ],
+  "real_length_cm": 120.0,
+  "real_mass_kg": 1.5
+}
