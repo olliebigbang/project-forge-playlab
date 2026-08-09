@@ -482,16 +482,9 @@ class LiveSession:
             semantic_seconds = time.perf_counter() - semantic_start
             if parsed.get("tool_name") != SUBMIT_BLUEPRINT_TOOL:
                 raise LivePipelineError("semantic", "EXPECTED_SUBMIT_BLUEPRINT_TOOL")
-            try:
-                blueprint = self._validate_semantic_tool_input(
-                    str(parsed["tool_name"]), parsed.get("tool_input")
-                )
-            except ValueError as exc:
-                raise LivePipelineError("semantic", f"CONTRACT_VALIDATION_FAILED:{exc}") from exc
-            state.semantic_blueprint = blueprint
             state.semantic_redacted = {
                 "tool_name": parsed["tool_name"],
-                "tool_input": parsed["tool_input"],
+                "tool_input": parsed.get("tool_input"),
                 "request_id": parsed.get("request_id"),
                 "model_id": parsed.get("model_id"),
                 "usage": parsed.get("usage", {}),
@@ -506,8 +499,17 @@ class LiveSession:
                     "semantic_output_tokens": int(usage.get("output_tokens", 0)),
                 }
             )
-            write_json_new(stage / "semantic_blueprint.json", blueprint)
+            # Preserve the successful provider response before local validation.
+            # A fail-closed contract rejection must not erase forensic evidence.
             write_json_new(stage / "semantic_response_redacted.json", state.semantic_redacted)
+            try:
+                blueprint = self._validate_semantic_tool_input(
+                    str(parsed["tool_name"]), parsed.get("tool_input")
+                )
+            except ValueError as exc:
+                raise LivePipelineError("semantic", f"CONTRACT_VALIDATION_FAILED:{exc}") from exc
+            state.semantic_blueprint = blueprint
+            write_json_new(stage / "semantic_blueprint.json", blueprint)
             projected, projection_evidence = project_static_visual(blueprint)
             write_json_new(stage / "static_visual_projection.json", projection_evidence)
 

@@ -38,21 +38,23 @@ if str(SEMANTIC_BRIDGE) not in sys.path:
 
 import live_orchestrator as live  # noqa: E402
 import affordance_contract_v1_2 as affordance_contract  # noqa: E402
-import affordance_contract_v1_2_1 as affordance_contract_v1_2_1  # noqa: E402
+import affordance_contract_v1_2_2 as affordance_contract_v1_2_2  # noqa: E402
 
 
 OPEN_CONTRACT = "forge-open-playtest-mode-v1"
 SEMANTIC_MODE_V1_1 = "v1_1"
-SEMANTIC_MODE_AFFORDANCE = "affordance_v1_2_1"
+SEMANTIC_MODE_AFFORDANCE = "affordance_v1_2_2"
 SEMANTIC_MODES = frozenset({SEMANTIC_MODE_V1_1, SEMANTIC_MODE_AFFORDANCE})
 AFFORDANCE_EXPERIMENT_HASHES = {
     "base_prompt": "a2d42b808175988267cf51193f2a4e43b2cc258bc1647887fe5c238d006bed12",
     "affordance_prompt": "9c055d1013b3962322504c6676250e4b3b92bd9ffd3835e951ec98cbf780a835",
     "correction_prompt": "91c4c4702178801ec7ea1f8055c0590b0b449ef46efd0ce47aa0c7cf657278cb",
-    "combined_prompt": "0d2ad06d2ba512bda973d0ddf30f2ce67d47cdd3fc77e31e4cf544e510c29499",
-    "tool_schema": "fa0a473661f9ead65f395063b2498aa86676f2a3892826b97467766988dbdd3c",
+    "grip_correction_prompt": "a2c3cd5f7bcd9ee00835d34827ab34ec945d85cad01eebc5486371ee62fdf98f",
+    "combined_prompt": "d0d422f9db3f8cb196ca95ba2623e6661573b29282b0b0f03e3418be76fe9c00",
+    "tool_schema": "eee335be353d025428216e61ebefb14e261c2d3cf3f476a6749ac0bcd1316d62",
     "v1_2_validator": "0736cf446bc931defbd4c0038ef93246f9a0bda5b14e8758096cc0fcbd843edf",
     "v1_2_1_validator": "8f2e55cee8a8541cadcc91c2990d82aa0041586f712ee90c5222dd79b84b223b",
+    "v1_2_2_validator": "7f0f4fcd849cbc5cfa836d4cbd405cf3584e4b3959391df6ba81f1122c5d918f",
 }
 TERMINAL_STAGES = frozenset({"identity_rejected", "completed", "failed"})
 PIPELINE_STAGES = (
@@ -107,14 +109,17 @@ def _semantic_compiler_inputs(semantic_mode: str) -> tuple[str, Mapping[str, Any
         raise live.LivePipelineError("preflight", "SEMANTIC_MODE_INVALID")
     affordance_path = live.SEMANTIC_ROOT / "prompts" / "affordance_v1_2_candidate_addendum.md"
     correction_path = live.SEMANTIC_ROOT / "prompts" / "affordance_v1_2_1_candidate_addendum.md"
+    grip_correction_path = live.SEMANTIC_ROOT / "prompts" / "affordance_v1_2_2_candidate_addendum.md"
     validator_paths = {
         "v1_2_validator": live.SEMANTIC_ROOT / "bridge" / "affordance_contract_v1_2.py",
         "v1_2_1_validator": live.SEMANTIC_ROOT / "bridge" / "affordance_contract_v1_2_1.py",
+        "v1_2_2_validator": live.SEMANTIC_ROOT / "bridge" / "affordance_contract_v1_2_2.py",
     }
     file_paths = {
         "base_prompt": base_path,
         "affordance_prompt": affordance_path,
         "correction_prompt": correction_path,
+        "grip_correction_prompt": grip_correction_path,
         **validator_paths,
     }
     for label, path in file_paths.items():
@@ -126,13 +131,14 @@ def _semantic_compiler_inputs(semantic_mode: str) -> tuple[str, Mapping[str, Any
         base_prompt,
         affordance_path.read_text(encoding="utf-8"),
         correction_path.read_text(encoding="utf-8"),
+        grip_correction_path.read_text(encoding="utf-8"),
     ]
     prompt = "\n\n".join(value.strip() for value in prompt_parts) + "\n"
     if hashlib.sha256(prompt.encode("utf-8")).hexdigest() != AFFORDANCE_EXPERIMENT_HASHES["combined_prompt"]:
         raise live.LivePipelineError(
             "preflight", "AFFORDANCE_EXPERIMENT_INPUT_HASH_MISMATCH:combined_prompt"
         )
-    schema = affordance_contract_v1_2_1.candidate_tool_schema_v1_2_1()
+    schema = affordance_contract_v1_2_2.candidate_tool_schema_v1_2_2()
     canonical_schema = json.dumps(
         schema, ensure_ascii=False, sort_keys=True, separators=(",", ":")
     ).encode("utf-8")
@@ -143,7 +149,7 @@ def _semantic_compiler_inputs(semantic_mode: str) -> tuple[str, Mapping[str, Any
     return (
         prompt,
         schema,
-        affordance_contract_v1_2_1.CONTRACT_VERSION,
+        affordance_contract_v1_2_2.CONTRACT_VERSION,
     )
 
 
@@ -299,7 +305,7 @@ class OpenPlaytestSession(live.LiveSession):
             raise live.LivePipelineError("preflight", "SEMANTIC_CONTRACT_CHANGED")
         if self.config.get("default_semantic_mode") != SEMANTIC_MODE_V1_1:
             raise live.LivePipelineError("preflight", "DEFAULT_SEMANTIC_MODE_CHANGED")
-        if self.config.get("affordance_experiment_contract") != affordance_contract_v1_2_1.CONTRACT_VERSION:
+        if self.config.get("affordance_experiment_contract") != affordance_contract_v1_2_2.CONTRACT_VERSION:
             raise live.LivePipelineError("preflight", "AFFORDANCE_EXPERIMENT_CONTRACT_CHANGED")
         if semantic_mode not in SEMANTIC_MODES:
             raise live.LivePipelineError("preflight", "SEMANTIC_MODE_INVALID")
@@ -340,6 +346,7 @@ class OpenPlaytestSession(live.LiveSession):
             blueprint_schema=semantic_schema,
             clarification_schema=live.CLARIFICATION_REQUEST_SCHEMA,
             call_limiter=live.CallLimiter(max_calls=int(self.config["session_call_limit"])),
+            strict_blueprint_tool=semantic_mode == SEMANTIC_MODE_AFFORDANCE,
         )
         self.compiler = ClarificationAwareCompiler(base_compiler)
         self.technical_contract = "forge-open-playtest-technical-v1"
@@ -394,7 +401,7 @@ class OpenPlaytestSession(live.LiveSession):
             raise affordance_contract.AffordanceContractError(
                 f"unexpected semantic tool: {tool_name}"
             )
-        return affordance_contract_v1_2_1.validate_candidate_blueprint_v1_2_1(tool_input)
+        return affordance_contract_v1_2_2.validate_candidate_blueprint_v1_2_2(tool_input)
 
     def _notify_pipeline_stage(self, state: live.CaseState, stage: str) -> None:
         with self.lock:
@@ -724,7 +731,7 @@ class OpenPlaytestSession(live.LiveSession):
         if "affordance" not in semantic_blueprint:
             return None
         try:
-            validated = affordance_contract_v1_2_1.validate_candidate_blueprint_v1_2_1(
+            validated = affordance_contract_v1_2_2.validate_candidate_blueprint_v1_2_2(
                 semantic_blueprint
             )
         except ValueError as exc:

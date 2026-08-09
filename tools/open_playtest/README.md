@@ -18,7 +18,7 @@ Affordance。要显式启动已批准的 Affordance Grammar 实验模式，使�
 .\scripts\run_open_playtest.ps1 -AffordanceGrammar
 ```
 
-实验模式固定使用 `forge-semantic-v1.2.1-candidate`。模式在整个试玩会话中锁定，
+实验模式固定使用 `forge-semantic-v1.2.2-candidate` 和 Anthropic strict tool use。模式在整个试玩会话中锁定，
 不能由单个输入或模型输出切换；界面会持续显示当前合同。
 
 脚本会先执行离线测试和安全预检，再启动只监听 `127.0.0.1:8190` 的 ComfyUI、只监听 `127.0.0.1:8771` 的本地桥接层，最后打开独立 Godot 场景。
@@ -39,7 +39,7 @@ Anthropic Key 每个试玩窗口最多输入一次，不是每个点子输入一
 ## Motion Grammar 交接边界
 
 Combat Feel 入口现在严格失败关闭：只有轮次中存在通过
-`forge-semantic-v1.2.1-candidate` 完整校验的 `affordance` 对象时，才会显示并允许
+`forge-semantic-v1.2.2-candidate` 完整校验的 `affordance` 对象时，才会显示并允许
 进入近战手感测试。该对象会随轮次原子交付为
 `object_affordance_profile.json`，Combat Feel 同时使用
 `--require-affordance-grammar`，因此不会静默退回旧近战编译器。

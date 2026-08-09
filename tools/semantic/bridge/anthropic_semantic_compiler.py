@@ -262,6 +262,8 @@ def build_anthropic_payload(
     model_id: str,
     blueprint_schema: Mapping[str, Any],
     clarification_schema: Mapping[str, Any],
+    *,
+    strict_blueprint_tool: bool = False,
 ) -> dict[str, Any]:
     """Build the key-free request body with both forced-choice client tools."""
 
@@ -269,7 +271,9 @@ def build_anthropic_payload(
     player_input = _require_nonempty_string("player_input", player_input)
     model_id = _require_nonempty_string("model_id", model_id)
 
-    return {
+    if type(strict_blueprint_tool) is not bool:
+        raise TypeError("strict_blueprint_tool must be a boolean")
+    payload = {
         "model": model_id,
         "max_tokens": MAX_TOKENS,
         "system": system_prompt,
@@ -305,6 +309,9 @@ def build_anthropic_payload(
         # one tool.  Response parsing independently enforces exactly one.
         "tool_choice": {"type": "any", "disable_parallel_tool_use": True},
     }
+    if strict_blueprint_tool:
+        payload["tools"][0]["strict"] = True
+    return payload
 
 
 def _parse_json_object(response: Mapping[str, Any] | str | bytes) -> dict[str, Any]:
@@ -439,6 +446,7 @@ class AnthropicSemanticCompiler:
         clarification_schema: Mapping[str, Any] | None = None,
         opener: Callable[..., Any] | None = None,
         call_limiter: CallLimiter | None = None,
+        strict_blueprint_tool: bool = False,
     ) -> None:
         self._defaults = (
             _CompilerInputs(system_prompt, blueprint_schema, clarification_schema)
@@ -457,6 +465,9 @@ class AnthropicSemanticCompiler:
             )
         self._opener = opener or _strict_open
         self._call_limiter = call_limiter or _PROCESS_CALL_LIMITER
+        if type(strict_blueprint_tool) is not bool:
+            raise TypeError("strict_blueprint_tool must be a boolean")
+        self._strict_blueprint_tool = strict_blueprint_tool
 
     @property
     def calls_made(self) -> int:
@@ -515,6 +526,7 @@ class AnthropicSemanticCompiler:
                     model_id,
                     inputs.blueprint_schema,
                     inputs.clarification_schema,
+                    strict_blueprint_tool=self._strict_blueprint_tool,
                 )
                 body = json.dumps(
                     payload, ensure_ascii=False, separators=(",", ":")

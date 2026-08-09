@@ -113,7 +113,7 @@ class OpenPlaytestTests(unittest.TestCase):
         self.assertEqual(config["default_semantic_mode"], "v1_1")
         self.assertEqual(
             config["affordance_experiment_contract"],
-            "forge-semantic-v1.2.1-candidate",
+            "forge-semantic-v1.2.2-candidate",
         )
 
     def test_semantic_modes_are_pinned_and_default_stays_v1_1(self) -> None:
@@ -126,7 +126,7 @@ class OpenPlaytestTests(unittest.TestCase):
         self.assertEqual(base_contract, "forge-semantic-v1.1")
         self.assertNotIn("Physical affordance fields", base_prompt)
         self.assertNotIn("affordance", base_schema["required"])
-        self.assertEqual(experiment_contract, "forge-semantic-v1.2.1-candidate")
+        self.assertEqual(experiment_contract, "forge-semantic-v1.2.2-candidate")
         self.assertIn("Physical affordance fields", experiment_prompt)
         self.assertIn("contract clarification", experiment_prompt)
         self.assertIn("affordance", experiment_schema["required"])
@@ -154,6 +154,51 @@ class OpenPlaytestTests(unittest.TestCase):
             session.semantic_mode = open_session.SEMANTIC_MODE_V1_1
             with self.assertRaises(ValueError):
                 session._validate_semantic_tool_input(live.SUBMIT_BLUEPRINT_TOOL, candidate)
+
+    def test_contract_failure_preserves_exact_redacted_tool_input_before_rejection(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            session = _make_session(root)
+            candidate_path = (
+                PLAYLAB / "tools" / "semantic" / "reports" / "affordance_retest_v1_2"
+                / "affordance-retest-v1-2-20260808T074610104680Z-70b603d7"
+                / "semantic_blueprints" / "A12.json"
+            )
+            candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+            candidate["affordance"]["handle_length"] = "short"
+            candidate["affordance"]["grip_topology"] = "body_grip"
+
+            class InvalidCompiler:
+                calls_made = 1
+
+                @staticmethod
+                def compile(_player_input: str) -> dict:
+                    return {
+                        "tool_name": live.SUBMIT_BLUEPRINT_TOOL,
+                        "tool_input": candidate,
+                        "request_id": "msg_redacted_test",
+                        "model_id": "claude-sonnet-5",
+                        "usage": {"input_tokens": 10, "output_tokens": 20},
+                        "stop_reason": "tool_use",
+                        "raw_response_redacted": '{"id":"msg_redacted_test"}',
+                    }
+
+            session.compiler = InvalidCompiler()
+            session.semantic_mode = open_session.SEMANTIC_MODE_AFFORDANCE
+            session.semantic_contract = "forge-semantic-v1.2.2-candidate"
+            state = live.CaseState(
+                config={"case_id": "R0001-evidence", "seed": 1}, revision=1
+            )
+            with self.assertRaisesRegex(live.LivePipelineError, "body_grip"):
+                session._run_technical(state, "一只金色鸡腿，可以砸击敌人")
+            self.assertIsNotNone(state.technical_dir)
+            evidence = json.loads(
+                (state.technical_dir / "semantic_response_redacted.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(evidence["tool_input"], candidate)
+            self.assertEqual(evidence["raw_response_redacted"], '{"id":"msg_redacted_test"}')
 
     def test_project_default_scene_and_mock_provider_are_unchanged(self) -> None:
         project = (PLAYLAB / "project.godot").read_text(encoding="utf-8")
@@ -431,10 +476,11 @@ class OpenPlaytestTests(unittest.TestCase):
         ui = (OPEN_ROOT / "godot" / "open_playtest.gd").read_text(encoding="utf-8")
         self.assertIn("[switch]$AffordanceGrammar", wrapper)
         self.assertIn("-AffordanceGrammar:$AffordanceGrammar", wrapper)
-        self.assertIn('"affordance_v1_2_1"', launcher)
+        self.assertIn('"affordance_v1_2_2"', launcher)
         self.assertIn('"--semantic-mode", $SemanticMode', launcher)
         self.assertIn('"--open-semantic-mode=$SemanticMode"', launcher)
         self.assertIn('parser.add_argument("--semantic-mode"', server)
+        self.assertIn("strict_blueprint_tool=semantic_mode == SEMANTIC_MODE_AFFORDANCE", (OPEN_ROOT / "bridge" / "open_playtest_session.py").read_text(encoding="utf-8"))
         self.assertIn("AFFORDANCE GRAMMAR", ui)
 
     def test_launcher_owns_loopback_services_and_stops_them(self) -> None:

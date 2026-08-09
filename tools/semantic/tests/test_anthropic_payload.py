@@ -121,6 +121,19 @@ class AnthropicPayloadTests(unittest.TestCase):
             payload["tool_choice"],
             {"type": "any", "disable_parallel_tool_use": True},
         )
+        self.assertNotIn("strict", payload["tools"][0])
+
+    def test_explicit_strict_blueprint_tool_does_not_change_clarification_tool(self) -> None:
+        payload = build_anthropic_payload(
+            "system",
+            "player",
+            MODEL_ID,
+            OBJECT_SCHEMA,
+            OBJECT_SCHEMA,
+            strict_blueprint_tool=True,
+        )
+        self.assertIs(payload["tools"][0]["strict"], True)
+        self.assertNotIn("strict", payload["tools"][1])
 
     def test_payload_never_contains_environment_key(self) -> None:
         secret = "sk" + "-ant-test-" + ("Z" * 24)
