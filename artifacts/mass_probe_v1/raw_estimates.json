@@ -1,0 +1,367 @@
+{
+  "model": "claude-opus-5",
+  "repeats": 3,
+  "provenance": "model_estimate",
+  "results": [
+    {
+      "id": "chicken_leg",
+      "reference_kg": 0.15,
+      "band_kg": [
+        0.08,
+        0.4
+      ],
+      "reference_length_cm": 20,
+      "estimates_kg": [
+        0.12,
+        0.12,
+        0.15
+      ],
+      "median_kg": 0.12,
+      "bases": [
+        "a cooked chicken drumstick",
+        "a cooked chicken drumstick",
+        "a cooked chicken drumstick"
+      ]
+    },
+    {
+      "id": "wooden_spoon",
+      "reference_kg": 0.09,
+      "band_kg": [
+        0.03,
+        0.25
+      ],
+      "reference_length_cm": 30,
+      "estimates_kg": [
+        0.06,
+        0.06,
+        0.06
+      ],
+      "median_kg": 0.06,
+      "bases": [
+        "kitchen wooden spoon, lighter than an egg",
+        "kitchen wooden spoon, lighter than a deck of cards",
+        "kitchen wooden spoon, lighter than an egg"
+      ]
+    },
+    {
+      "id": "cleaver",
+      "reference_kg": 0.7,
+      "band_kg": [
+        0.35,
+        1.3
+      ],
+      "reference_length_cm": 32,
+      "estimates_kg": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "median_kg": 0.7,
+      "bases": [
+        "Chinese kitchen cleaver, about like a full water bottle",
+        "Chinese kitchen cleaver, about like a 1.5 lb steel blade with wooden handle",
+        "Chinese kitchen cleaver, heavier than a chef's knife"
+      ]
+    },
+    {
+      "id": "hammer",
+      "reference_kg": 0.6,
+      "band_kg": [
+        0.3,
+        1.2
+      ],
+      "reference_length_cm": 33,
+      "estimates_kg": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "median_kg": 0.7,
+      "bases": [
+        "standard 16 oz claw hammer",
+        "standard 16 oz claw hammer",
+        "standard 16 oz claw hammer"
+      ]
+    },
+    {
+      "id": "frying_pan",
+      "reference_kg": 1.6,
+      "band_kg": [
+        0.7,
+        3.2
+      ],
+      "reference_length_cm": 40,
+      "estimates_kg": [
+        2.0,
+        2.2,
+        2.2
+      ],
+      "median_kg": 2.2,
+      "bases": [
+        "cast iron skillet, about as heavy as a full 2-liter bottle",
+        "cast-iron skillet, like a 10-inch pan",
+        "10-inch cast iron skillet"
+      ]
+    },
+    {
+      "id": "stool",
+      "reference_kg": 3.0,
+      "band_kg": [
+        1.2,
+        6.5
+      ],
+      "reference_length_cm": 45,
+      "estimates_kg": [
+        3.5,
+        3.5,
+        3.5
+      ],
+      "median_kg": 3.5,
+      "bases": [
+        "small solid-wood kitchen stool, like a bag of flour plus",
+        "small solid-wood step stool you carry with one hand",
+        "small wooden kitchen stool, liftable with one hand"
+      ]
+    },
+    {
+      "id": "fire_extinguisher",
+      "reference_kg": 6.0,
+      "band_kg": [
+        2.5,
+        13.0
+      ],
+      "reference_length_cm": 50,
+      "estimates_kg": [
+        9.0,
+        9.0,
+        9.0
+      ],
+      "median_kg": 9.0,
+      "bases": [
+        "typical 5kg-charge steel dry powder extinguisher, about as heavy as a full water jug",
+        "typical office 5 kg dry-powder extinguisher with steel cylinder",
+        "typical office 5 kg dry-powder extinguisher with steel cylinder"
+      ]
+    },
+    {
+      "id": "giant_wooden_spoon",
+      "reference_kg": 1.5,
+      "band_kg": [
+        0.4,
+        4.5
+      ],
+      "reference_length_cm": 60,
+      "estimates_kg": [
+        1.5,
+        1.5,
+        1.5
+      ],
+      "median_kg": 1.5,
+      "bases": [
+        "oversized carved wooden paddle-spoon, like a light wooden baseball bat",
+        "oversized carved wooden paddle spoon, like a large wooden cooking paddle",
+        "oversized carved wood paddle spoon, like a baseball bat's lighter cousin"
+      ]
+    },
+    {
+      "id": "axe",
+      "reference_kg": 2.0,
+      "band_kg": [
+        0.9,
+        3.8
+      ],
+      "reference_length_cm": 75,
+      "estimates_kg": [
+        2.7,
+        2.7,
+        2.7
+      ],
+      "median_kg": 2.7,
+      "bases": [
+        "full-size steel axe with hickory handle, like a splitting axe",
+        "full-size felling axe, ~3 lb head on hickory handle",
+        "full-size felling axe, ~3 lb head on hickory handle"
+      ]
+    },
+    {
+      "id": "baseball_bat",
+      "reference_kg": 0.9,
+      "band_kg": [
+        0.5,
+        1.5
+      ],
+      "reference_length_cm": 85,
+      "estimates_kg": [
+        0.9,
+        0.95,
+        0.9
+      ],
+      "median_kg": 0.9,
+      "bases": [
+        "wooden baseball bat, about 32 oz",
+        "wooden baseball bat, about 2 lb",
+        "wooden baseball bat, about 2 pounds"
+      ]
+    },
+    {
+      "id": "shield",
+      "reference_kg": 4.5,
+      "band_kg": [
+        2.0,
+        9.0
+      ],
+      "reference_length_cm": 85,
+      "estimates_kg": [
+        5.0,
+        5.0,
+        5.0
+      ],
+      "median_kg": 5.0,
+      "bases": [
+        "planked wooden shield with iron boss, like a full bag of flour",
+        "wooden viking shield with iron boss, about like a full watering can",
+        "wooden Viking round shield with iron boss, like a full watermelon"
+      ]
+    },
+    {
+      "id": "wooden_chair",
+      "reference_kg": 5.0,
+      "band_kg": [
+        2.2,
+        9.5
+      ],
+      "reference_length_cm": 90,
+      "estimates_kg": [
+        5.0,
+        6.0,
+        6.0
+      ],
+      "median_kg": 6.0,
+      "bases": [
+        "typical wooden dining chair, liftable with one hand",
+        "typical wooden dining chair, liftable with one hand",
+        "typical wooden dining chair, liftable with one hand"
+      ]
+    },
+    {
+      "id": "sword",
+      "reference_kg": 1.2,
+      "band_kg": [
+        0.7,
+        2.2
+      ],
+      "reference_length_cm": 100,
+      "estimates_kg": [
+        1.4,
+        1.4,
+        1.4
+      ],
+      "median_kg": 1.4,
+      "bases": [
+        "a steel longsword, about as heavy as a full 1.5L water bottle",
+        "steel longsword, about the weight of a full 1.5 L water bottle",
+        "steel longsword, about as heavy as a full 1.5L water bottle"
+      ]
+    },
+    {
+      "id": "shotgun_melee",
+      "reference_kg": 3.2,
+      "band_kg": [
+        1.8,
+        5.0
+      ],
+      "reference_length_cm": 100,
+      "estimates_kg": [
+        3.4,
+        3.2,
+        3.4
+      ],
+      "median_kg": 3.4,
+      "bases": [
+        "a pump-action shotgun, like a full jug of milk",
+        "pump-action shotgun, like a heavy toolbox item",
+        "a pump-action shotgun, like a full jug of milk"
+      ]
+    },
+    {
+      "id": "old_mop",
+      "reference_kg": 1.0,
+      "band_kg": [
+        0.45,
+        2.2
+      ],
+      "reference_length_cm": 150,
+      "estimates_kg": [
+        1.2,
+        1.2,
+        1.2
+      ],
+      "median_kg": 1.2,
+      "bases": [
+        "a dry household mop with wooden handle",
+        "a broom or dry cotton mop",
+        "a broom or dry cotton mop"
+      ]
+    },
+    {
+      "id": "spear",
+      "reference_kg": 2.0,
+      "band_kg": [
+        0.9,
+        4.0
+      ],
+      "reference_length_cm": 200,
+      "estimates_kg": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "median_kg": 2.0,
+      "bases": [
+        "long ash broom handle plus a small iron head",
+        "broom-length ash pole with an iron head, like a full sledgehammer's weight but spread out",
+        "a long ash pole with a small iron head, like a heavy broom plus a knife"
+      ]
+    },
+    {
+      "id": "fishing_rod",
+      "reference_kg": 0.3,
+      "band_kg": [
+        0.1,
+        0.8
+      ],
+      "reference_length_cm": 210,
+      "estimates_kg": [
+        0.3,
+        0.2,
+        0.25
+      ],
+      "median_kg": 0.25,
+      "bases": [
+        "graphite rod, lighter than a can of soda",
+        "graphite rod, lighter than a full water bottle",
+        "graphite rod blank, lighter than a full water bottle"
+      ]
+    },
+    {
+      "id": "iron_bar",
+      "reference_kg": 1.2,
+      "band_kg": [
+        0.6,
+        2.6
+      ],
+      "reference_length_cm": 30,
+      "estimates_kg": [
+        1.2,
+        1.2,
+        1.5
+      ],
+      "median_kg": 1.2,
+      "bases": [
+        "30cm solid steel rod, like a heavy hammer head",
+        "30cm solid steel rod, like a heavy hand weight bar",
+        "30cm solid steel rod ~25mm thick, like a heavy dumbbell handle stub"
+      ]
+    }
+  ]
+}

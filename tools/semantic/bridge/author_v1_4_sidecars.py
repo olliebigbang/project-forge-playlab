@@ -18,6 +18,11 @@ Two groups are written:
       front-weighted and both therefore compiled to the same mass axis of 1.0 and the
       same `heavy` label, a 33x difference in real mass that the compiler could not see.
 
+Careful: this writes both groups into the same directory, so running it over a directory
+that already holds `estimate_real_mass.py` output replaces model estimates with these
+guesses. The four upgrades under `artifacts/mass_axis_poc/affordance_v1_4/` are model
+output and should be regenerated with the estimator, not with this.
+
 Usage:
     python author_v1_4_sidecars.py <output_dir>
 """
@@ -68,7 +73,9 @@ DEMO_PROFILES = {
         "confidence": 1.0,
         "evidence_parts": ["meaty drumstick end", "narrow bone handle"],
         "real_length_cm": 13.0,
-        "real_mass_kg": 0.15,
+        # Model output: the probe asked this exact identity and answered 0.12kg (median of
+        # 0.12/0.12/0.15). The profile around it is still hand-authored.
+        "real_mass_kg": 0.12,
     },
     "sledgehammer": {
         "handle_length": "long",

@@ -5,7 +5,7 @@
     {
       "plain": "wooden_spoon",
       "modified": "iron_bar",
-      "asserts": "mass is not recoverable from length: same ~30cm object, different substance. Equal answers mean the model is sizing the silhouette rather than weighing the material."
+      "asserts": "mass is not recoverable from length: both are ~30cm one-hand objects, and only the substance differs. The size is stated in silhouette_hints because the estimator is deliberately not given real_length_cm -- without it the model priced a bar of its own choosing and the pair stopped being a controlled one."
     },
     {
       "plain": "wooden_spoon",
@@ -483,7 +483,8 @@
           "solid steel"
         ],
         "silhouette_hints": [
-          "plain straight solid metal rod of uniform thickness"
+          "plain straight solid metal rod of uniform thickness",
+          "the length of an ordinary kitchen spoon, about 30cm, held in one hand"
         ]
       }
     }

@@ -364,7 +364,7 @@ was resolution: `body_length` measured the right property too coarsely, and mop 
 collided inside one bucket. Mass is worse than coarse. `mass_distribution` measures a
 *different property* — where the weight sits, not how much there is — and the compiler had
 no third option, so it used the wrong field and called it mass. The two are independent:
-a chicken leg and a sledgehammer are both `front`, 33x apart. Refining the ordinal could
+a chicken leg and a sledgehammer are both `front`, more than fortyfold apart. Refining the ordinal could
 never have fixed this, because the quantity was not in the profile at all.
 
 **Measured before and after, same sidecar with the mass zeroed on one side.** All six probed
@@ -390,7 +390,7 @@ lands where inside it and nothing else — P08's middle layer, kept honest by ke
 number the same rather than by intending to.
 
 **Damage was not touched, and the switch that proves it is arithmetic.** Mass reaches damage
-only by selecting one of three tempo classes, so across a 33x mass span the base damage
+only by selecting one of three tempo classes, so across a 41.7x mass span the base damage
 takes exactly three values. `verify_mass_ab.gd` prints that ratio on every run: if anyone
 ever multiplies damage by kilograms, the third section stops showing three values and
 starts tracking the masses. What the chicken leg gets for being light is 0.39s swings, 0.82
@@ -398,20 +398,44 @@ movement and 56.4 DPS against the pan's 0.54s, 0.62 and 50.0 — faster, more mo
 better sustained damage in exchange for less per hit. Light is a different weapon, not a
 worse one.
 
-**Not measured yet, and it is the same check P06 was.** `estimate_real_mass.py` and
-`mass_probe.py` are written and dry-run verified — 18 objects, 17 of them shared with the
-length probe so both axes are asked about identical identities, plus an `iron_bar` control
-that is the same length as the plain wooden spoon and an order of magnitude heavier. The
-live run needs an API key that the authoring session did not have, so **every mass now in
-`artifacts/mass_axis_poc/` is hand-authored and is not evidence.** P06 is the reason to
-insist on the difference: the hand-authored guess for the giant spoon was 60cm and the
-model said 120.
-
 **The estimator deliberately does not receive `real_length_cm`,** even though the v1.3
 sidecar beside it carries one. Feeding it in would make mass partly a density calculation
 off the other axis, so a length error would propagate and the two fields would stop being
-independent evidence. The probe's fifth section exists to check that the axes actually did
-come out independent rather than one tracking the other.
+independent evidence. Measured over the 17 objects asked on both axes, 41% of pairs rank
+differently — the fishing rod is the longest object and the third lightest, the fire
+extinguisher is mid-length and the heaviest. Mass is not a second reading of length.
+
+**The control pair was wrong on the first run, and it failed in the direction that flatters.**
+`iron_bar` was written to be the same length as the plain wooden spoon, but the estimator is
+deliberately not given `real_length_cm`, and the case text never said how long the bar was.
+The model priced a bar of its own choosing at 6kg and the pair reported 100x — a number that
+would have been quoted as proving material sensitivity while actually comparing a 30cm spoon
+to a metre of steel. With the size stated in `silhouette_hints`, where P06 established that
+size language belongs, the bar comes back at 1.2kg and the pair reads a controlled 20x. **A
+control that is not controlled still produces a number, and the number is more impressive
+than the honest one.**
+
+**The repeat-spread check fails, and loosening it would be the wrong move.** Measured over
+18 objects x 3 repeats: ordering has no violations, both control pairs separate cleanly
+(20x material, 25x modifier), every median lands inside its reference band. But two objects
+exceed the 20% spread threshold inherited from P06 — the fishing rod at 40% (0.20–0.30kg)
+and the chicken leg at 25% (0.12–0.15kg) — so the probe's verdict line reads NOT REPEATABLE.
+
+Both failures are at the light end, and the cause is that the model answers round numbers:
+at 0.25kg the neighbouring round answers are 20–40% apart, while the same absolute wobble at
+3kg is a rounding error. **Relative spread is the wrong statistic for a quantity that is
+consumed through a logarithm.** Measured on the axis that actually drives tempo, the worst
+movement across repeats is +0.066 on a band of 0.65, no object's `weight_class` changes, and
+the chicken leg's 25% compresses to exactly 0.000 because 0.12 and 0.15 both sit at or below
+the axis floor. The curve is flattest precisely where the estimates are noisiest.
+
+The threshold was deliberately **not** raised to make the line go green. P06's own warning
+applies — tuning the expectation to the answer makes the check worthless — and a probe that
+measures the raw field is still measuring the right thing about the model. What changed is
+the interpretation, recorded here: this field is reliable enough to drive tempo despite
+failing a criterion written for a linearly-consumed quantity. Anyone who later feeds
+`real_mass_kg` into something *without* a compression curve inherits the 40% honestly, and
+should re-read this paragraph before assuming the axis is stable for their use.
 
 ## P10 — the frozen hash chain is line-ending sensitive outside `.gitattributes`
 

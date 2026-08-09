@@ -1,0 +1,66 @@
+REAL MASS ESTIMATE PROBE — 18 objects x 3 repeats — claude-opus-5
+
+1. REPEAT SPREAD  (same object asked repeatedly; 0.0% = every repeat agreed)
+   object                  median      min      max   spread   verdict
+   chicken_leg              0.12kg    0.12     0.15    25.0%   UNSTABLE — cannot drive tempo
+   wooden_spoon             0.06kg    0.06     0.06     0.0%   stable
+   cleaver                  0.70kg    0.70     0.70     0.0%   stable
+   hammer                   0.70kg    0.70     0.70     0.0%   stable
+   frying_pan               2.20kg    2.00     2.20     9.1%   stable
+   stool                    3.50kg    3.50     3.50     0.0%   stable
+   fire_extinguisher        9.00kg    9.00     9.00     0.0%   stable
+   giant_wooden_spoon       1.50kg    1.50     1.50     0.0%   stable
+   axe                      2.70kg    2.70     2.70     0.0%   stable
+   baseball_bat             0.90kg    0.90     0.95     5.6%   stable
+   shield                   5.00kg    5.00     5.00     0.0%   stable
+   wooden_chair             6.00kg    5.00     6.00    16.7%   stable
+   sword                    1.40kg    1.40     1.40     0.0%   stable
+   shotgun_melee            3.40kg    3.20     3.40     5.9%   stable
+   old_mop                  1.20kg    1.20     1.20     0.0%   stable
+   spear                    2.00kg    2.00     2.00     0.0%   stable
+   fishing_rod              0.25kg    0.20     0.30    40.0%   UNSTABLE — cannot drive tempo
+   iron_bar                 1.20kg    1.20     1.50    25.0%   UNSTABLE — cannot drive tempo
+
+   worst spread 40.0%  ->  NOT REPEATABLE: the same object measures differently run to run
+
+2. ORDERING  (sorted by model median; reference in brackets)
+       0.06 kg  [ 0.09 ref]   wooden_spoon
+       0.12 kg  [ 0.15 ref]   chicken_leg
+       0.25 kg  [ 0.30 ref]   fishing_rod
+       0.70 kg  [ 0.70 ref]   cleaver
+       0.70 kg  [ 0.60 ref]   hammer
+       0.90 kg  [ 0.90 ref]   baseball_bat
+       1.20 kg  [ 1.00 ref] * old_mop
+       1.20 kg  [ 1.20 ref]   iron_bar
+       1.40 kg  [ 1.20 ref]   sword
+       1.50 kg  [ 1.50 ref] * giant_wooden_spoon
+       2.00 kg  [ 2.00 ref]   spear
+       2.20 kg  [ 1.60 ref] * frying_pan
+       2.70 kg  [ 2.00 ref]   axe
+       3.40 kg  [ 3.20 ref] * shotgun_melee
+       3.50 kg  [ 3.00 ref]   stool
+       5.00 kg  [ 4.50 ref]   shield
+       6.00 kg  [ 5.00 ref]   wooden_chair
+       9.00 kg  [ 6.00 ref]   fire_extinguisher
+
+   no ordering violations among clearly-separated pairs
+
+3. CONTROL PAIRS  (mass must not collapse into length, or into the bare noun)
+   iron_bar / wooden_spoon = 20.00x (1.20 vs 0.06 kg)  ->  separated
+     asserts: mass is not recoverable from length: both are ~30cm one-hand objects, and only the substance differs. The size is stated in silhouette_hints because the estimator is deliberately not given real_length_cm -- without it the model priced a bar of its own choosing and the pair stopped being a controlled one.
+   giant_wooden_spoon / wooden_spoon = 25.00x (1.50 vs 0.06 kg)  ->  separated
+     asserts: the model reads the size modifier in display_name rather than pattern-matching the noun -- the P06 defect, guarded on the mass axis too.
+
+4. REFERENCE BAND  (rough human estimate — flags order-of-magnitude misses only)
+   every median inside its band
+
+5. AXIS INDEPENDENCE  (informational: does mass say anything length did not?)
+   17 objects measured on both axes; 56 of 136 pairs rank differently (41%)
+   largest disagreements (long-but-light vs short-but-heavy):
+     fishing_rod             210 cm     0.25 kg   rank shift -13
+     old_mop                 140 cm     1.20 kg   rank shift -8
+     spear                   220 cm     2.00 kg   rank shift -7
+     shield                   85 cm     5.00 kg   rank shift +6
+     stool                    45 cm     3.50 kg   rank shift +8
+     fire_extinguisher        50 cm     9.00 kg   rank shift +10
+
