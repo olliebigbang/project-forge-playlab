@@ -296,3 +296,57 @@ have length drive more properties — is the wrong shape: it is one axis doing m
 which is the addition T51 and T76 retired. The multiplication play is *more orthogonal
 axes*, so that N primitives keep producing N-fold combinations. Recorded here as the
 direction, not as a decision to implement.
+
+## P08 — real quantities pick which weapon you are, never whether you are viable
+
+*2026-08-09.* Prompted by the obvious objection to adding mass as an axis: a real chicken
+leg weighs 100g, a sledgehammer 5kg. Fifty times. Let that reach damage and the drawing
+that made a chicken leg is punished for being accurate.
+
+**The objection is right about physics and wrong about this codebase**, and the existing
+code already shows why. Damage is `{"rapid": 22, "balanced": 27, "committed": 34}` keyed
+off tempo — a 1.55x total spread, bound to a three-value class, touching no continuous
+quantity. Physics cannot reach it. Measured over the timing each tempo configures:
+
+  tempo        damage   swing    DPS    movement kept
+  rapid            22   0.39s   56.4             0.82
+  balanced         27   0.56s   48.2             0.62
+  committed        34   0.78s   43.6             0.42
+
+**Light is not weak — light has the highest DPS and nearly double the mobility.** It trades
+per-hit size and reach for rate and freedom. A chicken leg is a fast, mobile, short weapon,
+which is a weapon, not a punishment.
+
+**The rule, stated so it can be enforced:** a real quantity may decide *which* weapon
+something is; it may never decide *whether it is worth using*. This is T51's "every
+drawing has a reasonable answer" made checkable — a chicken leg must get a **different**
+answer, not a **worse** one. Concretely: anything that multiplies damage by a real
+quantity violates it, because real quantities span 50x and the damage band spans 1.55x by
+deliberate design.
+
+**How a real quantity is allowed to enter, in three layers.** P01–P07 walked this without
+naming it:
+
+  1. the real quantity fixes **ordering and ratio** — who is longer, heavier, slower;
+  2. game design fixes the **usable band** — 22–34 damage, 72–148 reach, chosen not derived;
+  3. a **compression curve** maps 1 into 2 so both ends stay playable.
+
+Length used exactly this: real cm for order, an 84–138 band the code already assumed, and
+a square root once straight proportionality made the 45cm pan unplayably small (P07). The
+answer to "surely full realism cannot work" is that it never was full realism — realism
+sets the order, design sets the bounds.
+
+**T60 does not forbid mass, and will be misread as if it does.** It says derive from
+slenderness *rather than mass*, because ink area saturates: `280x30` and `280x60` both
+measure 1.000. That is an indictment of **measuring mass off the drawing**, not of mass.
+Real mass in kilograms is precisely what geometry cannot see, which is the case T73/T74
+reserve for asking the model. Same argument that justified `real_length_cm` in P05.
+
+**A concrete defect this exposes, worth fixing with the axis.** `_weight_class` returns
+`heavy` when `mass_distribution == "front"`, and `_mass_axis` reads the same three-value
+field — so nothing in the compiler knows how heavy anything is, only where its mass sits.
+All four shipped objects come out `heavy`, and three of four share `mass_axis` 1.0. A
+chicken leg is front-weighted, so it classifies `heavy` and would swing slower than a
+sledgehammer. **The mass axis today is exactly where the length axis was before P01**: a
+categorical standing in for a continuous quantity, colliding everywhere, unnoticed because
+there was no magnitude to compare against. The bug to fix is tempo, not damage.
