@@ -30,11 +30,14 @@ from affordance_contract_v1_3 import (  # noqa: E402
     MAX_REAL_LENGTH_CM,
     MIN_REAL_LENGTH_CM,
     upgrade_profile_to_v1_3,
+    validate_real_length_cm,
 )
 
 
 MODEL = "claude-opus-5"
 
+# Structured outputs reject numeric bounds (minimum/maximum) and string-length bounds,
+# so the range lives in the description and is enforced client-side after the call.
 ESTIMATE_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -42,14 +45,14 @@ ESTIMATE_SCHEMA = {
     "properties": {
         "real_length_cm": {
             "type": "number",
-            "minimum": MIN_REAL_LENGTH_CM,
-            "maximum": MAX_REAL_LENGTH_CM,
-            "description": "Longest dimension of the real object in centimetres.",
+            "description": (
+                "Longest dimension of the real object in centimetres, between "
+                f"{MIN_REAL_LENGTH_CM:g} and {MAX_REAL_LENGTH_CM:g}."
+            ),
         },
         "basis": {
             "type": "string",
-            "maxLength": 200,
-            "description": "The everyday reference the estimate is anchored to.",
+            "description": "The everyday reference the estimate is anchored to, in one short phrase.",
         },
     },
 }
@@ -59,16 +62,27 @@ SYSTEM = (
     "picture of it: a rendered sprite fills its canvas whatever the subject, so image size "
     "carries no information about real size. Give the longest dimension of a typical example "
     "in centimetres. Order of magnitude is what matters -- a frying pan is tens of "
-    "centimetres, a mop is over a metre. Anchor the estimate to an everyday reference."
+    "centimetres, a mop is over a metre. Anchor the estimate to an everyday reference.\n\n"
+    "The canonical name is deliberately stripped of modifiers, so size words live in the "
+    "display name and the silhouette hints. Size words there ('giant', 'oversized', "
+    "'miniature') describe the real object and must change your estimate; combat flavour "
+    "words ('battle', 'heavy', 'cursed') must not."
 )
 
 
 def estimate_real_length_cm(client: anthropic.Anthropic, blueprint: dict) -> dict:
     identity = blueprint.get("identity", {})
+    # display_name carries the size modifier and must be sent. The canonical name is
+    # deliberately stripped of modifiers upstream (contract v1.2.1 exists to keep
+    # combat/effect words out of it), so "Giant Battle Wooden Spoon" has a
+    # canonical_name_en of plain "wooden spoon". Omitting display_name asks the model
+    # about the wrong object -- it answered 30cm for a spoon that is meant to be huge.
     description = json.dumps(
         {
             "canonical_name_en": identity.get("canonical_name_en"),
             "canonical_name_zh": identity.get("canonical_name_zh"),
+            "display_name_en": identity.get("display_name_en"),
+            "display_name_zh": identity.get("display_name_zh"),
             "category": identity.get("category"),
             "required_identity_parts": identity.get("required_identity_parts"),
             "material_hints": identity.get("material_hints"),
@@ -91,7 +105,11 @@ def estimate_real_length_cm(client: anthropic.Anthropic, blueprint: dict) -> dic
     if response.stop_reason == "refusal":
         raise RuntimeError(f"model declined the request: {response.stop_details}")
     text = next(block.text for block in response.content if block.type == "text")
-    return json.loads(text)
+    estimate = json.loads(text)
+    # The schema cannot carry the bounds, so an out-of-range answer has to fail here
+    # rather than travel on as if the contract had vetted it.
+    validate_real_length_cm(estimate["real_length_cm"])
+    return estimate
 
 
 def main() -> int:

@@ -26,6 +26,7 @@
       "reference_cm": 30, "band_cm": [22, 40],
       "identity": {
         "canonical_name_en": "wooden spoon", "canonical_name_zh": "木勺",
+        "display_name_en": "Wooden Spoon", "display_name_zh": "木勺",
         "category": "household_object",
         "required_identity_parts": ["shallow oval bowl", "straight handle"],
         "material_hints": ["wood"],
@@ -90,12 +91,14 @@
     {
       "id": "giant_wooden_spoon",
       "reference_cm": 60, "band_cm": [45, 90],
+      "note": "Mirrors the frozen blueprint exactly: canonical_name_en is plain 'wooden spoon' and the size modifier lives only in display_name. Contract v1.2.1 strips modifiers from canonical names, so this is the shape production actually produces -- an estimator that reads only the canonical name answers 30cm here.",
       "identity": {
-        "canonical_name_en": "giant wooden spoon", "canonical_name_zh": "巨大木勺",
+        "canonical_name_en": "wooden spoon", "canonical_name_zh": "木勺",
+        "display_name_en": "Giant Battle Wooden Spoon", "display_name_zh": "巨大战斗木勺",
         "category": "household_object",
-        "required_identity_parts": ["oversized spoon bowl", "long wooden handle"],
-        "material_hints": ["wood"],
-        "silhouette_hints": ["long wooden handle ending in an oversized rounded bowl"]
+        "required_identity_parts": ["long handle", "rounded scoop bowl", "spoon neck connecting handle to bowl"],
+        "material_hints": ["carved wood", "polished wood grain"],
+        "silhouette_hints": ["oversized long-handled spoon silhouette", "elongated handle with wide rounded bowl at end"]
       }
     },
     {

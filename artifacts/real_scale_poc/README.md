@@ -46,13 +46,27 @@ python $PP/rescale_to_real_length.py $A/recipe_slice_1b/old_mop/processed_sprite
 
 Requires `numpy`, `pillow`, `opencv-python`.
 
-## The lengths are placeholders
+## Where the lengths come from
 
-`author_v1_3_sidecars.py` hand-authors the four `real_length_cm` values so the pipeline
-can be wired and tested offline. They are **not** model output, so they are evidence that
-the plumbing works and nothing more. `tools/semantic/bridge/estimate_real_length.py` asks
-the model the same question and writes the same file; running it (needs an API key) is
-what would turn this into evidence about whether the model can estimate object size.
+The sidecars in `affordance_v1_3/` are **model output** (`claude-opus-5`, via
+`estimate_real_length.py` against the frozen blueprints under `data/`):
+
+| object | real_length_cm | model's stated basis |
+|---|---|---|
+| frying_pan | 45 | cast iron skillet with handle, about a forearm length |
+| shotgun_melee | 100 | pump-action shotgun, about as long as a baseball bat |
+| giant_wooden_spoon | 120 | about the length of a broom handle, versus a normal 30cm kitchen spoon |
+| old_mop | 140 | broom handle reaching chest height on an adult |
+
+Reliability was measured separately over 17 objects x 3 repeats — see
+`artifacts/length_probe_v1/REPORT.txt` and decision P06. Worst repeat spread 5.6%.
+
+`author_v1_3_sidecars.py` still hand-authors the same four values for working offline
+without an API key; anything it produces is labelled `hand_authored_placeholder` and is
+not evidence.
+
+Note that `real_length_cm` separates three objects that `body_length` cannot: mop, spoon
+and shotgun are all `"long"` under the ordinal, and 140 / 120 / 100 under the number.
 
 ## Result
 

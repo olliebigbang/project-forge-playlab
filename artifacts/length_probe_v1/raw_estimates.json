@@ -1,0 +1,330 @@
+{
+  "model": "claude-opus-5",
+  "repeats": 3,
+  "provenance": "model_estimate",
+  "results": [
+    {
+      "id": "chicken_leg",
+      "reference_cm": 20,
+      "band_cm": [
+        12,
+        30
+      ],
+      "estimates_cm": [
+        13.0,
+        13.0,
+        13.0
+      ],
+      "median_cm": 13.0,
+      "bases": [
+        "a cooked chicken drumstick, about a hand's length",
+        "a cooked chicken drumstick, about a hand's width long",
+        "a cooked chicken drumstick, about a hand's width long"
+      ]
+    },
+    {
+      "id": "wooden_spoon",
+      "reference_cm": 30,
+      "band_cm": [
+        22,
+        40
+      ],
+      "estimates_cm": [
+        30.0,
+        30.0,
+        30.0
+      ],
+      "median_cm": 30.0,
+      "bases": [
+        "typical kitchen wooden stirring spoon, about a forearm's length",
+        "typical kitchen stirring spoon, about a forearm's length",
+        "typical kitchen wooden stirring spoon, about a forearm's length"
+      ]
+    },
+    {
+      "id": "cleaver",
+      "reference_cm": 32,
+      "band_cm": [
+        22,
+        45
+      ],
+      "estimates_cm": [
+        32.0,
+        32.0,
+        32.0
+      ],
+      "median_cm": 32.0,
+      "bases": [
+        "Chinese kitchen cleaver, blade ~20 cm plus handle",
+        "Chinese kitchen cleaver, blade plus handle about a forearm's length",
+        "Chinese kitchen cleaver, ~20cm blade plus handle"
+      ]
+    },
+    {
+      "id": "hammer",
+      "reference_cm": 33,
+      "band_cm": [
+        25,
+        45
+      ],
+      "estimates_cm": [
+        33.0,
+        33.0,
+        33.0
+      ],
+      "median_cm": 33.0,
+      "bases": [
+        "standard claw hammer, forearm length",
+        "typical claw hammer handle, about a forearm's length",
+        "forearm-length carpenter's hammer"
+      ]
+    },
+    {
+      "id": "frying_pan",
+      "reference_cm": 40,
+      "band_cm": [
+        30,
+        55
+      ],
+      "estimates_cm": [
+        45.0,
+        45.0,
+        45.0
+      ],
+      "median_cm": 45.0,
+      "bases": [
+        "28 cm skillet plus handle, like a typical kitchen frying pan",
+        "typical 26cm skillet plus handle",
+        "28 cm skillet plus handle, like a kitchen frying pan"
+      ]
+    },
+    {
+      "id": "stool",
+      "reference_cm": 45,
+      "band_cm": [
+        35,
+        65
+      ],
+      "estimates_cm": [
+        45.0,
+        45.0,
+        45.0
+      ],
+      "median_cm": 45.0,
+      "bases": [
+        "seat height of a small kitchen stool, about knee-high",
+        "seat height about knee-high, like a kitchen step stool",
+        "seat height of a small kitchen stool, about knee height"
+      ]
+    },
+    {
+      "id": "fire_extinguisher",
+      "reference_cm": 50,
+      "band_cm": [
+        35,
+        75
+      ],
+      "estimates_cm": [
+        50.0,
+        50.0,
+        50.0
+      ],
+      "median_cm": 50.0,
+      "bases": [
+        "typical handheld office fire extinguisher, about knee-height",
+        "typical portable office fire extinguisher, about knee-high",
+        "typical portable office fire extinguisher, about knee-high"
+      ]
+    },
+    {
+      "id": "giant_wooden_spoon",
+      "reference_cm": 60,
+      "band_cm": [
+        45,
+        90
+      ],
+      "estimates_cm": [
+        120.0,
+        120.0,
+        120.0
+      ],
+      "median_cm": 120.0,
+      "bases": [
+        "giant wooden spoon nearly as tall as a broom handle",
+        "giant wooden spoon about as long as a broom handle, versus 30 cm for a normal one",
+        "oversized wooden spoon nearly as tall as a broom handle"
+      ]
+    },
+    {
+      "id": "axe",
+      "reference_cm": 75,
+      "band_cm": [
+        45,
+        100
+      ],
+      "estimates_cm": [
+        85.0,
+        90.0,
+        90.0
+      ],
+      "median_cm": 90.0,
+      "bases": [
+        "full-size felling axe, about arm-and-a-half long",
+        "long-handled felling axe, about waist height",
+        "full-size felling axe, about arm's length plus"
+      ]
+    },
+    {
+      "id": "baseball_bat",
+      "reference_cm": 85,
+      "band_cm": [
+        70,
+        100
+      ],
+      "estimates_cm": [
+        85.0,
+        85.0,
+        85.0
+      ],
+      "median_cm": 85.0,
+      "bases": [
+        "standard adult baseball bat, about waist height",
+        "standard adult baseball bat, about waist height",
+        "standard adult baseball bat, about waist height"
+      ]
+    },
+    {
+      "id": "shield",
+      "reference_cm": 85,
+      "band_cm": [
+        55,
+        120
+      ],
+      "estimates_cm": [
+        85.0,
+        85.0,
+        85.0
+      ],
+      "median_cm": 85.0,
+      "bases": [
+        "Viking round shield, about arm's-length wide",
+        "Viking round shield, about arm's-length across",
+        "Viking round shield, about arm's-length wide"
+      ]
+    },
+    {
+      "id": "wooden_chair",
+      "reference_cm": 90,
+      "band_cm": [
+        70,
+        115
+      ],
+      "estimates_cm": [
+        90.0,
+        90.0,
+        90.0
+      ],
+      "median_cm": 90.0,
+      "bases": [
+        "dining chair back height, about knee-to-chest tall",
+        "dining chair back height, about waist-high",
+        "dining chair height, seat at knee level"
+      ]
+    },
+    {
+      "id": "sword",
+      "reference_cm": 100,
+      "band_cm": [
+        75,
+        130
+      ],
+      "estimates_cm": [
+        110.0,
+        115.0,
+        115.0
+      ],
+      "median_cm": 115.0,
+      "bases": [
+        "a two-handed medieval longsword, about waist-height on an adult",
+        "medieval two-handed longsword, about waist-height on an adult",
+        "medieval longsword, about waist-height on an adult"
+      ]
+    },
+    {
+      "id": "shotgun_melee",
+      "reference_cm": 100,
+      "band_cm": [
+        80,
+        125
+      ],
+      "estimates_cm": [
+        110.0,
+        110.0,
+        110.0
+      ],
+      "median_cm": 110.0,
+      "bases": [
+        "typical pump-action shotgun, about as long as a broom handle section",
+        "typical pump-action shotgun, about as long as an adult's arm span half",
+        "typical pump-action shotgun, about as long as an adult's leg"
+      ]
+    },
+    {
+      "id": "old_mop",
+      "reference_cm": 150,
+      "band_cm": [
+        120,
+        180
+      ],
+      "estimates_cm": [
+        140.0,
+        140.0,
+        140.0
+      ],
+      "median_cm": 140.0,
+      "bases": [
+        "a standard household mop handle, about chest height",
+        "a household mop taller than waist height, about chin-high",
+        "floor mop with handle reaching about chest height"
+      ]
+    },
+    {
+      "id": "spear",
+      "reference_cm": 200,
+      "band_cm": [
+        150,
+        280
+      ],
+      "estimates_cm": [
+        220.0,
+        220.0,
+        220.0
+      ],
+      "median_cm": 220.0,
+      "bases": [
+        "taller than a person, like a long broom handle plus half again",
+        "taller than a person, like a long broom handle plus head",
+        "taller than a person, like a long broom handle plus half again"
+      ]
+    },
+    {
+      "id": "fishing_rod",
+      "reference_cm": 210,
+      "band_cm": [
+        150,
+        320
+      ],
+      "estimates_cm": [
+        210.0,
+        210.0,
+        210.0
+      ],
+      "median_cm": 210.0,
+      "bases": [
+        "typical 7-foot spinning rod, taller than a person's shoulder height",
+        "typical 7-foot spinning rod, taller than a person's shoulder height",
+        "typical 7-foot graphite rod, taller than a person"
+      ]
+    }
+  ]
+}

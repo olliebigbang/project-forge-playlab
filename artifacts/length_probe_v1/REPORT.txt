@@ -1,0 +1,63 @@
+REAL LENGTH ESTIMATE PROBE — 17 objects x 3 repeats — claude-opus-5
+
+1. REPEAT SPREAD  (same object asked repeatedly; 0.0% = every repeat agreed)
+   object                 median     min     max   spread   verdict
+   chicken_leg                13      13      13     0.0%   stable
+   wooden_spoon               30      30      30     0.0%   stable
+   cleaver                    32      32      32     0.0%   stable
+   hammer                     33      33      33     0.0%   stable
+   frying_pan                 45      45      45     0.0%   stable
+   stool                      45      45      45     0.0%   stable
+   fire_extinguisher          50      50      50     0.0%   stable
+   giant_wooden_spoon        120     120     120     0.0%   stable
+   axe                        90      85      90     5.6%   stable
+   baseball_bat               85      85      85     0.0%   stable
+   shield                     85      85      85     0.0%   stable
+   wooden_chair               90      90      90     0.0%   stable
+   sword                     115     110     115     4.3%   stable
+   shotgun_melee             110     110     110     0.0%   stable
+   old_mop                   140     140     140     0.0%   stable
+   spear                     220     220     220     0.0%   stable
+   fishing_rod               210     210     210     0.0%   stable
+
+   worst spread 5.6%  ->  repeatable enough to drive decisions
+
+2. ORDERING  (sorted by model median; reference in brackets)
+       13 cm  [  20 ref]   chicken_leg
+       30 cm  [  30 ref]   wooden_spoon
+       32 cm  [  32 ref]   cleaver
+       33 cm  [  33 ref]   hammer
+       45 cm  [  40 ref] * frying_pan
+       45 cm  [  45 ref]   stool
+       50 cm  [  50 ref]   fire_extinguisher
+       85 cm  [  85 ref]   baseball_bat
+       85 cm  [  85 ref]   shield
+       90 cm  [  75 ref]   axe
+       90 cm  [  90 ref]   wooden_chair
+      110 cm  [ 100 ref] * shotgun_melee
+      115 cm  [ 100 ref]   sword
+      120 cm  [  60 ref] * giant_wooden_spoon
+      140 cm  [ 150 ref] * old_mop
+      210 cm  [ 210 ref]   fishing_rod
+      220 cm  [ 200 ref]   spear
+
+   5 ordering violation(s) among clearly-separated pairs:
+     baseball_bat should exceed giant_wooden_spoon, but measured 85 vs 120
+     shield should exceed giant_wooden_spoon, but measured 85 vs 120
+     wooden_chair should exceed giant_wooden_spoon, but measured 90 vs 120
+     sword should exceed giant_wooden_spoon, but measured 115 vs 120
+     shotgun_melee should exceed giant_wooden_spoon, but measured 110 vs 120
+
+3. CONTROL PAIRS  (does the model read the size modifier, or just the noun?)
+   giant_wooden_spoon / wooden_spoon = 4.00x (120 vs 30)  ->  modifier read
+
+4. REFERENCE BAND  (rough human estimate — flags order-of-magnitude misses only)
+   giant_wooden_spoon      120 cm  outside band [45, 90]
+
+5. FRAME CAPACITY  (96px at 0.56 px/cm: ~143cm always fits, ~171cm is the diagonal best case)
+   cannot fit at any orientation — postprocess fails closed on
+   REAL_LENGTH_EXCEEDS_SPRITE_FRAME (decision P05: the contract allows these,
+   the frame is what needs changing):
+     spear                   220 cm
+     fishing_rod             210 cm
+

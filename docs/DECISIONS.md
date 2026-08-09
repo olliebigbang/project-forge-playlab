@@ -201,7 +201,48 @@ draw fails closed at `REAL_LENGTH_EXCEEDS_SPRITE_FRAME` rather than having the c
 pretend long objects don't exist. Representing a pike means a bigger frame or a smaller
 `PX_PER_CM`, not a narrower contract.
 
-**Still owed:** the four values are hand-authored placeholders from
-`author_v1_3_sidecars.py`, not model output. `estimate_real_length.py` asks the model the
-same question and writes the same file; running it is what turns "the plumbing works"
-into evidence about whether the model can actually estimate object size.
+**Settled by P06:** the four values now come from the model, not from the hand-authored
+placeholder table. `author_v1_3_sidecars.py` remains as the offline path for working
+without an API key.
+
+## P06 — the model can estimate length; the estimator must be told the display name
+
+*2026-08-09.* Measured with `tools/semantic/bridge/length_probe.py`, 17 objects x 3
+repeats on `claude-opus-5`. Report: `artifacts/length_probe_v1/REPORT.txt`.
+
+**The model is repeatable enough to drive reach.** Worst spread across repeats was 5.6%
+(axe 85-90cm, sword 110-115cm); 15 of 17 objects returned an identical number every time.
+A field that moved run to run could not drive mechanics however good its median was, so
+this was the check that had to pass first. It did.
+
+**Ordering is sound.** Across the sixteen objects other than the giant spoon there were
+no ordering violations at all: chicken leg 13 < cleaver 32 < pan 45 < bat 85 < chair 90 <
+sword 115 < mop 140 < fishing rod 210 < spear 220.
+
+**The real defect was ours, and the probe is what found it.** `estimate_real_length.py`
+sent `canonical_name_en` and omitted `display_name_en`. But T51's canonical-name hygiene
+(the whole reason contract v1.2.1 exists) deliberately strips modifiers from canonical
+names — so `giant_wooden_spoon` has a `canonical_name_en` of plain `"wooden spoon"`, and
+the word "Giant" survives only in `display_name_en`. Asked about a "wooden spoon" the
+model answered a correct and useless 30cm. **A field that upstream deliberately
+sanitises cannot be the only field a downstream consumer reads.** With the display name
+included the same object returns 120cm, and the model's own stated basis contrasts it
+against "a normal 30 cm kitchen spoon". The control pair went 1.0x -> 4.0x.
+
+That failure was invisible in the synthetic probe until the probe case was rewritten to
+mirror the frozen blueprint exactly. A probe built from hand-written descriptions tests
+the estimator against data production never emits — decision T58's complaint, in the
+shape of a test fixture.
+
+**Open, and a human call:** the model puts the giant spoon at 120cm, longer than the
+sword (115) and the shotgun (100). That is defensible for a weapon named "Giant Battle
+Wooden Spoon" but it contradicts the 60cm reference this log's own P01 table used. The
+reference has deliberately *not* been edited to match — tuning the expectation to the
+answer would make the check worthless. Whoever adjudicates should look at the sprite, not
+at either number.
+
+**Frame ceiling is real, not hypothetical.** Spear (220cm) and fishing rod (210cm) both
+exceed what a 96px frame at 0.56 px/cm can draw at any orientation. They come from the
+slice's own blind-test list, so this is not a contrived case: supporting that list needs a
+bigger frame or a smaller `PX_PER_CM`, and P05's `REAL_LENGTH_EXCEEDS_SPRITE_FRAME` is
+what stops it failing silently in the meantime.
