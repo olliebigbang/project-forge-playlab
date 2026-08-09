@@ -149,6 +149,17 @@ func _load_requested_weapon() -> bool:
 	asset = result.get("asset") as WeaponVisualAsset
 	affordance_profile = result.get("affordance_profile") as Resource
 	source_notice = str(result.get("notice", ""))
+	var affordance_override_path := _argument_value("--combat-affordance=", "")
+	if not affordance_override_path.is_empty():
+		# Playtest hook: swap in a profile that carries real_length_cm without touching
+		# the frozen, hash-pinned one. Marked unverified so a run using it can never be
+		# mistaken for a validated load.
+		var override_profile := asset_loader.load_affordance_override(affordance_override_path)
+		if override_profile == null:
+			source_notice = "AFFORDANCE_OVERRIDE_INVALID:%s" % affordance_override_path
+			return false
+		affordance_profile = override_profile
+		source_notice = "DEV AFFORDANCE OVERRIDE (unverified): %s" % affordance_override_path
 	weapon_id = str(result.get("asset_id", result.get("fixture_id", weapon_id)))
 	is_developer_fixture = bool(result.get("fixture", false))
 	if blueprint == null or asset == null:

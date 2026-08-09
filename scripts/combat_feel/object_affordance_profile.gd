@@ -24,6 +24,17 @@ const RIGIDITIES: PackedStringArray = ["rigid", "semi_rigid", "flexible"]
 @export_range(0.65, 1.0) var confidence := 1.0
 @export var evidence_parts := PackedStringArray()
 
+# Longest real-world dimension in centimetres (affordance contract v1.3). 0.0 means the
+# profile predates v1.3 and carries no length, so consumers must fall back rather than
+# treat it as a zero-length object. body_length cannot substitute: it is a three-value
+# ordinal and old_mop, giant_wooden_spoon and shotgun_melee are all "long" while
+# measuring 140, 120 and 100cm.
+@export var real_length_cm := 0.0
+
+
+func has_real_length() -> bool:
+	return is_finite(real_length_cm) and real_length_cm > 0.0
+
 
 func validation_errors() -> Array[String]:
 	var errors: Array[String] = []
@@ -49,6 +60,10 @@ func validation_errors() -> Array[String]:
 		errors.append("INVALID_AFFORDANCE_CONFIDENCE")
 	if evidence_parts.is_empty():
 		errors.append("MISSING_AFFORDANCE_EVIDENCE")
+	# 0.0 is the legitimate "absent" value for pre-v1.3 profiles; only a present-but-
+	# nonsensical length is an error.
+	if not is_finite(real_length_cm) or real_length_cm < 0.0:
+		errors.append("INVALID_REAL_LENGTH_CM")
 	return errors
 
 
@@ -68,4 +83,5 @@ func to_dict() -> Dictionary:
 		"has_stock": has_stock,
 		"confidence": confidence,
 		"evidence_parts": Array(evidence_parts),
+		"real_length_cm": real_length_cm,
 	}

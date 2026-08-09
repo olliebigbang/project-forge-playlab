@@ -553,7 +553,19 @@ func _affordance_profile_from_dict(data: Dictionary) -> Resource:
 	profile.has_stock = bool(data.get("has_stock"))
 	profile.confidence = confidence
 	profile.evidence_parts = PackedStringArray(evidence_value)
+	# Optional so pre-v1.3 profiles keep loading unchanged; absent stays 0.0.
+	profile.real_length_cm = float(data.get("real_length_cm", 0.0))
 	return null if not profile.validation_errors().is_empty() else profile
+
+## Developer-only: read an affordance profile from an arbitrary path, outside the index
+## and its hash checks. Exists so a contract change can be A/B playtested against the
+## frozen assets without editing them -- those are SHA-256 pinned and must not move.
+## No normal load path calls this; the caller is expected to mark the run as unverified.
+func load_affordance_override(path: String) -> Resource:
+	if path.is_empty() or not FileAccess.file_exists(path):
+		return null
+	return _affordance_profile_from_dict(_read_json(path))
+
 
 func _sha256_file(path: String) -> String:
 	var file := FileAccess.open(path, FileAccess.READ)

@@ -14,6 +14,20 @@ const IMPACT_TO_MOTION := {
 }
 
 const UNSUPPORTED := "UNSUPPORTED_AFFORDANCE_FOR_SLICE_1A"
+
+# Set false to restore the pre-v1.3 reach formula exactly. This is the A/B switch for
+# playtesting: with it off, reach is driven by the three-value length ordinal, so any two
+# objects sharing a bucket get identical reach -- old_mop and giant_wooden_spoon both
+# compiled to 139.5 despite being 140cm and 120cm. With it on, reach follows the object's
+# real length. Profiles without a real length (pre-v1.3) take the old path either way.
+const USE_REAL_LENGTH_REACH := true
+
+# Maps real centimetres onto the reach envelope the rest of the game already assumes, so
+# the A/B comparison is about which objects differ from each other rather than about a
+# global range change: 45cm lands at 85px and 140cm at 137px, inside the 84..138 band
+# tests/test_combat_feel_slice_0.gd asserts.
+const REACH_CM_BASE := 60.4
+const REACH_CM_SLOPE := 0.547
 const HANDLE_LENGTHS: PackedStringArray = ["none", "short", "medium", "long"]
 const BODY_LENGTHS: PackedStringArray = ["short", "medium", "long"]
 const GRIP_TOPOLOGIES: PackedStringArray = ["one_hand_handle", "two_hand_handle", "body_grip", "clamp_grip"]
@@ -308,11 +322,15 @@ func _legacy_contact_mode(surface: String) -> String:
 
 
 func _general_reach(affordance_profile: Resource, anchor_data: Dictionary, alpha_bounds: Rect2i) -> float:
-	var axis := _length_axis(affordance_profile)
-	var measured := _strike_span(anchor_data) * 0.48 + float(maxi(alpha_bounds.size.x, alpha_bounds.size.y)) * 0.56
 	# A protruding point remains mechanically legible even when it does not win
 	# the discrete Primitive selection for this particular structure.
 	var point_extension := 4.0 if affordance_profile.has_point else 0.0
+	if USE_REAL_LENGTH_REACH and affordance_profile.has_real_length():
+		# Reach is a property of the object, not of which bucket it landed in.
+		var from_length := REACH_CM_BASE + REACH_CM_SLOPE * affordance_profile.real_length_cm
+		return clampf(from_length + point_extension, 72.0, 148.0)
+	var axis := _length_axis(affordance_profile)
+	var measured := _strike_span(anchor_data) * 0.48 + float(maxi(alpha_bounds.size.x, alpha_bounds.size.y)) * 0.56
 	return clampf(68.0 + 66.0 * axis + measured * 0.12 + point_extension, 72.0, 148.0)
 
 
