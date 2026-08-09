@@ -6,6 +6,12 @@ instead of about the frame. See `docs/DECISIONS.md` P01–P04.
 **These are evidence, not production assets.** The frozen sprites under `data/` are
 SHA-256 pinned in their `index.json` and are deliberately untouched.
 
+> ⚠️ **The game does not load these sprites, and must not while `USE_REAL_LENGTH_RENDER_SCALE`
+> is on.** That switch already scales the frozen 86px sprites by the square root of real
+> length, which solves the same problem these files do. Doing both compounds a linear scale
+> with a root one: pan:mop comes out 4.52x instead of the intended 1.76x. Turn the switch
+> off first, or leave these as evidence. See decision P07.
+
 ## Provenance
 
 Only `shotgun_melee` still has its raw render, so only it goes through the real

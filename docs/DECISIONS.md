@@ -112,9 +112,11 @@ that are genuinely small are genuinely small on screen — the pan lands at ~22p
 
 **Why the length has to come from outside the image:** FLUX renders every object filling
 its canvas, so the pixels cannot say how big the thing is. No amount of measuring
-recovers it. It is currently a hard-coded four-object table in `process_sprite.py` as a
-proof of concept; sourcing it from the semantic contract is a separate task, deliberately
-not done here.
+recovers it. It shipped here as a hard-coded four-object table in `process_sprite.py`,
+with sourcing it from the semantic contract deliberately left to a separate task —
+**done in P05; the table no longer exists.** The 150cm figure below was that table's
+hand-authored guess; the model puts the mop at 140cm (P06), so `PX_PER_CM = 0.56` is now
+a constant chosen at the time rather than one derived from a current measurement.
 
 **Why principal axis and not bounding box:** the mop and spoon sit diagonally in frame.
 The mop measures 99.7px along its axis inside a 96px box. Scaling by bounding box would
@@ -246,3 +248,51 @@ exceed what a 96px frame at 0.56 px/cm can draw at any orientation. They come fr
 slice's own blind-test list, so this is not a contrived case: supporting that list needs a
 bigger frame or a smaller `PX_PER_CM`, and P05's `REAL_LENGTH_EXCEEDS_SPRITE_FRAME` is
 what stops it failing silently in the meantime.
+
+## P07 — real length drives reach and drawn size; the visible half was the missing half
+
+*2026-08-09.* Closes the line opened by P01. Evidence:
+`tools/combat_feel/verify_reach_ab.gd` (re-runnable), `artifacts/length_probe_v1/`.
+
+**Reach was bucket-driven and collided.** `_general_reach` keyed off a three-value length
+ordinal, so `old_mop` (140cm) and `giant_wooden_spoon` (120cm) compiled to 144.7 and
+144.4 — 0.3px apart. Reach now follows `real_length_cm` and they sit 11.0px apart. The
+formula does read sprite pixels, but at 0.067px of reach per px of sprite, so correctly
+scaled sprites alone would have moved reach by 1–4px. That path was never going to work.
+
+**The first playtest looked identical, and measuring said why.** Every source sprite is
+86px in its own frame, and `render_scale` came from the *same* ordinal as reach, so the
+spoon and the mop both drew at exactly 1.180. Same image, same multiplier, pixel-identical
+output. The reach change was real and had nothing on screen to show for it. Worth
+generalising: a value that only feeds an invisible hitbox cannot be validated by playing.
+
+**Drawn size now follows length too, by its square root.** Straight proportionality was
+physically honest and read badly — the 45cm pan drew at 33px against a ~90px character and
+the playtester's verdict was "这也太小了". The root also settles a mismatch rather than
+trading against it: reach is affine in cm, so a proportional drawing diverged at the short
+end and the pan struck from 2.61x its visible tip. Under the root, reach/drawn sits within
+1.34–1.48 — tighter than the 0.95–1.43 the code had *before* any of this, so the 72px reach
+floor never needed revisiting.
+
+**These two mechanisms are mutually exclusive — do not ship both.** The rescaled sprites in
+`artifacts/real_scale_poc/` and `render_scale`-from-length solve the same problem twice.
+The game currently draws the frozen 86px sprites and scales them; loading the rescaled ones
+without setting `USE_REAL_LENGTH_RENDER_SCALE = false` compounds a linear scale with a root
+one, giving pan:mop of 4.52x where 1.76x is intended. **This retires the anchor-rescaling
+task P01 left open**: anchors are already multiplied by `render_scale` downstream, so
+nothing needs re-deriving as long as the sprites stay as they are.
+
+**Residual collisions, measured over the 17 probed objects** (13 distinct reach values):
+`frying_pan = stool` (both 45cm), `baseball_bat = shield` (both 85cm),
+`axe = wooden_chair` (both 90cm) — all three *correct*, since those objects genuinely are
+the same length. Only `fishing_rod = spear` (210 vs 220cm) is a failure, and it is the
+clamp, not the mapping: everything past ~160cm flattens onto 148, and everything under
+~21cm onto 72. **Length is informative in the middle of the range and inert at both ends.**
+
+**What this does not fix, and the direction that would.** Length feeds exactly two things,
+reach and drawn size. Motion family, tempo, arc and hitbox thickness still come from the
+same coarse axes, so "ten weapons, three feels" (T77) stands. The tempting next move —
+have length drive more properties — is the wrong shape: it is one axis doing more work,
+which is the addition T51 and T76 retired. The multiplication play is *more orthogonal
+axes*, so that N primitives keep producing N-fold combinations. Recorded here as the
+direction, not as a decision to implement.
