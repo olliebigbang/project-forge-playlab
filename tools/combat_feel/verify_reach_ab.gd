@@ -15,7 +15,7 @@ func _initialize() -> void:
 		["giant_wooden_spoon", "live"],
 		["old_mop", "recipe"],
 	]
-	print("object              cm     OFF      ON     diff")
+	print("object              cm     OFF      ON     diff   scaleOFF  scaleON   spritePx  drawnON  reach/drawn")
 	for target: Array in targets:
 		var id := str(target[0])
 		var kind := str(target[1])
@@ -38,11 +38,24 @@ func _initialize() -> void:
 		if off_profile is String or on_profile is String:
 			print("%-18s COMPILE FAILED" % id)
 			continue
-		print("%-18s %4.0f  %6.1f  %6.1f  %+6.1f" % [
+		# render_scale and the sprite itself decide what the player actually sees; reach
+		# only moves an invisible hitbox. Printed together so "the numbers changed but it
+		# looks identical" can be diagnosed rather than argued about.
+		var bounds: Rect2i = asset.opaque_bounds
+		var sprite_px: int = maxi(bounds.size.x, bounds.size.y)
+		# How far the hitbox reaches versus how long the weapon is drawn. Well above 1.0
+		# means the player hits with a weapon that visibly does not touch the target.
+		var drawn_on: float = float(sprite_px) * on_profile.render_scale
+		print("%-18s %4.0f  %6.1f  %6.1f  %+6.1f     %5.3f    %5.3f   %4d   %6.1f   %6.2f" % [
 			id,
 			upgraded.real_length_cm,
 			off_profile.reach_pixels,
 			on_profile.reach_pixels,
 			on_profile.reach_pixels - off_profile.reach_pixels,
+			off_profile.render_scale,
+			on_profile.render_scale,
+			sprite_px,
+			drawn_on,
+			on_profile.reach_pixels / drawn_on,
 		])
 	quit()

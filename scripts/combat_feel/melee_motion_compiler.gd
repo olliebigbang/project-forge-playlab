@@ -28,6 +28,28 @@ const USE_REAL_LENGTH_REACH := true
 # tests/test_combat_feel_slice_0.gd asserts.
 const REACH_CM_BASE := 60.4
 const REACH_CM_SLOPE := 0.547
+
+# Set false to restore the pre-v1.3 render scale. Separate from the reach switch so the
+# two can be judged independently in a playtest -- reach moves an invisible hitbox, this
+# is the one the player actually sees.
+#
+# Why this is what makes real scale visible: every source sprite is the same length in
+# its own frame (all four measure 86px), and the old scale came from the same three-value
+# ordinal as reach, so giant_wooden_spoon and old_mop both drew at exactly 1.180. Same
+# image, same multiplier, pixel-identical result -- the reach change was real but nothing
+# on screen could show it. Scaling by real length reproduces what correctly-proportioned
+# sprites would look like, without needing new sprites or re-derived anchors, because the
+# grip anchors are already multiplied by render_scale downstream.
+const USE_REAL_LENGTH_RENDER_SCALE := true
+
+# old_mop keeps the scale it has today; everything else lands in proportion to it.
+const RENDER_SCALE_REFERENCE_CM := 140.0
+const RENDER_SCALE_AT_REFERENCE := 1.18
+# Legibility bounds only. This re-introduces the ceiling problem for extreme objects, the
+# same way the reach clamp does: a 400cm object cannot draw 3.4x without filling the
+# arena, so beyond these bounds length stops being visible again.
+const RENDER_SCALE_MIN := 0.30
+const RENDER_SCALE_MAX := 2.00
 const HANDLE_LENGTHS: PackedStringArray = ["none", "short", "medium", "long"]
 const BODY_LENGTHS: PackedStringArray = ["short", "medium", "long"]
 const GRIP_TOPOLOGIES: PackedStringArray = ["one_hand_handle", "two_hand_handle", "body_grip", "clamp_grip"]
@@ -136,7 +158,7 @@ func _compose_orthogonal_profile(
 	profile.hitbox_thickness = _general_hitbox_thickness(affordance_profile)
 	profile.control_strength = _general_control_strength(affordance_profile)
 	profile.impact_sharpness = _general_impact_sharpness(affordance_profile)
-	profile.render_scale = 1.10 + 0.08 * _length_axis(affordance_profile)
+	profile.render_scale = _general_render_scale(affordance_profile)
 	profile.mechanism_axes = recipe.mechanism_axes.duplicate(true)
 	profile.primitive_scores = recipe.primitive_scores.duplicate(true)
 	profile.compile_trace = {
@@ -332,6 +354,14 @@ func _general_reach(affordance_profile: Resource, anchor_data: Dictionary, alpha
 	var axis := _length_axis(affordance_profile)
 	var measured := _strike_span(anchor_data) * 0.48 + float(maxi(alpha_bounds.size.x, alpha_bounds.size.y)) * 0.56
 	return clampf(68.0 + 66.0 * axis + measured * 0.12 + point_extension, 72.0, 148.0)
+
+
+func _general_render_scale(affordance_profile: Resource) -> float:
+	if USE_REAL_LENGTH_RENDER_SCALE and affordance_profile.has_real_length():
+		var length_cm: float = float(affordance_profile.real_length_cm)
+		var scaled: float = RENDER_SCALE_AT_REFERENCE * length_cm / RENDER_SCALE_REFERENCE_CM
+		return clampf(scaled, RENDER_SCALE_MIN, RENDER_SCALE_MAX)
+	return 1.10 + 0.08 * _length_axis(affordance_profile)
 
 
 func _general_arc(affordance_profile: Resource) -> float:
