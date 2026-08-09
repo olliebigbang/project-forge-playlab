@@ -464,3 +464,62 @@ baseline in a new worktree will otherwise attribute these failures to whatever t
 about to change. The durable fix is to extend `.gitattributes` to every hash-pinned path
 and re-pin the CSV as LF; that edits frozen evidence, so it wants its own task and its own
 review rather than being smuggled into an unrelated branch.
+
+## P11 — mass and length stay two axes; do not multiply them into an inertia proxy
+
+*2026-08-10.* Proposed in this repo's own review line and refuted by measuring it. A
+parallel review of the 1B design asked for a `rotational_inertia_proxy`, and P09's real
+kilograms appeared to make one free: `real_mass_kg * (real_length_cm/100)^2` needs no new
+contract field. It is the worst of the four available options. Evidence:
+`tools/combat_feel/compare_axis_separability.py`.
+
+**The case for it was strong on every count except the one that decides.** It separates the
+frying pan from the chicken leg 220x where the categorical fields separated them not at
+all; it spans 4773x across the seventeen probed objects; it really is a new ordering
+(Spearman 0.715 against mass, 0.750 against length); and squaring the length does not
+amplify the noise, because length is the stable estimate — worst repeat spread 5.6% against
+mass's 40%, so the product comes out no worse than mass alone.
+
+**It loses on resolution, which is the only thing an axis is for.** Counting pairs closer
+together than 0.065 — P09's measured worst repeat-driven axis movement, so anything closer
+sits inside the estimator's own noise and cannot be a reliable distinction:
+
+  scheme                              indistinguishable pairs
+  inertia m*L^2 alone                      39/136    29%
+  length alone                             25/136    18%
+  mass alone                               21/136    15%
+  mass and length kept separate             7/136     5%
+
+**The product is a dimensionality reduction wearing multiplication's clothes.** Mass and
+length already rank objects almost independently — Spearman 0.237 between them — and that
+independence is the entire asset. Collapsing the pair into one scalar spends it: eight of
+seventeen objects pile into the 0.85–0.95 stretch of the inertia axis (axe, extinguisher,
+giant spoon, mop, shield, shotgun, sword, chair). Two axes became one. That is T51 and
+T76's addition failure in a costume with the word "multiply" printed on it, and it fooled
+the author of P09, who had been citing T51 all week.
+
+**A wider raw span is not a better axis.** Compressed into a fixed band, a wider span buys
+sharper ends and a flatter middle, because each unit of band then covers more ratio. m*L^2
+is crisp at the extremes and mush exactly where nearly every hand weapon lives. P07 found
+length informative in the middle and inert at the ends; this is the same trade run
+backwards, and it is a property of compressing any wide span into a fixed range.
+
+**The failing case never needed it.** Mass alone already separates pan from chicken leg
+18.3x, and the compiler already converts that into a tempo class flip rather than a
+percentage (P09). The search for a cleverer combination was solving a solved problem —
+worth noticing as a habit, because the arithmetic looked impressive enough to skip asking
+whether anything was still broken.
+
+**What the residual collisions say about where to go next.** The seven pairs the two-axis
+scheme cannot split are objects that genuinely are alike in both size and weight: cleaver
+and hammer (0.007 apart on the axis), giant spoon and sword, shield and chair, giant spoon
+and mop. No arrangement of kilograms and centimetres will separate those, because they do
+not differ in kilograms or centimetres. They differ in what they are made of and how they
+land — contact surface, compliance, impact sound. That is a different *kind* of axis, and
+these numbers are the argument for building it next rather than refining this one.
+
+**The geometric version of the same idea is worse, not better.** The parallel review
+proposed deriving the inertia proxy from the sprite. That meets T60 head-on — ink area
+saturates — and the review says so about this very case: pan and chicken leg are both 96px,
+both front-weighted, both short, so a geometric proxy returns nearly the same number for
+both. From pixels the quantity is not merely redundant, it is unavailable.
