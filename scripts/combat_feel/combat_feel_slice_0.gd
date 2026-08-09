@@ -145,19 +145,24 @@ func _load_requested_weapon() -> bool:
 	if not bool(result.get("ok", false)):
 		source_notice = str(result.get("error", "LOAD_FAILED"))
 		return false
+	# Playtest hook: swap in a profile that carries real_length_cm without touching the
+	# frozen, hash-pinned one. Resolved before blueprint/asset are assigned so a bad path
+	# leaves exactly the same state as any other failed load -- assigning them first and
+	# then returning false leaves the scene half-built, and _draw_player spams
+	# "render_scale on Nil" every frame instead of failing once.
+	var affordance_override_path := _argument_value("--combat-affordance=", "")
+	var override_profile: Resource = null
+	if not affordance_override_path.is_empty():
+		override_profile = asset_loader.load_affordance_override(affordance_override_path)
+		if override_profile == null:
+			source_notice = "AFFORDANCE_OVERRIDE_INVALID:%s" % affordance_override_path
+			return false
 	blueprint = result.get("blueprint") as WeaponBlueprint
 	asset = result.get("asset") as WeaponVisualAsset
 	affordance_profile = result.get("affordance_profile") as Resource
 	source_notice = str(result.get("notice", ""))
-	var affordance_override_path := _argument_value("--combat-affordance=", "")
-	if not affordance_override_path.is_empty():
-		# Playtest hook: swap in a profile that carries real_length_cm without touching
-		# the frozen, hash-pinned one. Marked unverified so a run using it can never be
-		# mistaken for a validated load.
-		var override_profile: Resource = asset_loader.load_affordance_override(affordance_override_path)
-		if override_profile == null:
-			source_notice = "AFFORDANCE_OVERRIDE_INVALID:%s" % affordance_override_path
-			return false
+	if override_profile != null:
+		# Marked unverified: this bypasses the index hash checks by design.
 		affordance_profile = override_profile
 		source_notice = "DEV AFFORDANCE OVERRIDE (unverified): %s" % affordance_override_path
 	weapon_id = str(result.get("asset_id", result.get("fixture_id", weapon_id)))
