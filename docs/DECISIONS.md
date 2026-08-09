@@ -350,3 +350,93 @@ chicken leg is front-weighted, so it classifies `heavy` and would swing slower t
 sledgehammer. **The mass axis today is exactly where the length axis was before P01**: a
 categorical standing in for a continuous quantity, colliding everywhere, unnoticed because
 there was no magnitude to compare against. The bug to fix is tempo, not damage.
+
+## P09 — real mass is a contract field, and it buys tempo, never damage
+
+*2026-08-09.* Implements the axis P08 argued for. Evidence:
+`tools/combat_feel/verify_mass_ab.gd` (re-runnable), `artifacts/mass_axis_poc/`.
+
+`real_mass_kg` is now required by affordance contract **v1.4**, a new module alongside the
+frozen v1.1/v1.2/v1.2.1/v1.3 — same shape P05 used, one axis further along.
+
+**Why a number, and why this is not the same argument as P05.** For length the complaint
+was resolution: `body_length` measured the right property too coarsely, and mop and spoon
+collided inside one bucket. Mass is worse than coarse. `mass_distribution` measures a
+*different property* — where the weight sits, not how much there is — and the compiler had
+no third option, so it used the wrong field and called it mass. The two are independent:
+a chicken leg and a sledgehammer are both `front`, 33x apart. Refining the ordinal could
+never have fixed this, because the quantity was not in the profile at all.
+
+**Measured before and after, same sidecar with the mass zeroed on one side.** All six probed
+objects compiled to `heavy`, and five of six to a mass axis of exactly 1.000 — the axis was
+not merely coarse, it was constant. Afterwards the axis spans 0.350–0.923 and all three
+labels are in use. The chicken leg moves `balanced -> rapid` and the shotgun
+`balanced -> committed`; the shotgun had been reading `rear` and inheriting 0.35 while
+actually weighing 3.2kg.
+
+**Why a logarithm, where length needed only a square root.** Both are P08's third layer, and
+the curve has to match the span: length ran 3.75x across real objects, mass runs 33x across
+these six and a thousandfold across legal contract values, into an axis band spanning 2.9x.
+Straight proportionality is not merely ugly here, it inverts things — a 1.6kg cast iron pan
+compiles to `rapid`, the same tempo as a 0.15kg chicken leg, while the 5kg sledgehammer
+falls back to `balanced` beside the mop and the spoon. Five of six objects land in one
+class, which is the constant axis again wearing a different hat. Under the log the five
+objects between 0.15 and 1.6kg spread across 0.39 of the band instead of 0.12.
+
+**The band was deliberately not widened.** `MASS_AXIS_MIN/MAX` are the 0.35–1.0 the ordinal
+already produced, because the tempo thresholds, startup, recovery, knockback, stagger,
+hitstop and camera kick are all tuned against that range. Real mass changes which object
+lands where inside it and nothing else — P08's middle layer, kept honest by keeping the
+number the same rather than by intending to.
+
+**Damage was not touched, and the switch that proves it is arithmetic.** Mass reaches damage
+only by selecting one of three tempo classes, so across a 33x mass span the base damage
+takes exactly three values. `verify_mass_ab.gd` prints that ratio on every run: if anyone
+ever multiplies damage by kilograms, the third section stops showing three values and
+starts tracking the masses. What the chicken leg gets for being light is 0.39s swings, 0.82
+movement and 56.4 DPS against the pan's 0.54s, 0.62 and 50.0 — faster, more mobile, and
+better sustained damage in exchange for less per hit. Light is a different weapon, not a
+worse one.
+
+**Not measured yet, and it is the same check P06 was.** `estimate_real_mass.py` and
+`mass_probe.py` are written and dry-run verified — 18 objects, 17 of them shared with the
+length probe so both axes are asked about identical identities, plus an `iron_bar` control
+that is the same length as the plain wooden spoon and an order of magnitude heavier. The
+live run needs an API key that the authoring session did not have, so **every mass now in
+`artifacts/mass_axis_poc/` is hand-authored and is not evidence.** P06 is the reason to
+insist on the difference: the hand-authored guess for the giant spoon was 60cm and the
+model said 120.
+
+**The estimator deliberately does not receive `real_length_cm`,** even though the v1.3
+sidecar beside it carries one. Feeding it in would make mass partly a density calculation
+off the other axis, so a length error would propagate and the two fields would stop being
+independent evidence. The probe's fifth section exists to check that the axes actually did
+come out independent rather than one tracking the other.
+
+## P10 — the frozen hash chain is line-ending sensitive outside `.gitattributes`
+
+*2026-08-09.* Found while establishing a baseline in a fresh worktree, not while looking
+for it.
+
+A fresh clone on Windows with `core.autocrlf=true` fails
+`tests/test_motion_grammar_generalization.gd` (3 of 4, and the suite runs one test fewer)
+and 47 of the Python offline tests, for no reason connected to the code. `.gitattributes`
+pins `-text` on `data/combat_feel/live_assets/**`, but several SHA-256-pinned files live
+*outside* that tree — `motion_grammar_generalization_v1`'s affordance profiles resolve to
+`tools/semantic/reports/...`, and `wooden_chair_generalization` pins
+`tools/comfyui/reports/spike_scores.csv`. Those get CRLF on checkout, so their digests
+stop matching and evidence verification fails closed exactly as designed, on a defect that
+does not exist.
+
+**The pins are not even consistent with each other.** The report JSONs under
+`tools/semantic/reports/` were hashed as LF; `spike_scores.csv` was hashed as CRLF. So no
+single global setting satisfies the whole chain — normalizing everything to LF fixes the
+Python suite and breaks the CSV, which is how the split was found.
+
+**Why this is worth a decision entry rather than a fix.** It is T58 in mirror image: there
+the tests were green while the thing was broken, here they are red while the thing is
+fine, and both cost the same thing — the tests stop being believed. Anyone establishing a
+baseline in a new worktree will otherwise attribute these failures to whatever they were
+about to change. The durable fix is to extend `.gitattributes` to every hash-pinned path
+and re-pin the CSV as LF; that edits frozen evidence, so it wants its own task and its own
+review rather than being smuggled into an unrelated branch.
