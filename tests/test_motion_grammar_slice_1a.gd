@@ -39,6 +39,7 @@ func _run() -> void:
 	_test_per_hit_attempt_stats_contract()
 	_test_handleless_affordance_loader_contract()
 	_test_anonymous_rear_mass_and_stock_runtime_axes()
+	_test_anonymous_rigidity_axis_reaches_every_primitive()
 	print("MOTION_GRAMMAR_SLICE_1A_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -450,6 +451,60 @@ func _test_anonymous_rear_mass_and_stock_runtime_axes() -> void:
 	ok = ok and rear_contact.x < neutral_asset.grip_primary.x
 	arena.free()
 	_check(ok, "21 anonymous rear mass and stock axes reach timing feedback and rear contact without identity input")
+
+
+func _test_anonymous_rigidity_axis_reaches_every_primitive() -> void:
+	var rigid: Variant = AFFORDANCE.new()
+	rigid.handle_length = "short"
+	rigid.body_length = "short"
+	rigid.grip_topology = "one_hand_handle"
+	rigid.rigidity = "rigid"
+	rigid.mass_distribution = "front"
+	rigid.contact_surface = "broad"
+	rigid.secondary_contact_surface = "none"
+	rigid.has_broad_face = true
+	rigid.confidence = 1.0
+	rigid.evidence_parts = PackedStringArray(["anonymous rigidity probe"])
+	var semi_rigid: Resource = _copy_affordance(rigid)
+	semi_rigid.rigidity = "semi_rigid"
+	var flexible: Resource = _copy_affordance(rigid)
+	flexible.rigidity = "flexible"
+	var compiler: Variant = COMPILER.new()
+	var anchors := {
+		"GripPrimary": [24.0, 48.0], "StrikePoint": [78.0, 48.0],
+	}
+	var bounds := Rect2i(8, 28, 80, 40)
+	var rigid_profile: Resource = compiler.compile(rigid, anchors, bounds)
+	var semi_profile: Resource = compiler.compile(semi_rigid, anchors, bounds)
+	var flexible_profile: Resource = compiler.compile(flexible, anchors, bounds)
+	var ok: bool = rigid_profile.combo_recipe.signature() != semi_profile.combo_recipe.signature()
+	ok = ok and semi_profile.combo_recipe.signature() != flexible_profile.combo_recipe.signature()
+	ok = ok and rigid_profile.combo_recipe.signature() != flexible_profile.combo_recipe.signature()
+	for family: String in PRIMITIVE.MOTION_FAMILIES:
+		var rigid_primitive: Resource = compiler._synthesize_primitive(family, "hit_1", rigid)
+		var semi_primitive: Resource = compiler._synthesize_primitive(family, "hit_1", semi_rigid)
+		var flexible_primitive: Resource = compiler._synthesize_primitive(family, "hit_1", flexible)
+		ok = ok and rigid_primitive.active_multiplier < semi_primitive.active_multiplier
+		ok = ok and semi_primitive.active_multiplier < flexible_primitive.active_multiplier
+		ok = ok and rigid_primitive.recovery_multiplier < semi_primitive.recovery_multiplier
+		ok = ok and semi_primitive.recovery_multiplier < flexible_primitive.recovery_multiplier
+		ok = ok and rigid_primitive.hitstop_multiplier > semi_primitive.hitstop_multiplier
+		ok = ok and semi_primitive.hitstop_multiplier > flexible_primitive.hitstop_multiplier
+		ok = ok and rigid_primitive.camera_kick_multiplier > semi_primitive.camera_kick_multiplier
+		ok = ok and semi_primitive.camera_kick_multiplier > flexible_primitive.camera_kick_multiplier
+		ok = ok and rigid_primitive.root_motion_distance > semi_primitive.root_motion_distance
+		ok = ok and semi_primitive.root_motion_distance > flexible_primitive.root_motion_distance
+		ok = ok and rigid_primitive.movement_allowed_ratio < semi_primitive.movement_allowed_ratio
+		ok = ok and semi_primitive.movement_allowed_ratio < flexible_primitive.movement_allowed_ratio
+		if family == "thrust":
+			ok = ok and rigid_primitive.extension_pixels > semi_primitive.extension_pixels
+			ok = ok and semi_primitive.extension_pixels > flexible_primitive.extension_pixels
+		else:
+			var rigid_span := absf(rigid_primitive.end_angle - rigid_primitive.start_angle)
+			var semi_span := absf(semi_primitive.end_angle - semi_primitive.start_angle)
+			var flexible_span := absf(flexible_primitive.end_angle - flexible_primitive.start_angle)
+			ok = ok and rigid_span < semi_span and semi_span < flexible_span
+	_check(ok, "22 anonymous rigidity axis changes trajectory timing movement and impact for every primitive without identity input")
 
 
 func _compiled(asset_id: String) -> Variant:

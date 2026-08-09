@@ -22,6 +22,26 @@ const CONTACT_SURFACES: PackedStringArray = ["point", "edge", "broad", "whole_bo
 const SECONDARY_CONTACT_SURFACES: PackedStringArray = ["none", "point", "edge", "broad", "whole_body"]
 const RIGIDITIES: PackedStringArray = ["rigid", "semi_rigid", "flexible"]
 const PRIMITIVE_ORDER: PackedStringArray = ["bash", "sweep", "thrust", "slam", "spin"]
+const RIGIDITY_RUNTIME := {
+	"rigid": {
+		"angle_span": 0.94, "extension": 1.04, "root_motion": 1.02,
+		"startup": 0.96, "active": 0.90, "recovery": 0.94,
+		"knockback": 1.06, "stagger": 1.08, "hitstop": 1.10,
+		"camera": 1.08, "movement_allowed": 0.88,
+	},
+	"semi_rigid": {
+		"angle_span": 1.06, "extension": 0.96, "root_motion": 0.96,
+		"startup": 1.02, "active": 1.08, "recovery": 1.06,
+		"knockback": 0.96, "stagger": 0.95, "hitstop": 0.90,
+		"camera": 0.94, "movement_allowed": 1.10,
+	},
+	"flexible": {
+		"angle_span": 1.18, "extension": 0.88, "root_motion": 0.90,
+		"startup": 1.10, "active": 1.18, "recovery": 1.16,
+		"knockback": 0.86, "stagger": 0.84, "hitstop": 0.74,
+		"camera": 0.80, "movement_allowed": 1.30,
+	},
+}
 
 
 func compile(source: Variant, detail: Variant, alpha_bounds: Rect2i = Rect2i()) -> Variant:
@@ -219,11 +239,21 @@ func _synthesize_primitive(family: String, stage: String, affordance_profile: Re
 	}[family]
 	if stage == "hit_2" and family in ["bash", "sweep"]:
 		angle_data = [float(angle_data[1]), -float(angle_data[0])]
+	var rigidity_runtime: Dictionary = RIGIDITY_RUNTIME[affordance_profile.rigidity]
+	if family != "thrust":
+		var angle_midpoint := (float(angle_data[0]) + float(angle_data[1])) * 0.5
+		var angle_half_span := (float(angle_data[1]) - float(angle_data[0])) * 0.5 \
+			* float(rigidity_runtime["angle_span"])
+		angle_data = [angle_midpoint - angle_half_span, angle_midpoint + angle_half_span]
 	var length_axis := _length_axis(affordance_profile)
 	var mass_axis := _mass_axis(affordance_profile)
 	var stage_weight: float = {"hit_1": 0.84, "hit_2": 1.00, "hit_3": 1.20, "charge": 1.12, "dodge": 1.28}[stage]
-	var startup: float = (0.88 + mass_axis * 0.16) * float({"hit_1": 0.88, "hit_2": 0.96, "hit_3": 1.18, "charge": 1.30, "dodge": 0.72}[stage])
-	var recovery: float = (0.86 + mass_axis * 0.20) * float({"hit_1": 0.88, "hit_2": 0.98, "hit_3": 1.24, "charge": 1.32, "dodge": 0.78}[stage])
+	var startup: float = (0.88 + mass_axis * 0.16) \
+		* float({"hit_1": 0.88, "hit_2": 0.96, "hit_3": 1.18, "charge": 1.30, "dodge": 0.72}[stage]) \
+		* float(rigidity_runtime["startup"])
+	var recovery: float = (0.86 + mass_axis * 0.20) \
+		* float({"hit_1": 0.88, "hit_2": 0.98, "hit_3": 1.24, "charge": 1.32, "dodge": 0.78}[stage]) \
+		* float(rigidity_runtime["recovery"])
 	var clamp_grip: bool = affordance_profile.grip_topology == "clamp_grip"
 	if clamp_grip:
 		# Clamp grips favor a short, restrained commitment without enlarging the
@@ -236,21 +266,24 @@ func _synthesize_primitive(family: String, stage: String, affordance_profile: Re
 		active_surface = affordance_profile.secondary_contact_surface \
 			if affordance_profile.secondary_contact_surface != "none" else "broad"
 	var contact_width: float = {"point": 0.66, "edge": 0.88, "broad": 1.18, "whole_body": 1.28}[active_surface]
-	var root_distance: float = (5.0 + length_axis * 16.0 + (7.0 if affordance_profile.has_barrel else 0.0)) * stage_weight
-	var extension: float = (24.0 + 22.0 * length_axis) if family == "thrust" else 0.0
+	var root_distance: float = (5.0 + length_axis * 16.0 + (7.0 if affordance_profile.has_barrel else 0.0)) \
+		* stage_weight * float(rigidity_runtime["root_motion"])
+	var extension: float = ((24.0 + 22.0 * length_axis) * float(rigidity_runtime["extension"])) \
+		if family == "thrust" else 0.0
 	var movement_allowed := clampf((0.06 + 0.10 * length_axis) if family in ["sweep", "spin"] else 0.04, 0.0, 0.30)
+	movement_allowed *= float(rigidity_runtime["movement_allowed"])
 	if clamp_grip:
 		movement_allowed *= 0.85
 	var finisher := 1.0 if stage not in ["hit_3", "charge"] else 1.22
-	return _primitive(family, float(angle_data[0]), float(angle_data[1]), extension, startup, 1.0 + 0.08 * mass_axis, recovery, 0.84 + 0.28 * length_axis, 0.78 + 0.28 * length_axis, 0.86 + 0.20 * contact_width, {
+	return _primitive(family, float(angle_data[0]), float(angle_data[1]), extension, startup, (1.0 + 0.08 * mass_axis) * float(rigidity_runtime["active"]), recovery, 0.84 + 0.28 * length_axis, 0.78 + 0.28 * length_axis, 0.86 + 0.20 * contact_width, {
 		"contact_anchor": contact_anchor,
 		"root_motion_distance": root_distance,
 		"hitbox_width_multiplier": contact_width,
 		"hitbox_length_multiplier": 0.82 + 0.30 * length_axis,
-		"knockback_multiplier": (0.88 + 0.18 * mass_axis) * finisher,
-		"stagger_multiplier": (0.90 + 0.20 * mass_axis) * finisher,
-		"hitstop_multiplier": (0.82 + 0.22 * mass_axis) * finisher,
-		"camera_kick_multiplier": (0.84 + 0.20 * mass_axis) * finisher,
+		"knockback_multiplier": (0.88 + 0.18 * mass_axis) * finisher * float(rigidity_runtime["knockback"]),
+		"stagger_multiplier": (0.90 + 0.20 * mass_axis) * finisher * float(rigidity_runtime["stagger"]),
+		"hitstop_multiplier": (0.82 + 0.22 * mass_axis) * finisher * float(rigidity_runtime["hitstop"]),
+		"camera_kick_multiplier": (0.84 + 0.20 * mass_axis) * finisher * float(rigidity_runtime["camera"]),
 		"movement_allowed_ratio": movement_allowed,
 	})
 

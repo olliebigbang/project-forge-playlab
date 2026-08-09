@@ -209,3 +209,26 @@ marked superseded. Current formal result: **RUNTIME REALIZATION PASS (23/23)**.
 This remains a technical property result, not a human claim that the game feels
 good. Evidence:
 `tools/semantic/reports/affordance_runtime_realization/affordance-runtime-realization-20260808T154441435Z/`.
+
+## Context-local rigidity realization correction
+
+A later explicit Open Playtest round exposed a narrower masking case that the
+neutral 23/23 matrix did not cover. A rigid short/front/broad profile and a
+semi-rigid short/front/broad profile both selected `bash -> slam -> bash`.
+Rigidity changed Primitive scores and the profile-wide sweep arc, but the
+selected bash/slam runtime did not consume that arc. The resulting normal
+Recipes were therefore mechanically identical even though the structural
+profiles differed.
+
+The generic compiler now applies the existing `rigidity` axis to every
+Primitive's trajectory or thrust extension, startup/active/recovery timing,
+root motion, movement allowance, knockback, stagger, hitstop, and camera kick.
+No semantic field, identity input, named asset branch, Primitive, controller,
+or combat system was added. A same-sequence Recipe remains valid: orthogonal
+composition does not promise a unique Primitive sequence for every identity,
+but a changed mechanical axis must no longer disappear inside that sequence.
+
+An anonymous property test varies only `rigidity` and verifies ordered runtime
+differences for all five Primitives. The three retained Recipe JSON files were
+regenerated from the compiler rather than used to constrain it. Current state:
+**TECHNICAL PASS / HUMAN PERCEPTIBILITY RETEST REQUIRED**.
