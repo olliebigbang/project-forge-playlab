@@ -1,0 +1,201 @@
+{
+  "schema": "forge-real-length-probe-v1",
+  "purpose": "Measure whether the model can estimate real object length reliably enough to drive reach. Reference values are rough human estimates with a tolerance band, NOT ground truth -- the load-bearing checks are repeat spread, ordering, and the modifier-sensitivity control pair, none of which depend on the reference being exactly right.",
+  "control_pairs": [
+    {
+      "plain": "wooden_spoon",
+      "modified": "giant_wooden_spoon",
+      "asserts": "the model reads the size modifier rather than pattern-matching the noun"
+    }
+  ],
+  "known_objects": ["frying_pan", "giant_wooden_spoon", "shotgun_melee", "old_mop"],
+  "objects": [
+    {
+      "id": "chicken_leg",
+      "reference_cm": 20, "band_cm": [12, 30],
+      "identity": {
+        "canonical_name_en": "chicken leg", "canonical_name_zh": "鸡腿",
+        "category": "food",
+        "required_identity_parts": ["drumstick meat", "exposed bone end"],
+        "material_hints": ["cooked meat", "bone"],
+        "silhouette_hints": ["bulbous meaty end tapering to a narrow bone handle"]
+      }
+    },
+    {
+      "id": "wooden_spoon",
+      "reference_cm": 30, "band_cm": [22, 40],
+      "identity": {
+        "canonical_name_en": "wooden spoon", "canonical_name_zh": "木勺",
+        "category": "household_object",
+        "required_identity_parts": ["shallow oval bowl", "straight handle"],
+        "material_hints": ["wood"],
+        "silhouette_hints": ["slender handle widening into a shallow rounded bowl at one end"]
+      }
+    },
+    {
+      "id": "cleaver",
+      "reference_cm": 32, "band_cm": [22, 45],
+      "identity": {
+        "canonical_name_en": "cleaver", "canonical_name_zh": "菜刀",
+        "category": "kitchen_tool",
+        "required_identity_parts": ["broad rectangular blade", "short handle", "straight cutting edge"],
+        "material_hints": ["steel", "wood handle"],
+        "silhouette_hints": ["heavy rectangular blade with a short offset handle"]
+      }
+    },
+    {
+      "id": "hammer",
+      "reference_cm": 33, "band_cm": [25, 45],
+      "identity": {
+        "canonical_name_en": "claw hammer", "canonical_name_zh": "羊角锤",
+        "category": "hand_tool",
+        "required_identity_parts": ["steel head", "claw", "straight handle"],
+        "material_hints": ["steel", "wood or fibreglass handle"],
+        "silhouette_hints": ["compact heavy head on a straight handle, front-weighted"]
+      }
+    },
+    {
+      "id": "frying_pan",
+      "reference_cm": 40, "band_cm": [30, 55],
+      "identity": {
+        "canonical_name_en": "frying pan", "canonical_name_zh": "平底锅",
+        "category": "household_object",
+        "required_identity_parts": ["flat circular pan body", "long handle", "pan rim", "flat pan bottom"],
+        "material_hints": ["cast iron", "metal"],
+        "silhouette_hints": ["round flat pan with a protruding long handle, side view silhouette"]
+      }
+    },
+    {
+      "id": "stool",
+      "reference_cm": 45, "band_cm": [35, 65],
+      "identity": {
+        "canonical_name_en": "wooden stool", "canonical_name_zh": "木凳",
+        "category": "furniture",
+        "required_identity_parts": ["flat round seat", "three or four legs"],
+        "material_hints": ["wood"],
+        "silhouette_hints": ["small flat seat on splayed legs, no backrest"]
+      }
+    },
+    {
+      "id": "fire_extinguisher",
+      "reference_cm": 50, "band_cm": [35, 75],
+      "identity": {
+        "canonical_name_en": "fire extinguisher", "canonical_name_zh": "灭火器",
+        "category": "equipment",
+        "required_identity_parts": ["pressurised cylinder", "squeeze handle", "hose and nozzle"],
+        "material_hints": ["painted steel", "rubber hose"],
+        "silhouette_hints": ["upright cylinder with a handle assembly at the top"]
+      }
+    },
+    {
+      "id": "giant_wooden_spoon",
+      "reference_cm": 60, "band_cm": [45, 90],
+      "identity": {
+        "canonical_name_en": "giant wooden spoon", "canonical_name_zh": "巨大木勺",
+        "category": "household_object",
+        "required_identity_parts": ["oversized spoon bowl", "long wooden handle"],
+        "material_hints": ["wood"],
+        "silhouette_hints": ["long wooden handle ending in an oversized rounded bowl"]
+      }
+    },
+    {
+      "id": "axe",
+      "reference_cm": 75, "band_cm": [45, 100],
+      "identity": {
+        "canonical_name_en": "felling axe", "canonical_name_zh": "斧头",
+        "category": "hand_tool",
+        "required_identity_parts": ["wedge-shaped steel head", "curved wooden haft"],
+        "material_hints": ["steel", "hickory"],
+        "silhouette_hints": ["long haft with a heavy wedge head at one end"]
+      }
+    },
+    {
+      "id": "baseball_bat",
+      "reference_cm": 85, "band_cm": [70, 100],
+      "identity": {
+        "canonical_name_en": "baseball bat", "canonical_name_zh": "棒球棒",
+        "category": "sports_equipment",
+        "required_identity_parts": ["tapered barrel", "narrow grip", "knob at the base"],
+        "material_hints": ["ash wood", "aluminium"],
+        "silhouette_hints": ["smooth taper from a narrow grip to a thick barrel"]
+      }
+    },
+    {
+      "id": "shield",
+      "reference_cm": 85, "band_cm": [55, 120],
+      "identity": {
+        "canonical_name_en": "round shield", "canonical_name_zh": "圆盾",
+        "category": "armour",
+        "required_identity_parts": ["broad round face", "central boss", "rear grip"],
+        "material_hints": ["wood planks", "iron rim"],
+        "silhouette_hints": ["large flat disc, viewed edge-on it is a thin broad plate"]
+      }
+    },
+    {
+      "id": "wooden_chair",
+      "reference_cm": 90, "band_cm": [70, 115],
+      "identity": {
+        "canonical_name_en": "wooden chair", "canonical_name_zh": "木椅",
+        "category": "furniture",
+        "required_identity_parts": ["seat", "backrest", "four legs"],
+        "material_hints": ["wood"],
+        "silhouette_hints": ["upright backrest above a flat seat on four legs"]
+      }
+    },
+    {
+      "id": "sword",
+      "reference_cm": 100, "band_cm": [75, 130],
+      "identity": {
+        "canonical_name_en": "longsword", "canonical_name_zh": "长剑",
+        "category": "weapon",
+        "required_identity_parts": ["straight double-edged blade", "crossguard", "grip", "pommel"],
+        "material_hints": ["steel", "leather-wrapped grip"],
+        "silhouette_hints": ["long straight blade with a perpendicular crossguard"]
+      }
+    },
+    {
+      "id": "shotgun_melee",
+      "reference_cm": 100, "band_cm": [80, 125],
+      "identity": {
+        "canonical_name_en": "shotgun", "canonical_name_zh": "霰弹枪",
+        "category": "weapon",
+        "required_identity_parts": ["barrel", "receiver", "shoulder stock"],
+        "material_hints": ["blued steel", "wood furniture"],
+        "silhouette_hints": ["long straight barrel above a stock, rear-weighted"]
+      }
+    },
+    {
+      "id": "old_mop",
+      "reference_cm": 150, "band_cm": [120, 180],
+      "identity": {
+        "canonical_name_en": "old mop", "canonical_name_zh": "旧拖把",
+        "category": "household_object",
+        "required_identity_parts": ["long wooden handle", "frayed mop head strands"],
+        "material_hints": ["worn wood", "cotton or cloth strands"],
+        "silhouette_hints": ["long slender pole with a bulky fibrous head at one end"]
+      }
+    },
+    {
+      "id": "spear",
+      "reference_cm": 200, "band_cm": [150, 280],
+      "identity": {
+        "canonical_name_en": "spear", "canonical_name_zh": "长矛",
+        "category": "weapon",
+        "required_identity_parts": ["long shaft", "pointed metal head"],
+        "material_hints": ["ash shaft", "iron head"],
+        "silhouette_hints": ["very long thin shaft with a small leaf-shaped point"]
+      }
+    },
+    {
+      "id": "fishing_rod",
+      "reference_cm": 210, "band_cm": [150, 320],
+      "identity": {
+        "canonical_name_en": "fishing rod", "canonical_name_zh": "鱼竿",
+        "category": "sports_equipment",
+        "required_identity_parts": ["tapered flexible blank", "handle grip", "line guides", "reel seat"],
+        "material_hints": ["graphite", "cork grip"],
+        "silhouette_hints": ["extremely long thin taper, whip-like"]
+      }
+    }
+  ]
+}
