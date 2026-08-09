@@ -14,7 +14,7 @@ $PythonPath = "C:\AI\ComfyUI-ForgeFlux2\.venv\Scripts\python.exe"
 $GodotPath = Join-Path $DocumentsRoot "project forge\.tools\Godot_v4.7.1-stable_win64.exe"
 $GodotConsolePath = Join-Path $DocumentsRoot "project forge\.tools\Godot_v4.7.1-stable_win64_console.exe"
 $ExpectedModel = "claude-sonnet-5"
-$SemanticMode = if ($AffordanceGrammar) { "affordance_v1_2_1" } else { "v1_1" }
+$SemanticMode = if ($AffordanceGrammar) { "affordance_v1_2_2" } else { "v1_1" }
 $SessionId = "open-{0}-{1}" -f [DateTime]::UtcNow.ToString("yyyyMMddTHHmmssfffZ").ToLowerInvariant(), [Guid]::NewGuid().ToString("N").Substring(0, 8)
 $SessionRoot = Join-Path $OpenRoot "runtime\$SessionId"
 $SessionOutput = Join-Path $OpenRoot "output\sessions\$SessionId"
@@ -97,7 +97,7 @@ try {
     }
     Write-Host "Approved semantic model fixed by contract: $ExpectedModel"
     if ($AffordanceGrammar) {
-        Write-Host "Explicit semantic experiment: forge-semantic-v1.2.1-candidate (Affordance Grammar enabled)"
+        Write-Host "Explicit semantic experiment: forge-semantic-v1.2.2-candidate (strict Affordance Grammar enabled)"
     }
     else {
         Write-Host "Default semantic contract: forge-semantic-v1.1 (Affordance Grammar disabled)"

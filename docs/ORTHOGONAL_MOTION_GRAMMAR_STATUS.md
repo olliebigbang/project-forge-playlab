@@ -52,11 +52,13 @@ inserted.
 
 The approved runtime promotion is explicit rather than default. Launching
 `scripts/run_open_playtest.ps1 -AffordanceGrammar` pins the whole session to
-`forge-semantic-v1.2.1-candidate`, its frozen additive prompts, its closed tool
-Schema, and the existing `claude-sonnet-5` model ID. The launcher without that
-switch remains v1.1. Neither mode retries or falls back to Mock, and the model
-returns semantic data only; the existing GDScript compiler still selects the
-recipe afterward.
+the additive `forge-semantic-v1.2.2-candidate`, its frozen prompt chain, its
+strict grip-pair tool Schema, and the existing `claude-sonnet-5` model ID. The
+launcher without that switch remains v1.1. Neither mode retries or falls back
+to Mock, and the model returns semantic data only; the existing GDScript
+compiler still selects the recipe afterward. v1.2.2 was added after a live
+Open Playtest input exposed a `body_grip`/non-`none` handle contradiction; the
+failed provider result is not repaired or retried.
 
 ## Current real-asset compile table
 
