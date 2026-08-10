@@ -1,13 +1,14 @@
 class_name LiveE2EAnchorCanvas
 extends Control
 
-signal anchor_confirmed(anchor_type: String, point: Vector2)
+signal anchor_confirmed(anchor_type: String, point: Vector2, was_adjusted: bool)
 
 var sprite_texture: Texture2D
 var current_anchor_type := "GripPrimary"
 var current_point := Vector2(48, 48)
 var other_points: Dictionary = {}
 var dragging := false
+var current_point_was_adjusted := false
 
 const DISPLAY_SIZE := Vector2(432, 432)
 const SPRITE_SIZE := Vector2(96, 96)
@@ -17,6 +18,7 @@ func configure(texture: Texture2D, anchor_type: String, point: Vector2, known_po
 	current_anchor_type = anchor_type
 	current_point = point
 	other_points = known_points.duplicate(true)
+	current_point_was_adjusted = false
 	custom_minimum_size = DISPLAY_SIZE
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	queue_redraw()
@@ -26,10 +28,11 @@ func set_step(anchor_type: String, point: Vector2, known_points: Dictionary) -> 
 	current_point = point
 	other_points = known_points.duplicate(true)
 	dragging = false
+	current_point_was_adjusted = false
 	queue_redraw()
 
 func confirm_current() -> void:
-	anchor_confirmed.emit(current_anchor_type, current_point)
+	anchor_confirmed.emit(current_anchor_type, current_point, current_point_was_adjusted)
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
@@ -45,7 +48,10 @@ func _gui_input(event: InputEvent) -> void:
 
 func _set_from_display(display_point: Vector2) -> void:
 	var local := (display_point / DISPLAY_SIZE) * SPRITE_SIZE
-	current_point = local.clamp(Vector2.ZERO, SPRITE_SIZE - Vector2.ONE)
+	var next_point := local.clamp(Vector2.ZERO, SPRITE_SIZE - Vector2.ONE)
+	if not next_point.is_equal_approx(current_point):
+		current_point_was_adjusted = true
+	current_point = next_point
 	queue_redraw()
 
 func _draw() -> void:

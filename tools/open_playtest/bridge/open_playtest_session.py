@@ -583,10 +583,17 @@ class OpenPlaytestSession(live.LiveSession):
             needed = ["GripPrimary", open_round.state.config["second_anchor_type"]]
             corrected = anchors.get("corrected_anchors")
             sources = anchors.get("anchor_source")
+            auto_anchors = anchors.get("auto_anchors")
+            auto_sources = anchors.get("auto_anchor_source")
+            auto_confidence = anchors.get("auto_confidence")
+            confirmation_status = anchors.get("confirmation_status")
             required = anchors.get("required_anchor_types")
             if not isinstance(required, list) or not all(item in required for item in needed):
                 raise live.LivePipelineError("anchor_confirmation", "REQUIRED_ANCHORS_MISSING")
-            if not isinstance(corrected, Mapping) or not isinstance(sources, Mapping):
+            if not all(isinstance(value, Mapping) for value in (
+                corrected, sources, auto_anchors, auto_sources,
+                auto_confidence, confirmation_status,
+            )):
                 raise live.LivePipelineError("anchor_confirmation", "ANCHOR_PAYLOAD_INVALID")
             for name in needed:
                 point = corrected.get(name)
@@ -594,8 +601,17 @@ class OpenPlaytestSession(live.LiveSession):
                     isinstance(value, (int, float)) and 0 <= value <= 95 for value in point
                 ):
                     raise live.LivePipelineError("anchor_confirmation", f"ANCHOR_POINT_INVALID:{name}")
-                if not str(sources.get(name, "")).startswith("player"):
-                    raise live.LivePipelineError("anchor_confirmation", f"PLAYER_CONFIRMATION_REQUIRED:{name}")
+                status = confirmation_status.get(name)
+                if status not in ("accepted_auto", "player_adjusted"):
+                    raise live.LivePipelineError("anchor_confirmation", f"ANCHOR_CONFIRMATION_STATUS_INVALID:{name}")
+                automatic_confidence = auto_confidence.get(name)
+                if isinstance(automatic_confidence, bool) or not isinstance(automatic_confidence, (int, float)):
+                    raise live.LivePipelineError("anchor_confirmation", f"AUTO_CONFIDENCE_INVALID:{name}")
+                if status == "accepted_auto":
+                    if point != auto_anchors.get(name) or sources.get(name) != auto_sources.get(name):
+                        raise live.LivePipelineError("anchor_confirmation", f"ACCEPTED_AUTO_PROVENANCE_INVALID:{name}")
+                elif sources.get(name) != "player_adjusted":
+                    raise live.LivePipelineError("anchor_confirmation", f"PLAYER_ADJUSTMENT_SOURCE_INVALID:{name}")
             open_round.state.anchors = copy.deepcopy(dict(anchors))
             open_round.state.training = {
                 "entered_training": True,

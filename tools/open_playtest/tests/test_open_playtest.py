@@ -287,14 +287,44 @@ class OpenPlaytestTests(unittest.TestCase):
                 "anchors": {
                     "required_anchor_types": ["GripPrimary", "EffectOrigin"],
                     "corrected_anchors": {"GripPrimary": [20, 48], "EffectOrigin": [82, 42]},
-                    "anchor_source": {"GripPrimary": "player_confirmed", "EffectOrigin": "player_confirmed"},
+                    "auto_anchors": {"GripPrimary": [20, 48], "EffectOrigin": [82, 42]},
+                    "anchor_source": {"GripPrimary": "resolver:grip", "EffectOrigin": "resolver:effect"},
+                    "auto_anchor_source": {"GripPrimary": "resolver:grip", "EffectOrigin": "resolver:effect"},
+                    "auto_confidence": {"GripPrimary": 0.88, "EffectOrigin": 0.58},
+                    "confirmation_status": {"GripPrimary": "accepted_auto", "EffectOrigin": "accepted_auto"},
                 },
             })
             self.assertTrue(result["can_enter_training"])
             self.assertEqual(value.state.stage, "ready_in_training_zone")
+            self.assertEqual(value.state.anchors["confirmation_status"]["GripPrimary"], "accepted_auto")
+            self.assertEqual(value.state.anchors["auto_confidence"]["GripPrimary"], 0.88)
         source = (OPEN_ROOT / "bridge" / "open_playtest_session.py").read_text(encoding="utf-8").lower()
         for forbidden in ("vacuum cleaner", "alarm clock", "stapler", "goblet", "umbrella", "gatling", "greatsword"):
             self.assertNotIn(forbidden, source)
+
+    def test_player_adjusted_anchor_status_and_auto_confidence_are_preserved(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            session = _make_session(root)
+            value = _add_round(session, root, "confirm_anchors")
+            result = session.confirm_anchors({
+                "session_id": session.session_id,
+                "round_id": "R0001-deadbeef",
+                "revision": 1,
+                "anchors": {
+                    "required_anchor_types": ["GripPrimary", "EffectOrigin"],
+                    "auto_anchors": {"GripPrimary": [20, 48], "EffectOrigin": [82, 42]},
+                    "corrected_anchors": {"GripPrimary": [24, 46], "EffectOrigin": [80, 44]},
+                    "anchor_source": {"GripPrimary": "player_adjusted", "EffectOrigin": "player_adjusted"},
+                    "auto_anchor_source": {"GripPrimary": "resolver:grip", "EffectOrigin": "resolver:effect"},
+                    "auto_confidence": {"GripPrimary": 0.88, "EffectOrigin": 0.58},
+                    "confirmation_status": {"GripPrimary": "player_adjusted", "EffectOrigin": "player_adjusted"},
+                },
+            })
+            self.assertTrue(result["can_enter_training"])
+            self.assertEqual(value.state.anchors["confirmation_status"]["EffectOrigin"], "player_adjusted")
+            self.assertEqual(value.state.anchors["auto_anchor_source"]["EffectOrigin"], "resolver:effect")
+            self.assertEqual(value.state.anchors["auto_confidence"]["EffectOrigin"], 0.58)
 
     def test_training_records_available_actions_without_formal_rooms(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

@@ -725,15 +725,29 @@ class LiveSession:
         required = anchors.get("required_anchor_types")
         corrected = anchors.get("corrected_anchors")
         sources = anchors.get("anchor_source")
+        auto_anchors = anchors.get("auto_anchors")
+        auto_sources = anchors.get("auto_anchor_source")
+        auto_confidence = anchors.get("auto_confidence")
+        confirmation_status = anchors.get("confirmation_status")
         needed = ["GripPrimary", state.config["second_anchor_type"]]
-        if not isinstance(required, list) or not all(item in required for item in needed) or not isinstance(corrected, Mapping) or not isinstance(sources, Mapping):
+        mappings = (corrected, sources, auto_anchors, auto_sources, auto_confidence, confirmation_status)
+        if not isinstance(required, list) or not all(item in required for item in needed) or not all(isinstance(value, Mapping) for value in mappings):
             raise LivePipelineError("anchor_confirmation", "REQUIRED_ANCHORS_MISSING")
         for name in needed:
             point = corrected.get(name)
             if not isinstance(point, list) or len(point) != 2 or not all(isinstance(value, (int, float)) and 0 <= value <= 95 for value in point):
                 raise LivePipelineError("anchor_confirmation", f"ANCHOR_POINT_INVALID:{name}")
-            if not str(sources.get(name, "")).startswith("player"):
-                raise LivePipelineError("anchor_confirmation", f"PLAYER_CONFIRMATION_REQUIRED:{name}")
+            status = confirmation_status.get(name)
+            if status not in ("accepted_auto", "player_adjusted"):
+                raise LivePipelineError("anchor_confirmation", f"ANCHOR_CONFIRMATION_STATUS_INVALID:{name}")
+            automatic_confidence = auto_confidence.get(name)
+            if isinstance(automatic_confidence, bool) or not isinstance(automatic_confidence, (int, float)):
+                raise LivePipelineError("anchor_confirmation", f"AUTO_CONFIDENCE_INVALID:{name}")
+            if status == "accepted_auto":
+                if point != auto_anchors.get(name) or sources.get(name) != auto_sources.get(name):
+                    raise LivePipelineError("anchor_confirmation", f"ACCEPTED_AUTO_PROVENANCE_INVALID:{name}")
+            elif sources.get(name) != "player_adjusted":
+                raise LivePipelineError("anchor_confirmation", f"PLAYER_ADJUSTMENT_SOURCE_INVALID:{name}")
         state.anchors = copy.deepcopy(dict(anchors))
         state.metrics["anchor_confirmation_seconds"] = round(float(seconds), 3)
         state.stage = "awaiting_training"

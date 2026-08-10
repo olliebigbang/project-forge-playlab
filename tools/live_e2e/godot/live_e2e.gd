@@ -298,11 +298,10 @@ func _configure_anchor_step() -> void:
 	else:
 		anchor_canvas.set_step(anchor_type, suggestion, known)
 
-func _on_anchor_confirmed(anchor_type: String, point: Vector2) -> void:
+func _on_anchor_confirmed(anchor_type: String, point: Vector2, was_adjusted: bool) -> void:
 	if anchor_type != anchor_steps[anchor_step_index]:
 		return
-	current_calibration.set_manual_anchor(anchor_type, point, 0.95)
-	current_calibration.anchor_source[anchor_type] = "player_confirmed_live_e2e"
+	current_calibration.confirm_anchor(anchor_type, point, was_adjusted)
 	if anchor_type == "GripPrimary":
 		ANCHOR_RESOLVER.recompute_derived(current_calibration, current_image)
 	anchor_step_index += 1

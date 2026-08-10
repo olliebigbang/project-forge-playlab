@@ -319,8 +319,17 @@ func _asset_from_image_and_anchors(image: Image, anchors: Dictionary) -> WeaponV
 	asset.tip = _point(anchors, ["StrikePoint", "Tip", "strike_point", "tip"], Vector2(asset.opaque_bounds.end.x, asset.opaque_bounds.get_center().y))
 	asset.muzzle = _point(anchors, ["EffectOrigin", "Muzzle", "effect_origin", "muzzle"], asset.tip)
 	asset.spin_pivot = _point(anchors, ["SpinPivot", "spin_pivot"], Vector2(asset.opaque_bounds.get_center()))
-	asset.anchor_confidence = 1.0
-	asset.anchor_source = "developer_fixture" if anchors.has("strike_point") else "live_player_confirmed"
+	asset.anchor_sources = _dictionary(anchors.get("anchor_source", {}))
+	asset.anchor_auto_sources = _dictionary(anchors.get("auto_anchor_source", {}))
+	asset.anchor_auto_confidence = _dictionary(anchors.get("auto_confidence", {}))
+	asset.anchor_confirmation_status = _dictionary(anchors.get("confirmation_status", {}))
+	if anchors.has("strike_point"):
+		asset.anchor_confidence = 1.0
+		asset.anchor_source = "developer_fixture"
+	else:
+		var final_confidence := _dictionary(anchors.get("confidence", {}))
+		asset.anchor_confidence = float(asset.anchor_auto_confidence.get("GripPrimary", final_confidence.get("GripPrimary", 0.0)))
+		asset.anchor_source = _anchor_source_summary(asset)
 	asset.rear_contact = asset.grip_primary
 	return _normalize_asset_orientation(asset, anchors)
 
@@ -340,8 +349,11 @@ func _normalize_asset_orientation(asset: WeaponVisualAsset, anchors: Dictionary)
 		calibration.required_anchor_types.append(str(value))
 	calibration.auto_anchors = _points_from_json(anchors.get("auto_anchors", {}))
 	calibration.corrected_anchors = _points_from_json(anchors.get("corrected_anchors", {}))
+	calibration.auto_anchor_source = _dictionary(anchors.get("auto_anchor_source", {}))
+	calibration.anchor_source = _dictionary(anchors.get("anchor_source", {}))
 	calibration.auto_confidence = (anchors.get("auto_confidence", {}) as Dictionary).duplicate(true)
 	calibration.confidence = (anchors.get("confidence", {}) as Dictionary).duplicate(true)
+	calibration.confirmation_status = _dictionary(anchors.get("confirmation_status", {}))
 	var normalized: WeaponVisualAsset = calibration.build_asset_copy()
 	if normalized == null:
 		return asset
@@ -369,6 +381,19 @@ func _points_from_json(value: Variant) -> Dictionary:
 		elif point_value is Dictionary:
 			result[str(key)] = Vector2(float(point_value.get("x", 0.0)), float(point_value.get("y", 0.0)))
 	return result
+
+
+func _dictionary(value: Variant) -> Dictionary:
+	return (value as Dictionary).duplicate(true) if value is Dictionary else {}
+
+
+func _anchor_source_summary(asset: WeaponVisualAsset) -> String:
+	for status: Variant in asset.anchor_confirmation_status.values():
+		if str(status) == "player_adjusted":
+			return "player_adjusted"
+	if not asset.anchor_confirmation_status.is_empty():
+		return "accepted_auto"
+	return "live_player_confirmed"
 
 
 func _transform_point_x(point: Vector2, flip_x: bool, width: int) -> Vector2:

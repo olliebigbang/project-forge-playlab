@@ -14,6 +14,7 @@ var auto_confidence: Dictionary = {}
 var corrected_anchors: Dictionary = {}
 var anchor_source: Dictionary = {}
 var confidence: Dictionary = {}
+var confirmation_status: Dictionary = {}
 var training_transform := {"flip_x": false}
 
 func anchor_point(anchor_type: String) -> Vector2:
@@ -28,6 +29,15 @@ func retain_auto_anchor(anchor_type: String) -> void:
 	corrected_anchors.erase(anchor_type)
 	anchor_source[anchor_type] = str(auto_anchor_source.get(anchor_type, "auto_suggestion_retained"))
 	confidence[anchor_type] = float(auto_confidence.get(anchor_type, confidence.get(anchor_type, 0.0)))
+
+func confirm_anchor(anchor_type: String, point: Vector2, was_adjusted: bool) -> void:
+	if was_adjusted:
+		set_manual_anchor(anchor_type, point)
+		anchor_source[anchor_type] = "player_adjusted"
+		confirmation_status[anchor_type] = "player_adjusted"
+	else:
+		retain_auto_anchor(anchor_type)
+		confirmation_status[anchor_type] = "accepted_auto"
 
 func apply_to_asset() -> WeaponVisualAsset:
 	return build_asset_copy()
@@ -59,8 +69,12 @@ func build_asset_copy() -> WeaponVisualAsset:
 		copy.muzzle = copy.grip_primary
 		copy.tip = copy.grip_primary
 	copy.spin_pivot = training_anchor_point("SpinPivot") if required_anchor_types.has("SpinPivot") else _image_centroid_fallback(copy)
-	copy.anchor_source = "semantic_required+player_calibration"
-	copy.anchor_confidence = _minimum_required_confidence()
+	copy.anchor_sources = anchor_source.duplicate(true)
+	copy.anchor_auto_sources = auto_anchor_source.duplicate(true)
+	copy.anchor_auto_confidence = auto_confidence.duplicate(true)
+	copy.anchor_confirmation_status = confirmation_status.duplicate(true)
+	copy.anchor_source = _confirmation_summary()
+	copy.anchor_confidence = _minimum_required_auto_confidence()
 	copy.orientation_flipped = should_flip
 	copy.orientation_source = "GripPrimary->%s" % action_type
 	return copy
@@ -82,6 +96,7 @@ func to_dict() -> Dictionary:
 		"corrected_anchors": _points_to_arrays(resolved_required_anchors()),
 		"anchor_source": anchor_source.duplicate(true),
 		"confidence": confidence.duplicate(true),
+		"confirmation_status": confirmation_status.duplicate(true),
 		"required_anchor_types": required_anchor_types.duplicate(),
 		"behavior_family": behavior_family,
 		"grip_profile": grip_profile,
@@ -147,6 +162,20 @@ func _minimum_required_confidence() -> float:
 	for anchor_type: String in required_anchor_types:
 		minimum = minf(minimum, float(confidence.get(anchor_type, 0.0)))
 	return minimum
+
+func _minimum_required_auto_confidence() -> float:
+	var minimum := 1.0
+	for anchor_type: String in required_anchor_types:
+		minimum = minf(minimum, float(auto_confidence.get(anchor_type, 0.0)))
+	return minimum
+
+func _confirmation_summary() -> String:
+	for anchor_type: String in required_anchor_types:
+		if str(confirmation_status.get(anchor_type, "")) == "player_adjusted":
+			return "player_adjusted"
+	if not confirmation_status.is_empty():
+		return "accepted_auto"
+	return str(anchor_source.get("GripPrimary", "none"))
 
 static func _points_to_arrays(points: Dictionary) -> Dictionary:
 	var result: Dictionary = {}

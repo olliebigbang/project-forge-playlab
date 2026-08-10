@@ -15,6 +15,10 @@ var spin_pivot: Vector2 = Vector2.ZERO
 var rear_contact: Vector2 = Vector2.ZERO
 var anchor_confidence: float = 0.0
 var anchor_source: String = "none"
+var anchor_sources: Dictionary = {}
+var anchor_auto_sources: Dictionary = {}
+var anchor_auto_confidence: Dictionary = {}
+var anchor_confirmation_status: Dictionary = {}
 var orientation_flipped := false
 var orientation_source := "none"
 
@@ -29,7 +33,12 @@ func anchors_dict() -> Dictionary:
 		"orientation_flipped": orientation_flipped,
 		"orientation_source": orientation_source,
 		"silhouette_grip_inertia_proxy_raw": calculate_silhouette_grip_inertia_proxy_raw(),
-		"confidence": anchor_confidence, "anchor_source": anchor_source
+		"confidence": anchor_confidence,
+		"anchor_source": anchor_source,
+		"anchor_sources": anchor_sources.duplicate(true),
+		"auto_anchor_source": anchor_auto_sources.duplicate(true),
+		"auto_confidence": anchor_auto_confidence.duplicate(true),
+		"confirmation_status": anchor_confirmation_status.duplicate(true),
 	}
 
 

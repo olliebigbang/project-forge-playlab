@@ -6,6 +6,7 @@ const RENDERER := preload("res://scripts/systems/procedural_weapon_renderer.gd")
 const RESOLVER := preload("res://scripts/systems/anchor_resolver.gd")
 const SEMANTIC_RESOLVER := preload("res://scripts/systems/semantic_anchor_resolver.gd")
 const SEMANTIC_CALIBRATOR := preload("res://scripts/ui/semantic_anchor_calibrator.gd")
+const LIVE_ANCHOR_CANVAS := preload("res://tools/live_e2e/godot/live_anchor_canvas.gd")
 const RULES := preload("res://scripts/systems/combat_rules.gd")
 const FLOW := preload("res://scripts/systems/flow_policy.gd")
 const LOGGER := preload("res://scripts/systems/event_logger.gd")
@@ -54,6 +55,7 @@ func _initialize() -> void:
 	_run("Spike 1 corpus contains exactly 11 existing sprites", _test_semantic_corpus)
 	_run("Semantic calibrator completes the two-step pointer flow", _test_semantic_two_step_pointer_flow)
 	_run("Retaining auto suggestion restores original confidence", _test_semantic_auto_restore)
+	_run("Anchor confirmation distinguishes accepted auto from player adjusted", _test_anchor_confirmation_status_paths)
 	print("RESULT: %d passed, %d failed" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -576,3 +578,38 @@ func _test_semantic_auto_restore() -> Variant:
 	calibration.set_manual_anchor("GripPrimary", Vector2(30, 40), 0.21)
 	calibration.retain_auto_anchor("GripPrimary")
 	return not calibration.corrected_anchors.has("GripPrimary") and is_equal_approx(float(calibration.confidence.get("GripPrimary", -2.0)), expected_confidence) and str(calibration.anchor_source.get("GripPrimary", "")) == expected_source
+
+func _test_anchor_confirmation_status_paths() -> Variant:
+	var blueprint: WeaponBlueprint = BLUEPRINT.fixed_blueprint("gatling")
+	var image: Image = RENDERER.build_image(blueprint)
+	var calibration = SEMANTIC_RESOLVER.resolve(image, blueprint)
+	var auto_grip: Vector2 = calibration.auto_anchors["GripPrimary"]
+	var auto_source := str(calibration.auto_anchor_source["GripPrimary"])
+	var auto_confidence := float(calibration.auto_confidence["GripPrimary"])
+	calibration.confirm_anchor("GripPrimary", auto_grip, false)
+	var accepted := str(calibration.confirmation_status.get("GripPrimary", "")) == "accepted_auto"
+	accepted = accepted and not calibration.corrected_anchors.has("GripPrimary")
+	accepted = accepted and str(calibration.anchor_source.get("GripPrimary", "")) == auto_source
+	accepted = accepted and is_equal_approx(float(calibration.confidence.get("GripPrimary", -1.0)), auto_confidence)
+	accepted = accepted and is_equal_approx(float(calibration.auto_confidence.get("GripPrimary", -1.0)), auto_confidence)
+
+	var adjusted_effect: Vector2 = calibration.anchor_point("EffectOrigin") + Vector2(-3.0, 2.0)
+	var effect_auto_confidence := float(calibration.auto_confidence["EffectOrigin"])
+	calibration.confirm_anchor("EffectOrigin", adjusted_effect, true)
+	var adjusted := str(calibration.confirmation_status.get("EffectOrigin", "")) == "player_adjusted"
+	adjusted = adjusted and calibration.anchor_point("EffectOrigin").is_equal_approx(adjusted_effect)
+	adjusted = adjusted and str(calibration.anchor_source.get("EffectOrigin", "")) == "player_adjusted"
+	adjusted = adjusted and is_equal_approx(float(calibration.auto_confidence.get("EffectOrigin", -1.0)), effect_auto_confidence)
+
+	var canvas = LIVE_ANCHOR_CANVAS.new()
+	var emitted_adjustments: Array[bool] = []
+	canvas.anchor_confirmed.connect(func(_anchor_type: String, _point: Vector2, was_adjusted: bool) -> void:
+		emitted_adjustments.append(was_adjusted)
+	)
+	canvas.configure(null, "GripPrimary", auto_grip, {})
+	canvas.confirm_current()
+	canvas.set_step("EffectOrigin", calibration.auto_anchors["EffectOrigin"], {})
+	canvas._set_from_display(Vector2(300.0, 220.0))
+	canvas.confirm_current()
+	canvas.free()
+	return accepted and adjusted and emitted_adjustments == [false, true]

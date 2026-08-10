@@ -59,6 +59,7 @@ func _run() -> void:
 	_test_40_charge_and_dodge_use_recipe_primitives()
 	_test_41_slice_compiles_legacy_live_without_affordance()
 	_test_42_attack_press_enters_visible_startup_immediately()
+	_test_43_anchor_provenance_reaches_asset_and_compile_trace()
 	print("COMBAT_FEEL_SLICE_0_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -363,6 +364,42 @@ func _test_42_attack_press_enters_visible_startup_immediately() -> void:
 	controller.tick(float(controller.current_timing().get("startup", 0.1)) + 0.001)
 	var committed: bool = controller.phase == "active" and controller.attack_kind == "normal" and is_same(controller.current_primitive, profile.combo_recipe.hit_1)
 	_check(immediate and committed, "42 attack press shows hit-one startup on the next frame and release commits it")
+
+func _test_43_anchor_provenance_reaches_asset_and_compile_trace() -> void:
+	var image := Image.create(96, 96, false, Image.FORMAT_RGBA8)
+	image.fill(Color.TRANSPARENT)
+	image.fill_rect(Rect2i(16, 38, 70, 20), Color.WHITE)
+	var anchors := {
+		"required_anchor_types": ["GripPrimary", "StrikePoint"],
+		"auto_anchors": {"GripPrimary": [18, 48], "StrikePoint": [84, 48]},
+		"corrected_anchors": {"GripPrimary": [22, 48], "StrikePoint": [84, 48]},
+		"anchor_source": {"GripPrimary": "player_adjusted", "StrikePoint": "resolver:tip"},
+		"auto_anchor_source": {"GripPrimary": "resolver:grip", "StrikePoint": "resolver:tip"},
+		"auto_confidence": {"GripPrimary": 0.88, "StrikePoint": 0.58},
+		"confidence": {"GripPrimary": 0.95, "StrikePoint": 0.58},
+		"confirmation_status": {"GripPrimary": "player_adjusted", "StrikePoint": "accepted_auto"},
+		"behavior_family": "heavy_melee",
+	}
+	var loader: Variant = LOADER.new()
+	var asset: WeaponVisualAsset = loader._asset_from_image_and_anchors(image, anchors)
+	var loaded: Dictionary = loader.load_default_live()
+	var profile: Variant = COMPILER.new().compile(
+		loaded.get("affordance_profile") as Resource,
+		asset.anchors_dict(),
+		asset.opaque_bounds
+	)
+	var trace: Dictionary = profile.compile_trace if profile is Resource else {}
+	var ok := is_equal_approx(asset.anchor_confidence, 0.88)
+	ok = ok and asset.anchor_source == "player_adjusted"
+	ok = ok and str(asset.anchor_sources.get("GripPrimary", "")) == "player_adjusted"
+	ok = ok and str(asset.anchor_auto_sources.get("GripPrimary", "")) == "resolver:grip"
+	ok = ok and is_equal_approx(float(asset.anchor_auto_confidence.get("StrikePoint", -1.0)), 0.58)
+	ok = ok and str(asset.anchor_confirmation_status.get("StrikePoint", "")) == "accepted_auto"
+	ok = ok and trace.get("anchor_source", {}) == asset.anchor_sources
+	ok = ok and trace.get("auto_anchor_source", {}) == asset.anchor_auto_sources
+	ok = ok and trace.get("auto_confidence", {}) == asset.anchor_auto_confidence
+	ok = ok and trace.get("confirmation_status", {}) == asset.anchor_confirmation_status
+	_check(ok, "43 loader and compile trace preserve anchor source auto confidence and confirmation status")
 
 func _controller() -> Variant:
 	var controller: Variant = CONTROLLER.new(); controller.configure(_profile()); return controller

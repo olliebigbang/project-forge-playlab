@@ -236,6 +236,10 @@ func _compose_orthogonal_profile(
 		"selected": selected.duplicate(true),
 		"identity_inputs_used": false,
 		"silhouette_grip_inertia_proxy_raw": profile.silhouette_grip_inertia_proxy_raw,
+		"anchor_source": anchor_data.get("anchor_sources", {}).duplicate(true),
+		"auto_anchor_source": anchor_data.get("auto_anchor_source", {}).duplicate(true),
+		"auto_confidence": anchor_data.get("auto_confidence", {}).duplicate(true),
+		"confirmation_status": anchor_data.get("confirmation_status", {}).duplicate(true),
 	}
 	return profile
 
