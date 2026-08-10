@@ -8,6 +8,7 @@ const LOADER := preload("res://scripts/combat_feel/combat_feel_asset_loader.gd")
 const PRIMITIVE := preload("res://scripts/combat_feel/motion_primitive.gd")
 const SLICE := preload("res://scripts/combat_feel/combat_feel_slice_0.gd")
 const SLICE_PATH := "res://scripts/combat_feel/combat_feel_slice_0.gd"
+const CHICKEN_MASK_FIXTURE_PATH := "res://tests/fixtures/golden_chicken_leg_alpha012_mask.json"
 
 var passed := 0
 var failed := 0
@@ -39,6 +40,8 @@ func _run() -> void:
 	_test_per_hit_attempt_stats_contract()
 	_test_handleless_affordance_loader_contract()
 	_test_anonymous_rear_mass_and_stock_runtime_axes()
+	_test_silhouette_grip_inertia_profile_trace_nominal()
+	_test_silhouette_grip_inertia_243_case_intervals()
 	print("MOTION_GRAMMAR_SLICE_1A_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -450,6 +453,164 @@ func _test_anonymous_rear_mass_and_stock_runtime_axes() -> void:
 	ok = ok and rear_contact.x < neutral_asset.grip_primary.x
 	arena.free()
 	_check(ok, "21 anonymous rear mass and stock axes reach timing feedback and rear contact without identity input")
+
+
+func _test_silhouette_grip_inertia_profile_trace_nominal() -> void:
+	var loaded: Dictionary = LOADER.new().load_motion_grammar_asset("frying_pan")
+	var pan_asset := loaded.get("asset") as WeaponVisualAsset
+	var affordance := loaded.get("affordance_profile") as Resource
+	var pan_profile: Resource = COMPILER.new().compile(
+		affordance,
+		pan_asset.anchors_dict(),
+		pan_asset.opaque_bounds
+	) as Resource
+	var chicken_fixture := _read_json(CHICKEN_MASK_FIXTURE_PATH)
+	var chicken_asset := _asset_from_binary_fixture(chicken_fixture)
+	var chicken_profile: Resource = COMPILER.new().compile(
+		affordance,
+		chicken_asset.anchors_dict(),
+		chicken_asset.opaque_bounds
+	) as Resource
+	var pan_nominal := pan_asset.calculate_silhouette_grip_inertia_proxy_raw()
+	var chicken_nominal := chicken_asset.calculate_silhouette_grip_inertia_proxy_raw()
+	var evidence_free_anchors := pan_asset.anchors_dict()
+	evidence_free_anchors.erase("silhouette_grip_inertia_proxy_raw")
+	var evidence_free_profile: Resource = COMPILER.new().compile(
+		affordance,
+		evidence_free_anchors,
+		pan_asset.opaque_bounds
+	) as Resource
+	var ok := is_equal_approx(pan_nominal, 0.39927631674980396)
+	ok = ok and is_equal_approx(chicken_nominal, 0.47467734081556534)
+	ok = ok and is_equal_approx(pan_profile.silhouette_grip_inertia_proxy_raw, pan_nominal)
+	ok = ok and is_equal_approx(chicken_profile.silhouette_grip_inertia_proxy_raw, chicken_nominal)
+	ok = ok and is_equal_approx(float(pan_profile.compile_trace.get("silhouette_grip_inertia_proxy_raw", -1.0)), pan_nominal)
+	ok = ok and is_equal_approx(float(chicken_profile.compile_trace.get("silhouette_grip_inertia_proxy_raw", -1.0)), chicken_nominal)
+	ok = ok and is_equal_approx(float(pan_profile.to_dict().get("silhouette_grip_inertia_proxy_raw", -1.0)), pan_nominal)
+	ok = ok and pan_profile.combo_recipe.signature() == evidence_free_profile.combo_recipe.signature()
+	ok = ok and is_equal_approx(pan_profile.reach_pixels, evidence_free_profile.reach_pixels)
+	ok = ok and is_equal_approx(pan_profile.startup_seconds, evidence_free_profile.startup_seconds)
+	ok = ok and is_equal_approx(pan_profile.hitbox_thickness, evidence_free_profile.hitbox_thickness)
+	_check(ok, "23 alpha>=0.12 runtime GripPrimary inertia is exposed in orthogonal profile and trace without changing combat output")
+
+
+func _test_silhouette_grip_inertia_243_case_intervals() -> void:
+	var loaded: Dictionary = LOADER.new().load_motion_grammar_asset("frying_pan")
+	var pan_asset := loaded.get("asset") as WeaponVisualAsset
+	var chicken_fixture := _read_json(CHICKEN_MASK_FIXTURE_PATH)
+	var chicken_asset := _asset_from_binary_fixture(chicken_fixture)
+	var pan_interval := _perturbed_inertia_interval(pan_asset.source_image, pan_asset.grip_primary, pan_asset.tip)
+	var chicken_interval := _perturbed_inertia_interval(chicken_asset.source_image, chicken_asset.grip_primary, chicken_asset.tip)
+	var ok := int(pan_interval.get("case_count", 0)) == 243
+	ok = ok and int(chicken_interval.get("case_count", 0)) == 243
+	ok = ok and int(pan_interval.get("distinct_inertia_count", 0)) == 27
+	ok = ok and int(chicken_interval.get("distinct_inertia_count", 0)) == 27
+	ok = ok and is_equal_approx(float(pan_interval.get("minimum", -1.0)), 0.3435990071586096)
+	ok = ok and is_equal_approx(float(pan_interval.get("maximum", -1.0)), 0.46863941119071145)
+	ok = ok and is_equal_approx(float(chicken_interval.get("minimum", -1.0)), 0.40939342040399873)
+	ok = ok and is_equal_approx(float(chicken_interval.get("maximum", -1.0)), 0.5540246759921706)
+	ok = ok and float(pan_interval.get("maximum", -INF)) >= float(chicken_interval.get("minimum", INF))
+	_check(ok, "24 frozen Pan and golden chicken runtime-normalized 243-case inertia intervals match their nominal bounds")
+
+
+func _perturbed_inertia_interval(source: Image, grip: Vector2, strike: Vector2) -> Dictionary:
+	var binary := _binary_mask_image(source)
+	var masks: Array[Image] = [
+		_morph_binary_mask(binary, false),
+		binary,
+		_morph_binary_mask(binary, true),
+	]
+	var minimum := INF
+	var maximum := -INF
+	var case_count := 0
+	var distinct_values: Dictionary = {}
+	for mask: Image in masks:
+		for grip_x: float in [-2.0, 0.0, 2.0]:
+			for grip_y: float in [-2.0, 0.0, 2.0]:
+				for strike_x: float in [-2.0, 0.0, 2.0]:
+					for strike_y: float in [-2.0, 0.0, 2.0]:
+						var candidate := WeaponVisualAsset.new()
+						candidate.source_image = mask
+						candidate.canvas_size = mask.get_size()
+						candidate.opaque_bounds = mask.get_used_rect()
+						candidate.grip_primary = grip + Vector2(grip_x, grip_y)
+						candidate.tip = strike + Vector2(strike_x, strike_y)
+						var value := candidate.calculate_silhouette_grip_inertia_proxy_raw()
+						minimum = minf(minimum, value)
+						maximum = maxf(maximum, value)
+						distinct_values[snappedf(value, 0.000000000001)] = true
+						case_count += 1
+	return {
+		"minimum": minimum,
+		"maximum": maximum,
+		"case_count": case_count,
+		"distinct_inertia_count": distinct_values.size(),
+	}
+
+
+func _asset_from_binary_fixture(data: Dictionary) -> WeaponVisualAsset:
+	var image := Image.create(int(data.get("width", 0)), int(data.get("height", 0)), false, Image.FORMAT_RGBA8)
+	image.fill(Color(0.0, 0.0, 0.0, 0.0))
+	var rows: Array = data.get("row_runs", [])
+	for y: int in range(rows.size()):
+		for run: Array in rows[y]:
+			for x: int in range(int(run[0]), int(run[1]) + 1):
+				image.set_pixel(x, y, Color.WHITE)
+	if bool(data.get("runtime_orientation_flipped", false)):
+		image.flip_x()
+	var asset := WeaponVisualAsset.new()
+	asset.source_image = image
+	asset.canvas_size = image.get_size()
+	asset.opaque_bounds = image.get_used_rect()
+	asset.grip_primary = _vector_from_array(data.get("grip_primary_runtime", []))
+	asset.grip_secondary = asset.grip_primary
+	asset.tip = _vector_from_array(data.get("strike_point_runtime", []))
+	asset.muzzle = asset.tip
+	asset.rear_contact = asset.grip_primary
+	return asset
+
+
+func _binary_mask_image(source: Image) -> Image:
+	var result := Image.create(source.get_width(), source.get_height(), false, Image.FORMAT_RGBA8)
+	result.fill(Color(0.0, 0.0, 0.0, 0.0))
+	for y: int in range(source.get_height()):
+		for x: int in range(source.get_width()):
+			if source.get_pixel(x, y).a >= WeaponVisualAsset.SILHOUETTE_ALPHA_THRESHOLD:
+				result.set_pixel(x, y, Color.WHITE)
+	return result
+
+
+func _morph_binary_mask(source: Image, dilate: bool) -> Image:
+	var result := Image.create(source.get_width(), source.get_height(), false, Image.FORMAT_RGBA8)
+	result.fill(Color(0.0, 0.0, 0.0, 0.0))
+	for y: int in range(source.get_height()):
+		for x: int in range(source.get_width()):
+			var foreground := false if dilate else true
+			for offset_y: int in range(-1, 2):
+				for offset_x: int in range(-1, 2):
+					var sample_x := x + offset_x
+					var sample_y := y + offset_y
+					var sample := sample_x >= 0 and sample_y >= 0 \
+						and sample_x < source.get_width() and sample_y < source.get_height() \
+						and source.get_pixel(sample_x, sample_y).a >= WeaponVisualAsset.SILHOUETTE_ALPHA_THRESHOLD
+					if dilate:
+						foreground = foreground or sample
+					else:
+						foreground = foreground and sample
+			if foreground:
+				result.set_pixel(x, y, Color.WHITE)
+	return result
+
+
+func _vector_from_array(value: Variant) -> Vector2:
+	if not value is Array or value.size() < 2:
+		return Vector2.ZERO
+	return Vector2(float(value[0]), float(value[1]))
+
+
+func _read_json(path: String) -> Dictionary:
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	return parsed if parsed is Dictionary else {}
 
 
 func _compiled(asset_id: String) -> Variant:

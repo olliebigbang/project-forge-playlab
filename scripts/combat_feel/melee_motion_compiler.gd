@@ -235,6 +235,7 @@ func _compose_orthogonal_profile(
 		"composer": "orthogonal_affordance_v1",
 		"selected": selected.duplicate(true),
 		"identity_inputs_used": false,
+		"silhouette_grip_inertia_proxy_raw": profile.silhouette_grip_inertia_proxy_raw,
 	}
 	return profile
 
@@ -528,6 +529,7 @@ func _base_profile(affordance_profile: Resource, anchor_data: Dictionary, alpha_
 	var profile: Variant = PROFILE.new()
 	var bounds_area := float(alpha_bounds.size.x * alpha_bounds.size.y)
 	profile.silhouette_fill_ratio = bounds_area / (96.0 * 96.0)
+	profile.silhouette_grip_inertia_proxy_raw = float(anchor_data.get("silhouette_grip_inertia_proxy_raw", 0.0))
 	profile.contact_bulk_ratio = {"point": 0.18, "edge": 0.30, "broad": 0.52, "whole_body": 0.62}[affordance_profile.contact_surface]
 	profile.grip_mode = "two_hand" if affordance_profile.grip_topology == "two_hand_handle" or _grip_span(anchor_data) >= 15.0 else ("center" if affordance_profile.handle_length == "none" else "one_hand")
 	return profile

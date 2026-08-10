@@ -1,6 +1,8 @@
 class_name WeaponVisualAsset
 extends RefCounted
 
+const SILHOUETTE_ALPHA_THRESHOLD := 0.12
+
 var texture: Texture2D
 var source_image: Image
 var canvas_size: Vector2i = Vector2i(96, 96)
@@ -26,5 +28,32 @@ func anchors_dict() -> Dictionary:
 		"rear_contact": [roundi(rear_contact.x), roundi(rear_contact.y)],
 		"orientation_flipped": orientation_flipped,
 		"orientation_source": orientation_source,
+		"silhouette_grip_inertia_proxy_raw": calculate_silhouette_grip_inertia_proxy_raw(),
 		"confidence": anchor_confidence, "anchor_source": anchor_source
 	}
+
+
+func calculate_silhouette_grip_inertia_proxy_raw() -> float:
+	if source_image == null or source_image.is_empty():
+		return 0.0
+	var minimum := Vector2i(source_image.get_width(), source_image.get_height())
+	var maximum := Vector2i(-1, -1)
+	var mask_pixel_count := 0
+	var squared_distance_sum := 0.0
+	for y: int in range(source_image.get_height()):
+		for x: int in range(source_image.get_width()):
+			if source_image.get_pixel(x, y).a < SILHOUETTE_ALPHA_THRESHOLD:
+				continue
+			minimum.x = mini(minimum.x, x)
+			minimum.y = mini(minimum.y, y)
+			maximum.x = maxi(maximum.x, x)
+			maximum.y = maxi(maximum.y, y)
+			mask_pixel_count += 1
+			squared_distance_sum += Vector2(float(x), float(y)).distance_squared_to(grip_primary)
+	if mask_pixel_count == 0:
+		return 0.0
+	var mask_size := maximum - minimum + Vector2i.ONE
+	var major_axis := float(maxi(mask_size.x, mask_size.y))
+	if major_axis <= 0.0:
+		return 0.0
+	return squared_distance_sum / (float(mask_pixel_count) * major_axis * major_axis)
