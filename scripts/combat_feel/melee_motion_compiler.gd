@@ -91,6 +91,30 @@ const MASS_AXIS_MAX := 1.00
 const MASS_AXIS_FLOOR_KG := 0.15
 const MASS_AXIS_CEILING_KG := 8.0
 
+# Set false to restore the pre-commitment cancel window exactly. Same A/B shape as the
+# length and mass switches above. Profiles without a real mass take the old path either
+# way, so every frozen asset keeps the 0.38 it has today.
+const USE_REAL_MASS_COMMITMENT := true
+
+# The value every object in the game shared before this axis existed.
+const EARLY_CANCEL_DEFAULT := 0.38
+
+# How far into the startup a dodge still calls the swing off. The free end is deliberately
+# generous: a light one-hand object should be usable as a probe, thrown out to see what the
+# enemy does and taken back when the answer is bad. The locked end is not zero, because a
+# window of exactly zero reads as an input drop rather than as weight.
+const EARLY_CANCEL_FREE := 0.78
+const EARLY_CANCEL_LOCKED := 0.04
+
+# How much of the player is behind the swing, which mass alone cannot say. The same 5kg
+# is a different commitment braced in one hand than swung on a two-hand shaft.
+const COMMITMENT_GRIP_COUPLING := {
+	"one_hand_handle": 0.00,
+	"clamp_grip": 0.10,
+	"two_hand_handle": 0.30,
+	"body_grip": 0.42,
+}
+
 # Boundaries for the three-value label, in kilograms. Below the first is something you
 # flick, above the second is something you heave.
 const WEIGHT_CLASS_LIGHT_MAX_KG := 0.5
@@ -198,6 +222,7 @@ func _compose_orthogonal_profile(
 	profile.charge_style = str(selected["charge"])
 	profile.dodge_attack_style = str(selected["dodge"])
 	profile.configure_timing_from_tempo()
+	profile.early_startup_cancel_ratio = _early_startup_cancel_ratio(affordance_profile)
 	profile.reach_pixels = _general_reach(affordance_profile, anchor_data, alpha_bounds)
 	profile.swing_arc_degrees = _general_arc(affordance_profile)
 	profile.hitbox_thickness = _general_hitbox_thickness(affordance_profile)
@@ -380,6 +405,33 @@ func _mass_axis_from_kg(mass_kg: float) -> float:
 	var span := log(MASS_AXIS_CEILING_KG) - floor_log
 	var position := clampf((log(maxf(mass_kg, MASS_AXIS_FLOOR_KG * 0.01)) - floor_log) / span, 0.0, 1.0)
 	return MASS_AXIS_MIN + position * (MASS_AXIS_MAX - MASS_AXIS_MIN)
+
+
+## How much of the startup is still the player's to take back.
+##
+## This is a different question from tempo, and the compiler could not previously answer
+## it at all: `early_startup_cancel_ratio` sat at its 0.38 default for every object the
+## player could draw, so a chicken leg and a sledgehammer were equally irrevocable.
+##
+## Kept orthogonal to tempo on purpose. Tempo is length plus mass; commitment is mass plus
+## *grip*, and grip_topology appears nowhere in `_tempo_for_axes`. Two objects that swing
+## for the same duration can therefore still differ in whether the swing can be called off,
+## which is what makes this an axis rather than a second reading of the first one.
+func _early_startup_cancel_ratio(affordance_profile: Resource) -> float:
+	if not (USE_REAL_MASS_COMMITMENT and affordance_profile.has_real_mass()):
+		return EARLY_CANCEL_DEFAULT
+	return lerpf(EARLY_CANCEL_FREE, EARLY_CANCEL_LOCKED, _commitment(affordance_profile))
+
+
+## 0 = a swing your wrist can stop, 1 = a swing your whole body is already inside.
+##
+## Mass says how much momentum is going into it; grip says how much of you is behind it.
+## A 5kg head on a two-hand shaft commits the body, while the same 5kg braced in one hand
+## is still a wrist away from being abandoned.
+func _commitment(affordance_profile: Resource) -> float:
+	var from_mass := (_mass_axis(affordance_profile) - MASS_AXIS_MIN) / (MASS_AXIS_MAX - MASS_AXIS_MIN)
+	var from_grip: float = COMMITMENT_GRIP_COUPLING[affordance_profile.grip_topology]
+	return clampf(from_mass + from_grip, 0.0, 1.0)
 
 
 func _reach_class(affordance_profile: Resource) -> String:
