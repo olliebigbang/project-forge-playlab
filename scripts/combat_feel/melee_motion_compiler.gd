@@ -324,7 +324,12 @@ func _synthesize_primitive(family: String, stage: String, affordance_profile: Re
 		"slam": [-1.82, 1.04], "spin": [-2.85, 3.25],
 	}[family]
 	if stage == "hit_2" and family in ["bash", "sweep"]:
-		angle_data = [float(angle_data[1]), -float(angle_data[0])]
+		# Retrace the opening arc backwards: start where it ended, end where it began.
+		# Negating the start instead of swapping to it kept the rotation going the same
+		# way over a stub of the original span -- bash covered 18 degrees against the
+		# opener's 53, sweep 10 against 136 -- so `forward_reverse_finisher` never had a
+		# reverse in it, and no object in the game ever swung back.
+		angle_data = [float(angle_data[1]), float(angle_data[0])]
 	var length_axis := _length_axis(affordance_profile)
 	var mass_axis := _mass_axis(affordance_profile)
 	var stage_weight: float = {"hit_1": 0.84, "hit_2": 1.00, "hit_3": 1.20, "charge": 1.12, "dodge": 1.28}[stage]

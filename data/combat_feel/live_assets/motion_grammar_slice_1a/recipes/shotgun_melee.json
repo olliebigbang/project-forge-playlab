@@ -21,7 +21,9 @@
       "long rigid main axis",
       "forward barrel end",
       "rear stock contact"
-    ]
+    ],
+    "real_length_cm": 0.0,
+    "real_mass_kg": 0.0
   },
   "combo_recipe": {
     "hit_1": {
@@ -57,7 +59,7 @@
       "motion_family": "bash",
       "contact_anchor": "tip",
       "start_angle": 0.3,
-      "end_angle": 0.62,
+      "end_angle": -0.62,
       "local_start_offset": [
         0.0,
         0.0
@@ -169,8 +171,8 @@
       "camera_kick_multiplier": 0.91,
       "movement_allowed_ratio": 0.04
     },
-    "recipe_signature": "690aaf0979d0f8e9f3b71845ad94e3a8de3d4fca484703c2282a2e25c89091cf",
-    "compile_reason": "orthogonal affordance composition: {\"body_length\":\"long\",\"confidence\":1.0,\"contact_surface\":\"point\",\"evidence_parts\":[\"long rigid main axis\",\"forward barrel end\",\"rear stock contact\"],\"grip_topology\":\"two_hand_handle\",\"handle_length\":\"medium\",\"has_barrel\":true,\"has_broad_face\":false,\"has_edge\":false,\"has_point\":true,\"has_stock\":true,\"mass_distribution\":\"rear\",\"rigidity\":\"rigid\",\"secondary_contact_surface\":\"broad\"}",
+    "recipe_signature": "261afd1e1cb0e63acf3e2a4f62bc69ca176fc5ae15367f99627e083e76c13068",
+    "compile_reason": "orthogonal affordance composition: {\"body_length\":\"long\",\"confidence\":1.0,\"contact_surface\":\"point\",\"evidence_parts\":[\"long rigid main axis\",\"forward barrel end\",\"rear stock contact\"],\"grip_topology\":\"two_hand_handle\",\"handle_length\":\"medium\",\"has_barrel\":true,\"has_broad_face\":false,\"has_edge\":false,\"has_point\":true,\"has_stock\":true,\"mass_distribution\":\"rear\",\"real_length_cm\":0.0,\"real_mass_kg\":0.0,\"rigidity\":\"rigid\",\"secondary_contact_surface\":\"broad\"}",
     "mechanism_axes": {
       "handle_length": "medium",
       "body_length": "long",
@@ -189,7 +191,9 @@
         "long rigid main axis",
         "forward barrel end",
         "rear stock contact"
-      ]
+      ],
+      "real_length_cm": 0.0,
+      "real_mass_kg": 0.0
     },
     "primitive_scores": {
       "bash": 3.932,

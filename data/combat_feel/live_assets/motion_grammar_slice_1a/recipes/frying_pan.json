@@ -21,7 +21,9 @@
       "short handle",
       "broad pan body",
       "front-weighted contact face"
-    ]
+    ],
+    "real_length_cm": 0.0,
+    "real_mass_kg": 0.0
   },
   "combo_recipe": {
     "hit_1": {
@@ -170,7 +172,7 @@
       "movement_allowed_ratio": 0.04
     },
     "recipe_signature": "696c4298e1b8bf997fd5011d1ee7621ef47bae8304d5d086b35e9293b9dae023",
-    "compile_reason": "orthogonal affordance composition: {\"body_length\":\"short\",\"confidence\":1.0,\"contact_surface\":\"broad\",\"evidence_parts\":[\"short handle\",\"broad pan body\",\"front-weighted contact face\"],\"grip_topology\":\"one_hand_handle\",\"handle_length\":\"short\",\"has_barrel\":false,\"has_broad_face\":true,\"has_edge\":false,\"has_point\":false,\"has_stock\":false,\"mass_distribution\":\"front\",\"rigidity\":\"rigid\",\"secondary_contact_surface\":\"none\"}",
+    "compile_reason": "orthogonal affordance composition: {\"body_length\":\"short\",\"confidence\":1.0,\"contact_surface\":\"broad\",\"evidence_parts\":[\"short handle\",\"broad pan body\",\"front-weighted contact face\"],\"grip_topology\":\"one_hand_handle\",\"handle_length\":\"short\",\"has_barrel\":false,\"has_broad_face\":true,\"has_edge\":false,\"has_point\":false,\"has_stock\":false,\"mass_distribution\":\"front\",\"real_length_cm\":0.0,\"real_mass_kg\":0.0,\"rigidity\":\"rigid\",\"secondary_contact_surface\":\"none\"}",
     "mechanism_axes": {
       "handle_length": "short",
       "body_length": "short",
@@ -189,7 +191,9 @@
         "short handle",
         "broad pan body",
         "front-weighted contact face"
-      ]
+      ],
+      "real_length_cm": 0.0,
+      "real_mass_kg": 0.0
     },
     "primitive_scores": {
       "bash": 5.8,

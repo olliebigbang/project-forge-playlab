@@ -21,7 +21,9 @@
       "long shaft",
       "broad mop head",
       "two-hand grip span"
-    ]
+    ],
+    "real_length_cm": 0.0,
+    "real_mass_kg": 0.0
   },
   "combo_recipe": {
     "hit_1": {
@@ -170,7 +172,7 @@
       "movement_allowed_ratio": 0.16
     },
     "recipe_signature": "045d930b3b9bfb992db5d40f087a0e0c1982e366bb7dbf3043a861faab2c455c",
-    "compile_reason": "orthogonal affordance composition: {\"body_length\":\"long\",\"confidence\":1.0,\"contact_surface\":\"whole_body\",\"evidence_parts\":[\"long shaft\",\"broad mop head\",\"two-hand grip span\"],\"grip_topology\":\"two_hand_handle\",\"handle_length\":\"long\",\"has_barrel\":false,\"has_broad_face\":true,\"has_edge\":false,\"has_point\":false,\"has_stock\":false,\"mass_distribution\":\"front\",\"rigidity\":\"semi_rigid\",\"secondary_contact_surface\":\"broad\"}",
+    "compile_reason": "orthogonal affordance composition: {\"body_length\":\"long\",\"confidence\":1.0,\"contact_surface\":\"whole_body\",\"evidence_parts\":[\"long shaft\",\"broad mop head\",\"two-hand grip span\"],\"grip_topology\":\"two_hand_handle\",\"handle_length\":\"long\",\"has_barrel\":false,\"has_broad_face\":true,\"has_edge\":false,\"has_point\":false,\"has_stock\":false,\"mass_distribution\":\"front\",\"real_length_cm\":0.0,\"real_mass_kg\":0.0,\"rigidity\":\"semi_rigid\",\"secondary_contact_surface\":\"broad\"}",
     "mechanism_axes": {
       "handle_length": "long",
       "body_length": "long",
@@ -189,7 +191,9 @@
         "long shaft",
         "broad mop head",
         "two-hand grip span"
-      ]
+      ],
+      "real_length_cm": 0.0,
+      "real_mass_kg": 0.0
     },
     "primitive_scores": {
       "bash": 2.682,
