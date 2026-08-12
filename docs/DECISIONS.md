@@ -523,3 +523,54 @@ proposed deriving the inertia proxy from the sprite. That meets T60 head-on — 
 saturates — and the review says so about this very case: pan and chicken leg are both 96px,
 both front-weighted, both short, so a geometric proxy returns nearly the same number for
 both. From pixels the quantity is not merely redundant, it is unavailable.
+
+## P12 — the selection layer is a four-way choice, and that is not a tuning bug
+
+*2026-08-10.* Measured after two separate lines of reasoning independently blamed
+`contact_surface` for dominating primitive selection. It does dominate. Rebalancing it is
+still the wrong move. Evidence: `tools/combat_feel/measure_selection_sensitivity.gd`.
+
+**The measurement asks a narrower question than the existing audit.**
+`export_affordance_axis_causality.gd` asks whether varying an axis changes anything in the
+compiled profile, and nearly everything answers yes, because nearly every axis feeds some
+multiplier. That is why twelve causality cases could pass while a pan and a chicken leg
+compiled to the same three swings. The question T77 actually turns on is whether an axis
+can change *which motions you swing*, so this sweeps one field at a time from three real
+baselines and records the resulting family triple.
+
+**Result: of 42 (baseline, axis) pairs, 9 can move the selection.** `contact_surface` is
+the only axis that moves it from every baseline, and it reaches all four combos every time.
+From the frying pan it is the only axis of fourteen that moves it at all. `has_point`,
+`has_edge`, `has_broad_face` and `has_barrel` never move it from any baseline despite
+carrying 0.75–0.90 in the scoring table, and neither do `real_mass_kg` or `real_length_cm`
+— an honest bound on P09 and P05, which reach the parameter layer only.
+
+**Why the A-B-A combo cannot be fixed by raising the de-duplication penalty.** Real scores
+for the pan: `bash 5.80, slam 4.75, sweep 1.10, thrust 0.70, spin 0.00`. At hit_3 both used
+families take −3.00, leaving `bash 3.70, slam 2.95, sweep 1.30, spin 1.00`. Bash wins its
+own third appearance by 0.75 because its base is 1.05 higher, and the first unused option
+trails by 2.40. The penalty would have to exceed −5.5 to surface a third motion, at which
+point it outweighs the combined contribution of most axes.
+
+**Decided: do not rebalance the contact weights.** The selection layer asks one question —
+how does this object deliver damage — and `contact_surface` is literally the answer to it.
+A point thrusts, a broad face bashes. Flattening its weight does not make selection richer,
+it makes it arbitrary, and it would break the property that the same affordance always
+compiles to the same recipe. The other axes are not being suppressed; they are answering a
+different question and were never candidates to decide this one.
+
+**What this costs, stated as arithmetic.** Selection has four reachable outcomes, one per
+`contact_surface` value. Tempo has three. Everything else is a multiplier in a 12–16% band,
+all pushing the same direction (P09). So the perceptible space is about 4 × 3, with several
+combinations unreachable — which is "ten weapons, three feels" (T77) reduced to its
+factors. The expressive ceiling was never limited by how many axes the contract carries; it
+is limited by how many *categorical* outcomes exist downstream of them.
+
+**So density has to come from a new categorical layer, not from more inputs to this one.**
+Three separate findings now point at the same place: P11's seven residual collisions are
+all objects alike in size and weight and different in material; `tempo` currently owns
+timing, damage, hitstop, knockback, camera shake *and* sound profile, so every impact
+channel is keyed to one three-valued enum; and the axes that fail to reach selection fail
+because selection is already answered. Giving a material or contact-resolution axis its own
+channels — sound and hitstop and rebound direction, taken from tempo rather than added
+alongside it — multiplies where adding a fifth scalar does not.
