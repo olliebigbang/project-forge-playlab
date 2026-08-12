@@ -10,18 +10,38 @@ param(
     # Developer-only affordance override, as a res:// path. Swaps the compiled feel without
     # touching the frozen, hash-pinned sidecar the weapon normally loads, so a contract
     # change can be played against real assets. The run is marked unverified on screen.
-    [string]$CombatAffordance = ""
+    [string]$CombatAffordance = "",
+    # Alternative asset sources. The scene resolves motion grammar before recipe before
+    # -Weapon, so these are offered as one exclusive choice rather than three flags that
+    # silently outrank each other.
+    [string]$RecipeAsset = "",
+    [string]$MotionGrammarAsset = ""
 )
 
 $ErrorActionPreference = "Stop"
 $PlaylabRoot = Split-Path -Parent $PSScriptRoot
 $Godot = & (Join-Path $PSScriptRoot "find_godot.ps1")
+
+if ((-not [string]::IsNullOrWhiteSpace($RecipeAsset)) -and (-not [string]::IsNullOrWhiteSpace($MotionGrammarAsset))) {
+    throw "Pass only one of -RecipeAsset or -MotionGrammarAsset; the scene would silently ignore the recipe."
+}
+$SourceArgument = "--live-weapon=$Weapon"
+$SourceLabel = $Weapon
+if (-not [string]::IsNullOrWhiteSpace($MotionGrammarAsset)) {
+    $SourceArgument = "--motion-grammar-asset=$MotionGrammarAsset"
+    $SourceLabel = "motion grammar $MotionGrammarAsset"
+}
+elseif (-not [string]::IsNullOrWhiteSpace($RecipeAsset)) {
+    $SourceArgument = "--recipe-asset=$RecipeAsset"
+    $SourceLabel = "recipe $RecipeAsset"
+}
+
 $Arguments = @(
     "--path", $PlaylabRoot,
     "res://scenes/combat_feel_slice_0.tscn",
     "--",
     "--mode=combat-feel-slice-0",
-    "--live-weapon=$Weapon"
+    $SourceArgument
 )
 if (-not [string]::IsNullOrWhiteSpace($DeveloperFixture)) { $Arguments += "--developer-fixture=$DeveloperFixture" }
 if (-not [string]::IsNullOrWhiteSpace($OpenPlaytestRound)) { $Arguments += "--open-playtest-round=$OpenPlaytestRound" }
@@ -31,7 +51,7 @@ if (-not [string]::IsNullOrWhiteSpace($BlueprintPath)) { $Arguments += "--combat
 if (-not [string]::IsNullOrWhiteSpace($AnchorsPath)) { $Arguments += "--combat-anchors=$AnchorsPath" }
 if (-not [string]::IsNullOrWhiteSpace($CombatAffordance)) { $Arguments += "--combat-affordance=$CombatAffordance" }
 
-Write-Output "Starting Forge Combat Feel Slice 0 Revision A ($Weapon)."
+Write-Output "Starting Forge Combat Feel Slice 0 Revision A ($SourceLabel)."
 Write-Output "Default source is a frozen real Live Forge result; developer fixtures require -DeveloperFixture explicitly."
 & $Godot @Arguments
 exit $LASTEXITCODE
