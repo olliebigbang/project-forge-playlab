@@ -61,7 +61,10 @@ func _initialize() -> void:
 
 func _run(test_name: String, test_callable: Callable) -> void:
 	var result: Variant = test_callable.call()
-	if result == true:
+	# A failing test returns its reason as a String. Comparing a String against a
+	# bool raises "Invalid operands" at runtime, which aborted _run before either
+	# counter moved, so every failure was dropped and RESULT always read 0 failed.
+	if result is bool and result:
 		passed += 1
 		print("PASS | %s" % test_name)
 	else:
