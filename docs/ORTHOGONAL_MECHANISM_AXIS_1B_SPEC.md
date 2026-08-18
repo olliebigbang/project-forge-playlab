@@ -1,6 +1,8 @@
 # Contact Resolution Axis — 1B 规格
 
-状态：DESIGN ONLY。本文件不含实现。
+状态：DESIGN ONLY，且**§4.2 的派生规则已被 P13 实测否决，勿照此实现**。
+其余部分仍然有效——尤其 §3 的通道移交，P13 明确未触及它。
+
 承接：`DECISIONS.md` 的 P11 与 P12。两者都以"下一步该建一个材质/接触解算轴，
 并把通道从 tempo 手里拿过来"收尾；本文件是那句话的落地规格。
 
@@ -100,7 +102,23 @@ committed:  hitstop 0.064  knockback 152  camera 4.8  sound forge_impact_heavy
 
 不新增契约字段，因此 v1.4 不变、估计器不变、冻结哈希链不受影响（P10）。
 
-### 4.2 派生规则
+### 4.2 派生规则 —— 已被 P13 否决
+
+> **停用。**M1 实测：36 份 affordance 档案里 `rigidity` 有 78% 是 `rigid`，
+> 三组数据各自独立同向。以 `rigidity != rigid` 派生 soft 分支，会让
+> `follow_through` 只收到极少数物件，其余全部按质量分成 `arrest` / `rebound`——
+> 而质量本就买 tempo（P09），等于把 tempo 换个 enum 重新驱动同一批通道。
+> 详见 P13。θ = 0.538 本身测得稳健（余量 2.9 倍噪声底），锅/鸡腿也确实分开
+> （7 倍噪声底），但靠质量分开一对不是本轴的目的。
+>
+> 待替换：决定类别归属的**输入**。P13 指出模型其实已经推理到作用端了——A10（鸡腿）
+> 的 `evidence_parts` 写着 "bulbous meat mass at striking end"、"semi-rigid meat and
+> bone structure"，丢失发生在三值枚举那一步。`evidence_parts` 是模型产出、带部件级材质
+> （A03 "long wooden handle, heavy steel axe head"、A12 "long flexible rod shaft, cork
+> handle grip"），且无需新增契约字段——但必须先按 P11 的方式测过才能建。
+>
+> 以下原文保留作记录。
+
 
 ```
 θ = 待测定，不得拍脑袋（见 §6）
