@@ -693,14 +693,9 @@ func _play_tone(kind: String) -> void:
 	stream.data = data; audio_player.stream = stream; audio_player.play()
 
 func _attack_motion_ratio() -> float:
-	if controller == null or controller.phase == "idle":
-		return 0.0
-	var ratio: float = controller.phase_ratio()
-	match controller.phase:
-		"startup": return ratio * 0.30
-		"active": return 0.30 + ratio * 0.52
-		"recovery": return 0.82 + ratio * 0.18
-	return 0.0
+	# The controller owns this now, because after a hit the path depends on what the
+	# object is made of and only the controller knows a hit has landed.
+	return 0.0 if controller == null else float(controller.swing_progress())
 
 
 func _character_pose() -> Dictionary:

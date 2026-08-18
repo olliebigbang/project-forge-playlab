@@ -24,6 +24,7 @@ var attack_serial := 0
 var active_just_started := false
 var hitstop_remaining := 0.0
 var hit_targets: Dictionary = {}
+var contact_progress := -1.0
 var last_cancel_reason := ""
 
 func configure(value: Resource) -> void:
@@ -38,7 +39,7 @@ func reset() -> void:
 	dodge_attack_window = 0.0; dodge_motion_seconds = 0.0
 	attack_kind = "normal"; attack_serial = 0; active_just_started = false
 	current_primitive = null
-	hitstop_remaining = 0.0; hit_targets.clear()
+	hitstop_remaining = 0.0; hit_targets.clear(); contact_progress = -1.0
 
 func press_attack() -> void:
 	if profile == null: return
@@ -60,7 +61,7 @@ func release_attack() -> void:
 	priming_attack = false
 	charge_state = "none"
 	attack_serial += 1
-	hit_targets.clear()
+	hit_targets.clear(); contact_progress = -1.0
 	attack_started.emit("normal", combo_index)
 	if phase == "startup" and phase_elapsed >= phase_duration:
 		_enter_phase("active")
@@ -120,6 +121,8 @@ func tick(delta: float) -> void:
 func register_hit(target_id: int) -> bool:
 	if phase != "active" or hit_targets.has(target_id): return false
 	hit_targets[target_id] = true
+	if contact_progress < 0.0:
+		contact_progress = _uninterrupted_swing_progress()
 	return true
 
 func begin_hitstop(seconds: float) -> void:
@@ -127,6 +130,38 @@ func begin_hitstop(seconds: float) -> void:
 
 func current_timing() -> Dictionary:
 	return profile.timing_for(attack_kind, combo_index, current_primitive) if profile != null else {}
+
+## How far through its arc the swing has travelled, 0 at the wind-up and 1 at rest.
+##
+## Until it connects the path is the same for every object. What contact does to it is not:
+## a cast iron pan stops dead where it landed, a fishing rod is thrown back the way it came,
+## and a chicken leg carries on through because nothing stopped it. This is the one channel
+## the player watches rather than feels, and unlike a multiplier it is not a percentage --
+## the weapon either comes back or it does not.
+func swing_progress() -> float:
+	var raw := _uninterrupted_swing_progress()
+	if contact_progress < 0.0 or profile == null:
+		return raw
+	var travelled := maxf(0.0, raw - contact_progress)
+	match str(profile.contact_resolution):
+		"arrest":
+			return contact_progress
+		"rebound":
+			return maxf(0.0, contact_progress - travelled * 1.60)
+		_:
+			return minf(1.0, contact_progress + travelled * 1.25)
+
+
+func _uninterrupted_swing_progress() -> float:
+	if phase == "idle":
+		return 0.0
+	var ratio := phase_ratio()
+	match phase:
+		"startup": return ratio * 0.30
+		"active": return 0.30 + ratio * 0.52
+		"recovery": return 0.82 + ratio * 0.18
+	return 0.0
+
 
 func phase_ratio() -> float:
 	return clampf(phase_elapsed / maxf(0.001, phase_duration), 0.0, 1.0)
@@ -143,7 +178,7 @@ func _start_attack(kind: String) -> void:
 		current_primitive = recipe.primitive_for_attack(kind, combo_index)
 	else:
 		current_primitive = null
-	attack_serial += 1; hit_targets.clear(); _enter_phase("startup")
+	attack_serial += 1; hit_targets.clear(); contact_progress = -1.0; _enter_phase("startup")
 	attack_started.emit(kind, combo_index)
 
 
@@ -152,7 +187,7 @@ func _begin_priming_normal() -> void:
 	combo_index = combo_index % 3 + 1
 	current_primitive = profile.combo_recipe.primitive_for(combo_index) if profile.combo_recipe != null else null
 	priming_attack = true
-	hit_targets.clear()
+	hit_targets.clear(); contact_progress = -1.0
 	_enter_phase("startup")
 
 
@@ -166,7 +201,7 @@ func _promote_priming_to_charge() -> void:
 	combo_index = 0
 	current_primitive = profile.combo_recipe.primitive_for_attack("charge") if profile.combo_recipe != null else null
 	attack_serial += 1
-	hit_targets.clear()
+	hit_targets.clear(); contact_progress = -1.0
 	_enter_phase("startup")
 	attack_started.emit("charge", 0)
 

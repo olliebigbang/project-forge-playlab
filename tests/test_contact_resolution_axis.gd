@@ -12,6 +12,7 @@ const AFFORDANCE := preload("res://scripts/combat_feel/object_affordance_profile
 const COMPILER := preload("res://scripts/combat_feel/melee_motion_compiler.gd")
 const FEEDBACK := preload("res://scripts/combat_feel/impact_feedback_profile.gd")
 const LOADER := preload("res://scripts/combat_feel/combat_feel_asset_loader.gd")
+const CONTROLLER := preload("res://scripts/combat_feel/melee_combat_controller.gd")
 
 var passed := 0
 var failed := 0
@@ -28,6 +29,8 @@ func _run() -> void:
 	_test_mass_does_not_reach_the_resolution()
 	_test_material_survives_the_finisher()
 	_test_material_leaves_timing_and_damage_alone()
+	_test_the_weapon_moves_differently_after_contact()
+	_test_a_whiff_traces_the_same_path_for_everything()
 	print("CONTACT_RESOLUTION_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -155,6 +158,70 @@ func _test_material_leaves_timing_and_damage_alone() -> void:
 	same = same and is_equal_approx(float(hard.recovery_seconds), float(soft.recovery_seconds))
 	same = same and is_equal_approx(float(hard.movement_commitment), float(soft.movement_commitment))
 	_check(same, "rigidity moves no timing, and so reaches no damage")
+
+
+## Every channel so far is felt at the instant of contact and then gone. This one is
+## visible: what the weapon does after it lands. Arrest stops it dead, rebound throws it
+## back, follow-through carries it on through the arc. Nothing in the game reads the hit
+## when drawing the swing today, so a hit and a whiff trace the same path.
+func _test_the_weapon_moves_differently_after_contact() -> void:
+	var progress := {}
+	for rigidity: String in ["rigid", "semi_rigid", "flexible"]:
+		var compiled: Variant = _compile(_profile(rigidity))
+		if compiled == null:
+			_check(false, "all three rigidity values compile")
+			return
+		progress[str(compiled.contact_resolution)] = _swing_progress_after_contact(compiled)
+	var values: Array = progress.values()
+	_check(
+		not is_equal_approx(values[0], values[1]) 			and not is_equal_approx(values[1], values[2]) 			and not is_equal_approx(values[0], values[2]),
+		"the three resolutions carry the weapon to three different places after a hit"
+	)
+
+
+## Drives a real attack to the middle of its active window, lands a hit, then advances the
+## same amount again and asks where the swing is.
+func _swing_progress_after_contact(motion_profile: Variant) -> float:
+	var controller: Variant = CONTROLLER.new()
+	controller.configure(motion_profile)
+	controller.press_attack()
+	controller.release_attack()
+	var timing: Dictionary = controller.current_timing()
+	controller.tick(float(timing.get("startup", 0.1)) * 1.01)
+	var active := float(timing.get("active", 0.1))
+	controller.tick(active * 0.4)
+	controller.register_hit(1)
+	controller.tick(active * 0.4)
+	return controller.swing_progress()
+
+
+## The axis acts on contact and nowhere else. A swing through empty air is the same swing
+## whatever the object is made of, so this fails if the remap is ever applied
+## unconditionally -- which is how it was verified.
+func _test_a_whiff_traces_the_same_path_for_everything() -> void:
+	var traced := {}
+	for rigidity: String in ["rigid", "semi_rigid", "flexible"]:
+		var compiled: Variant = _compile(_profile(rigidity))
+		if compiled == null:
+			_check(false, "all three rigidity values compile")
+			return
+		traced[rigidity] = _swing_progress_without_contact(compiled)
+	_check(
+		is_equal_approx(float(traced["rigid"]), float(traced["semi_rigid"]))
+			and is_equal_approx(float(traced["rigid"]), float(traced["flexible"])),
+		"a swing that hits nothing travels the same path for every material"
+	)
+
+
+func _swing_progress_without_contact(motion_profile: Variant) -> float:
+	var controller: Variant = CONTROLLER.new()
+	controller.configure(motion_profile)
+	controller.press_attack()
+	controller.release_attack()
+	var timing: Dictionary = controller.current_timing()
+	controller.tick(float(timing.get("startup", 0.1)) * 1.01)
+	controller.tick(float(timing.get("active", 0.1)) * 0.8)
+	return controller.swing_progress()
 
 
 func _profile(rigidity: String) -> Resource:
