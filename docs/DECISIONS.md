@@ -744,6 +744,13 @@ length in one the weapon can be knocked aside, hugged against the chest your who
 takes it. Nothing in the game currently models any of that: `recoil_degrees` moves the
 weapon, and there is no player-side consequence of connecting at all.
 
+**Its distribution is also the thing rigidity lacked, checked before building rather than
+after.** Across the same 36 profiles: `two_hand_handle` 55.6%, `one_hand_handle` 30.6%,
+`clamp_grip` 8.3%, `body_grip` 5.6%. All four values are occupied by real objects -- you hug
+a chair and a fire extinguisher, you clamp a shield by its strap and a folding stool by its
+legs -- and the largest class is 55.6% against rigidity's 75%. Neither rare branch is
+hypothetical, which was the question worth asking first after P13.
+
 **Decided: 1C takes grip_topology, and takes the player's side of the impact.** Scope is
 deliberately the mirror of 1B -- one existing categorical field, given channels nothing else
 owns, with each value carrying an advantage rather than forming a ladder (P08). No new
