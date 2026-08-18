@@ -13,8 +13,9 @@ const AFFORDANCE := preload("res://scripts/combat_feel/object_affordance_profile
 const COMPILER := preload("res://scripts/combat_feel/melee_motion_compiler.gd")
 const FEEDBACK := preload("res://scripts/combat_feel/impact_feedback_profile.gd")
 const LOADER := preload("res://scripts/combat_feel/combat_feel_asset_loader.gd")
+const CONTROLLER := preload("res://scripts/combat_feel/melee_combat_controller.gd")
 
-const EXPECTED_CHECKS := 3
+const EXPECTED_CHECKS := 6
 
 var passed := 0
 var failed := 0
@@ -27,6 +28,7 @@ func _init() -> void:
 func _run() -> void:
 	_test_bracing_changes_what_the_hit_does_to_you()
 	_test_no_grip_is_simply_the_best_way_to_hold_something()
+	_test_the_hit_reaches_the_player_and_the_weapon()
 	# A runtime error inside a test aborts that function without reaching a _check, so the
 	# counters simply come up short and the suite exits green. Reconciling against a
 	# declared total is what turns that silence back into a failure.
@@ -97,6 +99,57 @@ func _best_at_everything(grip: String, measured: Dictionary) -> bool:
 			if float(measured[grip][channel]) > float(measured[other][channel]):
 				strictly_better = true
 	return strictly_better
+
+
+## The numbers are only a table until something reads them. Before contact the grip has no
+## say -- a swing through air is the same swing however you hold it -- and after contact it
+## decides how far the weapon is knocked off line and which way the player is moved.
+func _test_the_hit_reaches_the_player_and_the_weapon() -> void:
+	var one_hand: Variant = _after_contact(_compile(_profile("one_hand_handle")))
+	var two_hand: Variant = _after_contact(_compile(_profile("two_hand_handle")))
+	var body: Variant = _after_contact(_compile(_profile("body_grip")))
+	if one_hand == null or two_hand == null or body == null:
+		_check(false, "all three grips compile")
+		return
+	_check(
+		not is_equal_approx(float(one_hand.contact_deflect_radians), float(two_hand.contact_deflect_radians)),
+		"a one-hand grip is knocked further off line than a braced one"
+	)
+	_check(
+		float(body.contact_displacement_pixels) > float(two_hand.contact_displacement_pixels),
+		"a body grip carries the player through where a braced grip holds position"
+	)
+	_check(
+		_before_contact(_compile(_profile("one_hand_handle"))) == 0.0,
+		"a swing that hits nothing moves nobody"
+	)
+
+
+## Drives a real attack to the middle of its active window and lands a hit.
+func _after_contact(motion_profile: Variant) -> Variant:
+	if motion_profile == null:
+		return null
+	var controller: Variant = CONTROLLER.new()
+	controller.configure(motion_profile)
+	controller.press_attack()
+	controller.release_attack()
+	var timing: Dictionary = controller.current_timing()
+	controller.tick(float(timing.get("startup", 0.1)) * 1.01)
+	controller.tick(float(timing.get("active", 0.1)) * 0.4)
+	controller.register_hit(1)
+	return controller
+
+
+## The same swing with nothing in its way.
+func _before_contact(motion_profile: Variant) -> float:
+	var controller: Variant = CONTROLLER.new()
+	controller.configure(motion_profile)
+	controller.press_attack()
+	controller.release_attack()
+	var timing: Dictionary = controller.current_timing()
+	controller.tick(float(timing.get("startup", 0.1)) * 1.01)
+	controller.tick(float(timing.get("active", 0.1)) * 0.8)
+	return float(controller.contact_deflect_radians)
 
 
 func _sequence(motion_profile: Variant) -> String:

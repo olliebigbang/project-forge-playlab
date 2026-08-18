@@ -1,6 +1,8 @@
 class_name MeleeCombatController
 extends RefCounted
 
+const FEEDBACK := preload("res://scripts/combat_feel/impact_feedback_profile.gd")
+
 signal attack_started(kind: String, combo_index: int)
 signal phase_changed(phase: String)
 
@@ -25,6 +27,8 @@ var active_just_started := false
 var hitstop_remaining := 0.0
 var hit_targets: Dictionary = {}
 var contact_progress := -1.0
+var contact_deflect_radians := 0.0
+var contact_displacement_pixels := 0.0
 var last_cancel_reason := ""
 
 func configure(value: Resource) -> void:
@@ -39,7 +43,7 @@ func reset() -> void:
 	dodge_attack_window = 0.0; dodge_motion_seconds = 0.0
 	attack_kind = "normal"; attack_serial = 0; active_just_started = false
 	current_primitive = null
-	hitstop_remaining = 0.0; hit_targets.clear(); contact_progress = -1.0
+	hitstop_remaining = 0.0; hit_targets.clear(); _forget_contact()
 
 func press_attack() -> void:
 	if profile == null: return
@@ -61,7 +65,7 @@ func release_attack() -> void:
 	priming_attack = false
 	charge_state = "none"
 	attack_serial += 1
-	hit_targets.clear(); contact_progress = -1.0
+	hit_targets.clear(); _forget_contact()
 	attack_started.emit("normal", combo_index)
 	if phase == "startup" and phase_elapsed >= phase_duration:
 		_enter_phase("active")
@@ -118,11 +122,24 @@ func tick(delta: float) -> void:
 				buffered_input = false
 				_start_attack("normal")
 
+## Contact is forgotten wherever the attack forgets its targets, so nothing leaks from one
+## swing into the next.
+func _forget_contact() -> void:
+	contact_progress = -1.0
+	contact_deflect_radians = 0.0
+	contact_displacement_pixels = 0.0
+
+
 func register_hit(target_id: int) -> bool:
 	if phase != "active" or hit_targets.has(target_id): return false
 	hit_targets[target_id] = true
 	if contact_progress < 0.0:
 		contact_progress = _uninterrupted_swing_progress()
+		# How you were holding it decides what connecting does to you, so the answer is
+		# read once at contact rather than recomputed while the swing plays out.
+		var feedback: Variant = FEEDBACK.for_attack(profile, attack_kind, combo_index, current_primitive)
+		contact_deflect_radians = deg_to_rad(float(feedback.weapon_deflect_degrees))
+		contact_displacement_pixels = float(feedback.player_advance_pixels) - float(feedback.player_pushback_pixels)
 	return true
 
 func begin_hitstop(seconds: float) -> void:
@@ -178,7 +195,7 @@ func _start_attack(kind: String) -> void:
 		current_primitive = recipe.primitive_for_attack(kind, combo_index)
 	else:
 		current_primitive = null
-	attack_serial += 1; hit_targets.clear(); contact_progress = -1.0; _enter_phase("startup")
+	attack_serial += 1; hit_targets.clear(); _forget_contact(); _enter_phase("startup")
 	attack_started.emit(kind, combo_index)
 
 
@@ -187,7 +204,7 @@ func _begin_priming_normal() -> void:
 	combo_index = combo_index % 3 + 1
 	current_primitive = profile.combo_recipe.primitive_for(combo_index) if profile.combo_recipe != null else null
 	priming_attack = true
-	hit_targets.clear(); contact_progress = -1.0
+	hit_targets.clear(); _forget_contact()
 	_enter_phase("startup")
 
 
@@ -201,7 +218,7 @@ func _promote_priming_to_charge() -> void:
 	combo_index = 0
 	current_primitive = profile.combo_recipe.primitive_for_attack("charge") if profile.combo_recipe != null else null
 	attack_serial += 1
-	hit_targets.clear(); contact_progress = -1.0
+	hit_targets.clear(); _forget_contact()
 	_enter_phase("startup")
 	attack_started.emit("charge", 0)
 

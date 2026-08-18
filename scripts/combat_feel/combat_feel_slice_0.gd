@@ -292,6 +292,9 @@ func _resolve_melee_hits() -> void:
 		if enemy.state == "dead": continue
 		if not _attack_contains(enemy.position): continue
 		if not controller.register_hit(enemy.enemy_id): continue
+		if not attack_connected:
+			# Once per swing, on the first thing it touches.
+			player_position.x += float(controller.contact_displacement_pixels) * player_facing
 		var feedback: Resource = FEEDBACK.for_attack(motion_profile, controller.attack_kind, controller.combo_index, controller.current_primitive)
 		var finisher_scale := 1.45 if controller.combo_index >= 3 or controller.attack_kind == "charge" else 1.0
 		if has_meta("debug_hitstop"):
@@ -793,6 +796,8 @@ func _weapon_pose() -> Dictionary:
 	if primitive != null:
 		var motion_ratio := _attack_motion_ratio()
 		angle = lerpf(primitive.start_angle, primitive.end_angle, motion_ratio) * player_facing
+		# Knocked off line by however it was being held. Zero until something is hit.
+		angle += float(controller.contact_deflect_radians) * player_facing
 		extension = sin(motion_ratio * PI) * primitive.extension_pixels
 		local_offset = primitive.local_start_offset.lerp(primitive.local_end_offset, motion_ratio)
 	return {"angle": angle, "extension": extension, "local_offset": local_offset}
