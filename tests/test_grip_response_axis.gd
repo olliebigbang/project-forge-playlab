@@ -14,6 +14,8 @@ const COMPILER := preload("res://scripts/combat_feel/melee_motion_compiler.gd")
 const FEEDBACK := preload("res://scripts/combat_feel/impact_feedback_profile.gd")
 const LOADER := preload("res://scripts/combat_feel/combat_feel_asset_loader.gd")
 
+const EXPECTED_CHECKS := 3
+
 var passed := 0
 var failed := 0
 
@@ -25,6 +27,13 @@ func _init() -> void:
 func _run() -> void:
 	_test_bracing_changes_what_the_hit_does_to_you()
 	_test_no_grip_is_simply_the_best_way_to_hold_something()
+	# A runtime error inside a test aborts that function without reaching a _check, so the
+	# counters simply come up short and the suite exits green. Reconciling against a
+	# declared total is what turns that silence back into a failure.
+	var ran := passed + failed
+	if ran != EXPECTED_CHECKS:
+		failed += 1
+		push_error("FAIL %d checks ran, expected %d -- a test aborted part-way" % [ran, EXPECTED_CHECKS])
 	print("GRIP_RESPONSE_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 

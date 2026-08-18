@@ -14,6 +14,8 @@ const FEEDBACK := preload("res://scripts/combat_feel/impact_feedback_profile.gd"
 const LOADER := preload("res://scripts/combat_feel/combat_feel_asset_loader.gd")
 const CONTROLLER := preload("res://scripts/combat_feel/melee_combat_controller.gd")
 
+const EXPECTED_CHECKS := 13
+
 var passed := 0
 var failed := 0
 
@@ -32,6 +34,13 @@ func _run() -> void:
 	_test_the_weapon_moves_differently_after_contact()
 	_test_a_whiff_traces_the_same_path_for_everything()
 	_test_the_three_impacts_sound_like_different_materials()
+	# A runtime error inside a test aborts that function without reaching a _check, so the
+	# counters simply come up short and the suite exits green. Reconciling against a
+	# declared total is what turns that silence back into a failure.
+	var ran := passed + failed
+	if ran != EXPECTED_CHECKS:
+		failed += 1
+		push_error("FAIL %d checks ran, expected %d -- a test aborted part-way" % [ran, EXPECTED_CHECKS])
 	print("CONTACT_RESOLUTION_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
