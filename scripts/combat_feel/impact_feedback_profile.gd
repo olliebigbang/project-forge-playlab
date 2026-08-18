@@ -12,6 +12,9 @@ extends Resource
 @export var recoil_degrees := 7.0
 @export var impact_tier := "light"
 @export var ring_count := 0
+@export var player_pushback_pixels := 0.0
+@export var weapon_deflect_degrees := 0.0
+@export var player_advance_pixels := 0.0
 
 ## Synthesis parameters for an impact.
 ##
@@ -131,6 +134,22 @@ static func for_attack(profile: Resource, attack_kind: String, combo_index: int,
 	feedback.knockback_strength = {
 		"arrest": 96.0, "follow_through": 152.0, "rebound": 82.0,
 	}.get(profile.contact_resolution, 116.0)
+	# What connecting does to the person swinging, which nothing modelled before. Each grip
+	# wins one of these outright, because P08 forbids a scale on which three of four ways to
+	# hold something are simply wrong. Two hands hold the ground and keep the weapon on
+	# line, and pay for it by being planted. A body grip takes the worst of the shove and
+	# has nothing that can be knocked aside, so it drives straight through -- a body check.
+	# A clamp is the easiest to knock off line, which is the price of holding something that
+	# was never meant to be swung.
+	feedback.player_pushback_pixels = {
+		"two_hand_handle": 0.0, "one_hand_handle": 5.0, "body_grip": 9.0, "clamp_grip": 7.0,
+	}.get(profile.grip_topology, 4.0)
+	feedback.weapon_deflect_degrees = {
+		"two_hand_handle": 2.0, "one_hand_handle": 11.0, "body_grip": 1.0, "clamp_grip": 14.0,
+	}.get(profile.grip_topology, 8.0)
+	feedback.player_advance_pixels = {
+		"two_hand_handle": 0.0, "one_hand_handle": 6.0, "body_grip": 14.0, "clamp_grip": 3.0,
+	}.get(profile.grip_topology, 4.0)
 	feedback.recoil_degrees = {
 		"arrest": 2.0, "follow_through": 0.0, "rebound": 16.0,
 	}.get(profile.contact_resolution, 7.0)

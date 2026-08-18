@@ -38,6 +38,7 @@ const GRIP_MODES: PackedStringArray = ["one_hand", "two_hand", "center"]
 @export var silhouette_fill_ratio := 0.35
 @export var silhouette_grip_inertia_proxy_raw := 0.0
 @export_enum("arrest", "follow_through", "rebound") var contact_resolution := "arrest"
+@export_enum("one_hand_handle", "two_hand_handle", "body_grip", "clamp_grip") var grip_topology := "one_hand_handle"
 @export var contact_bulk_ratio := 0.20
 @export var swing_arc_degrees := 110.0
 @export var hitbox_thickness := 46.0
@@ -127,6 +128,7 @@ func to_dict() -> Dictionary:
 		"silhouette_fill_ratio": silhouette_fill_ratio,
 		"silhouette_grip_inertia_proxy_raw": silhouette_grip_inertia_proxy_raw,
 		"contact_resolution": contact_resolution,
+		"grip_topology": grip_topology,
 		"contact_bulk_ratio": contact_bulk_ratio,
 		"swing_arc_degrees": swing_arc_degrees,
 		"hitbox_thickness": hitbox_thickness,

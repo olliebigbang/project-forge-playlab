@@ -218,6 +218,9 @@ func _compose_orthogonal_profile(
 	profile.weight_class = _weight_class(affordance_profile)
 	profile.tempo = _tempo_for_axes(affordance_profile)
 	profile.contact_resolution = _contact_resolution(affordance_profile)
+	# Carried whole rather than folded into grip_mode, which is three-valued and mixes in
+	# the measured anchor span. The axis is the declared topology, so keep it intact.
+	profile.grip_topology = affordance_profile.grip_topology
 	profile.contact_mode = _legacy_contact_mode(affordance_profile.contact_surface)
 	profile.combo_style = "orthogonal_per_hit"
 	profile.charge_style = str(selected["charge"])
