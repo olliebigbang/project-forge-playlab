@@ -705,3 +705,46 @@ material field, given impact channels of its own.
 same-sequence: longsword and fire axe, baseball bat and folding stool, wooden chair and
 fire extinguisher. Nothing in the contract separates them today. That is the case for a new
 signal, and it is a much narrower case than 1B started with.
+
+## P16 — the next axis is already in the contract, and it is grip
+
+*2026-08-18.* Asked after 1B shipped, using P13's test rather than intuition: of the axes the
+contract already carries, which ones separate objects that compile to the same primitive
+sequence? Evidence: `tools/combat_feel/rank_axes_by_collision_split.py`.
+
+**Two of them beat the axis 1B just built, and neither reaches anything.**
+
+  axis                 groups split   pairs split   has an outlet
+  handle_length            3/3            6/7       no
+  grip_topology            3/3            6/7       no
+  body_length              3/3            5/7       no
+  declared_features        2/3            5/7       no
+  rigidity                 2/3            4/7       yes, impact (1B)
+  mass_distribution        2/3            4/7       no
+  contact_surface          1/3            3/7       yes, selection (P12)
+
+The three pairs 1B leaves unresolved each differ on three or four axes. Nothing is missing
+from the contract. What is missing is anywhere for any of it to arrive, which is the same
+condition rigidity was in before 1B and the same one P12 described: several axes feed a
+scoring table that `contact_surface` has already decided, and then stop.
+
+**Between the two leaders, take `grip_topology`.** `handle_length` is an ordinal standing
+in for a length the contract already carries as a real number, and P09 named that pattern
+exactly -- "a categorical standing in for a continuous quantity, colliding everywhere". It
+should be retired against `real_length_cm`, not given a categorical outlet that entrenches
+it. `grip_topology` is natively categorical: `one_hand_handle`, `two_hand_handle`,
+`body_grip`, `clamp_grip` are kinds, not sizes. It needs no threshold, which is the mistake
+P15 caught in 1B's first design and would catch again in any axis built on a measured
+quantity.
+
+**It also asks a different question, which is the test that matters.** `contact_surface`
+answers how the object delivers damage. `rigidity` answers what happens where it lands.
+Grip answers what happens to *you* -- braced in two hands you are not moved, held at arm's
+length in one the weapon can be knocked aside, hugged against the chest your whole body
+takes it. Nothing in the game currently models any of that: `recoil_degrees` moves the
+weapon, and there is no player-side consequence of connecting at all.
+
+**Decided: 1C takes grip_topology, and takes the player's side of the impact.** Scope is
+deliberately the mirror of 1B -- one existing categorical field, given channels nothing else
+owns, with each value carrying an advantage rather than forming a ladder (P08). No new
+contract field, no threshold, no change to what the model is asked.
