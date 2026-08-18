@@ -217,6 +217,7 @@ func _compose_orthogonal_profile(
 	profile.reach_class = _reach_class(affordance_profile)
 	profile.weight_class = _weight_class(affordance_profile)
 	profile.tempo = _tempo_for_axes(affordance_profile)
+	profile.contact_resolution = _contact_resolution(affordance_profile)
 	profile.contact_mode = _legacy_contact_mode(affordance_profile.contact_surface)
 	profile.combo_style = "orthogonal_per_hit"
 	profile.charge_style = str(selected["charge"])
@@ -462,6 +463,14 @@ func _weight_class(affordance_profile: Resource) -> String:
 	if affordance_profile.rigidity == "flexible":
 		return "light"
 	return "medium"
+
+
+# Material alone, with no mass threshold: P15 measured that a threshold resolves none of
+# the collisions rigidity leaves, and that no balanced one clears P09's noise floor.
+func _contact_resolution(affordance_profile: Resource) -> String:
+	return {
+		"rigid": "arrest", "semi_rigid": "follow_through", "flexible": "rebound",
+	}[affordance_profile.rigidity]
 
 
 func _tempo_for_axes(affordance_profile: Resource) -> String:

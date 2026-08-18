@@ -15,20 +15,33 @@ extends Resource
 
 static func for_attack(profile: Resource, attack_kind: String, combo_index: int, primitive: Variant = null) -> Resource:
 	var feedback: Variant = load("res://scripts/combat_feel/impact_feedback_profile.gd").new()
+	# Hitstop belongs to what the object is made of, not to how fast it swings (P12: the
+	# new layer needs channels of its own, taken from tempo rather than added beside it).
+	feedback.hitstop_seconds = {
+		"arrest": 0.064, "follow_through": 0.052, "rebound": 0.034,
+	}.get(profile.contact_resolution, 0.048)
+	# Named for what the object is made of, not for how heavy it is. Hearing is a finer
+	# discriminator of material than swing timing is, which is why this channel moves too.
+	feedback.sound_profile = {
+		"arrest": "forge_impact_dead",
+		"follow_through": "forge_impact_soft",
+		"rebound": "forge_impact_ring",
+	}.get(profile.contact_resolution, "forge_impact_medium")
+	# Each resolution wins a different channel, because P08 forbids an axis on which one
+	# value is simply worse. Arrest stops the target dead and owns hitstop. Follow-through
+	# does not stop it, it shoves it, and owns knockback. Rebound throws the weapon back
+	# instead of the target and owns recoil, which is what buys its short recovery.
+	feedback.knockback_strength = {
+		"arrest": 96.0, "follow_through": 152.0, "rebound": 82.0,
+	}.get(profile.contact_resolution, 116.0)
+	feedback.recoil_degrees = {
+		"arrest": 2.0, "follow_through": 0.0, "rebound": 16.0,
+	}.get(profile.contact_resolution, 7.0)
 	match profile.tempo:
 		"rapid":
-			feedback.hitstop_seconds = 0.035
-			feedback.knockback_strength = 82.0
 			feedback.camera_shake_strength = 1.8
-			feedback.sound_profile = "forge_impact_light"
 		"committed":
-			feedback.hitstop_seconds = 0.064
-			feedback.knockback_strength = 152.0
 			feedback.camera_shake_strength = 4.8
-			feedback.sound_profile = "forge_impact_heavy"
-		_:
-			feedback.hitstop_seconds = 0.048
-			feedback.knockback_strength = 116.0
 	feedback.knockback_strength *= float(profile.control_strength)
 	feedback.camera_shake_strength *= float(profile.impact_sharpness)
 	if attack_kind == "charge":
