@@ -225,21 +225,42 @@ func _swing_progress_without_contact(motion_profile: Variant) -> float:
 	return controller.swing_progress()
 
 
-## Material is heard in how long the impact rings and how much of it is noise rather than
-## tone. Pitch alone reads as the same object at a different size, so three tones that
-## differ only there would not be three materials. Both dimensions must separate them.
+## Material is heard in how long the impact lasts and how much of it is noise rather than
+## tone. Pitch alone reads as the same object at a different size, so three voices that
+## separated only there would not be three materials -- both dimensions have to carry.
+##
+## This deliberately does not say which one lasts longest. An earlier version did, and the
+## claim it encoded was wrong: it assumed the flexible bucket held metal because the sound
+## was named "ring", when what is actually in there is a fishing rod.
 func _test_the_three_impacts_sound_like_different_materials() -> void:
-	var dead: Dictionary = FEEDBACK.tone_for("forge_impact_dead")
-	var ring: Dictionary = FEEDBACK.tone_for("forge_impact_ring")
-	var soft: Dictionary = FEEDBACK.tone_for("forge_impact_soft")
+	var voices: Array[Dictionary] = [
+		FEEDBACK.tone_for("forge_impact_dead"),
+		FEEDBACK.tone_for("forge_impact_soft"),
+		FEEDBACK.tone_for("forge_impact_whip"),
+	]
+	for voice: Dictionary in voices:
+		if voice.is_empty():
+			_check(false, "all three material voices exist")
+			return
 	_check(
-		float(ring.get("duration", 0.0)) > float(dead.get("duration", 0.0)) * 2.0,
-		"metal rings on where a dead thud is already over"
+		_all_apart(voices, "duration", 1.20),
+		"no two materials last the same length of time"
 	)
 	_check(
-		float(soft.get("noise", 0.0)) > float(ring.get("noise", 1.0)) * 3.0,
-		"a soft impact is mostly noise where a ringing one is mostly tone"
+		_all_apart(voices, "noise", 1.40),
+		"no two materials carry the same amount of noise"
 	)
+
+
+## True when every pair on this dimension is separated by at least `ratio`.
+func _all_apart(voices: Array[Dictionary], key: String, ratio: float) -> bool:
+	for a: int in range(voices.size()):
+		for b: int in range(a + 1, voices.size()):
+			var low := minf(float(voices[a][key]), float(voices[b][key]))
+			var high := maxf(float(voices[a][key]), float(voices[b][key]))
+			if low <= 0.0 or high / low < ratio:
+				return false
+	return true
 
 
 func _profile(rigidity: String) -> Resource:

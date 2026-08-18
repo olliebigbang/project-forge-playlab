@@ -13,24 +13,46 @@ extends Resource
 @export var impact_tier := "light"
 @export var ring_count := 0
 
-## Synthesis parameters for an impact, so the material reaches the speaker and not just the
-## profile. Material is heard in two things above all: how long the impact rings, and how
-## much of it is noise rather than tone. Pitch is the weakest of the three -- on its own it
-## reads as the same object at a different size -- so it carries the least here.
+## Synthesis parameters for an impact.
+##
+## A struck object rings at several inharmonic frequencies at once, the higher ones dying
+## first, and the very first milliseconds are a broadband crack rather than any pitch at
+## all. One sine wave and white noise cannot sound like a material, so each voice here is a
+## set of modes plus a shaped noise burst.
+##
+## Which materials actually occupy each resolution matters, and an earlier version of this
+## got it wrong by trusting a name: `rebound` was called "ring" and given a bell, but the
+## flexible objects in this game are fishing rods and mops. Every metal object is rigid and
+## lands on `arrest`. A rod strike is a whip, not a bell.
 ##
 ## Returns an empty dictionary for names it does not own, which leaves the caller's own
 ## table in charge of swings, whiffs and everything that is not an impact.
 static func tone_for(sound_profile: String) -> Dictionary:
 	match sound_profile:
 		"forge_impact_dead":
-			# Cast iron into a body: all of it arrives at once and none of it survives.
-			return {"frequency": 74.0, "duration": 0.085, "decay": 9.0, "noise": 0.22, "partial": 0.0}
-		"forge_impact_ring":
-			# Struck metal that was not stopped, so it keeps sounding after the hit is over.
-			return {"frequency": 392.0, "duration": 0.340, "decay": 2.2, "noise": 0.04, "partial": 0.53}
+			# Cast iron into a body. A hard crack as two solids meet, then a low thud the
+			# target swallows; nothing is left to ring because nothing was left moving.
+			return {
+				"duration": 0.130, "attack": 0.0008,
+				"modes": [[92.0, 1.00, 38.0], [151.0, 0.52, 52.0], [327.0, 0.26, 120.0]],
+				"noise": 0.55, "noise_decay": 150.0, "noise_lowpass": 0.35,
+			}
 		"forge_impact_soft":
-			# Meat and cloth have almost no tone to give; what is left is the noise of it.
-			return {"frequency": 58.0, "duration": 0.160, "decay": 5.5, "noise": 0.62, "partial": 0.0}
+			# Meat, bone and cloth. Soft mass compresses before it transfers, so the attack
+			# is slower and almost nothing survives as tone -- what is left is muffled noise.
+			return {
+				"duration": 0.185, "attack": 0.0055,
+				"modes": [[58.0, 0.55, 44.0], [97.0, 0.22, 62.0]],
+				"noise": 0.90, "noise_decay": 26.0, "noise_lowpass": 0.06,
+			}
+		"forge_impact_whip":
+			# A flexible rod. The tip is moving fastest and stops last, so the strike is a
+			# sharp mid-range thwack with air behind it, and then it is gone.
+			return {
+				"duration": 0.225, "attack": 0.0006,
+				"modes": [[214.0, 0.75, 27.0], [359.0, 0.44, 41.0], [663.0, 0.20, 78.0]],
+				"noise": 0.26, "noise_decay": 95.0, "noise_lowpass": 0.55,
+			}
 	return {}
 
 
@@ -38,27 +60,50 @@ static func tone_for(sound_profile: String) -> Dictionary:
 ## exporting them for review -- gets the same one.
 static func synthesise(kind: String, mix_rate: int) -> PackedByteArray:
 	var material: Dictionary = tone_for(kind)
-	var frequency: float = float(material.get("frequency", 0.0)) if not material.is_empty() else float({"swing_light": 245.0, "swing_heavy": 150.0, "whiff": 360.0, "hit": 118.0, "heavy_hit": 64.0, "dodge": 310.0, "hurt": 92.0}.get(kind, 140.0))
-	var duration: float = float(material.get("duration", 0.0)) if not material.is_empty() else float({"swing_light": 0.045, "swing_heavy": 0.072, "whiff": 0.065, "hit": 0.085, "heavy_hit": 0.16, "dodge": 0.055, "hurt": 0.10}.get(kind, 0.07))
+	if material.is_empty():
+		return _synthesise_legacy(kind, mix_rate)
+	var duration := float(material["duration"])
+	var attack := float(material["attack"])
+	var modes: Array = material["modes"]
+	var noise_amp := float(material["noise"])
+	var noise_decay := float(material["noise_decay"])
+	var lowpass := float(material["noise_lowpass"])
+	var sample_count := int(float(mix_rate) * duration)
+	var data := PackedByteArray()
+	data.resize(sample_count * 2)
+	var filtered := 0.0
+	for index: int in range(sample_count):
+		var seconds := float(index) / float(mix_rate)
+		var value := 0.0
+		for mode: Array in modes:
+			value += sin(TAU * float(mode[0]) * seconds) * float(mode[1]) * exp(-float(mode[2]) * seconds)
+		# One pole of lowpass turns hiss into the muffled thump a soft object actually makes.
+		filtered += lowpass * (randf_range(-1.0, 1.0) - filtered)
+		value += filtered * noise_amp * exp(-noise_decay * seconds)
+		# Without a rise the first sample is a step, which is its own click.
+		var rise := 1.0 if seconds >= attack else seconds / attack
+		data.encode_s16(index * 2, roundi(clampf(value * rise * 0.62, -1.0, 1.0) * 32767.0))
+	return data
+
+
+static func _synthesise_legacy(kind: String, mix_rate: int) -> PackedByteArray:
+	var frequency: float = float({"swing_light": 245.0, "swing_heavy": 150.0, "whiff": 360.0, "hit": 118.0, "heavy_hit": 64.0, "dodge": 310.0, "hurt": 92.0}.get(kind, 140.0))
+	var duration: float = float({"swing_light": 0.045, "swing_heavy": 0.072, "whiff": 0.065, "hit": 0.085, "heavy_hit": 0.16, "dodge": 0.055, "hurt": 0.10}.get(kind, 0.07))
 	var sample_count := int(float(mix_rate) * duration)
 	var data := PackedByteArray()
 	data.resize(sample_count * 2)
 	for index: int in range(sample_count):
 		var progress := float(index) / float(sample_count)
-		# A linear fade sounds like every material. Decay rate is what separates a ring
-		# that carries from a thud that is already gone, so the material sets it.
-		var envelope := exp(-float(material.get("decay", 1.0)) * progress) * (1.0 - progress) 			if not material.is_empty() else 1.0 - progress
+		var envelope := 1.0 - progress
 		var phase := TAU * frequency * float(index) / float(mix_rate)
 		var wave := sin(phase)
-		if not material.is_empty():
-			wave = sin(phase) + sin(phase * 1.73) * float(material.get("partial", 0.0))
-		elif kind == "heavy_hit":
+		if kind == "heavy_hit":
 			wave = sin(phase) * 0.70 + sin(phase * 0.51) * 0.45
 		elif kind == "whiff":
 			wave = sin(phase * (1.0 + progress * 1.6)) * 0.55
-		var noise_amount: float = float(material.get("noise", 0.0)) if not material.is_empty() 			else (0.18 if kind in ["hit", "heavy_hit"] else (0.08 if kind == "whiff" else 0.0))
+		var noise_amount := 0.18 if kind in ["hit", "heavy_hit"] else (0.08 if kind == "whiff" else 0.0)
 		var noise := randf_range(-noise_amount, noise_amount)
-		var gain := 0.50 if not material.is_empty() else (0.55 if kind == "heavy_hit" else 0.38)
+		var gain := 0.55 if kind == "heavy_hit" else 0.38
 		data.encode_s16(index * 2, roundi(clampf((wave + noise) * envelope * gain, -1.0, 1.0) * 32767.0))
 	return data
 
@@ -77,7 +122,7 @@ static func for_attack(profile: Resource, attack_kind: String, combo_index: int,
 	feedback.sound_profile = {
 		"arrest": "forge_impact_dead",
 		"follow_through": "forge_impact_soft",
-		"rebound": "forge_impact_ring",
+		"rebound": "forge_impact_whip",
 	}.get(profile.contact_resolution, "forge_impact_medium")
 	# Each resolution wins a different channel, because P08 forbids an axis on which one
 	# value is simply worse. Arrest stops the target dead and owns hitstop. Follow-through

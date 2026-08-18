@@ -12,7 +12,7 @@ extends SceneTree
 
 const FEEDBACK := preload("res://scripts/combat_feel/impact_feedback_profile.gd")
 const MIX_RATE := 22050
-const TONES: PackedStringArray = ["forge_impact_dead", "forge_impact_ring", "forge_impact_soft"]
+const TONES: PackedStringArray = ["forge_impact_dead", "forge_impact_soft", "forge_impact_whip"]
 const OUTPUT_DIR := "res://artifacts/impact_tones"
 
 
