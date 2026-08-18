@@ -22,6 +22,8 @@ static func for_attack(profile: Resource, attack_kind: String, combo_index: int,
 	}.get(profile.contact_resolution, 0.048)
 	# Named for what the object is made of, not for how heavy it is. Hearing is a finer
 	# discriminator of material than swing timing is, which is why this channel moves too.
+	# The combo stage does not overwrite this: it already has `impact_tier` to itself, so
+	# the two stay separate fields rather than multiplying into nine blended names.
 	feedback.sound_profile = {
 		"arrest": "forge_impact_dead",
 		"follow_through": "forge_impact_soft",
@@ -54,7 +56,6 @@ static func for_attack(profile: Resource, attack_kind: String, combo_index: int,
 		feedback.recoil_degrees = 17.0
 		feedback.impact_tier = "charge"
 		feedback.ring_count = 2
-		feedback.sound_profile = "forge_impact_charge"
 	elif combo_index >= 3:
 		feedback.hitstop_seconds = maxf(0.112, feedback.hitstop_seconds * 1.85)
 		feedback.knockback_strength *= 1.78
@@ -65,7 +66,6 @@ static func for_attack(profile: Resource, attack_kind: String, combo_index: int,
 		feedback.recoil_degrees = 14.0
 		feedback.impact_tier = "finisher"
 		feedback.ring_count = 2
-		feedback.sound_profile = "forge_impact_finisher"
 	elif combo_index == 2:
 		feedback.hitstop_seconds *= 1.28
 		feedback.knockback_strength *= 1.18

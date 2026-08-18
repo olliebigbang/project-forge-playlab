@@ -26,6 +26,8 @@ func _run() -> void:
 	_test_same_tempo_different_rigidity_changes_impact_sound()
 	_test_no_resolution_dominates_another_on_every_channel()
 	_test_mass_does_not_reach_the_resolution()
+	_test_material_survives_the_finisher()
+	_test_material_leaves_timing_and_damage_alone()
 	print("CONTACT_RESOLUTION_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -118,6 +120,41 @@ func _test_mass_does_not_reach_the_resolution() -> void:
 		str(light.contact_resolution) == str(heavy.contact_resolution),
 		"a fortyfold mass difference leaves the resolution alone"
 	)
+
+
+## The third hit and the charge are the loudest hits in the combo and the ones a player
+## is most likely to be listening to. Both replaced `sound_profile` outright with a stage
+## name, so the material said nothing on exactly the swings that carry.
+func _test_material_survives_the_finisher() -> void:
+	var hard: Variant = _compile(_profile("rigid"))
+	var soft: Variant = _compile(_profile("semi_rigid"))
+	if hard == null or soft == null:
+		_check(false, "both profiles compile")
+		return
+	for stage: Array in [["normal", 3], ["charge", 0]]:
+		var kind := str(stage[0])
+		var index := int(stage[1])
+		var a := str(FEEDBACK.for_attack(hard, kind, index, null).sound_profile)
+		var b := str(FEEDBACK.for_attack(soft, kind, index, null).sound_profile)
+		_check(a != b, "material is still audible on %s" % ("the finisher" if kind == "normal" else "the charge"))
+
+
+## The channels are owned, not shared. Tempo keeps timing and damage; material keeps the
+## impact. Letting rigidity reach `_tempo_for_axes` is the production change that makes
+## this fail, which is how it was verified -- and it would quietly hand damage to material,
+## which P09 forbids.
+func _test_material_leaves_timing_and_damage_alone() -> void:
+	var hard: Variant = _compile(_profile("rigid"))
+	var soft: Variant = _compile(_profile("flexible"))
+	if hard == null or soft == null:
+		_check(false, "both profiles compile")
+		return
+	var same: bool = str(hard.tempo) == str(soft.tempo)
+	same = same and is_equal_approx(float(hard.startup_seconds), float(soft.startup_seconds))
+	same = same and is_equal_approx(float(hard.active_seconds), float(soft.active_seconds))
+	same = same and is_equal_approx(float(hard.recovery_seconds), float(soft.recovery_seconds))
+	same = same and is_equal_approx(float(hard.movement_commitment), float(soft.movement_commitment))
+	_check(same, "rigidity moves no timing, and so reaches no damage")
 
 
 func _profile(rigidity: String) -> Resource:
