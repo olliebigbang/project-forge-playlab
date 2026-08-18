@@ -579,9 +579,14 @@ alongside it — multiplies where adding a fifth scalar does not.
 
 *2026-08-18.* Measured while running the 1B spec's M1 gate, which requires theta to be
 measured before anything is implemented and asks whether the three contact_resolution
-classes are supportable. Theta measured fine: 0.538, the midpoint of the widest gap between
-adjacent rigid objects on the mass axis, 0.188 of margin against P09's 0.065 noise floor.
-The frying pan and the chicken leg land on different resolutions seven noise floors apart.
+classes are supportable. Theta appeared to measure fine at the time -- 0.538, the midpoint of the
+widest gap between adjacent rigid objects on the mass axis, 0.188 of margin against P09's
+0.065 noise floor. That number did not survive. It was computed against the hand-authored
+chicken leg this decision goes on to condemn; once the fixture was replaced with the frozen
+estimator output, the widest gap fell to 0.083, theta moved to 0.768 and its margin to
+0.042, inside the noise floor, and M1's acceptance failed outright. P15 had already removed
+the threshold for unrelated reasons, so nothing downstream depends on the old number, but it
+should not be read as a measurement that held.
 Evidence: `tools/combat_feel/measure_contact_resolution.py`,
 `measure_rigidity_coverage.py`, `measure_within_collision_split.py`.
 
@@ -646,7 +651,9 @@ mass probe, twelve have no drawing — no sprite, no blueprint, nothing under `d
 affordance profiles cannot be obtained by running the estimator, because T74's subject is
 the drawing. Closing that gap means generating assets, which is a larger decision than 1B.
 
-**Decided: the derivation is not refuted, its input is incomplete.** The channel-transfer
+**Decided: the derivation is not refuted, its input is incomplete.** (Superseded in part by
+P15, which removes the mass threshold entirely; the conditional finding above stands, because
+it was measured on the handoff data where the chicken leg was always `semi_rigid`.) The channel-transfer
 half of the spec — taking hitstop, knockback, camera shake and sound off tempo — is
 untouched by any of this. 1B proceeds on rigidity plus the mass split, with three known
 unresolved pairs recorded rather than papered over, and with the chicken leg fixture fixed
@@ -681,6 +688,12 @@ a distinction the game may rely on. P11 wrote this about `m*L^2`: compressing a 
 span into a fixed band buys sharp ends and a flat middle, and is "crisp at the extremes and
 mush exactly where nearly every hand weapon lives". The mass axis is the same shape. It is
 a good continuous input, which is what P09 built it for, and a poor categorical splitter.
+
+**Confirmed afterwards from a second direction.** Replacing the hand-authored chicken leg
+fixture with frozen estimator output moved theta from 0.538 to 0.768 and collapsed its margin
+from 0.188 to 0.042 -- inside P09's noise floor -- and left `rebound` holding one object. That
+was measured for a different purpose and arrived at the same place: the threshold does not
+survive contact with correct data either.
 
 **Decided: contact_resolution takes rigidity alone.** The three resolutions map to the
 three rigidity values directly. This resolves the same four of seven collisions the split
