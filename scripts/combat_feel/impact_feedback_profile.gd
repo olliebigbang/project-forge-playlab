@@ -13,6 +13,27 @@ extends Resource
 @export var impact_tier := "light"
 @export var ring_count := 0
 
+## Synthesis parameters for an impact, so the material reaches the speaker and not just the
+## profile. Material is heard in two things above all: how long the impact rings, and how
+## much of it is noise rather than tone. Pitch is the weakest of the three -- on its own it
+## reads as the same object at a different size -- so it carries the least here.
+##
+## Returns an empty dictionary for names it does not own, which leaves the caller's own
+## table in charge of swings, whiffs and everything that is not an impact.
+static func tone_for(sound_profile: String) -> Dictionary:
+	match sound_profile:
+		"forge_impact_dead":
+			# Cast iron into a body: all of it arrives at once and none of it survives.
+			return {"frequency": 74.0, "duration": 0.085, "decay": 9.0, "noise": 0.22, "partial": 0.0}
+		"forge_impact_ring":
+			# Struck metal that was not stopped, so it keeps sounding after the hit is over.
+			return {"frequency": 392.0, "duration": 0.340, "decay": 2.2, "noise": 0.04, "partial": 0.53}
+		"forge_impact_soft":
+			# Meat and cloth have almost no tone to give; what is left is the noise of it.
+			return {"frequency": 58.0, "duration": 0.160, "decay": 5.5, "noise": 0.62, "partial": 0.0}
+	return {}
+
+
 static func for_attack(profile: Resource, attack_kind: String, combo_index: int, primitive: Variant = null) -> Resource:
 	var feedback: Variant = load("res://scripts/combat_feel/impact_feedback_profile.gd").new()
 	# Hitstop belongs to what the object is made of, not to how fast it swings (P12: the

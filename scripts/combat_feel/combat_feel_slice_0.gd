@@ -312,7 +312,7 @@ func _resolve_melee_hits() -> void:
 			normal_attack_hits[controller.combo_index] = int(normal_attack_hits.get(controller.combo_index, 0)) + 1
 		attack_connected = true
 		_spawn_impact(enemy.position, feedback.particle_scale, feedback.impact_tier, feedback.ring_count)
-		_play_tone("heavy_hit" if feedback.impact_tier in ["finisher", "charge"] else "hit")
+		_play_tone(str(feedback.sound_profile))
 
 func _attack_contains(target: Vector2) -> bool:
 	var hand := _hand_world_position()
@@ -676,19 +676,29 @@ func _build_audio() -> void:
 	audio_player = AudioStreamPlayer.new(); add_child(audio_player)
 
 func _play_tone(kind: String) -> void:
-	var frequency: float = float({"swing_light": 245.0, "swing_heavy": 150.0, "whiff": 360.0, "hit": 118.0, "heavy_hit": 64.0, "dodge": 310.0, "hurt": 92.0}.get(kind, 140.0))
-	var duration: float = float({"swing_light": 0.045, "swing_heavy": 0.072, "whiff": 0.065, "hit": 0.085, "heavy_hit": 0.16, "dodge": 0.055, "hurt": 0.10}.get(kind, 0.07))
+	# Impacts get their voice from the material; swings, whiffs and hurts keep theirs here.
+	var material: Dictionary = FEEDBACK.tone_for(kind)
+	var frequency: float = float(material.get("frequency", 0.0)) if not material.is_empty() else float({"swing_light": 245.0, "swing_heavy": 150.0, "whiff": 360.0, "hit": 118.0, "heavy_hit": 64.0, "dodge": 310.0, "hurt": 92.0}.get(kind, 140.0))
+	var duration: float = float(material.get("duration", 0.0)) if not material.is_empty() else float({"swing_light": 0.045, "swing_heavy": 0.072, "whiff": 0.065, "hit": 0.085, "heavy_hit": 0.16, "dodge": 0.055, "hurt": 0.10}.get(kind, 0.07))
 	var stream := AudioStreamWAV.new(); stream.format = AudioStreamWAV.FORMAT_16_BITS; stream.mix_rate = 22050; stream.stereo = false
 	var sample_count := int(stream.mix_rate * duration)
 	var data := PackedByteArray(); data.resize(sample_count * 2)
 	for index: int in range(sample_count):
-		var envelope := 1.0 - float(index) / float(sample_count)
+		var progress := float(index) / float(sample_count)
+		# A linear fade sounds like every material. Decay rate is what separates a ring
+		# that carries from a thud that is already gone, so the material sets it.
+		var envelope := exp(-float(material.get("decay", 1.0)) * progress) * (1.0 - progress) 			if not material.is_empty() else 1.0 - progress
 		var phase := TAU * frequency * float(index) / float(stream.mix_rate)
 		var wave := sin(phase)
-		if kind == "heavy_hit": wave = sin(phase) * 0.70 + sin(phase * 0.51) * 0.45
-		if kind == "whiff": wave = sin(phase * (1.0 + float(index) / float(sample_count) * 1.6)) * 0.55
-		var noise := randf_range(-0.18, 0.18) if kind in ["hit", "heavy_hit"] else (randf_range(-0.08, 0.08) if kind == "whiff" else 0.0)
-		var gain := 0.55 if kind == "heavy_hit" else 0.38
+		if not material.is_empty():
+			wave = sin(phase) + sin(phase * 1.73) * float(material.get("partial", 0.0))
+		elif kind == "heavy_hit":
+			wave = sin(phase) * 0.70 + sin(phase * 0.51) * 0.45
+		elif kind == "whiff":
+			wave = sin(phase * (1.0 + progress * 1.6)) * 0.55
+		var noise_amount: float = float(material.get("noise", 0.0)) if not material.is_empty() 			else (0.18 if kind in ["hit", "heavy_hit"] else (0.08 if kind == "whiff" else 0.0))
+		var noise := randf_range(-noise_amount, noise_amount)
+		var gain := 0.50 if not material.is_empty() else (0.55 if kind == "heavy_hit" else 0.38)
 		data.encode_s16(index * 2, roundi(clampf((wave + noise) * envelope * gain, -1.0, 1.0) * 32767.0))
 	stream.data = data; audio_player.stream = stream; audio_player.play()
 

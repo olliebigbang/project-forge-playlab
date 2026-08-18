@@ -31,6 +31,7 @@ func _run() -> void:
 	_test_material_leaves_timing_and_damage_alone()
 	_test_the_weapon_moves_differently_after_contact()
 	_test_a_whiff_traces_the_same_path_for_everything()
+	_test_the_three_impacts_sound_like_different_materials()
 	print("CONTACT_RESOLUTION_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -222,6 +223,23 @@ func _swing_progress_without_contact(motion_profile: Variant) -> float:
 	controller.tick(float(timing.get("startup", 0.1)) * 1.01)
 	controller.tick(float(timing.get("active", 0.1)) * 0.8)
 	return controller.swing_progress()
+
+
+## Material is heard in how long the impact rings and how much of it is noise rather than
+## tone. Pitch alone reads as the same object at a different size, so three tones that
+## differ only there would not be three materials. Both dimensions must separate them.
+func _test_the_three_impacts_sound_like_different_materials() -> void:
+	var dead: Dictionary = FEEDBACK.tone_for("forge_impact_dead")
+	var ring: Dictionary = FEEDBACK.tone_for("forge_impact_ring")
+	var soft: Dictionary = FEEDBACK.tone_for("forge_impact_soft")
+	_check(
+		float(ring.get("duration", 0.0)) > float(dead.get("duration", 0.0)) * 2.0,
+		"metal rings on where a dead thud is already over"
+	)
+	_check(
+		float(soft.get("noise", 0.0)) > float(ring.get("noise", 1.0)) * 3.0,
+		"a soft impact is mostly noise where a ringing one is mostly tone"
+	)
 
 
 func _profile(rigidity: String) -> Resource:
