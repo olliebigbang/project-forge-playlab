@@ -651,3 +651,44 @@ half of the spec — taking hitstop, knockback, camera shake and sound off tempo
 untouched by any of this. 1B proceeds on rigidity plus the mass split, with three known
 unresolved pairs recorded rather than papered over, and with the chicken leg fixture fixed
 first.
+
+## P15 — drop the mass threshold from contact_resolution; it resolves nothing
+
+*2026-08-18.* P13 left three colliding pairs that rigidity does not separate and handed
+them to contact_resolution's other half, the theta split on the mass axis. Measured, that
+half does no work at all. Evidence:
+`tools/combat_feel/measure_remaining_collisions.py`.
+(P14 is reserved for the codex line's note on dropping 442fee3.)
+
+**Theta resolves none of the three.** Both members of every remaining pair land in
+`arrest`: baseball bat 0.643 against stool 0.865, wooden chair 0.953 against fire
+extinguisher 1.000, longsword 0.715 against fire axe 0.822. Total collisions resolved by
+the axis stays at four of seven, all four by rigidity.
+
+**Theta was fitted to six objects and does not survive eighteen.** M1 chose 0.538 as the
+midpoint of the widest gap between adjacent rigid objects, which was defensible on the six
+profiles carrying both rigidity and a mass, and put 2.9 noise floors of margin around it.
+Across the eighteen probed objects that gap sits near the bottom of the band: three objects
+fall in `rebound` (wooden spoon 0.350, chicken leg 0.350, fishing rod 0.433) and fifteen in
+`arrest`. That is 83% one class — the same concentration this line refused to accept in
+`mass_distribution` at P09 and questioned in `rigidity` at P13, arrived at from the other
+direction.
+
+**No threshold fixes it, and the reason is P11's.** A balanced split would sit near 0.75,
+between the longsword at 0.715 and the spear at 0.773. Every adjacent gap in that region
+runs 0.011 to 0.047, all inside P09's 0.065 noise floor, so a balanced threshold cannot be
+a distinction the game may rely on. P11 wrote this about `m*L^2`: compressing a wide raw
+span into a fixed band buys sharp ends and a flat middle, and is "crisp at the extremes and
+mush exactly where nearly every hand weapon lives". The mass axis is the same shape. It is
+a good continuous input, which is what P09 built it for, and a poor categorical splitter.
+
+**Decided: contact_resolution takes rigidity alone.** The three resolutions map to the
+three rigidity values directly. This resolves the same four of seven collisions the split
+version did, removes a threshold that resolves none, and removes M1 along with it — there
+is no longer a number to fit. The axis becomes what P12 asked for in plain terms: the
+material field, given impact channels of its own.
+
+**What is left unresolved is now precise.** Three pairs, all same-material and
+same-sequence: longsword and fire axe, baseball bat and folding stool, wooden chair and
+fire extinguisher. Nothing in the contract separates them today. That is the case for a new
+signal, and it is a much narrower case than 1B started with.
