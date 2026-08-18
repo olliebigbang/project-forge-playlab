@@ -1,24 +1,23 @@
-"""Produce v1.4 affordance sidecars, without a model call.
+"""Produce offline v1.4 affordance sidecars, without a model call.
 
-This stands in for `estimate_real_mass.py` so the compiler can be wired and playtested
-offline, exactly as `author_v1_3_sidecars.py` did for length. The masses below are
-hand-authored estimates, NOT model output. Replace them with real output before treating
-any number here as evidence about what the model can estimate -- for length that
-replacement happened in P06, and the hand-authored 60cm giant spoon turned out to be 120.
+This is the fallback counterpart to `estimate_real_mass.py`, exactly as
+`author_v1_3_sidecars.py` was for length. Its inputs do not all have the same provenance;
+the output manifest records that distinction explicitly.
 
-Two groups are written:
+Three provenance groups are written:
 
   upgrades -- the four shipped objects, read from their v1.3 sidecars under
       artifacts/real_scale_poc/affordance_v1_3/ (whose lengths ARE model output) and
       given a mass. The frozen v1.2 originals under data/ are SHA-256 pinned and are
       never edited in place.
 
-  demos -- a chicken leg and a sledgehammer, authored whole. Neither is a shipped asset,
-      and they exist to make decision P08's defect visible by hand: both are
-      front-weighted and both therefore compiled to the same mass axis of 1.0 and the
-      same `heavy` label, a 33x difference in real mass that the compiler could not see.
+  model-backed demo -- the chicken leg structure is copied verbatim from the frozen A10
+      affordance estimator result. Its length and mass are the frozen model probe medians.
 
-Careful: this writes both groups into the same directory, so running it over a directory
+  hand-authored demo -- the sledgehammer is authored whole. It is not model evidence and
+      remains only an offline P08 control.
+
+Careful: this writes all three groups into the same directory, so running it over a directory
 that already holds `estimate_real_mass.py` output replaces model estimates with these
 guesses. The four upgrades under `artifacts/mass_axis_poc/affordance_v1_4/` are model
 output and should be regenerated with the estimator, not with this.
@@ -44,6 +43,18 @@ from affordance_contract_v1_4 import (  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 V1_3_SIDECARS = REPO_ROOT / "artifacts" / "real_scale_poc" / "affordance_v1_3"
+CHICKEN_LEG_MODEL_PROFILE = (
+    REPO_ROOT
+    / "tools"
+    / "semantic"
+    / "reports"
+    / "affordance_combined_handoff_v1_2_1"
+    / "affordance-combined-v1-2-1-20260808T132129343Z"
+    / "affordance_profiles"
+    / "A10.json"
+)
+CHICKEN_LEG_REAL_LENGTH_CM = 13.0
+CHICKEN_LEG_REAL_MASS_KG = 0.12
 
 # Hand-authored placeholders. Order-of-magnitude estimates of the real object.
 HAND_AUTHORED_MASS_KG = {
@@ -53,30 +64,9 @@ HAND_AUTHORED_MASS_KG = {
     "old_mop": 1.0,             # a light pole and a wet head
 }
 
-# Authored whole rather than upgraded, because neither is a shipped asset. Both are
-# deliberately `front` weighted and `broad` faced: under the pre-v1.4 compiler that made
-# them identical on every mass signal available.
-DEMO_PROFILES = {
-    "chicken_leg": {
-        "handle_length": "short",
-        "body_length": "short",
-        "grip_topology": "one_hand_handle",
-        "rigidity": "rigid",
-        "mass_distribution": "front",
-        "contact_surface": "broad",
-        "secondary_contact_surface": "none",
-        "has_point": False,
-        "has_edge": False,
-        "has_broad_face": True,
-        "has_barrel": False,
-        "has_stock": False,
-        "confidence": 1.0,
-        "evidence_parts": ["meaty drumstick end", "narrow bone handle"],
-        "real_length_cm": 13.0,
-        # Model output: the probe asked this exact identity and answered 0.12kg (median of
-        # 0.12/0.12/0.15). The profile around it is still hand-authored.
-        "real_mass_kg": 0.12,
-    },
+# Authored whole because this object has no frozen semantic/affordance estimator result.
+# It is deliberately retained as a clearly labelled offline control, not model evidence.
+HAND_AUTHORED_DEMO_PROFILES = {
     "sledgehammer": {
         "handle_length": "long",
         "body_length": "medium",
@@ -96,6 +86,14 @@ DEMO_PROFILES = {
         "real_mass_kg": 5.0,
     },
 }
+
+
+def model_backed_chicken_leg_profile() -> dict:
+    """Return frozen estimator structure plus frozen model length/mass medians."""
+    profile = json.loads(CHICKEN_LEG_MODEL_PROFILE.read_text(encoding="utf-8"))
+    profile["real_length_cm"] = CHICKEN_LEG_REAL_LENGTH_CM
+    profile["real_mass_kg"] = CHICKEN_LEG_REAL_MASS_KG
+    return validate_affordance_profile_v1_4(profile)
 
 
 def _write(target: Path, profile: dict) -> None:
@@ -125,13 +123,28 @@ def main() -> int:
             "path": str(target),
         })
 
-    for object_id, profile in DEMO_PROFILES.items():
+    chicken_leg = model_backed_chicken_leg_profile()
+    chicken_target = args.output_dir / "chicken_leg" / "object_affordance_profile.json"
+    _write(chicken_target, chicken_leg)
+    written.append({
+        "object_id": "chicken_leg",
+        "group": "model_backed_demo",
+        "structure_provenance": "frozen_affordance_estimator_A10",
+        "real_length_cm": chicken_leg["real_length_cm"],
+        "real_mass_kg": chicken_leg["real_mass_kg"],
+        "length_provenance": "model_probe_median",
+        "mass_provenance": "model_probe_median",
+        "path": str(chicken_target),
+    })
+
+    for object_id, profile in HAND_AUTHORED_DEMO_PROFILES.items():
         validated = validate_affordance_profile_v1_4(dict(profile))
         target = args.output_dir / object_id / "object_affordance_profile.json"
         _write(target, validated)
         written.append({
             "object_id": object_id,
-            "group": "demo",
+            "group": "hand_authored_demo",
+            "structure_provenance": "hand_authored_placeholder",
             "real_length_cm": validated["real_length_cm"],
             "real_mass_kg": validated["real_mass_kg"],
             "length_provenance": "hand_authored_placeholder",

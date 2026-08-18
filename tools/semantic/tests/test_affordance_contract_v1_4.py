@@ -31,6 +31,13 @@ from affordance_contract_v1_4 import (  # noqa: E402
     validate_candidate_blueprint_v1_4,
     validate_real_mass_kg,
 )
+from author_v1_4_sidecars import (  # noqa: E402
+    CHICKEN_LEG_MODEL_PROFILE,
+    CHICKEN_LEG_REAL_LENGTH_CM,
+    CHICKEN_LEG_REAL_MASS_KG,
+    REPO_ROOT,
+    model_backed_chicken_leg_profile,
+)
 
 
 def valid_profile_v1_3() -> dict:
@@ -183,6 +190,39 @@ class MassSeparatesWhereDistributionCollidesTest(unittest.TestCase):
         validate_affordance_profile_v1_4(iron_bar)
         self.assertEqual(wooden_spoon[REAL_LENGTH_FIELD], iron_bar[REAL_LENGTH_FIELD])
         self.assertGreater(iron_bar[REAL_MASS_FIELD] / wooden_spoon[REAL_MASS_FIELD], 10.0)
+
+
+class ModelBackedChickenLegFixtureTest(unittest.TestCase):
+    """The 1B chicken fixture must preserve the frozen estimator's structure."""
+
+    def test_fixture_structure_matches_frozen_a10_estimator_output(self) -> None:
+        source = json.loads(CHICKEN_LEG_MODEL_PROFILE.read_text(encoding="utf-8"))
+        fixture_path = (
+            REPO_ROOT
+            / "artifacts"
+            / "mass_axis_poc"
+            / "affordance_v1_4"
+            / "chicken_leg"
+            / "object_affordance_profile.json"
+        )
+        fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+        for field, expected in source.items():
+            self.assertEqual(fixture[field], expected, field)
+        self.assertEqual(fixture[REAL_LENGTH_FIELD], CHICKEN_LEG_REAL_LENGTH_CM)
+        self.assertEqual(fixture[REAL_MASS_FIELD], CHICKEN_LEG_REAL_MASS_KG)
+
+    def test_offline_authoring_cannot_restore_the_hand_authored_rigid_profile(self) -> None:
+        fixture_path = (
+            REPO_ROOT
+            / "artifacts"
+            / "mass_axis_poc"
+            / "affordance_v1_4"
+            / "chicken_leg"
+            / "object_affordance_profile.json"
+        )
+        fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+        self.assertEqual(model_backed_chicken_leg_profile(), fixture)
+        self.assertEqual(fixture["rigidity"], "semi_rigid")
 
 
 class RealMassSpanExceedsTheDamageBandTest(unittest.TestCase):

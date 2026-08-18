@@ -1,8 +1,8 @@
 {
   "handle_length": "short",
-  "body_length": "short",
+  "body_length": "medium",
   "grip_topology": "one_hand_handle",
-  "rigidity": "rigid",
+  "rigidity": "semi_rigid",
   "mass_distribution": "front",
   "contact_surface": "broad",
   "secondary_contact_surface": "none",
@@ -11,10 +11,12 @@
   "has_broad_face": true,
   "has_barrel": false,
   "has_stock": false,
-  "confidence": 1.0,
+  "confidence": 0.82,
   "evidence_parts": [
-    "meaty drumstick end",
-    "narrow bone handle"
+    "narrow bone shaft as handle",
+    "bulbous meat mass at striking end",
+    "semi-rigid meat and bone structure",
+    "front-heavy weight distribution"
   ],
   "real_length_cm": 13.0,
   "real_mass_kg": 0.12

@@ -21,8 +21,8 @@ SHA-256 pinned in their `index.json` and are deliberately untouched, exactly as 
 | giant_wooden_spoon | upgrade | 120 | 1.5 | model, from the frozen blueprint |
 | shotgun_melee | upgrade | 100 | 3.4 | model, from the frozen blueprint |
 | old_mop | upgrade | 140 | 1.2 | model, from the frozen blueprint |
-| chicken_leg | demo | 13 | 0.12 | model, via the probe |
-| sledgehammer | demo | 90 | 5.0 | **hand-authored** — not in the probe set |
+| chicken_leg | model-backed demo | 13 | 0.12 | model, via the probe |
+| sledgehammer | hand-authored demo | 90 | 5.0 | **hand-authored** — not in the probe set |
 
 The four upgrades are `estimate_real_mass.py` run against the same frozen
 `semantic_blueprint.json` files under `data/` that the game loads, which is the provenance
@@ -35,10 +35,12 @@ chain P06 established for length. The model's stated basis for each:
 | giant_wooden_spoon | 1.5 | oversized carved wooden paddle spoon |
 | shotgun_melee | 3.4 | typical pump-action 12-gauge, like a full jug of milk |
 
-`chicken_leg` and `sledgehammer` are not shipped assets. They exist to make P08's defect
-reproducible by hand: both are `mass_distribution: "front"` with a `broad` contact face, so
-before v1.4 the compiler gave them the *same* mass axis (1.0) and the *same* label
-(`heavy`) across a 40x difference in real mass.
+`chicken_leg` and `sledgehammer` are not shipped assets. The chicken leg's structural fields
+come from the frozen A10 affordance estimator output; its 13cm length and 0.12kg mass are
+the frozen model-probe medians. The sledgehammer's entire profile remains hand-authored and
+must not be cited as evidence of affordance-model capability. Together they retain P08's
+offline mass-axis control: both are `mass_distribution: "front"` with a `broad` contact
+face, so before v1.4 the compiler gave them the same mass axis and the same `heavy` label.
 
 ## Reproduce
 
@@ -55,14 +57,15 @@ python tools/semantic/bridge/estimate_real_mass.py $A/revision_a/giant_wooden_sp
 python tools/semantic/bridge/estimate_real_mass.py $A/motion_grammar_slice_1a/shotgun_melee/semantic_blueprint.json $V3/shotgun_melee/object_affordance_profile.json     $V4/shotgun_melee/object_affordance_profile.json
 ```
 
-The two demos, and the offline path when there is no API key:
+The model-backed chicken demo, the hand-authored sledgehammer control, and the offline path:
 
 ```bash
 python tools/semantic/bridge/author_v1_4_sidecars.py <some_scratch_dir>
 ```
 
-That script writes *both* groups with hand-authored masses, so point it somewhere else and
-copy the two demo profiles across rather than letting it overwrite the four model estimates.
+That script writes the chicken structure from frozen A10 model output, but still writes
+hand-authored placeholder masses for the four upgrades and a wholly hand-authored
+sledgehammer. Point it somewhere else; do not let it overwrite the four model estimates.
 
 ## Result
 
