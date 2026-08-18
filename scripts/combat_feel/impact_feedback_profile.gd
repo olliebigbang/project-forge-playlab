@@ -34,6 +34,35 @@ static func tone_for(sound_profile: String) -> Dictionary:
 	return {}
 
 
+## The samples themselves, so that anything wanting to hear a tone -- the game, or a tool
+## exporting them for review -- gets the same one.
+static func synthesise(kind: String, mix_rate: int) -> PackedByteArray:
+	var material: Dictionary = tone_for(kind)
+	var frequency: float = float(material.get("frequency", 0.0)) if not material.is_empty() else float({"swing_light": 245.0, "swing_heavy": 150.0, "whiff": 360.0, "hit": 118.0, "heavy_hit": 64.0, "dodge": 310.0, "hurt": 92.0}.get(kind, 140.0))
+	var duration: float = float(material.get("duration", 0.0)) if not material.is_empty() else float({"swing_light": 0.045, "swing_heavy": 0.072, "whiff": 0.065, "hit": 0.085, "heavy_hit": 0.16, "dodge": 0.055, "hurt": 0.10}.get(kind, 0.07))
+	var sample_count := int(float(mix_rate) * duration)
+	var data := PackedByteArray()
+	data.resize(sample_count * 2)
+	for index: int in range(sample_count):
+		var progress := float(index) / float(sample_count)
+		# A linear fade sounds like every material. Decay rate is what separates a ring
+		# that carries from a thud that is already gone, so the material sets it.
+		var envelope := exp(-float(material.get("decay", 1.0)) * progress) * (1.0 - progress) 			if not material.is_empty() else 1.0 - progress
+		var phase := TAU * frequency * float(index) / float(mix_rate)
+		var wave := sin(phase)
+		if not material.is_empty():
+			wave = sin(phase) + sin(phase * 1.73) * float(material.get("partial", 0.0))
+		elif kind == "heavy_hit":
+			wave = sin(phase) * 0.70 + sin(phase * 0.51) * 0.45
+		elif kind == "whiff":
+			wave = sin(phase * (1.0 + progress * 1.6)) * 0.55
+		var noise_amount: float = float(material.get("noise", 0.0)) if not material.is_empty() 			else (0.18 if kind in ["hit", "heavy_hit"] else (0.08 if kind == "whiff" else 0.0))
+		var noise := randf_range(-noise_amount, noise_amount)
+		var gain := 0.50 if not material.is_empty() else (0.55 if kind == "heavy_hit" else 0.38)
+		data.encode_s16(index * 2, roundi(clampf((wave + noise) * envelope * gain, -1.0, 1.0) * 32767.0))
+	return data
+
+
 static func for_attack(profile: Resource, attack_kind: String, combo_index: int, primitive: Variant = null) -> Resource:
 	var feedback: Variant = load("res://scripts/combat_feel/impact_feedback_profile.gd").new()
 	# Hitstop belongs to what the object is made of, not to how fast it swings (P12: the

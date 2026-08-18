@@ -44,3 +44,4 @@ tools/open_playtest/**/*.pyc
 **/*.translation
 **/*.csv.import
 *.gd.uid
+artifacts/impact_tones/
