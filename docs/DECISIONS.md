@@ -575,75 +575,79 @@ because selection is already answered. Giving a material or contact-resolution a
 channels — sound and hitstop and rebound direction, taken from tempo rather than added
 alongside it — multiplies where adding a fifth scalar does not.
 
-## P13 — rigidity is near-constant, so contact_resolution cannot hang its soft branch on it
+## P13 — test an impact axis inside collision groups, not on its marginal distribution
 
-*2026-08-18.* Measured while running the 1B spec's own M1 gate, which requires theta to be
+*2026-08-18.* Measured while running the 1B spec's M1 gate, which requires theta to be
 measured before anything is implemented and asks whether the three contact_resolution
-classes are supportable at all. Theta measured fine. The classes did not. Evidence:
-`tools/combat_feel/measure_rigidity_coverage.py` and
-`tools/combat_feel/measure_contact_resolution.py`.
+classes are supportable. Theta measured fine: 0.538, the midpoint of the widest gap between
+adjacent rigid objects on the mass axis, 0.188 of margin against P09's 0.065 noise floor.
+The frying pan and the chicken leg land on different resolutions seven noise floors apart.
+Evidence: `tools/combat_feel/measure_contact_resolution.py`,
+`measure_rigidity_coverage.py`, `measure_within_collision_split.py`.
 
-**The spec derived the soft branch from `rigidity != rigid`. Across every affordance
-profile the estimator has ever produced — 36 of them, in three independent groups — that
-condition is true 22% of the time:**
+**This decision was drafted twice with the wrong test and is recorded so nobody repeats
+it.** The first draft counted how often `rigidity` returns each value across every profile
+in the repository — 28 rigid, 6 semi_rigid, 2 flexible, 78% one value, the same shape in
+all three independent groups — and concluded the field was too constant to carry a
+categorical impact layer, the way P09 found `mass_distribution` "not merely coarse, it was
+constant".
 
-  group                 rigid   semi_rigid   flexible
-  anonymised handoff       16            2          2
-  proof of concept          8            2          0
-  shipped sidecar           4            2          0
-  combined            28 (78%)      6 (17%)     2 (6%)
+**That is the marginal distribution, and an impact axis is never asked to do marginal
+work.** It never has to tell apart two objects that already swing differently, because P12
+showed `contact_surface` reaches selection from every baseline and those objects are
+separated upstream. The only thing an impact axis must separate is objects that compile to
+the same primitive sequence. That is a conditional question, and it gives a different
+answer.
 
-Every group is skewed the same way, so this is not one bad batch. Two of the 36 (the chicken leg and sledgehammer demos) are hand-authored rather than model output and both read `rigid`; excluding them the split is 26/6/2, which moves nothing. For comparison
-`contact_surface`, the axis P12 found decisive, spreads 50/22/14/14 across its four values.
-Rigidity is not merely coarser than that; it is close to constant, which is the same defect
-P09 recorded in `mass_distribution` — "the axis was not merely coarse, it was constant" —
-now found in the field the 1B spec had chosen to carry the new categorical layer.
+**Measured on the twelve v1.2.1 handoff cases, which carry identity, affordance axes and
+compiled sequence in one row.** Twelve objects reach seven distinct sequences. Four
+sequences are reached by one object and need nothing. Three groups collide:
 
-**The estimator is not the problem; the enum it has to answer in is.** The chicken leg
-looked at first like proof that the field asks the wrong question — affordance v1.4 records
-a cooked drumstick as `rigid`, which answers "does this object bend" rather than "what
-happens where it lands". That profile turns out to be hand-authored: `author_v1_4_sidecars.py`
-says in a comment beside it that only the mass is model output and "the profile around it is
-still hand-authored". Asked the same object properly, the model answered `semi_rigid` and
-showed its work — A10's evidence reads "bulbous meat mass at striking end" and "semi-rigid
-meat and bone structure". So the model does reason about the contact end. What loses that
-reasoning is a three-value enum in which nine of every twelve objects are simply `rigid`.
+  sequence                 members                                    rigidity splits
+  bash -> slam -> bash     baseball bat, giant chicken leg, stool     yes
+  sweep -> spin -> slam    wooden chair, fire extinguisher, rod       yes
+  sweep -> thrust -> slam  longsword, fire axe                        no
 
-That reframes what to build. The earlier discussion brief proposed a whole-body `rigidity`
-beside a contact-end `contact_compliance`, and the rewritten spec cut it as collinear.
-Collinearity was the wrong objection, but so is "ask a second question": the model already
-answered it. `evidence_parts` is model output and carries part-level material on objects the
-enum flattens — A03 "long wooden handle, heavy steel axe head", A05 "long wooden handle,
-heavy iron hammer head", A10 "narrow bone shaft as handle, bulbous meat mass at striking
-end", A12 "long flexible rod shaft, cork handle grip". Two of those pairs are exactly P11's
-residual collisions, and in each the shaft and the striking end are different materials.
+Two of three groups, and four of the seven colliding pairs. The two it splits are exactly
+the shapes the axis was proposed for: a giant chicken leg pulled out of a baseball bat and
+a folding stool, and a flexible fishing rod pulled out of a rigid chair and a rigid
+extinguisher. A field that is 83% constant still did that, because the objects it
+distinguishes are the ones sharing a swing.
 
-**What the scheme degenerates into if built as specified.** With 78% of objects rigid,
-`follow_through` collects the handful of non-rigid ones and everything else splits into
-`arrest` and `rebound` by mass alone. Mass already buys tempo (P09) and tempo already owns
-the impact channels the axis was going to take from it, so the axis would re-key those
-channels to the quantity that was driving them anyway. It would not be a new dimension. It
-would be tempo wearing a different enum.
+**What it does not resolve, stated plainly.** Three colliding pairs survive rigidity, all
+of them same-value pairs: longsword and fire axe, bat and stool, chair and extinguisher.
+Those need the mass split theta provides, or something not yet in the contract. So
+`rigidity` is a sparse signal — it fires rarely and correctly — and cannot be the whole
+input. The spec's derivation stands with its expectation corrected: `follow_through` being
+a small class is not the defect the first draft called it, but neither is rigidity alone
+enough, and the axis carries less than the spec assumed.
 
-**The signal survived somewhere else.** `material_hints` in the shipped semantic blueprints
-separates the same objects rigidity flattens: cast iron, dark metal and polished steel
-against `old_mop`'s "worn wood, cotton or cloth strands". The mop entry also carries the
-distinction the single field cannot express, a wooden shaft and a cloth contact end in one
-object. This is free text rather than an enum and no axis should be built on it before it
-is measured the way P11 measured the inertia proxy. But it exists today, it needs no new
-contract field, and it is where the next measurement should look.
+**One shipped fixture would break the motivating case.** `artifacts/mass_axis_poc/`'s
+chicken leg records `rigidity: rigid`. That profile is hand-authored —
+`author_v1_4_sidecars.py` says beside it that only the mass is model output and "the
+profile around it is still hand-authored". Asked the same object, the model answered
+`semi_rigid` and showed its work: "bulbous meat mass at striking end", "semi-rigid meat and
+bone structure". Under the hand-authored value the chicken leg stays in the rigid branch
+with the bat and the stool, which is precisely the collision 1B exists to break. The
+fixture should be replaced with model output before it is used to judge anything.
+
+**A premise correction that came out of the same run.** P11 closed by naming three residual
+collisions as this axis's reason to exist — cleaver and hammer, giant spoon and sword,
+shield and chair. The handoff matrix carries identities, so these can be checked rather
+than inferred: cleaver compiles to `sweep -> bash -> slam` and hammer to
+`bash -> slam -> sweep`; shield to `bash -> sweep -> slam` and chair to
+`sweep -> spin -> slam`. They collide on the mass-length plane, which is what P11 was
+measuring, and not in compiled output. P11's own sentence lists "contact surface" first
+among what those pairs differ in, and that part was already built. The real collision list
+is the three groups above, and it is not the same list.
 
 **A second finding, about coverage rather than design.** Of the eighteen objects in the
-mass probe, twelve have no drawing at all — no sprite, no blueprint, nothing under `data/`.
-The residual collisions P11 named as this axis's reason to exist (cleaver and hammer,
-giant spoon and sword, shield and chair) are mostly in that twelve. Their affordance
-profiles cannot be obtained by running the estimator, because T74's subject is the drawing
-and there is no drawing. Closing that gap means generating assets, not running a tool, and
-that is a larger decision than 1B.
+mass probe, twelve have no drawing — no sprite, no blueprint, nothing under `data/`. Their
+affordance profiles cannot be obtained by running the estimator, because T74's subject is
+the drawing. Closing that gap means generating assets, which is a larger decision than 1B.
 
-**Decided: 1B does not proceed on the derivation as specified.** Theta = 0.538 stands as a
-measured number and the pan/chicken-leg pair does separate on it by seven times the noise
-floor, but separating one pair on mass is not what the axis was for. The channel-transfer
+**Decided: the derivation is not refuted, its input is incomplete.** The channel-transfer
 half of the spec — taking hitstop, knockback, camera shake and sound off tempo — is
-untouched by this and remains the right shape; what needs replacing is the input that
-decides which class an object lands in.
+untouched by any of this. 1B proceeds on rigidity plus the mass split, with three known
+unresolved pairs recorded rather than papered over, and with the chicken leg fixture fixed
+first.
