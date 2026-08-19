@@ -15,7 +15,7 @@ const FEEDBACK := preload("res://scripts/combat_feel/impact_feedback_profile.gd"
 const LOADER := preload("res://scripts/combat_feel/combat_feel_asset_loader.gd")
 const CONTROLLER := preload("res://scripts/combat_feel/melee_combat_controller.gd")
 
-const EXPECTED_CHECKS := 6
+const EXPECTED_CHECKS := 7
 
 var passed := 0
 var failed := 0
@@ -29,6 +29,7 @@ func _run() -> void:
 	_test_bracing_changes_what_the_hit_does_to_you()
 	_test_no_grip_is_simply_the_best_way_to_hold_something()
 	_test_the_hit_reaches_the_player_and_the_weapon()
+	_test_connecting_drives_some_grips_forward_and_others_back()
 	# A runtime error inside a test aborts that function without reaching a _check, so the
 	# counters simply come up short and the suite exits green. Reconciling against a
 	# declared total is what turns that silence back into a failure.
@@ -123,6 +124,30 @@ func _test_the_hit_reaches_the_player_and_the_weapon() -> void:
 		_before_contact(_compile(_profile("one_hand_handle"))) == 0.0,
 		"a swing that hits nothing moves nobody"
 	)
+
+
+## The sign is the part that makes this a trade rather than a ranking. If connecting only
+## ever moved the player forward, the axis would just be "how far you advance", and holding
+## something one way would be strictly better than another -- which is what P08 forbids and
+## what the first pass at these numbers did. Some grips have to give ground.
+##
+## A magnitude can be compressed until nobody feels it, which is what happened to every
+## continuous axis this line has tried. A direction cannot: you either went forward or you
+## did not.
+func _test_connecting_drives_some_grips_forward_and_others_back() -> void:
+	var forward := false
+	var backward := false
+	for grip: String in ["one_hand_handle", "two_hand_handle", "body_grip", "clamp_grip"]:
+		var controller: Variant = _after_contact(_compile(_profile(grip)))
+		if controller == null:
+			_check(false, "all four grips compile")
+			return
+		var moved := float(controller.contact_displacement_pixels)
+		if moved > 0.0:
+			forward = true
+		elif moved < 0.0:
+			backward = true
+	_check(forward and backward, "connecting carries some grips in and pushes others back")
 
 
 ## Drives a real attack to the middle of its active window and lands a hit.
