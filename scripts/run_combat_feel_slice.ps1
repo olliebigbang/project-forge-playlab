@@ -15,7 +15,15 @@ param(
     # -Weapon, so these are offered as one exclusive choice rather than three flags that
     # silently outrank each other.
     [string]$RecipeAsset = "",
-    [string]$MotionGrammarAsset = ""
+    [string]$MotionGrammarAsset = "",
+    # Load a second asset alongside the first and swap between them with TAB, in one
+    # session on one enemy. Judging across a relaunch compares against a memory, which
+    # three rounds of playtesting showed cannot even separate a sweep from a bash.
+    [string]$CompareWith = "",
+    # Pair the loaded asset against a deliberately absurd counterpart. If that is
+    # indistinguishable the protocol cannot measure anything, and no amount of tuning the
+    # real difference will help.
+    [switch]$CompareCalibration
 )
 
 $ErrorActionPreference = "Stop"
@@ -50,6 +58,8 @@ if (-not [string]::IsNullOrWhiteSpace($SpritePath)) { $Arguments += "--combat-sp
 if (-not [string]::IsNullOrWhiteSpace($BlueprintPath)) { $Arguments += "--combat-blueprint=$BlueprintPath" }
 if (-not [string]::IsNullOrWhiteSpace($AnchorsPath)) { $Arguments += "--combat-anchors=$AnchorsPath" }
 if (-not [string]::IsNullOrWhiteSpace($CombatAffordance)) { $Arguments += "--combat-affordance=$CombatAffordance" }
+if (-not [string]::IsNullOrWhiteSpace($CompareWith)) { $Arguments += "--compare-with=$CompareWith" }
+if ($CompareCalibration) { $Arguments += "--compare-calibration" }
 
 Write-Output "Starting Forge Combat Feel Slice 0 Revision A ($SourceLabel)."
 Write-Output "Default source is a frozen real Live Forge result; developer fixtures require -DeveloperFixture explicitly."

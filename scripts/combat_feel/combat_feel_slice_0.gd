@@ -7,6 +7,7 @@ const MOTION_COMPILER := preload("res://scripts/combat_feel/melee_motion_compile
 const CONTROLLER := preload("res://scripts/combat_feel/melee_combat_controller.gd")
 const ENEMY := preload("res://scripts/combat_feel/combat_feel_enemy.gd")
 const FEEDBACK := preload("res://scripts/combat_feel/impact_feedback_profile.gd")
+const AB_COMPARE := preload("res://scripts/combat_feel/ab_comparison.gd")
 const MOTION_PRIMITIVE := preload("res://scripts/combat_feel/motion_primitive.gd")
 
 var asset_loader: Variant
@@ -56,6 +57,11 @@ var blind_run_completed := false
 var blind_result_path := ""
 var blind_suite := "slice_1a"
 var capture_pose_only := false
+var compare_profiles: Array = []
+var compare_labels: PackedStringArray = []
+var compare_index := 0
+var compare_rows: Array = []
+var compare_label: Label
 
 var ui_layer: CanvasLayer
 var title_label: Label
@@ -96,6 +102,7 @@ func _ready() -> void:
 		_show_blocked(MOTION_COMPILER.UNSUPPORTED)
 		return
 	motion_profile = compiled
+	_setup_comparison()
 	_update_mode_title()
 	controller.configure(motion_profile)
 	_apply_saved_tuning()
@@ -107,6 +114,81 @@ func _ready() -> void:
 	var pose_capture_dir := _argument_value("--pose-capture-dir=", "")
 	if not pose_capture_dir.is_empty(): call_deferred("_capture_pose_visibility", pose_capture_dir)
 	elif not capture_dir.is_empty(): call_deferred("_capture_evidence", capture_dir)
+
+
+## Two profiles in one session, swapped instantly, so a judgement is made against the other
+## side rather than against a memory from before a relaunch. Three rounds of comparing
+## across relaunches could not tell a sweep from a bash, which says more about the protocol
+## than about anything being compared.
+func _setup_comparison() -> void:
+	var against := _argument_value("--compare-with=", "")
+	var calibration := _has_argument("--compare-calibration")
+	if against.is_empty() and not calibration:
+		return
+	var other: Variant = _calibration_profile() if calibration else _compare_asset_profile(against)
+	if other == null:
+		source_notice = "COMPARE_TARGET_UNAVAILABLE"
+		return
+	compare_profiles = [motion_profile, other]
+	compare_labels = PackedStringArray(["A  %s" % weapon_id, "B  %s" % ("calibration" if calibration else against)])
+	compare_rows = AB_COMPARE.differences(compare_profiles[0], compare_profiles[1])
+	_refresh_compare_label()
+
+
+## A second real asset, compiled against this one's anchors so only the affordance differs.
+func _compare_asset_profile(asset_id: String) -> Variant:
+	var loaded: Dictionary = asset_loader.load_motion_grammar_asset(asset_id)
+	if not bool(loaded.get("ok", false)):
+		loaded = asset_loader.load_recipe_asset(asset_id)
+	if not bool(loaded.get("ok", false)):
+		return null
+	var affordance: Variant = loaded.get("affordance_profile")
+	if affordance == null:
+		return null
+	var compiled: Variant = compiler.compile(affordance, asset.anchors_dict(), asset.opaque_bounds)
+	return null if compiled is String else compiled
+
+
+## A deliberately absurd counterpart, for finding out whether the protocol can detect
+## anything at all before it is trusted to detect something subtle. If this pair is
+## indistinguishable the problem is the setup, not the design.
+func _calibration_profile() -> Variant:
+	if affordance_profile == null:
+		return null
+	var extreme: Variant = affordance_profile.duplicate()
+	extreme.contact_surface = "point" if str(affordance_profile.contact_surface) != "point" else "whole_body"
+	extreme.secondary_contact_surface = "none"
+	extreme.rigidity = "flexible" if str(affordance_profile.rigidity) != "flexible" else "rigid"
+	extreme.grip_topology = "body_grip" if str(affordance_profile.grip_topology) != "body_grip" else "two_hand_handle"
+	extreme.handle_length = "none" if extreme.grip_topology == "body_grip" else affordance_profile.handle_length
+	extreme.has_point = true
+	extreme.real_mass_kg = maxf(0.15, float(affordance_profile.real_mass_kg) * 0.2)
+	var compiled: Variant = compiler.compile(extreme, asset.anchors_dict(), asset.opaque_bounds)
+	return null if compiled is String else compiled
+
+
+func _swap_comparison() -> void:
+	if compare_profiles.size() < 2:
+		return
+	compare_index = 1 - compare_index
+	motion_profile = compare_profiles[compare_index]
+	controller.configure(motion_profile)
+	_update_mode_title()
+	_refresh_compare_label()
+
+
+func _refresh_compare_label() -> void:
+	if compare_label == null or compare_profiles.size() < 2:
+		return
+	var text := "%s          [TAB] 切换
+" % compare_labels[compare_index]
+	if compare_rows.is_empty():
+		text += "两侧编译结果完全相同 —— 这一对测不出任何东西"
+	else:
+		for row: Dictionary in compare_rows:
+			text += "%s  %s
+" % [str(row["channel"]).rpad(20), row["detail"]]
+	compare_label.text = text
 
 
 func _compile_loaded_weapon() -> Variant:
@@ -229,6 +311,10 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_TAB:
+		_swap_comparison()
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("toggle_debug") and not blind_comparison:
 		debug_visible = not debug_visible
 		debug_label.visible = debug_visible
@@ -480,6 +566,8 @@ func _build_ui() -> void:
 	ui_layer.add_child(top)
 	title_label = _label("COMBAT FEEL SLICE 0 — HEAVY MELEE", 24, Color("72e4e0"))
 	title_label.position = Vector2(28, 14); top.add_child(title_label)
+	compare_label = _label("", 15, Color("f0c674"))
+	compare_label.position = Vector2(28, 52); top.add_child(compare_label)
 	status_label = _label("", 15, Color("d8e5ec")); status_label.position = Vector2(28, 46); status_label.size = Vector2(930, 48); top.add_child(status_label)
 	help_label = _label("WASD/方向键 移动　Space/J 攻击（按住蓄力）　Shift/K 闪避　F3 调试", 15, Color("b7c7d2")); help_label.position = Vector2(28, 94); top.add_child(help_label)
 	var boundary := _label("当前切片只验证近战物件；持续远程与投掷返回尚未接入。", 14, Color("f5c86b")); boundary.position = Vector2(28, 116); top.add_child(boundary)
