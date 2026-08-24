@@ -115,8 +115,12 @@ static func for_attack(profile: Resource, attack_kind: String, combo_index: int,
 	var feedback: Variant = load("res://scripts/combat_feel/impact_feedback_profile.gd").new()
 	# Hitstop belongs to what the object is made of, not to how fast it swings (P12: the
 	# new layer needs channels of its own, taken from tempo rather than added beside it).
+	# Spaced so that any two neighbours are far enough apart to be felt, not just the two
+	# ends. Every playable object is arrest or follow_through and none is flexible, so those
+	# neighbours are the whole axis in practice; at 1.23x they were inside the band P13
+	# spent its length condemning, and a player could not tell them apart.
 	feedback.hitstop_seconds = {
-		"arrest": 0.064, "follow_through": 0.052, "rebound": 0.034,
+		"arrest": 0.075, "follow_through": 0.046, "rebound": 0.030,
 	}.get(profile.contact_resolution, 0.048)
 	# Named for what the object is made of, not for how heavy it is. Hearing is a finer
 	# discriminator of material than swing timing is, which is why this channel moves too.
@@ -141,14 +145,19 @@ static func for_attack(profile: Resource, attack_kind: String, combo_index: int,
 	# has nothing that can be knocked aside, so it drives straight through -- a body check.
 	# A clamp is the easiest to knock off line, which is the price of holding something that
 	# was never meant to be swung.
+	# The runtime applies advance minus pushback, so these are chosen for what that
+	# difference comes to rather than for how they read apart. The first pass had one hand
+	# at six and five, which is a shove of one pixel; a player ran it against two hands and
+	# could not tell. What matters is the net, and it now spans 28 pixels with grips going
+	# both ways.
 	feedback.player_pushback_pixels = {
-		"two_hand_handle": 0.0, "one_hand_handle": 5.0, "body_grip": 9.0, "clamp_grip": 7.0,
+		"two_hand_handle": 0.0, "one_hand_handle": 11.0, "body_grip": 4.0, "clamp_grip": 13.0,
 	}.get(profile.grip_topology, 4.0)
 	feedback.weapon_deflect_degrees = {
-		"two_hand_handle": 2.0, "one_hand_handle": 11.0, "body_grip": 1.0, "clamp_grip": 14.0,
+		"two_hand_handle": 2.0, "one_hand_handle": 22.0, "body_grip": 6.0, "clamp_grip": 34.0,
 	}.get(profile.grip_topology, 8.0)
 	feedback.player_advance_pixels = {
-		"two_hand_handle": 0.0, "one_hand_handle": 6.0, "body_grip": 14.0, "clamp_grip": 3.0,
+		"two_hand_handle": 0.0, "one_hand_handle": 2.0, "body_grip": 20.0, "clamp_grip": 1.0,
 	}.get(profile.grip_topology, 4.0)
 	feedback.recoil_degrees = {
 		"arrest": 2.0, "follow_through": 0.0, "rebound": 16.0,

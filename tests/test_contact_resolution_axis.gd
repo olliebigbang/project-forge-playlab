@@ -14,7 +14,7 @@ const FEEDBACK := preload("res://scripts/combat_feel/impact_feedback_profile.gd"
 const LOADER := preload("res://scripts/combat_feel/combat_feel_asset_loader.gd")
 const CONTROLLER := preload("res://scripts/combat_feel/melee_combat_controller.gd")
 
-const EXPECTED_CHECKS := 13
+const EXPECTED_CHECKS := 14
 
 var passed := 0
 var failed := 0
@@ -34,6 +34,7 @@ func _run() -> void:
 	_test_the_weapon_moves_differently_after_contact()
 	_test_a_whiff_traces_the_same_path_for_everything()
 	_test_the_three_impacts_sound_like_different_materials()
+	_test_neighbouring_resolutions_are_far_enough_apart()
 	# A runtime error inside a test aborts that function without reaching a _check, so the
 	# counters simply come up short and the suite exits green. Reconciling against a
 	# declared total is what turns that silence back into a failure.
@@ -43,6 +44,26 @@ func _run() -> void:
 		push_error("FAIL %d checks ran, expected %d -- a test aborted part-way" % [ran, EXPECTED_CHECKS])
 	print("CONTACT_RESOLUTION_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
+
+
+## The widest gap in a three-value axis is worth nothing if the two values that actually
+## co-occur sit next to each other. Every playable object is arrest or follow_through --
+## none is flexible -- so in practice those two are the whole axis, and they were 1.23x
+## apart on hitstop while the table looked like 1.88x end to end. That is inside the band
+## P13 spent its length condemning.
+func _test_neighbouring_resolutions_are_far_enough_apart() -> void:
+	var stops: Array[float] = []
+	for rigidity: String in ["rigid", "semi_rigid", "flexible"]:
+		var compiled: Variant = _compile(_profile(rigidity))
+		if compiled == null:
+			_check(false, "all three rigidity values compile")
+			return
+		stops.append(float(_impact(compiled).hitstop_seconds))
+	stops.sort()
+	var worst := 99.0
+	for index: int in range(stops.size() - 1):
+		worst = minf(worst, float(stops[index + 1]) / maxf(float(stops[index]), 0.0001))
+	_check(worst >= 1.40, "the closest two resolutions are %.2fx apart on hitstop, needs 1.40" % worst)
 
 
 ## The behaviour the axis exists for. Length and mass are held identical so tempo cannot

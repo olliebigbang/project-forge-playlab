@@ -15,7 +15,7 @@ const FEEDBACK := preload("res://scripts/combat_feel/impact_feedback_profile.gd"
 const LOADER := preload("res://scripts/combat_feel/combat_feel_asset_loader.gd")
 const CONTROLLER := preload("res://scripts/combat_feel/melee_combat_controller.gd")
 
-const EXPECTED_CHECKS := 7
+const EXPECTED_CHECKS := 8
 
 var passed := 0
 var failed := 0
@@ -30,6 +30,7 @@ func _run() -> void:
 	_test_no_grip_is_simply_the_best_way_to_hold_something()
 	_test_the_hit_reaches_the_player_and_the_weapon()
 	_test_connecting_drives_some_grips_forward_and_others_back()
+	_test_the_net_movement_is_big_enough_to_see()
 	# A runtime error inside a test aborts that function without reaching a _check, so the
 	# counters simply come up short and the suite exits green. Reconciling against a
 	# declared total is what turns that silence back into a failure.
@@ -124,6 +125,25 @@ func _test_the_hit_reaches_the_player_and_the_weapon() -> void:
 		_before_contact(_compile(_profile("one_hand_handle"))) == 0.0,
 		"a swing that hits nothing moves nobody"
 	)
+
+
+## The sign test passes on a single pixel, and a single pixel is what shipped. A player ran
+## one-hand against two-hand and could not tell them apart, because the advance and the
+## pushback were designed as separate channels for the domination test while the runtime
+## only ever applies their difference -- six minus five.
+##
+## So the thing asserted here is the thing the player receives, not the parts it is built
+## from. Twenty pixels against a sprite of forty is a shove somebody can see.
+func _test_the_net_movement_is_big_enough_to_see() -> void:
+	var moved: Array[float] = []
+	for grip: String in ["one_hand_handle", "two_hand_handle", "body_grip", "clamp_grip"]:
+		var controller: Variant = _after_contact(_compile(_profile(grip)))
+		if controller == null:
+			_check(false, "all four grips compile")
+			return
+		moved.append(float(controller.contact_displacement_pixels))
+	var span: float = float(moved.max()) - float(moved.min())
+	_check(span >= 20.0, "the net shove spans %.1fpx across the grips, needs 20" % span)
 
 
 ## The sign is the part that makes this a trade rather than a ranking. If connecting only
