@@ -180,7 +180,7 @@ func _swap_comparison() -> void:
 func _refresh_compare_label() -> void:
 	if compare_label == null or compare_profiles.size() < 2:
 		return
-	var text := "%s          [TAB] 切换
+	var text := "%s          [Q] 切换
 " % compare_labels[compare_index]
 	if compare_rows.is_empty():
 		text += "两侧编译结果完全相同 —— 这一对测不出任何东西"
@@ -310,11 +310,18 @@ func _process(delta: float) -> void:
 	_update_debug()
 	queue_redraw()
 
-func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_TAB:
+## Q rather than TAB, and _input rather than _unhandled_input. TAB is bound to
+## ui_focus_next by default, so the focus system eats it before gameplay ever sees it --
+## which a headless smoke test cannot show, because it only proves the script parses.
+func _input(event: InputEvent) -> void:
+	if compare_profiles.size() < 2:
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_Q:
 		_swap_comparison()
 		get_viewport().set_input_as_handled()
-		return
+
+
+func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_debug") and not blind_comparison:
 		debug_visible = not debug_visible
 		debug_label.visible = debug_visible
