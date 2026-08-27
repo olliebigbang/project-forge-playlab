@@ -9,6 +9,7 @@ const ENEMY := preload("res://scripts/combat_feel/combat_feel_enemy.gd")
 const FEEDBACK := preload("res://scripts/combat_feel/impact_feedback_profile.gd")
 const MOTION_PRIMITIVE := preload("res://scripts/combat_feel/motion_primitive.gd")
 const PERCEPTIBLE_CONTACT := preload("res://scripts/combat_feel/perceptible_contact_mechanics.gd")
+const TARGET_INTERACTION := preload("res://scripts/combat_feel/weapon_target_interaction_resolver.gd")
 const PIXEL_WEAPON_DEFORMER := preload("res://scripts/combat_feel/pixel_weapon_deformer.gd")
 const TUNING_SCHEMA := "forge-combat-feel-tuning-v2"
 const TIMING_KEYS: PackedStringArray = ["startup", "active", "recovery", "combo_window", "input_buffer"]
@@ -379,6 +380,14 @@ func _resolve_melee_hits() -> void:
 			reaction["knockback"] = mechanism.get("knockback", reaction["knockback"])
 			reaction["stagger"] = mechanism.get("stagger", reaction["stagger"])
 			damage *= float(mechanism.get("damage_multiplier", 1.0))
+		elif affordance_profile != null:
+			var interaction_profile: Dictionary = TARGET_INTERACTION.compile_melee(affordance_profile, primitive)
+			var target_context: Dictionary = enemy.target_interaction_context()
+			mechanism = TARGET_INTERACTION.resolve(interaction_profile, target_context, damage, reaction)
+			reaction["knockback"] = mechanism.get("knockback", reaction["knockback"])
+			reaction["stagger"] = mechanism.get("stagger", reaction["stagger"])
+			damage = float(mechanism.get("health_damage", damage))
+		if not mechanism.is_empty():
 			last_contact_verb = str(mechanism.get("verb", "none"))
 			mechanism_verb_counts[last_contact_verb] = int(mechanism_verb_counts.get(last_contact_verb, 0)) + 1
 		var knockback: Vector2 = reaction["knockback"]
@@ -403,6 +412,12 @@ func _mechanism_experiment_enabled() -> bool:
 
 func _spawn_mechanism_feedback(at: Vector2, verb: String) -> void:
 	var color := PERCEPTIBLE_CONTACT.color_for_verb(verb)
+	match verb:
+		"entangle": color = Color("c084fc")
+		"hook_pull": color = Color("22d3ee")
+		"suppress": color = Color("f59e0b")
+		"armor_break": color = Color("fb7185")
+		"stagger": color = Color("facc15")
 	particles.append({
 		"kind": "ring",
 		"pos": at,

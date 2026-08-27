@@ -658,7 +658,7 @@ func _verify_entry_hashes(entry: Dictionary) -> String:
 		var path: String = paths[filename]
 		if not FileAccess.file_exists(path):
 			return "LIVE_EVIDENCE_FILE_MISSING:%s" % filename
-		if _sha256_file(path) != str(expected[filename]).to_lower():
+		if not _sha256_matches(path, str(expected[filename])):
 			return "LIVE_EVIDENCE_HASH_MISMATCH:%s" % filename
 	return ""
 
@@ -677,7 +677,7 @@ func _verify_recipe_entry_hashes(entry: Dictionary) -> String:
 		var path: String = paths[filename]
 		if not FileAccess.file_exists(path):
 			return "RECIPE_EVIDENCE_FILE_MISSING:%s" % filename
-		if _sha256_file(path) != str(expected[filename]).to_lower():
+		if not _sha256_matches(path, str(expected[filename])):
 			return "RECIPE_EVIDENCE_HASH_MISMATCH:%s" % filename
 	return ""
 
@@ -694,7 +694,7 @@ func _verify_named_evidence_hashes(entry: Dictionary) -> String:
 		var path := str(paths[key])
 		if not FileAccess.file_exists(path):
 			return "MOTION_GRAMMAR_EVIDENCE_FILE_MISSING:%s" % key
-		if _sha256_file(path) != str(expected[key]).to_lower():
+		if not _sha256_matches(path, str(expected[key])):
 			return "MOTION_GRAMMAR_EVIDENCE_HASH_MISMATCH:%s" % key
 	return ""
 
@@ -713,7 +713,7 @@ func _verify_override_source_hashes(override: Dictionary) -> String:
 			return "MOTION_GRAMMAR_OVERRIDE_HASH_MISSING:%s" % filename
 		if not FileAccess.file_exists(path):
 			return "MOTION_GRAMMAR_OVERRIDE_FILE_MISSING:%s" % filename
-		if _sha256_file(path) != str(expected[filename]).to_lower():
+		if not _sha256_matches(path, str(expected[filename])):
 			return "MOTION_GRAMMAR_OVERRIDE_HASH_MISMATCH:%s" % filename
 	return ""
 
@@ -819,6 +819,26 @@ func _sha256_file(path: String) -> String:
 		context.update(file.get_buffer(mini(65536, file.get_length() - file.get_position())))
 	file.close()
 	return context.finish().hex_encode()
+
+func _sha256_matches(path: String, expected: String) -> bool:
+	var normalized_expected := expected.to_lower()
+	if _sha256_file(path) == normalized_expected:
+		return true
+	# Git may materialize text evidence with CRLF on Windows even though the
+	# frozen manifest was hashed with LF. Only canonicalize that one byte-level
+	# representation difference; binary files and all other changes still fail.
+	if path.get_extension().to_lower() not in ["json", "jsonl", "csv"]:
+		return false
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return false
+	var text := file.get_as_text()
+	file.close()
+	var canonical_bytes := text.replace("\r\n", "\n").to_utf8_buffer()
+	var context := HashingContext.new()
+	context.start(HashingContext.HASH_SHA256)
+	context.update(canonical_bytes)
+	return context.finish().hex_encode() == normalized_expected
 
 func _has_useful_alpha(image: Image) -> bool:
 	var transparent := 0

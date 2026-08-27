@@ -28,6 +28,9 @@ var arena_bounds := Rect2(45, 145, 1190, 530)
 var mechanism_status := ""
 var mechanism_status_time := 0.0
 var last_mechanism_verb := "none"
+var target_mass_class := "medium"
+var armor_integrity := 0.0
+var last_target_interaction: Dictionary = {}
 var _player_hit_this_attack := false
 
 func setup(kind: String, id_value: int, spawn_position: Vector2) -> void:
@@ -37,12 +40,16 @@ func setup(kind: String, id_value: int, spawn_position: Vector2) -> void:
 	if enemy_kind == RAM:
 		max_health = 150.0
 		health = 150.0
+		target_mass_class = "heavy"
+		armor_integrity = 0.65
 		state = "hold_distance"
 		tell_seconds = 0.72
 		recovery_seconds = 1.05
 	else:
 		max_health = 78.0
 		health = 78.0
+		target_mass_class = "medium"
+		armor_integrity = 0.0
 		state = "approach"
 		tell_seconds = 0.48
 		recovery_seconds = 0.62
@@ -105,18 +112,34 @@ func apply_hit(
 
 
 func _apply_mechanism(mechanism: Dictionary) -> void:
+	last_target_interaction = mechanism.duplicate(true)
 	last_mechanism_verb = str(mechanism.get("verb", "none"))
 	mechanism_status = str(mechanism.get("status", ""))
 	mechanism_status_time = maxf(0.0, float(mechanism.get("status_seconds", 0.0)))
+	var armor_before := armor_integrity
+	armor_integrity = maxf(0.0, armor_integrity - float(mechanism.get("armor_damage", 0.0)))
+	if bool(mechanism.get("armor_break", false)) or (armor_before > 0.0 and armor_integrity <= 0.0):
+		last_mechanism_verb = "armor_break"
+		mechanism_status = "ARMOR BROKEN"
+		mechanism_status_time = maxf(mechanism_status_time, 0.72)
 	if bool(mechanism.get("immobilize", false)):
 		velocity = Vector2.ZERO
 	if bool(mechanism.get("control_lock", false)):
 		velocity *= 0.35
+	stagger_time = maxf(stagger_time, float(mechanism.get("stagger_seconds", 0.0)))
 	stagger_time = maxf(stagger_time, mechanism_status_time)
 	recoil_visual_time = maxf(recoil_visual_time, mechanism_status_time)
 	if bool(mechanism.get("interrupts_attack", false)) and state in ["tell", "attack", "charge"]:
 		_enter_state("recovery")
 	mechanism_applied.emit(self, last_mechanism_verb, mechanism_status)
+
+
+func target_interaction_context() -> Dictionary:
+	return {
+		"mass_class": target_mass_class,
+		"armor_integrity": armor_integrity,
+		"state": state,
+	}
 
 func is_attack_dangerous() -> bool:
 	return state in ["attack", "charge"]
@@ -204,6 +227,27 @@ func _draw_mechanism_status() -> void:
 		"sweep_control":
 			color = Color("c084fc")
 			draw_arc(Vector2.ZERO, 43.0, 0.0, TAU, 32, color, 4.0)
+		"entangle":
+			color = Color("c084fc")
+			draw_arc(Vector2.ZERO, 38.0, 0.0, TAU, 28, color, 4.0)
+			draw_arc(Vector2.ZERO, 29.0, 0.0, TAU, 24, color, 3.0)
+		"hook_pull":
+			color = Color("22d3ee")
+			draw_line(Vector2(-42 * facing, 0), Vector2(-12 * facing, 0), color, 4.0)
+			draw_colored_polygon(PackedVector2Array([
+				Vector2(-42 * facing, 0), Vector2(-31 * facing, -8), Vector2(-31 * facing, 8),
+			]), color)
+		"suppress":
+			color = Color("f59e0b")
+			for offset: float in [-9.0, 0.0, 9.0]:
+				draw_line(Vector2(-34, -29 + offset), Vector2(34, -29 + offset), color, 2.0)
+		"armor_break":
+			color = Color("fb7185")
+			draw_line(Vector2(-22, -21), Vector2(5, 6), color, 4.0)
+			draw_line(Vector2(5, 6), Vector2(-3, 23), color, 4.0)
+		"stagger":
+			color = Color("facc15")
+			draw_arc(Vector2.ZERO, 34.0, -2.7, -0.4, 18, color, 3.0)
 	draw_string(
 		ThemeDB.fallback_font,
 		Vector2(-56, -58),

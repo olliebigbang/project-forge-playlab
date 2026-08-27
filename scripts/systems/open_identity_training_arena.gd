@@ -66,11 +66,7 @@ func _update_projectiles(delta: float) -> void:
 			var hit: Dictionary = projectile["hit"]
 			if not hit.has(enemy_id) and Vector2(projectile["pos"]).distance_to(enemy["pos"]) < 23.0:
 				hit[enemy_id] = true
-				_damage_enemy(
-					enemy,
-					_projectile_damage_against(projectile, enemy),
-					float(projectile.get("hit_stagger_seconds", 0.12))
-				)
+				_resolve_projectile_hit(projectile, enemy)
 				match blueprint.effect_type:
 					"thermal_emission": enemy["burn"] = 2.2
 					"electric_current": _chain_damage(enemy, 6.0)
