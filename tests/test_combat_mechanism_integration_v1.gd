@@ -4,6 +4,7 @@ const DRIVER := preload("res://scripts/enemy_attack/enemy_attack_runtime_driver.
 const INTERACTION := preload("res://scripts/combat_feel/weapon_target_interaction_resolver.gd")
 const ENEMY := preload("res://scripts/combat_feel/combat_feel_enemy.gd")
 const ARENA := preload("res://scripts/systems/gameplay_arena.gd")
+const PLAYTEST_SCENE := preload("res://scenes/combat_mechanism_playtest.tscn")
 
 var passed := 0
 var failed := 0
@@ -21,6 +22,7 @@ func _initialize() -> void:
 	_run("Projectile activation preserves its committed direction and compiled lifetime", _test_projectile_activation_event)
 	_run("Marked impact activates at its committed point with the compiled circle", _test_marked_activation_event)
 	_run("Ranged arena materializes and resolves both detached hazard families", _test_arena_detached_hazards)
+	_run("Dedicated playtest opens the formal attack-enabled enemy room", _test_playtest_room_wiring)
 	_run("Runtime bridge remains identity-free and asks no player question", _test_runtime_boundary)
 	print("COMBAT_MECHANISM_INTEGRATION_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
@@ -250,6 +252,29 @@ func _test_arena_detached_hazards() -> Variant:
 		"marked_spawned": marked_spawned,
 		"marked_hit": marked_hit,
 	}
+
+
+func _test_playtest_room_wiring() -> Variant:
+	var playtest: Node2D = PLAYTEST_SCENE.instantiate()
+	playtest._ready()
+	var arena: Node2D = playtest.arena
+	var types: Array[String] = []
+	var compiled_by_type: Dictionary = {}
+	for enemy: Dictionary in arena.enemies:
+		var enemy_type := str(enemy.get("type", ""))
+		types.append(enemy_type)
+		compiled_by_type[enemy_type] = bool(enemy.get("compiled_attacks_ready", false))
+	var wired: bool = arena.stage_name == "room_2"
+	wired = wired and types == ["guard", "rusher", "swarmling"]
+	wired = wired and bool(compiled_by_type.get("guard", false))
+	wired = wired and bool(compiled_by_type.get("rusher", false))
+	var diagnostics := {
+		"stage_name": arena.stage_name,
+		"enemy_types": types,
+		"compiled_by_type": compiled_by_type,
+	}
+	playtest.free()
+	return true if wired else diagnostics
 
 
 func _control_outcome(level: String, context: Dictionary) -> Dictionary:
