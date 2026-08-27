@@ -211,7 +211,7 @@ static func resolve(
 		armor_break
 	)
 	var target_state := str(target_context.get("state", ""))
-	var interrupts := target_state in ["tell", "attack", "charge"] and (
+	var interrupts := target_state in ["tell", "attack", "charge", "telegraph", "commit", "active"] and (
 		stagger_seconds >= 0.28
 		or pin_seconds >= 0.18
 		or entangle_seconds >= 0.22
@@ -240,6 +240,7 @@ static func resolve(
 		"displacement_pixels": 22.0 * displacement_scale,
 		"displacement_mode": displacement_mode,
 		"stagger": stagger_strength,
+		"interrupt_strength": stagger_strength,
 		"stagger_seconds": stagger_seconds,
 		"armor_damage": armor_damage,
 		"armor_break": armor_break,

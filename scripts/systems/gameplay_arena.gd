@@ -7,6 +7,7 @@ signal metrics_changed(metrics: Dictionary)
 const RULES := preload("res://scripts/systems/combat_rules.gd")
 const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
 const TARGET_INTERACTION := preload("res://scripts/combat_feel/weapon_target_interaction_resolver.gd")
+const ENEMY_ATTACK_RUNTIME := preload("res://scripts/enemy_attack/enemy_attack_runtime_driver.gd")
 const WORLD_RECT := Rect2(34, 116, 1212, 568)
 
 const TARGET_MECHANICAL_PROFILES := {
@@ -15,6 +16,44 @@ const TARGET_MECHANICAL_PROFILES := {
 	"guard": {"mass_class": "heavy", "armor_integrity": 1.0},
 	"target": {"mass_class": "medium", "armor_integrity": 0.0},
 	"moving_target": {"mass_class": "medium", "armor_integrity": 0.0},
+}
+const TARGET_ATTACK_DECLARATIONS := {
+	"swarmling": [{
+		"attack_key": "slot_quick_contact",
+		"axes": {
+			"delivery": "contact", "target_lock": "live_until_active",
+			"hit_shape": "capsule", "depth_path": "same_lane", "tempo": "quick",
+			"stability": "fragile", "recovery": "brief",
+		},
+		"selection": {
+			"preferred_range": "close", "depth_fit": "aligned", "base_priority": 65,
+			"coordination_cost": 1, "requires_clear_path": false, "selection_rank": 10,
+		},
+	}],
+	"rusher": [{
+		"attack_key": "slot_locked_rush",
+		"axes": {
+			"delivery": "rush", "target_lock": "direction_on_commit",
+			"hit_shape": "strip", "depth_path": "cross_depth", "tempo": "committed",
+			"stability": "tell_interruptible", "recovery": "extended",
+		},
+		"selection": {
+			"preferred_range": "mid", "depth_fit": "tolerant", "base_priority": 72,
+			"coordination_cost": 1, "requires_clear_path": true, "selection_rank": 10,
+		},
+	}],
+	"guard": [{
+		"attack_key": "slot_guard_arc",
+		"axes": {
+			"delivery": "contact", "target_lock": "direction_on_commit",
+			"hit_shape": "arc", "depth_path": "same_lane", "tempo": "standard",
+			"stability": "armored_commit", "recovery": "punishable",
+		},
+		"selection": {
+			"preferred_range": "close", "depth_fit": "aligned", "base_priority": 58,
+			"coordination_cost": 1, "requires_clear_path": false, "selection_rank": 10,
+		},
+	}],
 }
 
 var stage_name := "training"
@@ -393,6 +432,14 @@ func _update_enemies(delta: float) -> void:
 			continue
 		var to_player := player_position - Vector2(enemy["pos"])
 		enemy["facing"] = signf(to_player.x)
+		var attack_runtime: Variant = enemy.get("attack_runtime", null)
+		if bool(enemy.get("compiled_attacks_ready", false)) and attack_runtime != null:
+			if attack_runtime.is_running():
+				_update_compiled_enemy_attack(enemy, attack_runtime, delta)
+				continue
+			if not _target_is_immobilized(enemy) and float(enemy.get("suppression_seconds", 0.0)) <= 0.0:
+				if _begin_compiled_enemy_attack(enemy, attack_runtime, to_player):
+					continue
 		if _target_is_immobilized(enemy):
 			continue
 		var speed := 54.0
@@ -411,7 +458,7 @@ func _update_enemies(delta: float) -> void:
 			enemy["cooldown"] = maxf(float(enemy.get("cooldown", 0.0)), 0.18)
 		if to_player.length() > 28.0:
 			enemy["pos"] = Vector2(enemy["pos"]) + to_player.normalized() * speed * delta
-		elif float(enemy["cooldown"]) <= 0.0 and invulnerable_timer <= 0.0:
+		elif not bool(enemy.get("compiled_attacks_ready", false)) and float(enemy["cooldown"]) <= 0.0 and invulnerable_timer <= 0.0:
 			var damage := 5.0 if enemy["type"] == "swarmling" else 9.0
 			player_health = maxf(1.0, player_health - damage)
 			metrics["damage_taken"] = float(metrics["damage_taken"]) + damage
@@ -425,6 +472,44 @@ func _update_enemies(delta: float) -> void:
 func _damage_enemy(enemy: Dictionary, amount: float, hurt_seconds: float = 0.12) -> void:
 	enemy["hp"] = float(enemy["hp"]) - amount
 	enemy["hurt"] = maxf(float(enemy.get("hurt", 0.0)), hurt_seconds)
+
+
+func _begin_compiled_enemy_attack(enemy: Dictionary, attack_runtime: Variant, to_player: Vector2) -> bool:
+	var selected: Dictionary = attack_runtime.begin_attack({
+		"distance_pixels": to_player.length(),
+		"depth_delta_pixels": to_player.y,
+		"available_coordination_budget": 1,
+		"clear_path": true,
+	}, Vector2(enemy["pos"]), player_position)
+	if not bool(selected.get("ok", false)):
+		return false
+	enemy["attack_phase"] = "telegraph"
+	enemy["last_attack_mechanism"] = selected.duplicate(true)
+	return true
+
+
+func _update_compiled_enemy_attack(enemy: Dictionary, attack_runtime: Variant, delta: float) -> void:
+	var result: Dictionary = attack_runtime.step(delta, Vector2(enemy["pos"]), player_position)
+	enemy["attack_phase"] = str(result.get("phase", "idle"))
+	enemy["last_attack_mechanism"] = result.duplicate(true)
+	var delivery := str(result.get("delivery", attack_runtime.current_delivery()))
+	var active_seconds := float(result.get("active_seconds_this_step", 0.0))
+	if active_seconds <= 0.0:
+		return
+	if delivery == "rush" and not _target_is_immobilized(enemy):
+		var motion := result.get("attack_motion", {}) as Dictionary
+		var direction: Vector2 = Vector2(result.get("locked_direction", Vector2(float(enemy.get("facing", -1.0)), 0.0)))
+		enemy["pos"] = Vector2(enemy["pos"]) + direction * float(motion.get("travel_speed_pixels_per_second", 0.0)) * active_seconds
+	if attack_runtime.active_hit_registered or invulnerable_timer > 0.0:
+		return
+	if not attack_runtime.current_hit_contains(Vector2(enemy["pos"]), player_position):
+		return
+	attack_runtime.register_active_hit()
+	var damage: float = float({"contact": 6.0, "rush": 12.0, "projectile": 8.0, "marked_impact": 10.0}.get(delivery, 6.0))
+	player_health = maxf(1.0, player_health - damage)
+	metrics["damage_taken"] = float(metrics["damage_taken"]) + damage
+	flash_timer = 0.14
+	metrics_changed.emit(metrics)
 
 
 func _resolve_projectile_hit(projectile: Dictionary, enemy: Dictionary) -> Dictionary:
@@ -457,10 +542,14 @@ func _resolve_projectile_hit(projectile: Dictionary, enemy: Dictionary) -> Dicti
 
 
 func _target_interaction_context(enemy: Dictionary) -> Dictionary:
+	var attack_state := "attack" if float(enemy.get("cooldown", 0.0)) <= 0.0 else "recovery"
+	var attack_runtime: Variant = enemy.get("attack_runtime", null)
+	if attack_runtime != null and attack_runtime.is_running():
+		attack_state = str(attack_runtime.phase)
 	return {
 		"mass_class": str(enemy.get("mass_class", "medium")),
 		"armor_integrity": float(enemy.get("armor_integrity", 0.0)),
-		"state": "attack" if float(enemy.get("cooldown", 0.0)) <= 0.0 else "recovery",
+		"state": attack_state,
 	}
 
 
@@ -481,6 +570,11 @@ func _apply_target_interaction(enemy: Dictionary, outcome: Dictionary) -> void:
 	enemy["entangle_seconds"] = maxf(float(enemy.get("entangle_seconds", 0.0)), float(outcome.get("entangle_seconds", 0.0)))
 	enemy["suppression_seconds"] = maxf(float(enemy.get("suppression_seconds", 0.0)), float(outcome.get("suppression_seconds", 0.0)))
 	enemy["last_target_interaction"] = outcome.duplicate(true)
+	var attack_runtime: Variant = enemy.get("attack_runtime", null)
+	if attack_runtime != null and attack_runtime.is_running():
+		var interrupt_result: Dictionary = attack_runtime.try_interrupt(outcome)
+		if bool(interrupt_result.get("interrupted", false)):
+			enemy["attack_phase"] = "recovery"
 	var displacement: Vector2 = outcome.get("knockback", Vector2.ZERO)
 	match str(outcome.get("displacement_mode", "away")):
 		"hold": displacement = Vector2.ZERO
@@ -549,6 +643,9 @@ func _spawn_stage() -> void:
 
 func _spawn_enemy(type_name: String, position: Vector2, health: float) -> void:
 	var mechanical: Dictionary = (TARGET_MECHANICAL_PROFILES.get(type_name, TARGET_MECHANICAL_PROFILES["target"]) as Dictionary).duplicate(true)
+	var attack_runtime: RefCounted = ENEMY_ATTACK_RUNTIME.new()
+	var declarations: Array = (TARGET_ATTACK_DECLARATIONS.get(type_name, []) as Array).duplicate(true)
+	var attack_configuration: Dictionary = attack_runtime.configure(declarations) if not declarations.is_empty() else {"ok": false}
 	enemies.append({
 		"id": enemies.size() + 1, "type": type_name, "pos": position, "hp": health,
 		"max_hp": health, "facing": -1.0, "cooldown": 0.0, "hurt": 0.0,
@@ -558,6 +655,9 @@ func _spawn_enemy(type_name: String, position: Vector2, health: float) -> void:
 		"pin_seconds": 0.0, "entangle_seconds": 0.0, "suppression_seconds": 0.0,
 		"interaction_status": "", "interaction_status_time": 0.0,
 		"last_target_interaction": {},
+		"attack_runtime": attack_runtime,
+		"compiled_attacks_ready": bool(attack_configuration.get("ok", false)),
+		"attack_phase": "idle", "last_attack_mechanism": {},
 	})
 
 func _muzzle_world() -> Vector2:
@@ -706,11 +806,35 @@ func _draw_enemies() -> void:
 				draw_circle(position - Vector2(0, 33), 25.0, Color("ef4444"), false, 7.0)
 		if float(enemy.get("burn", 0.0)) > 0.0:
 			draw_circle(position + Vector2(0, -30), 8.0, Color("38bdf8"))
+		_draw_enemy_attack_preview(enemy)
 		_draw_target_interaction(enemy)
 		var max_hp := float(enemy["max_hp"])
 		var ratio := clampf(float(enemy["hp"]) / maxf(1.0, max_hp), 0.0, 1.0)
 		draw_rect(Rect2(position + Vector2(-24, -40), Vector2(48, 5)), Color("0f172a"), true)
 		draw_rect(Rect2(position + Vector2(-24, -40), Vector2(48 * ratio, 5)), Color("4ade80"), true)
+
+
+func _draw_enemy_attack_preview(enemy: Dictionary) -> void:
+	var attack_runtime: Variant = enemy.get("attack_runtime", null)
+	if attack_runtime == null or not attack_runtime.is_telegraphing() or attack_runtime.current_attack.is_empty():
+		return
+	var region := attack_runtime.current_attack.get("hit_region", {}) as Dictionary
+	var origin: Vector2 = Vector2(enemy["pos"])
+	var direction: Vector2 = Vector2(attack_runtime.locked_direction).normalized()
+	var color := Color(1.0, 0.28, 0.20, 0.58)
+	match str(region.get("shape", "capsule")):
+		"arc":
+			var half_arc := deg_to_rad(float(region.get("arc_degrees", 0.0)) * 0.5)
+			var angle := direction.angle()
+			draw_arc(origin, float(region.get("radius_pixels", 0.0)), angle - half_arc, angle + half_arc, 24, color, 4.0)
+		"circle":
+			draw_circle(Vector2(attack_runtime.locked_point), float(region.get("radius_pixels", 0.0)), color, false, 4.0)
+		"strip", "capsule":
+			var length := float(region.get("length_pixels", 0.0))
+			var side: Vector2 = direction.orthogonal() * float(region.get("width_pixels", 0.0)) * 0.5
+			draw_line(origin + side, origin + direction * length + side, color, 3.0)
+			draw_line(origin - side, origin + direction * length - side, color, 3.0)
+			draw_line(origin + direction * length + side, origin + direction * length - side, color, 3.0)
 
 
 func _draw_target_interaction(enemy: Dictionary) -> void:

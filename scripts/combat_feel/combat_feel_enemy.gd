@@ -5,8 +5,34 @@ signal player_struck(damage: float, direction: Vector2)
 signal defeated(enemy: Node2D)
 signal mechanism_applied(enemy: Node2D, verb: String, status: String)
 
+const ATTACK_RUNTIME := preload("res://scripts/enemy_attack/enemy_attack_runtime_driver.gd")
 const PUPPET := "slag_puppet"
 const RAM := "forge_ram"
+
+const PUPPET_ATTACK_DECLARATIONS := [{
+	"attack_key": "slot_contact_arc",
+	"axes": {
+		"delivery": "contact", "target_lock": "live_until_active",
+		"hit_shape": "arc", "depth_path": "same_lane", "tempo": "standard",
+		"stability": "fragile", "recovery": "punishable",
+	},
+	"selection": {
+		"preferred_range": "close", "depth_fit": "aligned", "base_priority": 60,
+		"coordination_cost": 1, "requires_clear_path": false, "selection_rank": 10,
+	},
+}]
+const RAM_ATTACK_DECLARATIONS := [{
+	"attack_key": "slot_locked_rush",
+	"axes": {
+		"delivery": "rush", "target_lock": "direction_on_commit",
+		"hit_shape": "strip", "depth_path": "cross_depth", "tempo": "committed",
+		"stability": "armored_commit", "recovery": "extended",
+	},
+	"selection": {
+		"preferred_range": "mid", "depth_fit": "tolerant", "base_priority": 70,
+		"coordination_cost": 1, "requires_clear_path": true, "selection_rank": 10,
+	},
+}]
 
 var enemy_id := 0
 var enemy_kind := PUPPET
@@ -31,6 +57,8 @@ var last_mechanism_verb := "none"
 var target_mass_class := "medium"
 var armor_integrity := 0.0
 var last_target_interaction: Dictionary = {}
+var attack_runtime: RefCounted = ATTACK_RUNTIME.new()
+var compiled_attacks_ready := false
 var _player_hit_this_attack := false
 
 func setup(kind: String, id_value: int, spawn_position: Vector2) -> void:
@@ -53,6 +81,12 @@ func setup(kind: String, id_value: int, spawn_position: Vector2) -> void:
 		state = "approach"
 		tell_seconds = 0.48
 		recovery_seconds = 0.62
+	var declarations: Array = RAM_ATTACK_DECLARATIONS if enemy_kind == RAM else PUPPET_ATTACK_DECLARATIONS
+	var configured: Dictionary = attack_runtime.configure(declarations)
+	compiled_attacks_ready = bool(configured.get("ok", false))
+	if compiled_attacks_ready:
+		tell_seconds = attack_runtime.telegraph_total_seconds()
+		recovery_seconds = attack_runtime.recovery_total_seconds()
 	queue_redraw()
 
 func simulate(delta: float, player_position: Vector2, frozen: bool = false) -> void:
@@ -77,6 +111,12 @@ func simulate(delta: float, player_position: Vector2, frozen: bool = false) -> v
 		queue_redraw()
 		return
 	state_time += delta
+	if attack_runtime.is_running():
+		_simulate_compiled_attack(delta, player_position)
+		position.x = clampf(position.x, arena_bounds.position.x + 24.0, arena_bounds.end.x - 24.0)
+		position.y = clampf(position.y, arena_bounds.position.y + 35.0, arena_bounds.end.y - 20.0)
+		queue_redraw()
+		return
 	if enemy_kind == RAM: _simulate_ram(delta, player_position)
 	else: _simulate_puppet(delta, player_position)
 	position.x = clampf(position.x, arena_bounds.position.x + 24.0, arena_bounds.end.x - 24.0)
@@ -129,7 +169,16 @@ func _apply_mechanism(mechanism: Dictionary) -> void:
 	stagger_time = maxf(stagger_time, float(mechanism.get("stagger_seconds", 0.0)))
 	stagger_time = maxf(stagger_time, mechanism_status_time)
 	recoil_visual_time = maxf(recoil_visual_time, mechanism_status_time)
-	if bool(mechanism.get("interrupts_attack", false)) and state in ["tell", "attack", "charge"]:
+	var runtime_interrupt := {"interrupted": false}
+	if attack_runtime.is_running():
+		runtime_interrupt = attack_runtime.try_interrupt(mechanism)
+	if bool(runtime_interrupt.get("interrupted", false)):
+		_set_runtime_state("recovery")
+	elif attack_runtime.is_running() and str(runtime_interrupt.get("reason", "")) == "PHASE_PROTECTED":
+		# The hit still deals damage and can move the target, but a protected
+		# committed phase is not silently converted into a cancelled attack.
+		stagger_time = minf(stagger_time, 0.05)
+	elif bool(mechanism.get("interrupts_attack", false)) and state in ["tell", "attack", "charge"]:
 		_enter_state("recovery")
 	mechanism_applied.emit(self, last_mechanism_verb, mechanism_status)
 
@@ -138,16 +187,17 @@ func target_interaction_context() -> Dictionary:
 	return {
 		"mass_class": target_mass_class,
 		"armor_integrity": armor_integrity,
-		"state": state,
+		"state": attack_runtime.phase if attack_runtime.is_running() else state,
 	}
 
 func is_attack_dangerous() -> bool:
-	return state in ["attack", "charge"]
+	return attack_runtime.is_attack_dangerous() if attack_runtime.is_running() else state in ["attack", "charge"]
 
 func is_telegraphing() -> bool:
-	return state == "tell"
+	return attack_runtime.is_telegraphing() if attack_runtime.is_running() else state == "tell"
 
 func force_state(next_state: String) -> void:
+	attack_runtime.reset()
 	state = next_state
 	state_time = 0.0
 	queue_redraw()
@@ -158,7 +208,7 @@ func _simulate_puppet(delta: float, player_position: Vector2) -> void:
 	match state:
 		"approach":
 			if to_player.length() > 78.0: position += to_player.normalized() * 55.0 * delta
-			else: _enter_state("tell")
+			elif not _begin_compiled_attack(player_position): _enter_state("tell")
 		"tell":
 			if state_time >= tell_seconds: _enter_state("attack")
 		"attack":
@@ -178,7 +228,7 @@ func _simulate_ram(delta: float, player_position: Vector2) -> void:
 			var desired := 260.0
 			if to_player.length() < desired - 45.0: position -= to_player.normalized() * 44.0 * delta
 			elif to_player.length() > desired + 55.0: position += to_player.normalized() * 38.0 * delta
-			if state_time >= 0.82: _enter_state("tell")
+			if state_time >= 0.82 and not _begin_compiled_attack(player_position): _enter_state("tell")
 		"tell":
 			if state_time >= tell_seconds:
 				locked_direction = to_player.normalized()
@@ -197,13 +247,86 @@ func _enter_state(next_state: String) -> void:
 	state_time = 0.0
 	_player_hit_this_attack = false
 
+
+func _begin_compiled_attack(player_position: Vector2) -> bool:
+	if not compiled_attacks_ready:
+		return false
+	var to_player := player_position - position
+	var selected: Dictionary = attack_runtime.begin_attack({
+		"distance_pixels": to_player.length(),
+		"depth_delta_pixels": to_player.y,
+		"available_coordination_budget": 1,
+		"clear_path": true,
+	}, position, player_position)
+	if not bool(selected.get("ok", false)):
+		return false
+	locked_direction = Vector2(selected.get("locked_direction", locked_direction))
+	tell_seconds = attack_runtime.telegraph_total_seconds()
+	recovery_seconds = attack_runtime.recovery_total_seconds()
+	_set_runtime_state("tell")
+	return true
+
+
+func _simulate_compiled_attack(delta: float, player_position: Vector2) -> void:
+	var result: Dictionary = attack_runtime.step(delta, position, player_position)
+	locked_direction = Vector2(result.get("locked_direction", locked_direction))
+	var delivery := str(result.get("delivery", attack_runtime.current_delivery()))
+	match str(result.get("phase", "idle")):
+		"telegraph", "commit": _set_runtime_state("tell")
+		"active": _set_runtime_state("charge" if delivery == "rush" else "attack")
+		"recovery": _set_runtime_state("recovery")
+		"idle": _set_runtime_state("hold_distance" if enemy_kind == RAM else "approach")
+	var active_seconds := float(result.get("active_seconds_this_step", 0.0))
+	if active_seconds > 0.0:
+		var motion := result.get("attack_motion", {}) as Dictionary
+		if delivery == "rush":
+			position += locked_direction * float(motion.get("travel_speed_pixels_per_second", 0.0)) * active_seconds
+		if not attack_runtime.active_hit_registered and attack_runtime.current_hit_contains(position, player_position):
+			attack_runtime.register_active_hit()
+			var damage: float = float({"contact": 9.0, "rush": 18.0, "projectile": 11.0, "marked_impact": 14.0}.get(delivery, 9.0))
+			player_struck.emit(float(damage), locked_direction)
+	if delivery == "rush" and attack_runtime.phase == "active" and not arena_bounds.grow(-12.0).has_point(position):
+		attack_runtime.force_recovery("arena_boundary")
+		_set_runtime_state("recovery")
+
+
+func _set_runtime_state(next_state: String) -> void:
+	if state != next_state:
+		state = next_state
+		state_time = 0.0
+		_player_hit_this_attack = false
+
 func _draw() -> void:
 	if enemy_kind == RAM: _draw_ram()
 	else: _draw_puppet()
+	_draw_compiled_attack_preview()
 	var ratio := clampf(health / maxf(1.0, max_health), 0.0, 1.0)
 	draw_rect(Rect2(-28, -50, 56, 5), Color("14202b"), true)
 	draw_rect(Rect2(-28, -50, 56 * ratio, 5), Color("6ee7a8"), true)
 	_draw_mechanism_status()
+
+
+func _draw_compiled_attack_preview() -> void:
+	if not attack_runtime.is_telegraphing() or attack_runtime.current_attack.is_empty():
+		return
+	var region := attack_runtime.current_attack.get("hit_region", {}) as Dictionary
+	var color := Color(1.0, 0.28, 0.20, 0.62)
+	var direction: Vector2 = Vector2(attack_runtime.locked_direction).normalized()
+	var angle: float = direction.angle()
+	match str(region.get("shape", "capsule")):
+		"arc":
+			var half_arc := deg_to_rad(float(region.get("arc_degrees", 0.0)) * 0.5)
+			draw_arc(Vector2.ZERO, float(region.get("radius_pixels", 0.0)), angle - half_arc, angle + half_arc, 24, color, 4.0)
+		"circle":
+			var local_point: Vector2 = Vector2(attack_runtime.locked_point) - position
+			draw_circle(local_point, float(region.get("radius_pixels", 0.0)), color, false, 4.0)
+		"strip", "capsule":
+			var length := float(region.get("length_pixels", 0.0))
+			var half_width := float(region.get("width_pixels", 0.0)) * 0.5
+			var side: Vector2 = direction.orthogonal() * half_width
+			draw_line(side, direction * length + side, color, 3.0)
+			draw_line(-side, direction * length - side, color, 3.0)
+			draw_line(direction * length + side, direction * length - side, color, 3.0)
 
 
 func _draw_mechanism_status() -> void:

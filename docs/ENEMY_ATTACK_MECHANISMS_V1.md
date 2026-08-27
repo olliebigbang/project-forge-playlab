@@ -10,6 +10,11 @@ The slice does not infer an attack from an enemy name, change player weapon
 parsing, ask the player how an attack should work, or connect the result to a
 scene or enemy state machine.
 
+Integration note: this document records the original isolated compiler slice.
+The later scene/state-machine connection lives in
+`docs/COMBAT_MECHANISM_INTEGRATION_V1.md` and keeps these compiler boundaries
+unchanged.
+
 ## File boundary
 
 The implementation is isolated to:
