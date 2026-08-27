@@ -4,6 +4,7 @@ const DRIVER := preload("res://scripts/enemy_attack/enemy_attack_runtime_driver.
 const INTERACTION := preload("res://scripts/combat_feel/weapon_target_interaction_resolver.gd")
 const ENEMY := preload("res://scripts/combat_feel/combat_feel_enemy.gd")
 const ARENA := preload("res://scripts/systems/gameplay_arena.gd")
+const ATTACK_VISUAL := preload("res://scripts/enemy_attack/enemy_attack_visual_language.gd")
 const PLAYTEST_SCENE := preload("res://scenes/combat_mechanism_playtest.tscn")
 
 var passed := 0
@@ -23,6 +24,7 @@ func _initialize() -> void:
 	_run("Marked impact activates at its committed point with the compiled circle", _test_marked_activation_event)
 	_run("Ranged arena materializes and resolves both detached hazard families", _test_arena_detached_hazards)
 	_run("Dedicated playtest opens the formal attack-enabled enemy room", _test_playtest_room_wiring)
+	_run("Attack-axis visual language is distinct and identity-free", _test_attack_axis_visual_language)
 	_run("Runtime bridge remains identity-free and asks no player question", _test_runtime_boundary)
 	print("COMBAT_MECHANISM_INTEGRATION_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
@@ -275,6 +277,69 @@ func _test_playtest_room_wiring() -> Variant:
 	}
 	playtest.free()
 	return true if wired else diagnostics
+
+
+func _test_attack_axis_visual_language() -> Variant:
+	var declarations: Array[Dictionary] = [
+		_declaration({"target_lock": "live_until_active", "stability": "fragile", "recovery": "brief"}),
+		_declaration({
+			"delivery": "rush", "target_lock": "direction_on_commit", "hit_shape": "strip",
+			"depth_path": "cross_depth", "tempo": "committed", "stability": "armored_commit",
+			"recovery": "extended",
+		}),
+		_declaration({
+			"delivery": "projectile", "target_lock": "direction_on_commit", "hit_shape": "capsule",
+			"tempo": "standard", "stability": "tell_interruptible", "recovery": "punishable",
+		}),
+		_declaration({
+			"delivery": "marked_impact", "target_lock": "point_on_commit", "hit_shape": "circle",
+			"depth_path": "depth_band", "tempo": "committed", "stability": "fragile",
+			"recovery": "extended",
+		}),
+	]
+	var marker_families: Dictionary = {}
+	var visuals: Array[Dictionary] = []
+	for declaration: Dictionary in declarations:
+		var driver: RefCounted = DRIVER.new()
+		var configured: Dictionary = driver.configure([declaration])
+		if not bool(configured.get("ok", false)):
+			return configured
+		var visual: Dictionary = ATTACK_VISUAL.compile(driver.compiled_attacks[0])
+		if not bool(visual.get("ok", false)):
+			return visual
+		marker_families[str(visual.get("marker_family", ""))] = true
+		visuals.append(visual)
+	var contact := visuals[0]
+	var rush := visuals[1]
+	var projectile := visuals[2]
+	var marked := visuals[3]
+	var owners := projectile.get("visual_parameter_owners", {}) as Dictionary
+	var source := FileAccess.get_file_as_string("res://scripts/enemy_attack/enemy_attack_visual_language.gd").to_lower()
+	var identity_free := true
+	for forbidden: String in ["guard", "rusher", "swarmling", "enemy_type", "enemy_kind"]:
+		identity_free = identity_free and not source.contains(forbidden)
+	var ok := marker_families.size() == 4
+	ok = ok and str(contact.get("lock_marker", "")) == "tracking_tether"
+	ok = ok and str(rush.get("lock_marker", "")) == "direction_gate"
+	ok = ok and str(marked.get("lock_marker", "")) == "point_brackets"
+	ok = ok and str(contact.get("stability_marker", "")) == "broken_ring"
+	ok = ok and str(rush.get("stability_marker", "")) == "shield_frame"
+	ok = ok and str(projectile.get("stability_marker", "")) == "open_ring"
+	ok = ok and float(contact.get("pulse_hz", 0.0)) > float(marked.get("pulse_hz", 0.0))
+	ok = ok and str(rush.get("recovery_marker", "")) == "triple_bars"
+	ok = ok and str(projectile.get("recovery_marker", "")) == "double_bars"
+	ok = ok and str(owners.get("marker_family", "")) == "delivery"
+	ok = ok and str(owners.get("lock_marker", "")) == "target_lock"
+	ok = ok and str(owners.get("pulse_hz", "")) == "tempo"
+	ok = ok and str(owners.get("stability_marker", "")) == "stability"
+	ok = ok and str(owners.get("recovery_marker", "")) == "recovery"
+	ok = ok and identity_free and not bool(projectile.get("identity_inputs_used", true))
+	return true if ok else {
+		"visuals": visuals,
+		"marker_families": marker_families.keys(),
+		"identity_free": identity_free,
+		"owners": owners,
+	}
 
 
 func _control_outcome(level: String, context: Dictionary) -> Dictionary:

@@ -45,7 +45,7 @@ func _process(_delta: float) -> void:
 		"敌人攻击 × 武器反应 试玩\n"
 		+ "WASD/方向键移动　空格或 J 射击　Shift 或 K 闪避　R 重开　Esc 退出\n"
 		+ "生命 %.0f　敌方弹体/地面危险区 %d\n" % [float(arena.player_health), arena.enemy_attack_hazards.size()]
-		+ "观察：橙色虚线→Guard 弹体；红色落点圈→Rusher 地面攻击\n"
+		+ "看图形：断续射线＝弹体　连续箭头＝冲撞　同心准星＝落点　短扇形＝近战\n"
 		+ "敌人状态：" + "　|　".join(enemy_lines)
 	)
 

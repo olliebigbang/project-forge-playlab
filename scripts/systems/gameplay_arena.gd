@@ -8,6 +8,7 @@ const RULES := preload("res://scripts/systems/combat_rules.gd")
 const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
 const TARGET_INTERACTION := preload("res://scripts/combat_feel/weapon_target_interaction_resolver.gd")
 const ENEMY_ATTACK_RUNTIME := preload("res://scripts/enemy_attack/enemy_attack_runtime_driver.gd")
+const ENEMY_ATTACK_VISUAL := preload("res://scripts/enemy_attack/enemy_attack_visual_language.gd")
 const WORLD_RECT := Rect2(34, 116, 1212, 568)
 
 const TARGET_MECHANICAL_PROFILES := {
@@ -924,41 +925,168 @@ func _draw_enemies() -> void:
 
 func _draw_enemy_attack_preview(enemy: Dictionary) -> void:
 	var attack_runtime: Variant = enemy.get("attack_runtime", null)
-	if attack_runtime == null or not attack_runtime.is_telegraphing() or attack_runtime.current_attack.is_empty():
+	if attack_runtime == null or attack_runtime.current_attack.is_empty():
 		return
-	var region := attack_runtime.current_attack.get("hit_region", {}) as Dictionary
-	var attack_axes := attack_runtime.current_attack.get("axes", {}) as Dictionary
-	var attack_motion := attack_runtime.current_attack.get("attack_motion", {}) as Dictionary
+	var visual: Dictionary = ENEMY_ATTACK_VISUAL.compile(attack_runtime.current_attack)
+	if not bool(visual.get("ok", false)):
+		return
+	var phase := str(attack_runtime.phase)
+	var color := Color(str(visual.get("primary_color", "fb7185")))
+	var pulse_hz := float(visual.get("pulse_hz", 3.0))
+	var pulse := 0.5 + 0.5 * sin(float(attack_runtime.phase_elapsed) * TAU * pulse_hz)
+	color.a = 0.48 + pulse * 0.26
 	var origin: Vector2 = Vector2(enemy["pos"])
+	if phase == "recovery":
+		_draw_enemy_attack_recovery(origin, visual, color)
+		return
+	if phase not in ["telegraph", "commit", "active"]:
+		return
+	if phase == "commit":
+		color.a = 0.84
+	elif phase == "active":
+		color.a = 0.96
+	var region := attack_runtime.current_attack.get("hit_region", {}) as Dictionary
+	var attack_motion := attack_runtime.current_attack.get("attack_motion", {}) as Dictionary
 	var direction: Vector2 = Vector2(attack_runtime.locked_direction).normalized()
-	var color := Color(1.0, 0.28, 0.20, 0.58)
-	if str(attack_axes.get("delivery", "")) == "projectile":
-		var path_length := minf(
-			720.0,
-			float(attack_motion.get("travel_speed_pixels_per_second", 0.0))
-				* float(attack_motion.get("hazard_lifetime_seconds", 0.0))
-		)
-		for segment_index: int in range(0, int(path_length), 32):
-			var segment_start := origin + direction * float(segment_index)
-			var segment_end := origin + direction * minf(path_length, float(segment_index + 18))
-			draw_line(segment_start, segment_end, Color(1.0, 0.52, 0.22, 0.42), 2.0)
+	if direction.is_zero_approx():
+		direction = Vector2(float(enemy.get("facing", -1.0)), 0.0)
+	var shape_origin := origin
+	if str(region.get("origin_mode", "attacker")) == "locked_point":
+		shape_origin = Vector2(attack_runtime.locked_point)
+	_draw_attack_hit_region(shape_origin, direction, region, color)
+	var marker_origin := shape_origin if str(visual.get("marker_family", "")) == "concentric_target" else origin
+	_draw_attack_delivery_marker(marker_origin, direction, region, attack_motion, visual, color)
+	_draw_attack_lock_marker(origin, direction, region, attack_runtime, visual, color)
+	_draw_attack_stability_marker(origin, phase, visual, color)
+
+
+func _draw_attack_hit_region(origin: Vector2, direction: Vector2, region: Dictionary, color: Color) -> void:
 	match str(region.get("shape", "capsule")):
 		"arc":
 			var half_arc := deg_to_rad(float(region.get("arc_degrees", 0.0)) * 0.5)
 			var angle := direction.angle()
 			draw_arc(origin, float(region.get("radius_pixels", 0.0)), angle - half_arc, angle + half_arc, 24, color, 4.0)
 		"circle":
-			var impact_point: Vector2 = Vector2(attack_runtime.locked_point)
 			var impact_radius := float(region.get("radius_pixels", 0.0))
-			draw_circle(impact_point, impact_radius, color, false, 4.0)
-			draw_line(impact_point - Vector2(10, 0), impact_point + Vector2(10, 0), color, 3.0)
-			draw_line(impact_point - Vector2(0, 10), impact_point + Vector2(0, 10), color, 3.0)
+			var fill := color
+			fill.a *= 0.16
+			draw_circle(origin, impact_radius, fill)
+			draw_arc(origin, impact_radius, 0.0, TAU, 32, color, 4.0)
 		"strip", "capsule":
 			var length := float(region.get("length_pixels", 0.0))
 			var side: Vector2 = direction.orthogonal() * float(region.get("width_pixels", 0.0)) * 0.5
 			draw_line(origin + side, origin + direction * length + side, color, 3.0)
 			draw_line(origin - side, origin + direction * length - side, color, 3.0)
 			draw_line(origin + direction * length + side, origin + direction * length - side, color, 3.0)
+
+
+func _draw_attack_delivery_marker(
+	origin: Vector2,
+	direction: Vector2,
+	region: Dictionary,
+	attack_motion: Dictionary,
+	visual: Dictionary,
+	color: Color
+) -> void:
+	var side := direction.orthogonal()
+	match str(visual.get("marker_family", "body_sweep")):
+		"chevron_lane":
+			var length := maxf(72.0, float(region.get("length_pixels", 0.0)))
+			for amount: float in [0.28, 0.52, 0.76]:
+				var center := origin + direction * length * amount
+				var tip := center + direction * 10.0
+				draw_line(center - direction * 9.0 + side * 9.0, tip, color, 4.0)
+				draw_line(center - direction * 9.0 - side * 9.0, tip, color, 4.0)
+		"dashed_launch":
+			var path_length := minf(
+				720.0,
+				float(attack_motion.get("travel_speed_pixels_per_second", 0.0))
+					* float(attack_motion.get("hazard_lifetime_seconds", 0.0))
+			)
+			for segment_index: int in range(0, int(path_length), 32):
+				var segment_start := origin + direction * float(segment_index)
+				var segment_end := origin + direction * minf(path_length, float(segment_index + 18))
+				draw_line(segment_start, segment_end, color, 3.0)
+			var diamond := PackedVector2Array([
+				origin + direction * 11.0,
+				origin + side * 9.0,
+				origin - direction * 11.0,
+				origin - side * 9.0,
+				origin + direction * 11.0,
+			])
+			draw_polyline(diamond, color, 4.0)
+		"concentric_target":
+			var impact_point := origin
+			var radius := float(region.get("radius_pixels", 0.0))
+			draw_arc(impact_point, radius * 0.58, 0.0, TAU, 28, color, 3.0)
+			draw_circle(impact_point, 5.0, color)
+		_:
+			draw_arc(origin, 27.0, direction.angle() - 0.8, direction.angle() + 0.8, 14, color, 3.0)
+
+
+func _draw_attack_lock_marker(
+	origin: Vector2,
+	direction: Vector2,
+	region: Dictionary,
+	attack_runtime: Variant,
+	visual: Dictionary,
+	color: Color
+) -> void:
+	var side := direction.orthogonal()
+	match str(visual.get("lock_marker", "tracking_tether")):
+		"direction_gate":
+			var gate_distance := maxf(72.0, float(region.get("length_pixels", 0.0)))
+			var gate := origin + direction * gate_distance
+			draw_line(gate - side * 14.0, gate + side * 14.0, color, 5.0)
+			draw_line(gate - side * 14.0, gate - side * 14.0 - direction * 9.0, color, 4.0)
+			draw_line(gate + side * 14.0, gate + side * 14.0 - direction * 9.0, color, 4.0)
+		"point_brackets":
+			var point: Vector2 = Vector2(attack_runtime.locked_point)
+			for x_sign: float in [-1.0, 1.0]:
+				for y_sign: float in [-1.0, 1.0]:
+					var corner := point + Vector2(19.0 * x_sign, 19.0 * y_sign)
+					draw_line(corner, corner - Vector2(9.0 * x_sign, 0.0), color, 4.0)
+					draw_line(corner, corner - Vector2(0.0, 9.0 * y_sign), color, 4.0)
+		_:
+			var tracked: Vector2 = Vector2(attack_runtime.tracked_target)
+			var tether := color
+			tether.a *= 0.48
+			draw_dashed_line(origin, tracked, tether, 2.0, 12.0)
+			draw_circle(tracked, 8.0, color, false, 3.0)
+
+
+func _draw_attack_stability_marker(origin: Vector2, phase: String, visual: Dictionary, color: Color) -> void:
+	match str(visual.get("stability_marker", "broken_ring")):
+		"shield_frame":
+			var radius := 34.0
+			var frame := PackedVector2Array([
+				origin + Vector2(0, -radius),
+				origin + Vector2(radius, -radius * 0.45),
+				origin + Vector2(radius * 0.78, radius * 0.72),
+				origin + Vector2(0, radius),
+				origin + Vector2(-radius * 0.78, radius * 0.72),
+				origin + Vector2(-radius, -radius * 0.45),
+				origin + Vector2(0, -radius),
+			])
+			draw_polyline(frame, color, 6.0 if phase == "commit" else 3.0)
+		"open_ring":
+			draw_arc(origin, 32.0, -0.15, PI - 0.35, 18, color, 3.0)
+			draw_arc(origin, 32.0, PI + 0.15, TAU - 0.35, 18, color, 3.0)
+		_:
+			for start_angle: float in [0.10, 1.70, 3.30, 4.90]:
+				draw_arc(origin, 31.0, start_angle, start_angle + 0.72, 8, color, 3.0)
+
+
+func _draw_enemy_attack_recovery(origin: Vector2, visual: Dictionary, color: Color) -> void:
+	var count := 1
+	match str(visual.get("recovery_marker", "single_bar")):
+		"double_bars": count = 2
+		"triple_bars": count = 3
+	var total_width := float(count - 1) * 12.0
+	for index: int in range(count):
+		var x := -total_width * 0.5 + float(index) * 12.0
+		draw_line(origin + Vector2(x, 30), origin + Vector2(x, 46), color, 5.0)
+		draw_circle(origin + Vector2(x, 50), 3.0, color)
 
 
 func _draw_target_interaction(enemy: Dictionary) -> void:
