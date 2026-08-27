@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-enemy-ai-blueprint-response-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "requested_concept",
+    "canonical_name_zh",
+    "battle_role_zh",
+    "confidence",
+    "visual_axes",
+    "mechanical_profile",
+    "attacks"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "forge-enemy-ai-blueprint-response-v1"
+    },
+    "requested_concept": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "canonical_name_zh": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 48
+    },
+    "battle_role_zh": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 80
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "visual_axes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["body_plan", "scale", "material", "palette", "signature_feature"],
+      "properties": {
+        "body_plan": {
+          "type": "string",
+          "enum": ["biped", "quadruped", "arachnid", "serpentine", "floating", "tracked"]
+        },
+        "scale": {
+          "type": "string",
+          "enum": ["small", "medium", "large"]
+        },
+        "material": {
+          "type": "string",
+          "enum": ["flesh", "chitin", "metal", "stone", "spectral"]
+        },
+        "palette": {
+          "type": "string",
+          "enum": ["ember", "venom", "frost", "arcane", "electric", "industrial"]
+        },
+        "signature_feature": {
+          "type": "string",
+          "enum": ["mandibles", "horns", "dorsal_spines", "halo", "tail", "shoulder_core"]
+        }
+      }
+    },
+    "mechanical_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mass_class", "armor_class", "durability", "mobility"],
+      "properties": {
+        "mass_class": {
+          "type": "string",
+          "enum": ["light", "medium", "heavy"]
+        },
+        "armor_class": {
+          "type": "string",
+          "enum": ["none", "light", "heavy"]
+        },
+        "durability": {
+          "type": "string",
+          "enum": ["fragile", "standard", "sturdy"]
+        },
+        "mobility": {
+          "type": "string",
+          "enum": ["slow", "steady", "fast"]
+        }
+      }
+    },
+    "attacks": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["slot_label_zh", "axes", "selection"],
+        "properties": {
+          "slot_label_zh": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 32
+          },
+          "axes": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "delivery",
+              "target_lock",
+              "hit_shape",
+              "depth_path",
+              "tempo",
+              "stability",
+              "recovery"
+            ],
+            "properties": {
+              "delivery": {
+                "type": "string",
+                "enum": ["contact", "rush", "projectile", "marked_impact"]
+              },
+              "target_lock": {
+                "type": "string",
+                "enum": ["live_until_active", "direction_on_commit", "point_on_commit"]
+              },
+              "hit_shape": {
+                "type": "string",
+                "enum": ["capsule", "arc", "circle", "strip"]
+              },
+              "depth_path": {
+                "type": "string",
+                "enum": ["same_lane", "cross_depth", "depth_band"]
+              },
+              "tempo": {
+                "type": "string",
+                "enum": ["quick", "standard", "committed"]
+              },
+              "stability": {
+                "type": "string",
+                "enum": ["fragile", "tell_interruptible", "armored_commit"]
+              },
+              "recovery": {
+                "type": "string",
+                "enum": ["brief", "punishable", "extended"]
+              }
+            }
+          },
+          "selection": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "preferred_range",
+              "depth_fit",
+              "base_priority",
+              "coordination_cost",
+              "requires_clear_path",
+              "selection_rank"
+            ],
+            "properties": {
+              "preferred_range": {
+                "type": "string",
+                "enum": ["close", "mid", "far", "any"]
+              },
+              "depth_fit": {
+                "type": "string",
+                "enum": ["aligned", "tolerant", "any"]
+              },
+              "base_priority": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "coordination_cost": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3
+              },
+              "requires_clear_path": {
+                "type": "boolean"
+              },
+              "selection_rank": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 999
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

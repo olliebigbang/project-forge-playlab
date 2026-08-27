@@ -1,0 +1,62 @@
+{
+  "schema": "forge-enemy-ai-blueprint-response-v1",
+  "requested_concept": "机械蜘蛛",
+  "canonical_name_zh": "织网猎蛛",
+  "battle_role_zh": "远处喷网封路，靠近后锁定方向飞扑",
+  "confidence": 0.96,
+  "visual_axes": {
+    "body_plan": "arachnid",
+    "scale": "medium",
+    "material": "metal",
+    "palette": "electric",
+    "signature_feature": "mandibles"
+  },
+  "mechanical_profile": {
+    "mass_class": "medium",
+    "armor_class": "light",
+    "durability": "standard",
+    "mobility": "fast"
+  },
+  "attacks": [
+    {
+      "slot_label_zh": "锁向飞扑",
+      "axes": {
+        "delivery": "rush",
+        "target_lock": "direction_on_commit",
+        "hit_shape": "strip",
+        "depth_path": "cross_depth",
+        "tempo": "committed",
+        "stability": "tell_interruptible",
+        "recovery": "extended"
+      },
+      "selection": {
+        "preferred_range": "mid",
+        "depth_fit": "tolerant",
+        "base_priority": 72,
+        "coordination_cost": 1,
+        "requires_clear_path": true,
+        "selection_rank": 10
+      }
+    },
+    {
+      "slot_label_zh": "电网喷射",
+      "axes": {
+        "delivery": "projectile",
+        "target_lock": "live_until_active",
+        "hit_shape": "capsule",
+        "depth_path": "same_lane",
+        "tempo": "quick",
+        "stability": "fragile",
+        "recovery": "brief"
+      },
+      "selection": {
+        "preferred_range": "far",
+        "depth_fit": "aligned",
+        "base_priority": 66,
+        "coordination_cost": 1,
+        "requires_clear_path": true,
+        "selection_rank": 20
+      }
+    }
+  ]
+}

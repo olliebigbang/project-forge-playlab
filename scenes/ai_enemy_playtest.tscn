@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource path="res://scripts/enemy_attack/ai_enemy_playtest.gd" type="Script" id="1_ai_enemy"]
+
+[node name="AIEnemyPlaytest" type="Node2D"]
+script = ExtResource("1_ai_enemy")

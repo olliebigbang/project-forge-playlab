@@ -10,6 +10,7 @@ const TARGET_INTERACTION := preload("res://scripts/combat_feel/weapon_target_int
 const ENEMY_ATTACK_RUNTIME := preload("res://scripts/enemy_attack/enemy_attack_runtime_driver.gd")
 const ENEMY_ATTACK_VISUAL := preload("res://scripts/enemy_attack/enemy_attack_visual_language.gd")
 const ENEMY_ATTACK_SPRITE := preload("res://scripts/enemy_attack/enemy_attack_sprite_language.gd")
+const ENEMY_IDENTITY_VISUAL := preload("res://scripts/enemy_attack/enemy_identity_visual_language.gd")
 const WORLD_RECT := Rect2(34, 116, 1212, 568)
 
 const TARGET_MECHANICAL_PROFILES := {
@@ -87,6 +88,7 @@ var player_position := Vector2(250, 420)
 var player_health := 100.0
 var facing := 1.0
 var enemies: Array[Dictionary] = []
+var custom_enemy_blueprints: Array[Dictionary] = []
 var projectiles: Array[Dictionary] = []
 var enemy_attack_hazards: Array[Dictionary] = []
 var boomerang: Dictionary = {}
@@ -116,10 +118,18 @@ var completion_delay := -1.0
 var flash_timer := 0.0
 var metrics := {"damage_taken": 0.0, "overheat_count": 0, "dodge_count": 0, "defeated": 0}
 
-func start_stage(next_stage: String, next_blueprint: WeaponBlueprint, next_asset: WeaponVisualAsset) -> void:
+func start_stage(
+	next_stage: String,
+	next_blueprint: WeaponBlueprint,
+	next_asset: WeaponVisualAsset,
+	next_enemy_blueprints: Array[Dictionary] = []
+) -> void:
 	stage_name = next_stage
 	blueprint = next_blueprint
 	asset = next_asset
+	custom_enemy_blueprints.clear()
+	for profile: Dictionary in next_enemy_blueprints:
+		custom_enemy_blueprints.append(profile.duplicate(true))
 	player_position = Vector2(250, 420)
 	player_health = 100.0
 	projectiles.clear()
@@ -469,7 +479,7 @@ func _update_enemies(delta: float) -> void:
 					continue
 		if _target_is_immobilized(enemy):
 			continue
-		var speed := 54.0
+		var speed := float(enemy.get("move_speed", 54.0))
 		if enemy["type"] == "rusher":
 			enemy["charge"] = float(enemy.get("charge", 0.0)) + delta
 			if float(enemy["charge"]) > 1.35:
@@ -722,6 +732,15 @@ func _check_completion(delta: float) -> void:
 
 func _spawn_stage() -> void:
 	enemies.clear()
+	if not custom_enemy_blueprints.is_empty():
+		var positions: Array[Vector2] = [Vector2(900, 350), Vector2(1040, 520), Vector2(980, 230)]
+		for index: int in range(custom_enemy_blueprints.size()):
+			var profile := custom_enemy_blueprints[index]
+			var spawn_position := positions[index % positions.size()]
+			if profile.get("spawn_position", null) is Vector2:
+				spawn_position = Vector2(profile["spawn_position"])
+			_spawn_enemy_blueprint(profile, spawn_position)
+		return
 	match stage_name:
 		"room_1":
 			_spawn_enemy("swarmling", Vector2(800, 250), 24.0)
@@ -738,15 +757,35 @@ func _spawn_stage() -> void:
 
 func _spawn_enemy(type_name: String, position: Vector2, health: float) -> void:
 	var mechanical: Dictionary = (TARGET_MECHANICAL_PROFILES.get(type_name, TARGET_MECHANICAL_PROFILES["target"]) as Dictionary).duplicate(true)
-	var attack_runtime: RefCounted = ENEMY_ATTACK_RUNTIME.new()
-	var declarations: Array = (TARGET_ATTACK_DECLARATIONS.get(type_name, []) as Array).duplicate(true)
-	var attack_configuration: Dictionary = attack_runtime.configure(declarations) if not declarations.is_empty() else {"ok": false}
-	enemies.append({
-		"id": enemies.size() + 1, "type": type_name, "pos": position, "hp": health,
-		"max_hp": health, "facing": -1.0, "cooldown": 0.0, "hurt": 0.0,
-		"burn": 0.0, "charge": 0.0, "patrol": 1.0,
+	_spawn_enemy_blueprint({
+		"id": type_name,
+		"type_name": type_name,
+		"display_name": type_name,
 		"mass_class": str(mechanical.get("mass_class", "medium")),
 		"armor_integrity": float(mechanical.get("armor_integrity", 0.0)),
+		"max_health": health,
+		"move_speed": 54.0,
+		"attack_declarations": (TARGET_ATTACK_DECLARATIONS.get(type_name, []) as Array).duplicate(true),
+		"visual_identity_axes": {},
+	}, position)
+
+
+func _spawn_enemy_blueprint(profile: Dictionary, position: Vector2) -> void:
+	var attack_runtime: RefCounted = ENEMY_ATTACK_RUNTIME.new()
+	var declarations: Array = (profile.get("attack_declarations", []) as Array).duplicate(true)
+	var attack_configuration: Dictionary = attack_runtime.configure(declarations) if not declarations.is_empty() else {"ok": false}
+	var maximum_health := float(profile.get("max_health", 80.0))
+	var type_name := str(profile.get("type_name", "generated_enemy"))
+	enemies.append({
+		"id": enemies.size() + 1, "type": type_name, "pos": position, "hp": maximum_health,
+		"max_hp": maximum_health, "facing": -1.0, "cooldown": 0.0, "hurt": 0.0,
+		"burn": 0.0, "charge": 0.0, "patrol": 1.0,
+		"display_name": str(profile.get("display_name", type_name)),
+		"blueprint_id": str(profile.get("id", type_name)),
+		"mass_class": str(profile.get("mass_class", "medium")),
+		"armor_integrity": float(profile.get("armor_integrity", 0.0)),
+		"move_speed": float(profile.get("move_speed", 54.0)),
+		"visual_identity_axes": (profile.get("visual_identity_axes", {}) as Dictionary).duplicate(true),
 		"pin_seconds": 0.0, "entangle_seconds": 0.0, "suppression_seconds": 0.0,
 		"interaction_status": "", "interaction_status_time": 0.0,
 		"last_target_interaction": {},
@@ -934,6 +973,9 @@ func _draw_enemy_axis_sprite(enemy: Dictionary, compiled_attack: Dictionary) -> 
 	var sprite: Dictionary = ENEMY_ATTACK_SPRITE.compile(compiled_attack)
 	if not bool(sprite.get("ok", false)):
 		return false
+	var identity: Dictionary = ENEMY_IDENTITY_VISUAL.compile(enemy.get("visual_identity_axes", {}) as Dictionary)
+	if not bool(identity.get("ok", false)):
+		return false
 	var attack_runtime: Variant = enemy.get("attack_runtime", null)
 	var phase := "idle"
 	var phase_elapsed := 0.0
@@ -948,17 +990,32 @@ func _draw_enemy_axis_sprite(enemy: Dictionary, compiled_attack: Dictionary) -> 
 	var progress := _enemy_sprite_phase_progress(compiled_attack, phase, phase_elapsed)
 	var animation_hz := float(sprite.get("animation_hz", 4.0))
 	var animation_frame := int(floor(phase_elapsed * animation_hz)) % 2
-	var body_width := float(sprite.get("body_width", 28.0))
-	var body_height := float(sprite.get("body_height", 32.0))
+	var scale_multiplier := float(identity.get("scale_multiplier", 1.0))
+	var body_width := float(sprite.get("body_width", 28.0)) * scale_multiplier
+	var body_height := float(sprite.get("body_height", 32.0)) * scale_multiplier
 	var pose_offset := _enemy_sprite_pose_offset(sprite, phase, progress, animation_frame, facing_sign)
 	var base := _snap_enemy_pixel(Vector2(enemy["pos"]) + pose_offset)
 	var outline := Color("111827")
-	var body_color := Color("f8fafc") if float(enemy.get("hurt", 0.0)) > 0.0 else Color(str(sprite.get("body_color", "64748b")))
+	var material_color := Color(str(identity.get("material_color", "64748b")))
+	var stability_color := Color(str(sprite.get("body_color", "64748b")))
+	var body_color := Color("f8fafc") if float(enemy.get("hurt", 0.0)) > 0.0 else material_color.lerp(stability_color, 0.28)
 	var accent := Color(str(sprite.get("accent_color", "facc15")))
-	_draw_enemy_axis_stance(base, body_width, body_height, facing_sign, str(sprite.get("stance_family", "narrow")), outline, body_color)
-	_draw_enemy_axis_chassis(base, body_width, body_height, int(sprite.get("armor_plate_count", 0)), outline, body_color)
+	var identity_accent := Color(str(identity.get("accent_color", "f59e0b")))
+	var body_plan := str(identity.get("body_plan", "biped"))
+	_draw_enemy_identity_body(
+		base, body_width, body_height, facing_sign, body_plan,
+		str(sprite.get("stance_family", "narrow")), int(sprite.get("armor_plate_count", 0)),
+		outline, body_color
+	)
 	_draw_enemy_axis_tool(base, body_width, body_height, facing_sign, direction, phase, progress, sprite, outline, accent)
-	_draw_enemy_axis_sensor(base, body_height, facing_sign, str(sprite.get("sensor_family", "tracking_eye")), outline, accent)
+	_draw_enemy_signature_feature(
+		base, body_width, body_height, facing_sign, body_plan,
+		str(identity.get("signature_feature", "shoulder_core")), outline, identity_accent
+	)
+	_draw_enemy_axis_sensor(
+		base, body_width, body_height, facing_sign, body_plan,
+		str(sprite.get("sensor_family", "tracking_eye")), outline, identity_accent
+	)
 	return true
 
 
@@ -997,6 +1054,144 @@ func _enemy_sprite_pose_offset(
 		"recovery":
 			return Vector2(0.0, lerpf(0.0, float(sprite.get("recovery_drop_pixels", 2.0)), progress))
 	return Vector2.ZERO
+
+
+func _draw_enemy_identity_body(
+	base: Vector2,
+	body_width: float,
+	body_height: float,
+	facing_sign: float,
+	body_plan: String,
+	stance_family: String,
+	armor_plate_count: int,
+	outline: Color,
+	body_color: Color
+) -> void:
+	match body_plan:
+		"arachnid":
+			var core_width := body_width * 0.92
+			var core_height := body_height * 0.62
+			for side_sign: float in [-1.0, 1.0]:
+				for leg_index: int in range(4):
+					var root := base + Vector2(side_sign * core_width * 0.30, -core_height * 0.22 + float(leg_index) * core_height * 0.15)
+					var knee := root + Vector2(side_sign * (10.0 + float(leg_index) * 2.0), -8.0 + float(leg_index) * 5.0)
+					var foot := knee + Vector2(side_sign * (10.0 + float(leg_index)), 8.0 + float(leg_index) * 3.0)
+					draw_line(root, knee, outline, 6.0)
+					draw_line(knee, foot, outline, 5.0)
+					draw_line(root, knee, body_color, 3.0)
+					draw_line(knee, foot, body_color, 2.0)
+			var abdomen := base - Vector2(facing_sign * core_width * 0.42, 0)
+			draw_rect(Rect2(abdomen - Vector2(core_width * 0.38 + 3, core_height * 0.42 + 3), Vector2(core_width * 0.76 + 6, core_height * 0.84 + 6)), outline, true)
+			draw_rect(Rect2(abdomen - Vector2(core_width * 0.38, core_height * 0.42), Vector2(core_width * 0.76, core_height * 0.84)), body_color.darkened(0.12), true)
+			draw_rect(Rect2(base - Vector2(core_width * 0.42 + 3, core_height * 0.50 + 3), Vector2(core_width * 0.84 + 6, core_height + 6)), outline, true)
+			draw_rect(Rect2(base - Vector2(core_width * 0.42, core_height * 0.50), Vector2(core_width * 0.84, core_height)), body_color, true)
+			_draw_enemy_identity_plates(base, core_width * 0.76, core_height, armor_plate_count, body_color)
+		"quadruped":
+			var torso_width := body_width * 1.34
+			var torso_height := body_height * 0.68
+			for leg_x: float in [-0.42, -0.18, 0.18, 0.42]:
+				var root := base + Vector2(torso_width * leg_x, torso_height * 0.32)
+				var foot := root + Vector2(4.0 * signf(leg_x), body_height * 0.62)
+				draw_line(root, foot, outline, 8.0)
+				draw_line(root, foot, body_color, 4.0)
+			draw_rect(Rect2(base - Vector2(torso_width * 0.5 + 3, torso_height * 0.5 + 3), Vector2(torso_width + 6, torso_height + 6)), outline, true)
+			draw_rect(Rect2(base - Vector2(torso_width * 0.5, torso_height * 0.5), Vector2(torso_width, torso_height)), body_color, true)
+			_draw_enemy_identity_plates(base, torso_width, torso_height, armor_plate_count, body_color)
+		"serpentine":
+			for segment_index: int in range(5, 0, -1):
+				var segment_size := maxf(8.0, body_height * (0.58 - float(segment_index) * 0.055))
+				var segment_center := base - Vector2(facing_sign * float(segment_index) * body_width * 0.34, -sin(float(segment_index) * 1.4) * 5.0)
+				draw_rect(Rect2(segment_center - Vector2(segment_size * 0.5 + 2, segment_size * 0.5 + 2), Vector2(segment_size + 4, segment_size + 4)), outline, true)
+				draw_rect(Rect2(segment_center - Vector2(segment_size * 0.5, segment_size * 0.5), Vector2(segment_size, segment_size)), body_color.darkened(float(segment_index) * 0.035), true)
+			draw_rect(Rect2(base - Vector2(body_width * 0.48 + 3, body_height * 0.42 + 3), Vector2(body_width * 0.96 + 6, body_height * 0.84 + 6)), outline, true)
+			draw_rect(Rect2(base - Vector2(body_width * 0.48, body_height * 0.42), Vector2(body_width * 0.96, body_height * 0.84)), body_color, true)
+			_draw_enemy_identity_plates(base, body_width * 0.9, body_height * 0.72, armor_plate_count, body_color)
+		"floating":
+			var radius := maxf(body_width, body_height) * 0.55
+			var diamond := PackedVector2Array([
+				base + Vector2(0, -radius), base + Vector2(radius, 0),
+				base + Vector2(0, radius), base + Vector2(-radius, 0),
+			])
+			draw_colored_polygon(diamond, outline)
+			var inner := PackedVector2Array([
+				base + Vector2(0, -radius + 4), base + Vector2(radius - 4, 0),
+				base + Vector2(0, radius - 4), base + Vector2(-radius + 4, 0),
+			])
+			draw_colored_polygon(inner, body_color)
+			for offset: Vector2 in [Vector2(-18, radius + 8), Vector2(0, radius + 12), Vector2(18, radius + 8)]:
+				draw_rect(Rect2(base + offset - Vector2(3, 3), Vector2(6, 6)), body_color.lightened(0.25), true)
+		"tracked":
+			var track_width := body_width * 1.32
+			var track_height := maxf(14.0, body_height * 0.38)
+			var track_center := base + Vector2(0, body_height * 0.33)
+			draw_rect(Rect2(track_center - Vector2(track_width * 0.5 + 3, track_height * 0.5 + 3), Vector2(track_width + 6, track_height + 6)), outline, true)
+			draw_rect(Rect2(track_center - Vector2(track_width * 0.5, track_height * 0.5), Vector2(track_width, track_height)), body_color.darkened(0.24), true)
+			for wheel_x: float in [-0.34, 0.0, 0.34]:
+				draw_circle(track_center + Vector2(track_width * wheel_x, 0), track_height * 0.28, body_color.lightened(0.18))
+			draw_rect(Rect2(base - Vector2(body_width * 0.5 + 3, body_height * 0.48 + 3), Vector2(body_width + 6, body_height * 0.76 + 6)), outline, true)
+			draw_rect(Rect2(base - Vector2(body_width * 0.5, body_height * 0.48), Vector2(body_width, body_height * 0.76)), body_color, true)
+			_draw_enemy_identity_plates(base - Vector2(0, body_height * 0.1), body_width, body_height * 0.6, armor_plate_count, body_color)
+		_:
+			_draw_enemy_axis_stance(base, body_width, body_height, facing_sign, stance_family, outline, body_color)
+			_draw_enemy_axis_chassis(base, body_width, body_height, armor_plate_count, outline, body_color)
+
+
+func _draw_enemy_identity_plates(base: Vector2, width: float, height: float, count: int, body_color: Color) -> void:
+	if count <= 0:
+		return
+	var plate_color := body_color.lightened(0.25)
+	var plate_width := maxf(5.0, (width - 6.0) / float(count))
+	for index: int in range(count):
+		var x := -width * 0.5 + 3.0 + float(index) * plate_width
+		draw_rect(Rect2(base + Vector2(x, -height * 0.30), Vector2(plate_width - 2.0, height * 0.60)), plate_color, true)
+
+
+func _draw_enemy_signature_feature(
+	base: Vector2,
+	body_width: float,
+	body_height: float,
+	facing_sign: float,
+	body_plan: String,
+	feature: String,
+	outline: Color,
+	accent: Color
+) -> void:
+	var front := base + Vector2(facing_sign * body_width * (0.66 if body_plan in ["quadruped", "tracked"] else 0.48), -body_height * 0.08)
+	match feature:
+		"mandibles":
+			for y_sign: float in [-1.0, 1.0]:
+				var root := front + Vector2(0, y_sign * 5.0)
+				var tip := root + Vector2(facing_sign * 16.0, y_sign * 8.0)
+				draw_line(root, tip, outline, 6.0)
+				draw_line(root, tip, accent, 3.0)
+		"horns":
+			for x_sign: float in [-1.0, 1.0]:
+				var root := base + Vector2(x_sign * body_width * 0.26, -body_height * 0.56)
+				var horn := PackedVector2Array([root + Vector2(-5, 0), root + Vector2(5, 0), root + Vector2(x_sign * 5, -15)])
+				draw_colored_polygon(horn, outline)
+				draw_line(root, root + Vector2(x_sign * 4, -11), accent, 3.0)
+		"dorsal_spines":
+			for amount: float in [-0.28, 0.0, 0.28]:
+				var root := base + Vector2(body_width * amount, -body_height * 0.48)
+				var spine := PackedVector2Array([root + Vector2(-5, 0), root + Vector2(5, 0), root + Vector2(0, -14)])
+				draw_colored_polygon(spine, accent)
+		"halo":
+			var center := base + Vector2(0, -body_height * 0.72)
+			var halo := PackedVector2Array([
+				center + Vector2(-18, -7), center + Vector2(18, -7),
+				center + Vector2(18, 7), center + Vector2(-18, 7), center + Vector2(-18, -7),
+			])
+			draw_polyline(halo, accent, 4.0)
+		"tail":
+			var root := base - Vector2(facing_sign * body_width * 0.46, -body_height * 0.12)
+			var joint := root - Vector2(facing_sign * 18.0, 12.0)
+			var tip := joint + Vector2(facing_sign * 8.0, 18.0)
+			draw_line(root, joint, outline, 7.0)
+			draw_line(joint, tip, accent, 5.0)
+		_:
+			var core := base + Vector2(-facing_sign * body_width * 0.28, -body_height * 0.20)
+			draw_rect(Rect2(core - Vector2(7, 7), Vector2(14, 14)), outline, true)
+			draw_rect(Rect2(core - Vector2(4, 4), Vector2(8, 8)), accent, true)
 
 
 func _draw_enemy_axis_stance(
@@ -1046,15 +1241,34 @@ func _draw_enemy_axis_chassis(
 
 func _draw_enemy_axis_sensor(
 	base: Vector2,
+	body_width: float,
 	body_height: float,
 	facing_sign: float,
+	body_plan: String,
 	sensor_family: String,
 	outline: Color,
 	accent: Color
 ) -> void:
 	var head := base + Vector2(0, -body_height * 0.5 - 9.0)
-	draw_rect(Rect2(head - Vector2(9, 7), Vector2(18, 14)), outline, true)
-	draw_rect(Rect2(head - Vector2(6, 4), Vector2(12, 8)), Color("cbd5e1"), true)
+	var head_size := Vector2(18, 14)
+	match body_plan:
+		"arachnid":
+			head = base + Vector2(facing_sign * body_width * 0.38, -body_height * 0.10)
+			head_size = Vector2(12, 10)
+		"quadruped":
+			head = base + Vector2(facing_sign * body_width * 0.68, -body_height * 0.18)
+			head_size = Vector2(16, 12)
+		"serpentine":
+			head = base + Vector2(facing_sign * body_width * 0.28, -body_height * 0.05)
+			head_size = Vector2(14, 12)
+		"floating":
+			head = base
+			head_size = Vector2(14, 14)
+		"tracked":
+			head = base + Vector2(facing_sign * body_width * 0.22, -body_height * 0.44)
+			head_size = Vector2(16, 10)
+	draw_rect(Rect2(head - head_size * 0.5 - Vector2(2, 2), head_size + Vector2(4, 4)), outline, true)
+	draw_rect(Rect2(head - head_size * 0.5, head_size), Color("cbd5e1"), true)
 	match sensor_family:
 		"direction_slit":
 			draw_rect(Rect2(head + Vector2(-1 if facing_sign > 0.0 else -9, -2), Vector2(10, 4)), accent, true)
