@@ -1,0 +1,105 @@
+{
+  "schema": "forge-perceptible-mechanism-experiment-assets-v1",
+  "developer_experiment_only": true,
+  "normal_player_flow": false,
+  "frozen_evidence_claim": false,
+  "notice": "Developer experiment inputs copied from the current tracked generalization assets. This index is not a replacement hash ledger or a human-feel claim.",
+  "assets": [
+    {
+      "id": "longsword_generalization",
+      "representative_surface": "edge",
+      "sample_label": "LONGSWORD SAMPLE",
+      "sprite": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/longsword/processed_sprite.png",
+      "blueprint": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/longsword/semantic_blueprint.json",
+      "anchors": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/longsword/anchors.json",
+      "affordance": {
+        "handle_length": "short",
+        "body_length": "long",
+        "grip_topology": "one_hand_handle",
+        "rigidity": "rigid",
+        "mass_distribution": "balanced",
+        "contact_surface": "edge",
+        "secondary_contact_surface": "point",
+        "has_point": true,
+        "has_edge": true,
+        "has_broad_face": false,
+        "has_barrel": false,
+        "has_stock": false,
+        "confidence": 0.9,
+        "evidence_parts": ["long slender blade", "sharp tip", "cutting edge", "handle grip", "crossguard"]
+      }
+    },
+    {
+      "id": "spear_generalization",
+      "representative_surface": "point",
+      "sample_label": "SPEAR SAMPLE",
+      "sprite": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/spear/processed_sprite.png",
+      "blueprint": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/spear/semantic_blueprint.json",
+      "anchors": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/spear/anchors.json",
+      "affordance": {
+        "handle_length": "long",
+        "body_length": "long",
+        "grip_topology": "two_hand_handle",
+        "rigidity": "rigid",
+        "mass_distribution": "front",
+        "contact_surface": "point",
+        "secondary_contact_surface": "none",
+        "has_point": true,
+        "has_edge": false,
+        "has_broad_face": false,
+        "has_barrel": false,
+        "has_stock": false,
+        "confidence": 0.9,
+        "evidence_parts": ["long shaft held with two hands", "pointed spearhead for thrusting", "front-weighted head mass"]
+      }
+    },
+    {
+      "id": "frying_pan",
+      "representative_surface": "broad",
+      "sample_label": "FRYING PAN SAMPLE",
+      "sprite": "res://data/combat_feel/live_assets/recipe_slice_1b/frying_pan/processed_sprite.png",
+      "blueprint": "res://data/combat_feel/live_assets/recipe_slice_1b/frying_pan/semantic_blueprint.json",
+      "anchors": "res://data/combat_feel/live_assets/recipe_slice_1b/frying_pan/anchors.json",
+      "affordance": {
+        "handle_length": "short",
+        "body_length": "short",
+        "grip_topology": "one_hand_handle",
+        "rigidity": "rigid",
+        "mass_distribution": "front",
+        "contact_surface": "broad",
+        "secondary_contact_surface": "none",
+        "has_point": false,
+        "has_edge": false,
+        "has_broad_face": true,
+        "has_barrel": false,
+        "has_stock": false,
+        "confidence": 1.0,
+        "evidence_parts": ["short handle", "broad pan body", "front-weighted contact face"]
+      }
+    },
+    {
+      "id": "wooden_chair_generalization",
+      "representative_surface": "whole_body",
+      "sample_label": "WOODEN CHAIR SAMPLE",
+      "sprite": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/wooden_chair/processed_sprite.png",
+      "blueprint": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/wooden_chair/semantic_blueprint.json",
+      "anchors": "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/wooden_chair/anchors.json",
+      "affordance": {
+        "handle_length": "none",
+        "body_length": "medium",
+        "grip_topology": "body_grip",
+        "rigidity": "rigid",
+        "mass_distribution": "front",
+        "contact_surface": "whole_body",
+        "secondary_contact_surface": "edge",
+        "has_point": false,
+        "has_edge": true,
+        "has_broad_face": true,
+        "has_barrel": false,
+        "has_stock": false,
+        "confidence": 0.85,
+        "evidence_parts": ["chair back as grip point", "four legs as striking extremities", "seat as broad mass", "rigid wood frame"]
+      }
+    }
+  ]
+}

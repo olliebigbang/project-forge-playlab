@@ -1,0 +1,43 @@
+{
+  "schema": "forge-semantic-anchors-soft-mechanism-v1",
+  "case_id": "fishing_rod_builtin",
+  "behavior_family": "heavy_melee",
+  "grip_profile": "rear_grip",
+  "required_anchor_types": [
+    "GripPrimary",
+    "StrikePoint"
+  ],
+  "auto_anchors": {
+    "GripPrimary": [14.0, 77.0],
+    "StrikePoint": [82.0, 85.0],
+    "TetherOrigin": [82.0, 6.0]
+  },
+  "auto_anchor_source": {
+    "GripPrimary": "ai_structure_anchor",
+    "StrikePoint": "ai_structure_anchor",
+    "TetherOrigin": "ai_mechanism_anchor"
+  },
+  "auto_confidence": {
+    "GripPrimary": 0.96,
+    "StrikePoint": 0.93,
+    "TetherOrigin": 0.94
+  },
+  "corrected_anchors": {
+    "GripPrimary": [14.0, 77.0],
+    "StrikePoint": [82.0, 85.0],
+    "TetherOrigin": [82.0, 6.0]
+  },
+  "anchor_source": {
+    "GripPrimary": "ai_structure_anchor",
+    "StrikePoint": "ai_structure_anchor",
+    "TetherOrigin": "ai_mechanism_anchor"
+  },
+  "confidence": {
+    "GripPrimary": 0.96,
+    "StrikePoint": 0.93,
+    "TetherOrigin": 0.94
+  },
+  "training_transform": {
+    "flip_x": false
+  }
+}

@@ -1,0 +1,219 @@
+{
+  "schema": "forge-firearm-identity-profiles-v1",
+  "source": "CURATED_AI_FIREARM_IDENTITY_V1",
+  "entries": [
+    {
+      "id": "qbz_95",
+      "canonical_name_zh": "中国95式步枪",
+      "aliases": ["中国95式步枪", "95式步枪", "QBZ-95", "QBZ95", "Type 95 rifle"],
+      "visual_description_en": "recognizable QBZ-95 style bullpup service rifle, compact integrated rear receiver, magazine clearly behind the primary grip, raised carry-handle silhouette",
+      "required_identity_parts_zh": ["无托式枪身", "握把后方弹匣", "上方提把轮廓", "短后部与前伸枪管"],
+      "visual_identity_card": {
+        "schema": "forge-firearm-visual-identity-card-v1",
+        "visual_axes": {
+          "stock_profile": "integrated_bullpup_shell",
+          "upper_landmark": "raised_bridge_with_open_gap",
+          "magazine_profile": "curved_box_behind_primary_grip",
+          "fore_end_profile": "short_tapered_polymer_fore_end",
+          "receiver_profile": "compact_rear_loaded_bullpup"
+        },
+        "required_landmarks_en": [
+          "curved magazine visibly behind the primary grip",
+          "rear receiver and shoulder contact merged into one compact shell",
+          "raised upper bridge with a transparent gap beneath it",
+          "short rear body with a distinct forward barrel and fore-end"
+        ],
+        "confusable_exclusions_en": [
+          "not a conventional rifle with the magazine ahead of the grip",
+          "not an AUG or generic science-fiction bullpup",
+          "no separate long shoulder stock behind the receiver"
+        ]
+      },
+      "declaration": {
+        "source": "CURATED_AI_FIREARM_IDENTITY_V2",
+        "confidence": 0.96,
+        "weapon_domain": "handheld_firearm",
+        "layout": "bullpup",
+        "stock_structure": "integrated",
+        "feed_position": "behind_grip",
+        "magazine_shape": "curved",
+        "barrel_length": "medium",
+        "upper_profile": "carry_handle",
+        "support_mode": "two_hand_shouldered",
+        "fire_control": "select_fire_auto",
+        "cadence": "rapid",
+        "recoil": "medium",
+        "recoil_recovery": "balanced",
+        "muzzle_climb": "medium",
+        "accuracy": "controlled",
+        "impact_force": "medium",
+        "penetration": "strong",
+        "reload": "standard",
+        "effective_range": "medium",
+        "handling": "agile",
+        "magazine_capacity": "standard",
+        "finish_palette": "olive_black"
+      }
+    },
+    {
+      "id": "m4a1",
+      "canonical_name_zh": "M4A1",
+      "aliases": ["M4A1", "M4-A1", "M4A1卡宾枪", "M4A1 carbine"],
+      "visual_description_en": "recognizable M4A1 style conventional carbine, telescoping rear stock, magazine ahead of the primary grip, straight top rail and compact handguard",
+      "required_identity_parts_zh": ["伸缩式枪托", "握把前方弹匣", "平直机匣上沿", "紧凑护木与枪管"],
+      "visual_identity_card": {
+        "schema": "forge-firearm-visual-identity-card-v1",
+        "visual_axes": {
+          "stock_profile": "collapsible_polymer_stock_on_buffer_tube",
+          "upper_landmark": "low_flat_receiver_rail",
+          "magazine_profile": "box_magazine_ahead_of_primary_grip",
+          "fore_end_profile": "compact_carbine_rail_handguard",
+          "receiver_profile": "split_upper_lower_carbine_receiver"
+        },
+        "required_landmarks_en": [
+          "compact collapsible polymer stock attached by a visible buffer tube",
+          "box magazine visibly ahead of the primary grip",
+          "low flat receiver rail without a permanent carry-handle loop",
+          "short carbine handguard and barrel rather than a full-length rifle front"
+        ],
+        "confusable_exclusions_en": [
+          "not an M16 with a full fixed stock or permanent carry handle",
+          "not an MP5 with twin bare sliding stock rails",
+          "not an AK or Type 81 with a strongly curved magazine and raised gas tube"
+        ]
+      },
+      "declaration": {
+        "source": "CURATED_AI_FIREARM_IDENTITY_V2",
+        "confidence": 0.97,
+        "weapon_domain": "handheld_firearm",
+        "layout": "conventional_rifle",
+        "stock_structure": "telescoping",
+        "feed_position": "ahead_of_grip",
+        "magazine_shape": "straight",
+        "barrel_length": "medium",
+        "upper_profile": "top_rail",
+        "support_mode": "two_hand_shouldered",
+        "fire_control": "select_fire_auto",
+        "cadence": "rapid",
+        "recoil": "light",
+        "recoil_recovery": "quick",
+        "muzzle_climb": "low",
+        "accuracy": "precise",
+        "impact_force": "medium",
+        "penetration": "medium",
+        "reload": "quick",
+        "effective_range": "medium",
+        "handling": "agile",
+        "magazine_capacity": "standard",
+        "finish_palette": "gunmetal_black"
+      }
+    },
+    {
+      "id": "type_81",
+      "canonical_name_zh": "81杠",
+      "aliases": ["81杠", "81式自动步枪", "81式步枪", "Type 81 rifle", "QBZ-81", "QBZ81"],
+      "visual_description_en": "recognizable Type 81 style conventional long rifle, fixed rear stock, strongly curved magazine ahead of the grip, long barrel and raised gas-tube line",
+      "required_identity_parts_zh": ["固定式长枪托", "明显弯曲弹匣", "较长枪管", "机匣上方导气结构"],
+      "visual_reference_id": "type_81_museum_cc_by_sa_v1",
+      "visual_identity_card": {
+        "schema": "forge-firearm-visual-identity-card-v1",
+        "visual_axes": {
+          "stock_profile": "fixed_solid_slender_stock",
+          "upper_landmark": "raised_gas_tube_and_rear_sight_line",
+          "magazine_profile": "strongly_curved_magazine_with_trigger_gap",
+          "fore_end_profile": "long_tapered_fore_end",
+          "receiver_profile": "long_conventional_service_rifle_receiver"
+        },
+        "required_landmarks_en": [
+          "solid fixed shoulder stock",
+          "strongly curved magazine ahead of the grip with a visible gap from the trigger guard",
+          "front sight set back with an exposed barrel section continuing to the muzzle",
+          "long fore-end and raised gas-tube line above the receiver"
+        ],
+        "confusable_exclusions_en": [
+          "not a generic AK-47 or Type 56 with the magazine tight against the trigger guard",
+          "not an M4 with a collapsible stock and flat top rail",
+          "not a bullpup layout"
+        ]
+      },
+      "declaration": {
+        "source": "CURATED_AI_FIREARM_IDENTITY_V2",
+        "confidence": 0.95,
+        "weapon_domain": "handheld_firearm",
+        "layout": "conventional_rifle",
+        "stock_structure": "fixed",
+        "feed_position": "ahead_of_grip",
+        "magazine_shape": "curved",
+        "barrel_length": "long",
+        "upper_profile": "raised_gas_tube",
+        "support_mode": "two_hand_shouldered",
+        "fire_control": "select_fire_auto",
+        "cadence": "balanced",
+        "recoil": "strong",
+        "recoil_recovery": "slow",
+        "muzzle_climb": "high",
+        "accuracy": "controlled",
+        "impact_force": "strong",
+        "penetration": "strong",
+        "reload": "slow",
+        "effective_range": "long",
+        "handling": "heavy",
+        "magazine_capacity": "standard",
+        "finish_palette": "wood_steel"
+      }
+    },
+    {
+      "id": "qsz_92",
+      "canonical_name_zh": "92式手枪",
+      "aliases": ["92式手枪", "中国92式手枪", "QSZ-92", "QSZ92", "Type 92 pistol"],
+      "visual_description_en": "recognizable QSZ-92 style compact service pistol, short slide above a single grip, magazine housed inside the grip, no shoulder stock",
+      "required_identity_parts_zh": ["短套筒", "单一手枪握把", "握把内弹匣", "没有枪托"],
+      "visual_identity_card": {
+        "schema": "forge-firearm-visual-identity-card-v1",
+        "visual_axes": {
+          "stock_profile": "none",
+          "upper_landmark": "compact_service_pistol_slide",
+          "magazine_profile": "magazine_inside_primary_grip",
+          "fore_end_profile": "short_under_barrel_frame_rail",
+          "receiver_profile": "rounded_trigger_guard_polymer_frame"
+        },
+        "required_landmarks_en": [
+          "compact service-pistol slide above one grip",
+          "magazine contained inside the primary grip and no shoulder stock",
+          "large rounded trigger guard rather than a squared Glock-style guard",
+          "short frame and accessory-rail projection beneath the front of the barrel"
+        ],
+        "confusable_exclusions_en": [
+          "not a Glock silhouette with a squared trigger guard and blocky rectangular frame",
+          "not a revolver",
+          "not a machine pistol or stocked handgun"
+        ]
+      },
+      "declaration": {
+        "source": "CURATED_AI_FIREARM_IDENTITY_V2",
+        "confidence": 0.95,
+        "weapon_domain": "handheld_firearm",
+        "layout": "pistol",
+        "stock_structure": "none",
+        "feed_position": "in_grip",
+        "magazine_shape": "in_grip",
+        "barrel_length": "short",
+        "upper_profile": "slide",
+        "support_mode": "one_hand",
+        "fire_control": "semi_auto",
+        "cadence": "deliberate",
+        "recoil": "medium",
+        "recoil_recovery": "balanced",
+        "muzzle_climb": "medium",
+        "accuracy": "loose",
+        "impact_force": "light",
+        "penetration": "light",
+        "reload": "quick",
+        "effective_range": "short",
+        "handling": "agile",
+        "magazine_capacity": "compact",
+        "finish_palette": "dark_polymer"
+      }
+    }
+  ]
+}

@@ -26,6 +26,8 @@ tools/semantic/.tmp/
 tools/semantic/logs/
 tools/semantic/**/__pycache__/
 tools/semantic/**/*.pyc
+tools/visual/**/__pycache__/
+tools/visual/**/*.pyc
 *.semantic-secret-test
 tools/comfyui/flux2/output/
 tools/comfyui/flux2/.tmp/

@@ -31,7 +31,7 @@ func _export() -> void:
 			quit(1)
 			return
 		var payload := {
-			"schema": "forge-motion-grammar-slice-1a-recipe-v1",
+			"schema": "forge-motion-grammar-slice-1a-recipe-v4",
 			"asset_id": asset_id,
 			"source_round_id": str(loaded.get("source_round_id", "")),
 			"developer_only": bool(loaded.get("developer_only", false)),

@@ -1,0 +1,56 @@
+{
+  "schema": "forge-firearm-identity-ai-response-v3",
+  "requested_identity": "AK-47",
+  "classification": "handheld_firearm_supported",
+  "canonical_name": "AK-47",
+  "confidence": 0.94,
+  "identity_evidence": [
+    "magazine-fed conventional shoulder-fired rifle"
+  ],
+  "visual_description_en": "recognizable conventional rifle with fixed rear stock, curved magazine ahead of the grip, and raised upper profile",
+  "required_identity_parts_zh": [
+    "固定后托",
+    "握把前方弯弹匣",
+    "抬高的上方轮廓",
+    "前伸枪管"
+  ],
+  "visual_identity_axes": {
+    "stock_profile": "slender solid fixed stock with a dropped lower edge",
+    "upper_landmark": "raised gas tube and separate front sight block",
+    "magazine_profile": "strongly curved magazine ahead of the pistol grip",
+    "fore_end_profile": "short wood fore-end below the gas tube",
+    "receiver_profile": "stepped stamped receiver with exposed barrel section"
+  },
+  "required_landmarks_en": [
+    "slender solid fixed stock",
+    "strongly curved magazine ahead of the pistol grip",
+    "raised gas tube ending at a separate front sight block"
+  ],
+  "confusable_exclusions_en": [
+    "not an AR-pattern rifle with a straight magazine and buffer-tube stock",
+    "not a generic block rifle lacking the raised gas system"
+  ],
+  "declaration": {
+    "weapon_domain": "handheld_firearm",
+    "layout": "conventional_rifle",
+    "stock_structure": "fixed",
+    "feed_position": "ahead_of_grip",
+    "magazine_shape": "curved",
+    "barrel_length": "long",
+    "upper_profile": "raised_gas_tube",
+    "support_mode": "two_hand_shouldered",
+    "fire_control": "select_fire_auto",
+    "cadence": "balanced",
+    "recoil": "strong",
+    "recoil_recovery": "slow",
+    "muzzle_climb": "high",
+    "accuracy": "controlled",
+    "impact_force": "strong",
+    "penetration": "strong",
+    "reload": "standard",
+    "effective_range": "long",
+    "handling": "balanced",
+    "magazine_capacity": "standard",
+    "finish_palette": "wood_steel"
+  }
+}

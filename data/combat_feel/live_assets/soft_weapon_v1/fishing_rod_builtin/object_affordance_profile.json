@@ -1,0 +1,28 @@
+{
+  "schema": "forge-object-affordance-profile-v4",
+  "handle_length": "short",
+  "body_length": "long",
+  "grip_topology": "one_hand_handle",
+  "rigidity": "flexible",
+  "mass_distribution": "balanced",
+  "contact_surface": "whole_body",
+  "secondary_contact_surface": "point",
+  "flex_topology": "bending_shaft",
+  "tether_topology": "flexible_line",
+  "terminal_load": "light",
+  "tether_mode": "hook",
+  "tether_deployment": "cast_retract",
+  "has_point": true,
+  "has_edge": false,
+  "has_broad_face": false,
+  "has_barrel": false,
+  "has_stock": false,
+  "confidence": 0.92,
+  "evidence_parts": [
+    "main body is a continuous slender shaft that visibly bends",
+    "a separate continuous line runs from the shaft tip to the terminal hook",
+    "the hook is a light pointed terminal load",
+    "the reel pays out the attached line and retrieves it after the terminal travels",
+    "the handle is at the rear while alpha mass remains geometrically balanced"
+  ]
+}

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource path="res://scripts/combat_feel/perceptible_mechanism_experiment.gd" type="Script" id="1_experiment"]
+
+[node name="PerceptibleMechanismExperiment" type="Node2D"]
+script = ExtResource("1_experiment")

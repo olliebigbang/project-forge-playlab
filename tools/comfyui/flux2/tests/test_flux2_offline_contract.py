@@ -819,7 +819,7 @@ class OfflineBridgeBehaviorTests(unittest.TestCase):
                 )
         self.assertEqual(request.call_count, 2)
 
-    def test_56_formal_generation_contains_one_submit_and_zero_retry_contract(self) -> None:
+    def test_56_formal_generation_contains_one_submit_and_external_retry_evidence(self) -> None:
         source = inspect.getsource(bridge.generate)
         tree = ast.parse(source)
         submit_calls = [
@@ -828,8 +828,21 @@ class OfflineBridgeBehaviorTests(unittest.TestCase):
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "_submit_and_wait"
         ]
         self.assertEqual(len(submit_calls), 1)
-        self.assertIn('"retry_count": 0', source)
+        self.assertIn('"retry_count": int(visual_retry_count)', source)
         self.assertNotRegex(source, r"(?i)for\s+attempt|while\s+attempt")
+
+    def test_56a_open_identity_prompt_accepts_unicode_without_weakening_explicit_blueprints(self) -> None:
+        prompt = "Recognizable original object, player identity text 鱼竿. structural requirement curved shaft."
+        open_blueprint = bridge._load_blueprint(None, prompt)
+        positive, _negative, evidence = bridge.compose_prompts(open_blueprint)
+        self.assertIn("鱼竿", positive)
+        self.assertEqual(evidence["input_contract"], "open_identity_generation_prompt_v1")
+        self.assertEqual(evidence["generation_prompt_sha256"], hashlib.sha256(prompt.encode("utf-8")).hexdigest())
+
+        explicit_blueprint = json.loads(json.dumps(self.BLUEPRINT))
+        explicit_blueprint["visual"]["prompt_en"] = "一张桌子"
+        with self.assertRaisesRegex(bridge.Flux2BridgeError, "NON_ASCII_TEXT_REJECTED_FROM_MODEL_HANDOFF"):
+            bridge.compose_prompts(explicit_blueprint)
 
     def test_57_success_is_published_by_one_atomic_directory_replace(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -860,6 +873,62 @@ class OfflineBridgeBehaviorTests(unittest.TestCase):
             manifest = read_json(final / "manifest.json")
             self.assertEqual(manifest["status"], "success")
             self.assertEqual(manifest["retry_count"], 0)
+
+    def test_57a_mechanism_visual_brief_and_bounded_redraw_count_are_preserved(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            profile = self._offline_profile(root)
+            _, entry = self._offline_raw_and_entry(root)
+            brief = {
+                "schema": "forge-mechanism-visual-brief-v1",
+                "source": "ai_mechanism_axes_visual_compiler_v1",
+                "automatic": True,
+                "player_confirmation_required": False,
+                "axes": {"body_continuity": "continuous_flexible"},
+                "required_roles": ["grip", "flexible_body", "strike"],
+            }
+            brief_path = root / "visual-structure-brief.json"
+            brief_path.write_text(json.dumps(brief, ensure_ascii=False), encoding="utf-8")
+            expected_sha = sha256_file(brief_path)
+            with mock.patch.object(bridge, "health", return_value={"ok": True}), mock.patch.object(
+                bridge, "ResourceMonitor", self.DummyMonitor
+            ), mock.patch.object(
+                bridge.legacy_bridge, "_submit_and_wait", return_value=("offline-prompt", entry)
+            ) as submit, mock.patch.object(
+                bridge.legacy_bridge, "process_sprite", side_effect=self._successful_postprocessor
+            ):
+                final = bridge.generate(
+                    profile,
+                    case_id="B01_SOFT",
+                    run_id="redraw_2",
+                    output_group="matrix",
+                    blueprint=self.BLUEPRINT,
+                    seed=4041001,
+                    prompt_policy_version="forge-open-identity-v3",
+                    visual_structure_brief_path=brief_path,
+                    visual_retry_count=2,
+                )
+            self.assertEqual(submit.call_count, 1)
+            self.assertEqual(read_json(final / "visual_structure_brief.json"), brief)
+            manifest = read_json(final / "manifest.json")
+            self.assertEqual(manifest["prompt_policy_version"], "forge-open-identity-v3")
+            self.assertEqual(manifest["retry_count"], 2)
+            self.assertEqual(manifest["visual_structure_brief_sha256"], expected_sha)
+            self.assertEqual(manifest["mechanism_visual_gate"], "pending_godot_alpha_and_rig_evaluation")
+
+    def test_57b_visual_redraw_count_is_bounded_without_bridge_resubmission(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            profile = self._offline_profile(Path(directory))
+            with self.assertRaisesRegex(bridge.Flux2BridgeError, "VISUAL_RETRY_COUNT_INVALID"):
+                bridge.generate(
+                    profile,
+                    case_id="B01",
+                    run_id="redraw_3",
+                    output_group="matrix",
+                    blueprint=self.BLUEPRINT,
+                    seed=4041001,
+                    visual_retry_count=3,
+                )
 
     def test_58_alpha_failure_retains_raw_and_never_publishes_a_fake_sprite(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

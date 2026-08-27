@@ -1,0 +1,93 @@
+{
+  "schema": "forge-builtin-pixel-visual-fixture-v1",
+  "sprite_fixture": {
+    "canvas": [96, 96],
+    "shapes": [
+      {"type": "line", "points": [[20, 66], [34, 54], [49, 47], [63, 50], [76, 40], [88, 23]], "width": 5, "color": "1b2635"},
+      {"type": "line", "points": [[20, 66], [34, 54], [49, 47], [63, 50], [76, 40], [88, 23]], "width": 2, "color": "a8434c"},
+      {"type": "line", "points": [[10, 82], [22, 64]], "width": 9, "color": "251b18"},
+      {"type": "line", "points": [[10, 82], [22, 64]], "width": 5, "color": "b8793d"},
+      {"type": "circle", "center": [21, 65], "radius": 5, "color": "d2a85c"},
+      {"type": "circle", "center": [88, 23], "radius": 2, "color": "d85b63"}
+    ]
+  },
+  "semantic_blueprint": {
+    "schema": "forge-semantic-blueprint-soft-mechanism-v1",
+    "id": "anonymous-continuous-soft-body-v1",
+    "identity": {
+      "canonical_name_zh": "鞭子",
+      "display_name_zh": "像素鞭子",
+      "required_identity_parts": ["短握把", "连续鞭身", "细鞭梢"]
+    },
+    "combat": {
+      "behavior_family": "heavy_melee",
+      "delivery": "whole_object_strike",
+      "impact_mode": "whole_body_collision",
+      "cadence_hint": "balanced_soft_combo",
+      "drawback": "recovery",
+      "effect_type": "normal"
+    },
+    "grip_profile": "rear_grip",
+    "weight_class": "light",
+    "confidence": 0.91,
+    "affordance_source": "ai_builtin_structure_sample_v1",
+    "affordance": {
+      "handle_length": "short",
+      "body_length": "long",
+      "grip_topology": "one_hand_handle",
+      "rigidity": "flexible",
+      "mass_distribution": "balanced",
+      "contact_surface": "whole_body",
+      "secondary_contact_surface": "none",
+      "flex_topology": "flexible_line",
+      "tether_topology": "none",
+      "terminal_load": "none",
+      "tether_mode": "wrap",
+      "tether_deployment": "none",
+      "has_point": false,
+      "has_edge": false,
+      "has_broad_face": false,
+      "has_barrel": false,
+      "has_stock": false,
+      "confidence": 0.91,
+      "evidence_parts": [
+        "a short rigid handle is visibly separate from one continuous narrowing soft body",
+        "there is no second attached line and no concentrated terminal mass"
+      ]
+    }
+  },
+  "anchors": {
+    "schema": "forge-semantic-anchors-soft-mechanism-v1",
+    "behavior_family": "heavy_melee",
+    "grip_profile": "rear_grip",
+    "required_anchor_types": ["GripPrimary", "StrikePoint"],
+    "corrected_anchors": {"GripPrimary": [11.0, 81.0], "StrikePoint": [88.0, 23.0]},
+    "auto_anchors": {"GripPrimary": [11.0, 81.0], "StrikePoint": [88.0, 23.0]},
+    "confidence": {"GripPrimary": 0.94, "StrikePoint": 0.92}
+  },
+  "visual_rig": {
+    "schema": "forge-pixel-weapon-visual-rig-v1",
+    "source": "ai_builtin_structure_sample_v1",
+    "automatic": true,
+    "player_confirmation_required": false,
+    "confidence": 0.92,
+    "parts": [
+      {
+        "id": "root_fixture",
+        "role": "rigid_root",
+        "pivot": [11.0, 81.0],
+        "mask_polygon": [[1.0, 78.0], [15.0, 95.0], [30.0, 70.0], [27.0, 59.0], [18.0, 58.0], [8.0, 68.0]],
+        "priority": 100,
+        "z_index": 0
+      },
+      {
+        "id": "continuous_soft_structure",
+        "role": "deform_body",
+        "source_path": [[20.0, 66.0], [34.0, 54.0], [49.0, 47.0], [63.0, 50.0], [76.0, 40.0], [88.0, 23.0]],
+        "mask_radius": 6.0,
+        "priority": 20,
+        "z_index": 1
+      }
+    ]
+  }
+}

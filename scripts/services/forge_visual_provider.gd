@@ -3,6 +3,7 @@ extends RefCounted
 
 const MODE_MOCK := "MOCK"
 const MODE_LOCAL_COMFYUI := "LOCAL_COMFYUI"
+const MODE_FAL_FIREARM := "FAL_FIREARM"
 
 var request_revision := 0
 

@@ -1,0 +1,81 @@
+{
+  "schema": "forge-builtin-pixel-visual-fixture-v1",
+  "sprite_fixture": {
+    "canvas": [96, 96],
+    "shapes": [
+      {"type": "line", "points": [[10, 84], [86, 15]], "width": 11, "color": "241b15"},
+      {"type": "line", "points": [[10, 84], [86, 15]], "width": 7, "color": "9a6332"},
+      {"type": "line", "points": [[18, 76], [27, 68]], "width": 8, "color": "d3a857"},
+      {"type": "circle", "center": [10, 84], "radius": 5, "color": "4a3020"},
+      {"type": "circle", "center": [86, 15], "radius": 5, "color": "4a3020"}
+    ]
+  },
+  "semantic_blueprint": {
+    "schema": "forge-semantic-blueprint-soft-mechanism-v1",
+    "id": "anonymous-rigid-control-v1",
+    "identity": {
+      "canonical_name_zh": "木棍",
+      "display_name_zh": "像素木棍",
+      "required_identity_parts": ["握持缠带", "完整刚性棍身"]
+    },
+    "combat": {
+      "behavior_family": "heavy_melee",
+      "delivery": "whole_object_strike",
+      "impact_mode": "whole_body_collision",
+      "cadence_hint": "balanced",
+      "drawback": "recovery",
+      "effect_type": "normal"
+    },
+    "grip_profile": "rear_grip",
+    "weight_class": "medium",
+    "confidence": 0.93,
+    "affordance_source": "ai_builtin_structure_sample_v1",
+    "affordance": {
+      "handle_length": "medium",
+      "body_length": "long",
+      "grip_topology": "two_hand_handle",
+      "rigidity": "rigid",
+      "mass_distribution": "balanced",
+      "contact_surface": "whole_body",
+      "secondary_contact_surface": "none",
+      "flex_topology": "none",
+      "tether_topology": "none",
+      "terminal_load": "none",
+      "tether_mode": "none",
+      "tether_deployment": "none",
+      "has_point": false,
+      "has_edge": false,
+      "has_broad_face": false,
+      "has_barrel": false,
+      "has_stock": false,
+      "confidence": 0.93,
+      "evidence_parts": ["one continuous thick body has no visible joint line tether or separate moving endpoint"]
+    }
+  },
+  "anchors": {
+    "schema": "forge-semantic-anchors-soft-mechanism-v1",
+    "behavior_family": "heavy_melee",
+    "grip_profile": "rear_grip",
+    "required_anchor_types": ["GripPrimary", "StrikePoint"],
+    "corrected_anchors": {"GripPrimary": [15.0, 79.0], "StrikePoint": [86.0, 15.0]},
+    "auto_anchors": {"GripPrimary": [15.0, 79.0], "StrikePoint": [86.0, 15.0]},
+    "confidence": {"GripPrimary": 0.95, "StrikePoint": 0.94}
+  },
+  "visual_rig": {
+    "schema": "forge-pixel-weapon-visual-rig-v1",
+    "source": "ai_builtin_structure_sample_v1",
+    "automatic": true,
+    "player_confirmation_required": false,
+    "confidence": 0.95,
+    "parts": [
+      {
+        "id": "complete_rigid_structure",
+        "role": "rigid_root",
+        "pivot": [15.0, 79.0],
+        "mask_polygon": [[0.0, 0.0], [95.0, 0.0], [95.0, 95.0], [0.0, 95.0]],
+        "priority": 100,
+        "z_index": 0
+      }
+    ]
+  }
+}

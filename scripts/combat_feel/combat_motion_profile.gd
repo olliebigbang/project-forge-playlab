@@ -7,6 +7,14 @@ const REACH_CLASSES: PackedStringArray = ["short", "medium", "long"]
 const TEMPOS: PackedStringArray = ["rapid", "balanced", "committed"]
 const CONTACT_MODES: PackedStringArray = ["edge", "point", "whole_body"]
 const GRIP_MODES: PackedStringArray = ["one_hand", "two_hand", "center"]
+const GRIP_TOPOLOGIES: PackedStringArray = ["one_hand_handle", "two_hand_handle", "body_grip", "clamp_grip"]
+const RIGIDITIES: PackedStringArray = ["rigid", "semi_rigid", "flexible"]
+const CONTACT_SURFACES: PackedStringArray = ["point", "edge", "broad", "whole_body"]
+const FLEX_TOPOLOGIES: PackedStringArray = ["none", "bending_shaft", "flexible_line", "linked_segments"]
+const TETHER_TOPOLOGIES: PackedStringArray = ["none", "flexible_line", "linked_segments"]
+const TERMINAL_LOADS: PackedStringArray = ["none", "light", "heavy"]
+const TETHER_MODES: PackedStringArray = ["none", "wrap", "hook"]
+const TETHER_DEPLOYMENTS: PackedStringArray = ["none", "fixed_length", "cast_retract", "launch_tension"]
 
 @export_enum("sweep", "slam", "thrust") var motion_family := "sweep"
 @export_enum("light", "medium", "heavy") var weight_class := "medium"
@@ -42,6 +50,26 @@ const GRIP_MODES: PackedStringArray = ["one_hand", "two_hand", "center"]
 @export var control_strength := 1.0
 @export var impact_sharpness := 1.0
 @export var render_scale := 1.18
+
+# Mechanism-axis V4 runtime contract. These values are compiled from anonymous
+# structure and are consumed directly by movement, collision, pose and impact.
+# They do not contain an object name or a player-selected attack style.
+@export_enum("one_hand_handle", "two_hand_handle", "body_grip", "clamp_grip") var grip_topology := "one_hand_handle"
+@export_enum("rigid", "semi_rigid", "flexible") var rigidity_mode := "rigid"
+@export_enum("point", "edge", "broad", "whole_body") var primary_contact_surface := "edge"
+@export_enum("none", "point", "edge", "broad", "whole_body") var secondary_contact_surface := "none"
+@export var secondary_contact_stage := "none"
+@export_enum("none", "bending_shaft", "flexible_line", "linked_segments") var flex_topology := "none"
+@export_enum("none", "flexible_line", "linked_segments") var tether_topology := "none"
+@export_enum("none", "light", "heavy") var terminal_load := "none"
+@export_enum("none", "wrap", "hook") var tether_mode := "none"
+@export_enum("none", "fixed_length", "cast_retract", "launch_tension") var tether_deployment := "none"
+@export_range(0.0, 1.0) var handle_leverage_ratio := 0.5
+@export_range(0.0, 1.0) var body_coverage_ratio := 0.5
+@export_range(0.0, 1.0) var mass_inertia_ratio := 0.5
+@export_range(0.0, 1.0) var terminal_load_ratio := 0.0
+@export_range(0.0, 1.0) var tether_origin_ratio := 1.0
+@export var close_range_deadzone_pixels := 0.0
 
 func configure_timing_from_tempo() -> void:
 	match tempo:
@@ -100,6 +128,40 @@ func validation_errors() -> Array[String]:
 	if tempo not in TEMPOS: errors.append("INVALID_TEMPO")
 	if contact_mode not in CONTACT_MODES: errors.append("INVALID_CONTACT_MODE")
 	if grip_mode not in GRIP_MODES: errors.append("INVALID_GRIP_MODE")
+	if grip_topology not in GRIP_TOPOLOGIES: errors.append("INVALID_GRIP_TOPOLOGY")
+	if rigidity_mode not in RIGIDITIES: errors.append("INVALID_RIGIDITY_MODE")
+	if primary_contact_surface not in CONTACT_SURFACES: errors.append("INVALID_PRIMARY_CONTACT_SURFACE")
+	if secondary_contact_surface != "none" and secondary_contact_surface not in CONTACT_SURFACES:
+		errors.append("INVALID_SECONDARY_CONTACT_SURFACE")
+	if secondary_contact_stage not in ["none", "hit_3"]:
+		errors.append("INVALID_SECONDARY_CONTACT_STAGE")
+	if flex_topology not in FLEX_TOPOLOGIES: errors.append("INVALID_FLEX_TOPOLOGY")
+	if tether_topology not in TETHER_TOPOLOGIES: errors.append("INVALID_TETHER_TOPOLOGY")
+	if terminal_load not in TERMINAL_LOADS: errors.append("INVALID_TERMINAL_LOAD")
+	if tether_mode not in TETHER_MODES: errors.append("INVALID_TETHER_MODE")
+	if tether_deployment not in TETHER_DEPLOYMENTS: errors.append("INVALID_TETHER_DEPLOYMENT")
+	if rigidity_mode == "flexible" and flex_topology == "none": errors.append("FLEXIBLE_PROFILE_REQUIRES_FLEX_TOPOLOGY")
+	if rigidity_mode != "flexible" and flex_topology != "none": errors.append("FLEX_TOPOLOGY_REQUIRES_FLEXIBLE_PROFILE")
+	var has_soft_path := flex_topology != "none" or tether_topology != "none"
+	if not has_soft_path and (terminal_load != "none" or tether_mode != "none"):
+		errors.append("SOFT_PROFILE_FACTORS_REQUIRE_SOFT_PATH")
+	if tether_mode != "none" \
+		and flex_topology not in ["flexible_line", "linked_segments"] \
+		and tether_topology == "none":
+		errors.append("TETHER_MODE_REQUIRES_LINE_OR_LINKS")
+	if tether_mode == "hook" and primary_contact_surface != "point" and secondary_contact_surface != "point":
+		errors.append("HOOK_TETHER_REQUIRES_POINT_CONTACT")
+	if tether_topology == "none" and tether_deployment != "none":
+		errors.append("TETHER_DEPLOYMENT_REQUIRES_ATTACHED_TETHER")
+	if tether_topology != "none" and tether_deployment == "none":
+		errors.append("ATTACHED_TETHER_REQUIRES_DEPLOYMENT")
+	if handle_leverage_ratio < 0.0 or handle_leverage_ratio > 1.0 \
+		or body_coverage_ratio < 0.0 or body_coverage_ratio > 1.0 \
+		or mass_inertia_ratio < 0.0 or mass_inertia_ratio > 1.0 \
+		or terminal_load_ratio < 0.0 or terminal_load_ratio > 1.0 \
+		or tether_origin_ratio < 0.0 or tether_origin_ratio > 1.0 \
+		or close_range_deadzone_pixels < 0.0:
+		errors.append("INVALID_MECHANISM_RUNTIME_VALUE")
 	if startup_seconds <= 0.0 or active_seconds <= 0.0 or recovery_seconds <= 0.0:
 		errors.append("INVALID_TIMING")
 	if combo_recipe != null:
@@ -129,4 +191,20 @@ func to_dict() -> Dictionary:
 		"control_strength": control_strength,
 		"impact_sharpness": impact_sharpness,
 		"render_scale": render_scale,
+		"grip_topology": grip_topology,
+		"rigidity_mode": rigidity_mode,
+		"primary_contact_surface": primary_contact_surface,
+		"secondary_contact_surface": secondary_contact_surface,
+		"secondary_contact_stage": secondary_contact_stage,
+		"flex_topology": flex_topology,
+		"tether_topology": tether_topology,
+		"terminal_load": terminal_load,
+		"tether_mode": tether_mode,
+		"tether_deployment": tether_deployment,
+		"handle_leverage_ratio": handle_leverage_ratio,
+		"body_coverage_ratio": body_coverage_ratio,
+		"mass_inertia_ratio": mass_inertia_ratio,
+		"terminal_load_ratio": terminal_load_ratio,
+		"tether_origin_ratio": tether_origin_ratio,
+		"close_range_deadzone_pixels": close_range_deadzone_pixels,
 	}

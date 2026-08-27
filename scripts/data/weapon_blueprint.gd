@@ -31,6 +31,12 @@ var silhouette_aspect: float = 2.2
 var silhouette_curvature: String = "angular"
 var silhouette_mass_distribution: String = "balanced"
 var silhouette_handle_region: String = "rear"
+var affordance: Dictionary = {}
+var affordance_source: String = ""
+var visual_rig: Dictionary = {}
+var visual_rig_source: String = ""
+var visual_structure_brief: Dictionary = {}
+var visual_structure_brief_source: String = ""
 var confidence: float = 1.0
 var clarification_question: String = ""
 var modifiers: Dictionary = {}
@@ -86,7 +92,12 @@ func to_dict() -> Dictionary:
 		"visual_prompt": visual_prompt, "palette_hint": palette_hint,
 		"silhouette_aspect": silhouette_aspect, "silhouette_curvature": silhouette_curvature,
 		"silhouette_mass_distribution": silhouette_mass_distribution,
-		"silhouette_handle_region": silhouette_handle_region, "confidence": confidence,
+		"silhouette_handle_region": silhouette_handle_region,
+		"affordance": affordance.duplicate(true), "affordance_source": affordance_source,
+		"visual_rig": visual_rig.duplicate(true), "visual_rig_source": visual_rig_source,
+		"visual_structure_brief": visual_structure_brief.duplicate(true),
+		"visual_structure_brief_source": visual_structure_brief_source,
+		"confidence": confidence,
 		"clarification_question": clarification_question, "modifiers": modifiers.duplicate(true)
 	}
 
@@ -98,6 +109,12 @@ static func from_dict(data: Dictionary) -> WeaponBlueprint:
 				blueprint.preserved_visual_features.clear()
 				for feature: Variant in data[key]:
 					blueprint.preserved_visual_features.append(str(feature))
+			elif key == "affordance":
+				blueprint.affordance = (data[key] as Dictionary).duplicate(true) if data[key] is Dictionary else {}
+			elif key == "visual_rig":
+				blueprint.visual_rig = (data[key] as Dictionary).duplicate(true) if data[key] is Dictionary else {}
+			elif key == "visual_structure_brief":
+				blueprint.visual_structure_brief = (data[key] as Dictionary).duplicate(true) if data[key] is Dictionary else {}
 			else:
 				blueprint.set(key, data[key])
 	blueprint.validate_and_repair()

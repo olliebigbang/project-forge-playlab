@@ -35,7 +35,21 @@ SYSTEM_NEGATIVE = (
     "multiple views, multiple objects, inventory grid, text, label, letters, logo, watermark, "
     "UI, scenery, room, landscape, environment, pedestal, cropped object, cut off, border"
 )
-PROMPT_POLICY_VERSION = "forge-open-identity-v2"
+FIREARM_SYSTEM_POSITIVE = (
+    "one isolated recognisable firearm game sprite, strict flat side view facing right, "
+    "complete firearm visible, authentic model-defining silhouette and proportions, "
+    "separate stock receiver grip magazine handguard barrel and muzzle structures, "
+    "crisp handcrafted pixel art, limited dark metal palette, hard pixel clusters, "
+    "no person, no hand, no character, no text, no watermark, no UI, no scene, "
+    "flat high-contrast solid chroma key magenta background, generous empty margin"
+)
+FIREARM_SYSTEM_NEGATIVE = (
+    "generic gun, block scaffold, rectangular placeholder, toy gun, fantasy redesign, sci-fi redesign, "
+    "wrong stock, wrong magazine position, merged grip and magazine, portrait, human, hands, fingers, "
+    "character holding object, weapon sheet, multiple views, multiple objects, text, label, letters, "
+    "logo, watermark, UI, scenery, cropped object, cut off, photorealistic scene, smooth 3D render"
+)
+PROMPT_POLICY_VERSION = "forge-open-identity-v3"
 REQUIRED_MANIFEST_FIELDS = {
     "case_id",
     "prompt",
@@ -83,8 +97,13 @@ def sanitize_model_prompt(value: str, maximum: int = 1400) -> str:
     return safe
 
 
-def compose_positive_prompt(model_generation_prompt: str) -> str:
-    return f"{model_generation_prompt}. {SYSTEM_POSITIVE}"
+def compose_positive_prompt(model_generation_prompt: str, visual_kind: str = "generic") -> str:
+    system_prompt = FIREARM_SYSTEM_POSITIVE if visual_kind == "firearm" else SYSTEM_POSITIVE
+    return f"{model_generation_prompt}. {system_prompt}"
+
+
+def compose_negative_prompt(visual_kind: str = "generic") -> str:
+    return FIREARM_SYSTEM_NEGATIVE if visual_kind == "firearm" else SYSTEM_NEGATIVE
 
 
 def _expand(value: str) -> str:
@@ -284,6 +303,39 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def _load_visual_structure_brief(path: Path | None) -> tuple[dict[str, Any], str]:
+    if path is None:
+        return {}, ""
+    resolved = path.resolve()
+    if not resolved.is_file() or resolved.stat().st_size > 65536:
+        raise BridgeError("VISUAL_STRUCTURE_BRIEF_FILE_INVALID")
+    raw = resolved.read_bytes()
+    parsed = json.loads(raw.decode("utf-8"))
+    if not isinstance(parsed, dict):
+        raise BridgeError("VISUAL_STRUCTURE_BRIEF_JSON_INVALID")
+    common_valid = (
+        parsed.get("automatic") is True
+        and parsed.get("player_confirmation_required") is False
+        and isinstance(parsed.get("axes"), dict)
+        and isinstance(parsed.get("required_roles"), list)
+        and bool(parsed.get("required_roles"))
+    )
+    mechanism_valid = (
+        parsed.get("schema") == "forge-mechanism-visual-brief-v1"
+        and parsed.get("source") == "ai_mechanism_axes_visual_compiler_v1"
+    )
+    firearm_valid = (
+        parsed.get("schema") == "forge-firearm-visual-brief-v1"
+        and isinstance(parsed.get("source"), str)
+        and bool(parsed.get("source"))
+        and parsed.get("scaffold_presentable") is False
+        and parsed.get("finished_art_requires_external_generator") is True
+    )
+    if not common_valid or not (mechanism_valid or firearm_valid):
+        raise BridgeError("VISUAL_STRUCTURE_BRIEF_CONTRACT_INVALID")
+    return parsed, hashlib.sha256(raw).hexdigest()
+
+
 def generate(
     config_path: Path,
     *,
@@ -295,6 +347,8 @@ def generate(
     control_strength: float,
     sketch_path: Path | None,
     prompt_policy_version: str = PROMPT_POLICY_VERSION,
+    visual_structure_brief_path: Path | None = None,
+    visual_retry_count: int = 0,
 ) -> Path:
     # Kept explicit in every manifest so a later prompt-policy edit cannot be
     # confused with the bounded visual evidence already delivered by this Spike.
@@ -306,7 +360,15 @@ def generate(
         raise BridgeError("PLAYER_IDENTITY_PROMPT_EMPTY")
     if len(prompt) > 1200:
         raise BridgeError("PLAYER_IDENTITY_PROMPT_TOO_LONG")
+    if visual_retry_count < 0 or visual_retry_count > 2:
+        raise BridgeError("VISUAL_RETRY_COUNT_INVALID")
     model_generation_prompt = sanitize_model_prompt(generation_prompt)
+    visual_structure_brief, visual_structure_brief_sha256 = _load_visual_structure_brief(visual_structure_brief_path)
+    visual_kind = (
+        "firearm"
+        if visual_structure_brief.get("schema") == "forge-firearm-visual-brief-v1"
+        else "mechanism" if visual_structure_brief else "generic"
+    )
     config = load_config(config_path)
     workflow_path = Path(config["workflow_file"])
     workflow_bytes = workflow_path.read_bytes()
@@ -348,7 +410,10 @@ def generate(
         "prompt_id": "",
         "run_id": safe_run,
         "request_id": uuid.uuid4().hex,
-        "retry_count": 0,
+        "retry_count": int(visual_retry_count),
+        "visual_structure_brief_sha256": visual_structure_brief_sha256,
+        "visual_kind": visual_kind,
+        "mechanism_visual_gate": "pending_godot_alpha_and_rig_evaluation" if visual_structure_brief else "not_requested",
         "generation_size": [int(config["generation_width"]), int(config["generation_height"])],
     }
     log_lines = [
@@ -356,9 +421,11 @@ def generate(
         f"run_id={safe_run}",
         f"seed={seed}",
         f"prompt_policy_version={prompt_policy_version}",
-        "retry_count=0",
+        f"retry_count={visual_retry_count}",
     ]
     try:
+        if visual_structure_brief:
+            _write_json(temp_directory / "visual_structure_brief.json", visual_structure_brief)
         health = health_check(config)
         if not health.get("ok", False):
             raise BridgeError("COMFYUI_HEALTH_CHECK_FAILED")
@@ -377,13 +444,13 @@ def generate(
         manifest["img2img_denoise"] = round(denoise, 4)
         # Identity evidence comes first so the behavior/composition scaffold cannot
         # silently replace the player's object with a familiar weapon archetype.
-        positive = compose_positive_prompt(model_generation_prompt)
+        positive = compose_positive_prompt(model_generation_prompt, visual_kind)
         output_prefix = f"ForgeSpike/{safe_case}/{safe_run}/raw"
         graph = inject_workflow(
             workflow,
             checkpoint=str(config["checkpoint"]),
             positive_prompt=positive,
-            negative_prompt=SYSTEM_NEGATIVE,
+            negative_prompt=compose_negative_prompt(visual_kind),
             input_image=input_relative.as_posix(),
             seed=seed,
             denoise=denoise,
@@ -456,6 +523,8 @@ def _parse_args() -> argparse.Namespace:
     generate_parser.add_argument("--seed", type=int, required=True)
     generate_parser.add_argument("--control-strength", type=float, default=0.45)
     generate_parser.add_argument("--sketch", type=Path)
+    generate_parser.add_argument("--visual-structure-brief", type=Path)
+    generate_parser.add_argument("--visual-retry-count", type=int, default=0)
     return parser.parse_args()
 
 
@@ -475,6 +544,8 @@ def main() -> int:
             seed=args.seed,
             control_strength=args.control_strength,
             sketch_path=args.sketch,
+            visual_structure_brief_path=args.visual_structure_brief,
+            visual_retry_count=args.visual_retry_count,
         )
         print(json.dumps({"status": "success", "output_directory": str(result)}, ensure_ascii=False))
         return 0

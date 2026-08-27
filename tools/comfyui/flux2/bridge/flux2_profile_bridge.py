@@ -28,6 +28,11 @@ PROFILE_DIRECTORY = COMFYUI_TOOLS_ROOT / "config" / "profiles"
 PROFILE_CONTRACT = "forge-comfy-profile-v1"
 WORKFLOW_CONTRACT = "forge-flux2-klein-4b-v1"
 PROMPT_POLICY_VERSION = "forge-flux2-static-identity-v1"
+OPEN_IDENTITY_PROMPT_POLICY_VERSIONS = {
+    "forge-open-identity-v2",
+    "forge-open-identity-v3",
+}
+OPEN_IDENTITY_INPUT_MARKER = "_flux2_open_identity_generation_prompt_v1"
 GENERIC_POSITIVE = (
     "one isolated physical fantasy game prop, side view or slight three-quarter side view, "
     "facing right, complete object fully visible, centered with generous empty margin, "
@@ -50,7 +55,7 @@ EXPECTED_MODEL_HASHES = {
     "vae": "d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5",
 }
 EXPECTED_COMFYUI_COMMIT = "b1693ecba9f5b65f8c80ab36b195ab963ec92413"
-EXPECTED_POSTPROCESSOR_HASH = "f748c8e61dfd022d351d84c57c2d68b50b3dc39685403c7af20cc0402eebc0e9"
+EXPECTED_POSTPROCESSOR_HASH = "c6fe62c05c18b3fbc79312750080c03b8980bdb5f76b48270b873ecdce4bd3fa"
 
 
 class Flux2BridgeError(RuntimeError):
@@ -206,7 +211,10 @@ def _require_string_list(value: Any, field: str, *, allow_empty: bool = True) ->
     return [item.strip() for item in value]
 
 
-def compose_prompts(blueprint: dict[str, Any]) -> tuple[str, str, dict[str, Any]]:
+def compose_prompts(
+    blueprint: dict[str, Any], visual_kind: str = "generic"
+) -> tuple[str, str, dict[str, Any]]:
+    is_open_identity_prompt = blueprint.get(OPEN_IDENTITY_INPUT_MARKER) is True
     identity = blueprint.get("identity")
     visual = blueprint.get("visual")
     if not isinstance(identity, dict) or not isinstance(visual, dict):
@@ -224,7 +232,9 @@ def compose_prompts(blueprint: dict[str, Any]) -> tuple[str, str, dict[str, Any]
         raise Flux2BridgeError("BLUEPRINT_VISUAL_PROMPTS_MISSING")
     must_preserve = _require_string_list(visual.get("must_preserve", required_parts), "must_preserve", allow_empty=False)
     replacements = _require_string_list(visual.get("must_not_replace_with", []), "must_not_replace_with")
-    all_text = [canonical, prompt_en, negative_en, *required_parts, *materials, *silhouettes, *decorations, *must_preserve, *replacements]
+    all_text = [canonical, negative_en, *required_parts, *materials, *silhouettes, *decorations, *must_preserve, *replacements]
+    if not is_open_identity_prompt:
+        all_text.append(prompt_en)
     if any(any(ord(character) > 127 for character in text) for text in all_text):
         raise Flux2BridgeError("NON_ASCII_TEXT_REJECTED_FROM_MODEL_HANDOFF")
     positive_sections = [
@@ -239,12 +249,20 @@ def compose_prompts(blueprint: dict[str, Any]) -> tuple[str, str, dict[str, Any]
     if decorations:
         positive_sections.append(f"subtle optional forge decorations: {'; '.join(decorations)}")
     positive_sections.append(f"identity-preservation cues: {'; '.join(must_preserve)}")
-    positive_sections.append(GENERIC_POSITIVE)
+    positive_sections.append(
+        legacy_bridge.FIREARM_SYSTEM_POSITIVE
+        if visual_kind == "firearm"
+        else GENERIC_POSITIVE
+    )
     positive = ". ".join(section for section in positive_sections if section) + "."
     negative_sections = [negative_en.rstrip(". ")]
     if replacements:
         negative_sections.append("forbidden substitutions: " + "; ".join(replacements))
-    negative_sections.append(GENERIC_NEGATIVE)
+    negative_sections.append(
+        legacy_bridge.FIREARM_SYSTEM_NEGATIVE
+        if visual_kind == "firearm"
+        else GENERIC_NEGATIVE
+    )
     negative = ". ".join(section for section in negative_sections if section) + "."
     evidence = {
         "canonical_name_en": canonical,
@@ -256,7 +274,12 @@ def compose_prompts(blueprint: dict[str, Any]) -> tuple[str, str, dict[str, Any]
         "visual_negative_prompt_en": negative_en,
         "must_preserve": must_preserve,
         "must_not_replace_with": replacements,
+        "input_contract": (
+            "open_identity_generation_prompt_v1" if is_open_identity_prompt else "explicit_semantic_blueprint_v1"
+        ),
     }
+    if is_open_identity_prompt:
+        evidence["generation_prompt_sha256"] = hashlib.sha256(prompt_en.encode("utf-8")).hexdigest()
     return positive, negative, evidence
 
 
@@ -367,6 +390,9 @@ def generate(
     reference_image: Path | None = None,
     raw_only: bool = False,
     exact_positive_prompt: str | None = None,
+    prompt_policy_version: str = PROMPT_POLICY_VERSION,
+    visual_structure_brief_path: Path | None = None,
+    visual_retry_count: int = 0,
 ) -> Path:
     if profile.get("profile_id") != "flux2_klein_4b":
         raise Flux2BridgeError("FLUX2_BRIDGE_REQUIRES_FLUX2_PROFILE")
@@ -374,12 +400,24 @@ def generate(
         raise Flux2BridgeError("GENERATION_MODE_INVALID")
     if mode == "edit" and reference_image is None:
         raise Flux2BridgeError("EDIT_REFERENCE_REQUIRED")
+    if prompt_policy_version not in {PROMPT_POLICY_VERSION, *OPEN_IDENTITY_PROMPT_POLICY_VERSIONS}:
+        raise Flux2BridgeError("PROMPT_POLICY_VERSION_INVALID")
+    if visual_retry_count < 0 or visual_retry_count > 2:
+        raise Flux2BridgeError("VISUAL_RETRY_COUNT_INVALID")
+    visual_structure_brief, visual_structure_brief_sha256 = legacy_bridge._load_visual_structure_brief(
+        visual_structure_brief_path
+    )
+    visual_kind = (
+        "firearm"
+        if visual_structure_brief.get("schema") == "forge-firearm-visual-brief-v1"
+        else "mechanism" if visual_structure_brief else "generic"
+    )
     safe_case = "".join(character for character in case_id.lower() if character.isalnum() or character in "_-")
     safe_run = "".join(character for character in run_id.lower() if character.isalnum() or character in "_-")
     safe_group = "".join(character for character in output_group.lower() if character.isalnum() or character in "_-")
     if not safe_case or not safe_run or not safe_group:
         raise Flux2BridgeError("OUTPUT_IDENTIFIER_INVALID")
-    positive, negative, blueprint_evidence = compose_prompts(blueprint)
+    positive, negative, blueprint_evidence = compose_prompts(blueprint, visual_kind)
     if exact_positive_prompt is not None:
         if output_group != "smoke" or case_id != "smoke_t2i":
             raise Flux2BridgeError("EXACT_PROMPT_OVERRIDE_RESERVED_FOR_FIXED_SMOKE")
@@ -422,7 +460,7 @@ def generate(
         "contract": "forge-flux2-generation-v1",
         "profile_id": profile["profile_id"],
         "workflow_contract_version": profile["workflow_contract_version"],
-        "prompt_policy_version": PROMPT_POLICY_VERSION,
+        "prompt_policy_version": prompt_policy_version,
         "case_id": safe_case,
         "run_id": safe_run,
         "output_group": safe_group,
@@ -447,7 +485,12 @@ def generate(
         "steps": int(generation["steps"]),
         "guidance": float(generation["guidance"]),
         "sampler": generation["sampler"],
-        "retry_count": 0,
+        "retry_count": int(visual_retry_count),
+        "visual_structure_brief_sha256": visual_structure_brief_sha256,
+        "visual_kind": visual_kind,
+        "mechanism_visual_gate": (
+            "pending_godot_alpha_and_rig_evaluation" if visual_structure_brief else "not_requested"
+        ),
         "prompt_id": "",
         "generation_seconds": 0.0,
         "total_wall_seconds": 0.0,
@@ -463,6 +506,8 @@ def generate(
     wall_start = time.perf_counter()
     monitor_path = Path(__file__).resolve().parents[1] / "logs" / "runtime_state.json"
     try:
+        if visual_structure_brief:
+            _write_json(stage / "visual_structure_brief.json", visual_structure_brief)
         if not health(profile).get("ok"):
             raise Flux2BridgeError("COMFYUI_HEALTH_CHECK_FAILED")
         _write_json(stage / "blueprint_projection.json", blueprint_evidence)
@@ -526,7 +571,8 @@ def generate(
                     f"run_id={safe_run}",
                     f"mode={mode}",
                     f"seed={seed}",
-                    "retry_count=0",
+                    f"prompt_policy_version={prompt_policy_version}",
+                    f"retry_count={visual_retry_count}",
                     f"prompt_id={manifest['prompt_id']}",
                     f"status={manifest['status']}",
                     f"failure_reason={manifest['failure_reason']}",
@@ -550,14 +596,18 @@ def _load_blueprint(path: Path | None, generation_prompt: str | None) -> dict[st
             raise Flux2BridgeError("BLUEPRINT_FILE_INVALID") from exc
         if not isinstance(value, dict):
             raise Flux2BridgeError("BLUEPRINT_ROOT_INVALID")
+        if OPEN_IDENTITY_INPUT_MARKER in value:
+            raise Flux2BridgeError("BLUEPRINT_RESERVED_FIELD_PRESENT")
         return value
     prompt = str(generation_prompt or "").strip()
     if not prompt:
         raise Flux2BridgeError("BLUEPRINT_OR_GENERATION_PROMPT_REQUIRED")
+    prompt = legacy_bridge.sanitize_model_prompt(prompt)
     return {
+        OPEN_IDENTITY_INPUT_MARKER: True,
         "identity": {
-            "canonical_name_en": prompt,
-            "required_identity_parts": [prompt],
+            "canonical_name_en": "player-declared source object",
+            "required_identity_parts": ["recognizable source-object silhouette"],
             "material_hints": [],
             "silhouette_hints": [],
             "optional_decorations": [],
@@ -565,7 +615,7 @@ def _load_blueprint(path: Path | None, generation_prompt: str | None) -> dict[st
         "visual": {
             "prompt_en": prompt,
             "negative_prompt_en": GENERIC_NEGATIVE,
-            "must_preserve": [prompt],
+            "must_preserve": ["player-declared source object identity"],
             "must_not_replace_with": [],
         },
     }
@@ -593,6 +643,8 @@ def parse_args() -> argparse.Namespace:
     generate_parser.add_argument("--reference", type=Path)
     generate_parser.add_argument("--flux2-enable-sketch-edit", action="store_true")
     generate_parser.add_argument("--raw-only", action="store_true")
+    generate_parser.add_argument("--visual-structure-brief", type=Path)
+    generate_parser.add_argument("--visual-retry-count", type=int, default=0)
     return parser.parse_args()
 
 
@@ -640,7 +692,7 @@ def main() -> int:
         if args.command == "health":
             print(json.dumps(health(profile), ensure_ascii=False, indent=2))
             return 0
-        if args.prompt_policy_version not in {PROMPT_POLICY_VERSION, "forge-open-identity-v2"}:
+        if args.prompt_policy_version not in {PROMPT_POLICY_VERSION, *OPEN_IDENTITY_PROMPT_POLICY_VERSIONS}:
             raise Flux2BridgeError("PROMPT_POLICY_VERSION_INVALID")
         if args.mode == "edit" and not args.flux2_enable_sketch_edit:
             raise Flux2BridgeError("SKETCH_EDIT_DEVELOPER_SWITCH_REQUIRED")
@@ -657,6 +709,9 @@ def main() -> int:
             mode=args.mode,
             reference_image=args.reference or args.sketch,
             raw_only=args.raw_only,
+            prompt_policy_version=args.prompt_policy_version,
+            visual_structure_brief_path=args.visual_structure_brief,
+            visual_retry_count=args.visual_retry_count,
         )
         print(json.dumps({"status": "success", "output_directory": str(result)}, ensure_ascii=False))
         return 0

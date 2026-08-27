@@ -1,0 +1,12 @@
+{
+  "schema": "forge-soft-weapon-mechanism-manifest-v1",
+  "status": "developer_mechanism_sample_ready",
+  "developer_only": true,
+  "normal_player_flow": false,
+  "playtest_claim": false,
+  "manual_playtest_performed": false,
+  "player_mechanism_input_used": false,
+  "player_confirmation_required": false,
+  "source_generator": "deterministic_builtin_pixel_fixture",
+  "mechanism_contract": {"main_soft_path": "none", "attached_soft_path": "none", "terminal_load": "none", "tether_mode": "none", "tether_deployment": "none"}
+}

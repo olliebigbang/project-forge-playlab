@@ -135,6 +135,7 @@ func _test_unsupported_has_no_sweep_fallback() -> void:
 	unmatched.contact_surface = "edge"
 	unmatched.secondary_contact_surface = "none"
 	unmatched.rigidity = "flexible"
+	unmatched.flex_topology = "flexible_line"
 	var result: Variant = COMPILER.new().compile(unmatched, asset.anchors_dict(), asset.opaque_bounds)
 	_check(result == COMPILER.UNSUPPORTED, "07 contradictory or incomplete structure returns unsupported without sweep fallback")
 
@@ -150,16 +151,19 @@ func _test_runtime_executes_each_recipe_primitive() -> void:
 
 
 func _test_spin_has_stronger_multi_target_coverage() -> void:
+	var loader: Variant = LOADER.new()
 	var broom_profile: Resource = _compiled("old_mop") as Resource
+	var broom_asset := loader.load_recipe_asset("old_mop").get("asset") as WeaponVisualAsset
 	var spin_index := 0
 	for index: int in range(1, 4):
 		if broom_profile.combo_recipe.primitive_for(index).motion_family == "spin": spin_index = index
-	var broom_arena: Variant = _arena_on_hit(broom_profile, spin_index)
+	var broom_arena: Variant = _arena_on_hit(broom_profile, spin_index, broom_asset)
 	var broom_hand: Vector2 = broom_arena._hand_world_position()
 	var broom_front: bool = broom_arena._attack_contains(broom_hand + Vector2(92, 0))
 	var broom_rear: bool = broom_arena._attack_contains(broom_hand + Vector2(-92, 0))
 	var pan_profile: Resource = _compiled("frying_pan") as Resource
-	var pan_arena: Variant = _arena_on_hit(pan_profile, 3)
+	var pan_asset := loader.load_recipe_asset("frying_pan").get("asset") as WeaponVisualAsset
+	var pan_arena: Variant = _arena_on_hit(pan_profile, 3, pan_asset)
 	var pan_hand: Vector2 = pan_arena._hand_world_position()
 	var pan_contact: Vector2 = pan_arena._primitive_contact_world(pan_arena.controller.current_primitive, pan_hand)
 	var pan_front: bool = pan_arena._attack_contains(pan_contact)
@@ -175,18 +179,19 @@ func _test_pan_and_broom_orientation_normalization() -> void:
 	var broom: Dictionary = loader.load_recipe_asset("old_mop")
 	var pan_asset := pan.get("asset") as WeaponVisualAsset
 	var broom_asset := broom.get("asset") as WeaponVisualAsset
-	var pan_arena: Variant = _arena_on_hit(_compiled("frying_pan") as Resource, 1)
-	var broom_arena: Variant = _arena_on_hit(_compiled("old_mop") as Resource, 1)
+	var pan_arena: Variant = _arena_on_hit(_compiled("frying_pan") as Resource, 1, pan_asset)
+	var broom_arena: Variant = _arena_on_hit(_compiled("old_mop") as Resource, 1, broom_asset)
 	var pan_hand: Vector2 = pan_arena._hand_world_position()
 	var broom_hand: Vector2 = broom_arena._hand_world_position()
 	var pan_contact: Vector2 = pan_arena._primitive_contact_world(pan_arena.controller.current_primitive, pan_hand)
+	var broom_contact: Vector2 = broom_arena._primitive_contact_world(broom_arena.controller.current_primitive, broom_hand)
 	var ok: bool = pan_asset.orientation_flipped and broom_asset.orientation_flipped
 	ok = ok and pan_asset.tip.x > pan_asset.grip_primary.x and broom_asset.tip.x > broom_asset.grip_primary.x
 	ok = ok and pan_arena._attack_contains(pan_contact) and not pan_arena._attack_contains(pan_hand + Vector2(-70, 0))
-	ok = ok and broom_arena._attack_contains(broom_hand + Vector2(90, 0)) and not broom_arena._attack_contains(broom_hand + Vector2(-120, 0))
+	ok = ok and broom_contact.x > broom_hand.x and broom_arena._attack_contains(broom_contact) and not broom_arena._attack_contains(broom_hand + Vector2(-120, 0))
 	pan_arena.free()
 	broom_arena.free()
-	_check(ok, "10 Pan and Broom normalize sprite anchors and forward hitboxes together")
+	_check(ok, "10 Pan and Broom normalize sprite anchors and current contact trajectories together")
 
 
 func _test_shotgun_developer_anchor_override() -> void:
@@ -239,9 +244,10 @@ func _runtime_sequence(profile: Resource) -> PackedStringArray:
 	return sequence
 
 
-func _arena_on_hit(profile: Resource, hit_index: int) -> Variant:
+func _arena_on_hit(profile: Resource, hit_index: int, visual_asset: WeaponVisualAsset = null) -> Variant:
 	var arena: Variant = SLICE.new()
 	arena.motion_profile = profile
+	arena.asset = visual_asset
 	arena.controller = CONTROLLER.new()
 	arena.controller.configure(profile)
 	arena.player_position = Vector2(300, 400)

@@ -97,6 +97,20 @@ class SpikeTests(unittest.TestCase):
             self.assertGreater(sprite.getchannel("A").getextrema()[1], 0)
             self.assertEqual(metadata["processed_dimensions"], [96, 96])
 
+    def test_native_transparent_pixel_art_keeps_alpha_and_hard_edges(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = Image.new("RGBA", (384, 256), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(raw)
+            draw.rectangle((60, 92, 306, 140), fill=(48, 56, 68, 255))
+            draw.polygon(((126, 138), (168, 138), (150, 216), (112, 216)), fill=(34, 40, 48, 255))
+            raw.save(root / "raw.png")
+            metadata = process_sprite(root / "raw.png", root / "sprite.png", root / "mask.png")
+            sprite = Image.open(root / "sprite.png").convert("RGBA")
+            self.assertEqual(metadata["background_source"], "native_alpha")
+            self.assertEqual(sprite.size, (96, 96))
+            self.assertEqual(set(sprite.getchannel("A").getdata()), {0, 255})
+
     def test_temporary_run_is_not_a_final_result(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -140,6 +154,33 @@ class SpikeTests(unittest.TestCase):
             self.assertIn(term, bridge.SYSTEM_POSITIVE)
         for term in ("portrait", "human", "weapon sheet", "inventory grid", "cropped object"):
             self.assertIn(term, bridge.SYSTEM_NEGATIVE)
+
+    def test_firearm_brief_selects_finished_pixel_art_prompt_not_fantasy_toy_prompt(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "firearm_visual_brief.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "schema": "forge-firearm-visual-brief-v1",
+                        "ok": True,
+                        "automatic": True,
+                        "source": "AI_FIREARM_TEST",
+                        "axes": {"layout": "conventional_rifle"},
+                        "required_roles": ["receiver", "stock", "muzzle"],
+                        "scaffold_presentable": False,
+                        "finished_art_requires_external_generator": True,
+                        "player_confirmation_required": False,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            brief, digest = bridge._load_visual_structure_brief(path)
+            self.assertEqual(brief["schema"], "forge-firearm-visual-brief-v1")
+            self.assertTrue(digest)
+            positive = bridge.compose_positive_prompt("MP5A3", "firearm")
+            self.assertIn("authentic model-defining silhouette", positive)
+            self.assertNotIn("fantasy toy aesthetic", positive)
+            self.assertIn("block scaffold", bridge.compose_negative_prompt("firearm"))
 
 
 if __name__ == "__main__":

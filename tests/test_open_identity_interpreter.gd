@@ -17,11 +17,11 @@ func _initialize() -> void:
 	print("Forge Open Identity Interpretation Spike 2 tests")
 	_run("Five required identities remain verbatim", _test_required_identities)
 	_run("Three distinct identities share sustained behavior", _test_same_family_visual_diversity)
-	_run("Object nouns never select behavior", _test_object_nouns_do_not_select_behavior)
+	_run("Object nouns never select behavior or trigger a player question", _test_object_nouns_do_not_select_behavior)
 	_run("Sketch-only input asks exact identity question", _test_sketch_only_clarification)
-	_run("Structured sketch clarification continues without default", _test_structured_sketch_clarification)
-	_run("Unclear behavior asks once and rejects an unclear answer", _test_behavior_clarification_once)
-	_run("Conflicting behavior clues ask once instead of using priority", _test_behavior_conflict_clarification)
+	_run("Identity-only sketch clarification never asks how to fight", _test_structured_sketch_clarification)
+	_run("Unclear behavior is returned to AI without a player question", _test_behavior_clarification_once)
+	_run("Conflicting behavior clues are returned to AI without priority or a player question", _test_behavior_conflict_clarification)
 	_run("Fastener wording compiles to the generic fastener effect", _test_fastener_effect)
 	_run("Text plus sketch preserves both evidence sources", _test_text_and_sketch_evidence)
 	_run("Behavior delta cannot replace identity", _test_delta_preserves_identity)
@@ -86,10 +86,12 @@ func _test_object_nouns_do_not_select_behavior() -> Variant:
 	var interpreter: WeaponInterpreter = INTERPRETER_SCRIPT.new()
 	for noun_only: String in ["木桌", "木椅", "旧茶壶", "巨大鸡腿", "机械雨伞"]:
 		var result: Dictionary = interpreter.interpret(noun_only, PackedByteArray(), {})
-		if not bool(result.get("needs_clarification", false)):
-			return "object noun selected a behavior: %s" % noun_only
-		if str(result.get("clarification_kind", "")) != "behavior":
-			return "wrong clarification kind for %s" % noun_only
+		if bool(result.get("ok", true)) or bool(result.get("needs_clarification", false)):
+			return "object noun selected a behavior or triggered a question: %s" % noun_only
+		if str(result.get("error", "")) != "AI_BEHAVIOR_REANALYSIS_REQUIRED":
+			return "object noun did not return to AI for %s" % noun_only
+		if bool(result.get("player_confirmation_required", true)) or result.has("question"):
+			return "object noun routed mechanism inference to the player: %s" % noun_only
 	return true
 
 func _test_sketch_only_clarification() -> Variant:
@@ -105,52 +107,35 @@ func _test_sketch_only_clarification() -> Variant:
 func _test_structured_sketch_clarification() -> Variant:
 	var interpreter: WeaponInterpreter = INTERPRETER_SCRIPT.new()
 	var sketch := PackedByteArray([1, 2, 3])
-	var clarification := "IDENTITY::一块无法画清的抽象物件::BEHAVIOR::returning_thrown"
+	var clarification := "IDENTITY::一块无法画清的抽象物件"
 	var result: Dictionary = interpreter.interpret("", sketch, {"aspect_ratio": 1.3}, null, "", clarification)
-	if not bool(result.get("ok", false)) or bool(result.get("needs_clarification", true)):
-		return "structured clarification did not continue"
-	var blueprint := result.get("blueprint") as WeaponBlueprint
-	if blueprint == null:
-		return "blueprint missing"
-	if blueprint.player_identity_text != "一块无法画清的抽象物件":
+	if bool(result.get("ok", true)) or bool(result.get("needs_clarification", false)):
+		return "identity-only clarification incorrectly selected a behavior"
+	if str(result.get("player_identity_text", "")) != "一块无法画清的抽象物件":
 		return "clarified identity not preserved"
-	if blueprint.behavior_family != "returning_thrown":
-		return "explicit behavior not honored"
-	return blueprint.weapon_form == "open_identity_object"
+	return str(result.get("error", "")) == "AI_BEHAVIOR_REANALYSIS_REQUIRED" and not result.has("question")
 
 func _test_behavior_clarification_once() -> Variant:
 	var interpreter: WeaponInterpreter = INTERPRETER_SCRIPT.new()
 	var first: Dictionary = interpreter.interpret("一只旧水壶", PackedByteArray(), {})
-	if not bool(first.get("needs_clarification", false)) or str(first.get("clarification_kind", "")) != "behavior":
-		return "first gameplay clarification missing"
-	var second: Dictionary = interpreter.interpret("一只旧水壶", PackedByteArray(), {}, null, "", "说不清")
-	if bool(second.get("needs_clarification", true)):
-		return "unclear gameplay answer asked a second time"
-	if bool(second.get("ok", true)) or str(second.get("error", "")) != "BEHAVIOR_CLARIFICATION_UNRECOGNIZED":
-		return "unclear answer did not fail explicitly"
-	var accepted: Dictionary = interpreter.interpret("一只旧水壶", PackedByteArray(), {}, null, "", "BEHAVIOR::sustained_ranged")
-	if not bool(accepted.get("ok", false)):
-		return "explicit family answer rejected"
-	var blueprint := accepted.get("blueprint") as WeaponBlueprint
-	return blueprint != null and blueprint.player_identity_text == "一只旧水壶" and blueprint.behavior_family == "sustained_ranged"
+	if bool(first.get("ok", true)) or str(first.get("error", "")) != "AI_BEHAVIOR_REANALYSIS_REQUIRED":
+		return "unclear behavior did not fail back to AI"
+	if bool(first.get("needs_clarification", false)) or first.has("question"):
+		return "unclear behavior still asks the player"
+	return not bool(first.get("player_confirmation_required", true)) and str(first.get("reason", "")) == "behavior_action_unclear"
 
 func _test_behavior_conflict_clarification() -> Variant:
 	var interpreter: WeaponInterpreter = INTERPRETER_SCRIPT.new()
 	var identity := "会连续发射后再飞出去返回的普通物件"
 	var first: Dictionary = interpreter.interpret(identity, PackedByteArray(), {})
-	if not bool(first.get("needs_clarification", false)):
+	if bool(first.get("ok", true)) or str(first.get("error", "")) != "AI_BEHAVIOR_REANALYSIS_REQUIRED":
 		return "conflicting action clues were silently prioritized"
-	if str(first.get("clarification_kind", "")) != "behavior" or str(first.get("reason", "")) != "behavior_action_conflict":
-		return "conflict did not use the behavior clarification boundary"
+	if bool(first.get("needs_clarification", false)) or first.has("question") or str(first.get("reason", "")) != "behavior_action_conflict":
+		return "conflict still uses a player behavior question"
 	var candidates: Array = first.get("behavior_candidates", [])
 	if candidates.size() != 2 or not candidates.has("sustained_ranged") or not candidates.has("returning_thrown"):
 		return "conflict candidates were not recorded"
-	var unclear: Dictionary = interpreter.interpret(identity, PackedByteArray(), {}, null, "", "仍然都要")
-	if bool(unclear.get("needs_clarification", true)) or str(unclear.get("error", "")) != "BEHAVIOR_CLARIFICATION_UNRECOGNIZED":
-		return "unclear conflict answer asked more than once"
-	var resolved: Dictionary = interpreter.interpret(identity, PackedByteArray(), {}, null, "", "BEHAVIOR::returning_thrown")
-	var blueprint := resolved.get("blueprint") as WeaponBlueprint
-	return blueprint != null and blueprint.behavior_family == "returning_thrown" and blueprint.player_identity_text == identity
+	return not bool(first.get("player_confirmation_required", true))
 
 func _test_fastener_effect() -> Variant:
 	var interpreter: WeaponInterpreter = INTERPRETER_SCRIPT.new()

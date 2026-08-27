@@ -1,0 +1,42 @@
+{
+  "schema": "forge-soft-weapon-mechanism-assets-v1",
+  "notice": "DEVELOPER-ONLY SOFT WEAPON MECHANISM SAMPLE; NO PLAYTEST CLAIM",
+  "assets": [
+    {
+      "id": "fishing_rod_builtin",
+      "developer_only": true,
+      "normal_player_flow": false,
+      "source_kind": "openai_builtin_imagegen_pixel_art",
+      "sprite": "res://data/combat_feel/live_assets/soft_weapon_v1/fishing_rod_builtin/processed_sprite.png",
+      "blueprint": "res://data/combat_feel/live_assets/soft_weapon_v1/fishing_rod_builtin/semantic_blueprint.json",
+      "anchors": "res://data/combat_feel/live_assets/soft_weapon_v1/fishing_rod_builtin/anchors.json",
+      "visual_rig": "res://data/combat_feel/live_assets/soft_weapon_v1/fishing_rod_builtin/visual_rig.json",
+      "affordance_profile": "res://data/combat_feel/live_assets/soft_weapon_v1/fishing_rod_builtin/object_affordance_profile.json",
+      "manifest": "res://data/combat_feel/live_assets/soft_weapon_v1/fishing_rod_builtin/result_manifest.json"
+    },
+    {
+      "id": "continuous_lash_builtin",
+      "developer_only": true,
+      "normal_player_flow": false,
+      "source_kind": "deterministic_builtin_pixel_fixture",
+      "fixture_payload": "res://data/combat_feel/live_assets/soft_weapon_v1/continuous_lash_builtin/fixture_payload.json",
+      "manifest": "res://data/combat_feel/live_assets/soft_weapon_v1/continuous_lash_builtin/result_manifest.json"
+    },
+    {
+      "id": "linked_braid_builtin",
+      "developer_only": true,
+      "normal_player_flow": false,
+      "source_kind": "deterministic_builtin_pixel_fixture",
+      "fixture_payload": "res://data/combat_feel/live_assets/soft_weapon_v1/linked_braid_builtin/fixture_payload.json",
+      "manifest": "res://data/combat_feel/live_assets/soft_weapon_v1/linked_braid_builtin/result_manifest.json"
+    },
+    {
+      "id": "rigid_staff_builtin",
+      "developer_only": true,
+      "normal_player_flow": false,
+      "source_kind": "deterministic_builtin_pixel_fixture",
+      "fixture_payload": "res://data/combat_feel/live_assets/soft_weapon_v1/rigid_staff_builtin/fixture_payload.json",
+      "manifest": "res://data/combat_feel/live_assets/soft_weapon_v1/rigid_staff_builtin/result_manifest.json"
+    }
+  ]
+}

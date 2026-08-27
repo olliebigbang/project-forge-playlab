@@ -48,8 +48,11 @@ func _test_existing_orthogonal_chain_compiles_all_assets() -> void:
 	var ok := true
 	for asset_id: String in loader.generalization_asset_ids():
 		var loaded: Dictionary = loader.load_generalization_asset(asset_id)
-		ok = ok and bool(loaded.get("ok", false)) and not bool(loaded.get("fixture", true))
-		if not ok:
+		var entry_ok := bool(loaded.get("ok", false)) and not bool(loaded.get("fixture", true))
+		if not entry_ok:
+			push_error("GENERALIZATION_LOAD_FAILED:%s:%s" % [asset_id, str(loaded.get("error", "unknown"))])
+		ok = ok and entry_ok
+		if not entry_ok:
 			continue
 		var asset: WeaponVisualAsset = loaded.get("asset") as WeaponVisualAsset
 		var affordance: Resource = loaded.get("affordance_profile") as Resource
@@ -59,7 +62,7 @@ func _test_existing_orthogonal_chain_compiles_all_assets() -> void:
 			continue
 		signatures[compiled.combo_recipe.signature()] = true
 		sequences["|".join(compiled.combo_recipe.primitive_sequence())] = true
-		ok = ok and str(compiled.compile_trace.get("composer", "")) == "orthogonal_affordance_v1"
+		ok = ok and str(compiled.compile_trace.get("composer", "")) == "orthogonal_affordance_v4"
 		ok = ok and not bool(compiled.compile_trace.get("identity_inputs_used", true))
 	_check(ok and signatures.size() == 3 and sequences.size() == 3, "02 new assets compile through the existing orthogonal chain into distinct runtime recipes")
 
@@ -99,6 +102,10 @@ func _test_blind_metrics_have_unique_extrema() -> void:
 	var ok := true
 	for asset_id: String in loader.generalization_asset_ids():
 		var loaded: Dictionary = loader.load_generalization_asset(asset_id)
+		if not bool(loaded.get("ok", false)):
+			push_error("GENERALIZATION_METRIC_LOAD_FAILED:%s:%s" % [asset_id, str(loaded.get("error", "unknown"))])
+			ok = false
+			continue
 		var asset: WeaponVisualAsset = loaded.get("asset") as WeaponVisualAsset
 		var compiled: Resource = compiler.compile(
 			loaded.get("affordance_profile") as Resource,

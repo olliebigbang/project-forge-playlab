@@ -15,6 +15,10 @@ const MOCK_VISUAL_PROVIDER := preload("res://scripts/services/mock_forge_visual_
 const OPEN_VISUAL_PROMPT := preload("res://scripts/services/open_identity_visual_prompt.gd")
 const OPEN_IDENTITY_TRAINING_ARENA := preload("res://scripts/systems/open_identity_training_arena.gd")
 const OPEN_IDENTITY_FLOW := preload("res://scripts/open_identity_spike.gd")
+const MECHANISM_HANDOFF := preload("res://scripts/combat_feel/runtime_mechanism_handoff.gd")
+const MELEE_MOTION_COMPILER := preload("res://scripts/combat_feel/melee_motion_compiler.gd")
+const COMBAT_FEEL_SLICE := preload("res://scripts/combat_feel/combat_feel_slice_0.gd")
+const COMBAT_FEEL_ASSET_LOADER := preload("res://scripts/combat_feel/combat_feel_asset_loader.gd")
 const SKETCH_CANVAS := preload("res://scripts/ui/sketch_canvas.gd")
 
 var passed := 0
@@ -23,6 +27,7 @@ var failed := 0
 func _initialize() -> void:
 	print("Forge Playlab V1 deterministic test suite")
 	_run("Blueprint required fields and enums", _test_blueprint_required)
+	_run("Blueprint preserves isolated AI affordance provenance", _test_blueprint_ai_affordance_roundtrip)
 	_run("Unsupported values repair deterministically", _test_blueprint_repair)
 	_run("Three fixed blueprints instantiate", _test_fixed_blueprints)
 	_run("Alpha bounds extraction", _test_alpha_bounds)
@@ -44,6 +49,11 @@ func _initialize() -> void:
 	_run("Text-only identity input excludes a retained sketch", _test_open_identity_text_only_isolation)
 	_run("One clarification survives cancel and retry for unchanged input", _test_open_identity_clarification_persistence)
 	_run("Generated identity requires explicit player confirmation", _test_open_identity_confirmation_gate)
+	_run("Heavy melee stops before image generation without AI axes", _test_heavy_melee_semantic_preflight)
+	_run("Heavy melee without AI affordance fails closed", _test_heavy_melee_mechanism_gate)
+	_run("Automatic AI mechanism card has no player mechanism controls", _test_automatic_mechanism_ui)
+	_run("Mechanism scaffold fallback works without a visual provider", _test_mechanism_scaffold_fallback)
+	_run("AI-resolved mechanism card compiles and hands off exactly once", _test_mechanism_compile_and_handoff)
 	_run("Open identity training arena remains identity-agnostic", _test_open_identity_arena_contract)
 	_run("Open identity effects are gated by effect type", _test_open_identity_effect_gates)
 	_run("Semantic anchors are behavior-declared", _test_semantic_required_types)
@@ -77,6 +87,25 @@ func _test_blueprint_required() -> Variant:
 	if not blueprint.grip_profile in BLUEPRINT.GRIP_PROFILES:
 		return "invalid grip"
 	return true
+
+func _test_blueprint_ai_affordance_roundtrip() -> Variant:
+	var blueprint: WeaponBlueprint = BLUEPRINT.fixed_blueprint("greatsword")
+	blueprint.affordance = {
+		"handle_length": "long", "body_length": "long", "grip_topology": "two_hand_handle",
+		"rigidity": "rigid", "mass_distribution": "front", "contact_surface": "edge",
+		"secondary_contact_surface": "none", "has_point": false, "has_edge": true,
+		"has_broad_face": false, "has_barrel": false, "has_stock": false,
+		"confidence": 0.91, "evidence_parts": ["long blade", "two-hand hilt"],
+	}
+	blueprint.affordance_source = "anthropic:claude-sonnet-5"
+	var serialized := blueprint.to_dict()
+	var restored := BLUEPRINT.from_dict(serialized) as WeaponBlueprint
+	(serialized["affordance"] as Dictionary)["rigidity"] = "flexible"
+	if restored.affordance_source != blueprint.affordance_source:
+		return "AI provenance was lost"
+	if str(restored.affordance.get("rigidity", "")) != "rigid":
+		return "restored affordance aliases the serialized dictionary"
+	return restored.affordance == blueprint.affordance
 
 func _test_blueprint_repair() -> Variant:
 	var blueprint := BLUEPRINT.new() as WeaponBlueprint
@@ -224,7 +253,7 @@ func _test_open_identity_prompt() -> Variant:
 	var prompt: String = OPEN_VISUAL_PROMPT.build(blueprint)
 	if not prompt.contains(blueprint.player_identity_text):
 		return "identity omitted from generation prompt"
-	if not prompt.contains("Behavior contract") or not prompt.contains("forge-open-identity-v2"):
+	if not prompt.contains("Behavior contract") or not prompt.contains("forge-open-identity-v3"):
 		return "versioned action-only visual contract missing"
 	for fixed_identity: String in ["gatling", "mechanical umbrella", "chainsaw greatsword"]:
 		if prompt.to_lower().contains(fixed_identity):
@@ -259,9 +288,8 @@ func _test_open_identity_clarification_persistence() -> Variant:
 	flow.current_input_signature = signature
 	flow.clarified_input_signature = signature
 	flow.clarified_identity = "旧木桌"
-	flow.clarified_behavior_family = "returning_thrown"
 	var result: Variant = true
-	if flow._stored_clarification() != "IDENTITY::旧木桌::BEHAVIOR::returning_thrown":
+	if flow._stored_clarification() != "IDENTITY::旧木桌":
 		result = "unchanged input lost its one-time clarification"
 	else:
 		flow.current_input_signature = flow._input_signature("sketch", "", {"raw_strokes": [[[0.2, 0.2]]]})
@@ -287,6 +315,147 @@ func _test_open_identity_confirmation_gate() -> Variant:
 				result = "mutable blueprint modifier bypassed player confirmation"
 	flow.free()
 	return result
+
+func _test_heavy_melee_semantic_preflight() -> Variant:
+	var flow = OPEN_IDENTITY_FLOW.new()
+	flow._build_theme()
+	flow.arena = OPEN_IDENTITY_TRAINING_ARENA.new()
+	flow.add_child(flow.arena)
+	flow.ui_layer = CanvasLayer.new()
+	flow.add_child(flow.ui_layer)
+	flow.provider_mode = "LOCAL_COMFYUI"
+	var interpretation: Dictionary = flow.interpreter.interpret("会用边缘重击的巨大鸡腿", PackedByteArray(), {})
+	flow._handle_interpretation_result(interpretation)
+	var option_controls: Array[Node] = flow.find_children("*", "OptionButton", true, false)
+	var ok: bool = flow.state == "ai_semantic_failed" and flow.provider == null and flow.current_asset == null
+	ok = ok and option_controls.is_empty()
+	flow.free()
+	return true if ok else "heavy melee reached image generation or player mechanism controls without AI axes"
+
+func _test_heavy_melee_mechanism_gate() -> Variant:
+	var flow = OPEN_IDENTITY_FLOW.new()
+	flow.current_blueprint = BLUEPRINT.fixed_blueprint("greatsword")
+	flow.current_asset = RESOLVER.resolve(RENDERER.build_image(flow.current_blueprint), flow.current_blueprint)
+	if not flow._requires_mechanism_profile():
+		flow.free()
+		return "heavy melee skipped automatic mechanism resolution"
+	if flow._mechanism_profile_is_ready():
+		flow.free()
+		return "empty mechanism state passed its gate"
+	var incomplete: Dictionary = flow._resolve_ai_mechanism()
+	if bool(incomplete.get("ok", false)) or str(incomplete.get("error", "")) != "AI_AFFORDANCE_SOURCE_MISSING":
+		flow.free()
+		return "missing AI affordance did not fail closed: %s" % str(incomplete)
+	if bool(incomplete.get("player_confirmation_required", true)) or incomplete.has("questions"):
+		flow.free()
+		return "missing AI affordance was routed back to the player"
+	flow.current_blueprint = BLUEPRINT.fixed_blueprint("gatling")
+	if flow._requires_mechanism_profile():
+		flow.free()
+		return "non-melee behavior was forced through the melee mechanism card"
+	flow.free()
+	return true
+
+func _test_mechanism_compile_and_handoff() -> Variant:
+	var flow = OPEN_IDENTITY_FLOW.new()
+	var loaded: Dictionary = COMBAT_FEEL_ASSET_LOADER.new().load_motion_grammar_asset("frying_pan")
+	flow.current_blueprint = loaded.get("blueprint") as WeaponBlueprint
+	flow.current_asset = loaded.get("asset") as WeaponVisualAsset
+	var frozen_affordance := loaded.get("affordance_profile") as Resource
+	flow.current_blueprint.affordance = frozen_affordance.to_dict()
+	flow.current_blueprint.affordance_source = "ai_semantic_v1_2"
+	var resolved: Dictionary = flow._resolve_ai_mechanism()
+	if not bool(resolved.get("ok", false)):
+		flow.free()
+		return "AI axes did not compile: %s" % str(resolved.get("error", ""))
+	var affordance := resolved.get("affordance_profile") as Resource
+	var motion := resolved.get("motion_profile") as Resource
+	flow._apply_ai_mechanism_resolution(resolved)
+	if not flow._mechanism_profile_is_ready() or motion.combo_recipe == null:
+		flow.free()
+		return "compiled mechanism profile did not unlock its dedicated gate"
+	var handoff: Node = get_root().get_node_or_null("MechanismHandoff")
+	if handoff == null:
+		flow.free()
+		return "autoloaded mechanism handoff is missing"
+	handoff.call("clear")
+	var bypass_error := str(handoff.call("store", flow.current_blueprint, flow.current_asset, frozen_affordance))
+	if bypass_error != "MECHANISM_HANDOFF_PROFILE_NOT_AI_RESOLVED" or bool(handoff.call("has_pending")):
+		flow.free()
+		return "manual sidecar bypassed the AI-resolved handoff boundary: %s" % bypass_error
+	var error := str(handoff.call("store", flow.current_blueprint, flow.current_asset, affordance))
+	if not error.is_empty() or not bool(handoff.call("has_pending")):
+		flow.free()
+		return "valid mechanism handoff rejected: %s" % error
+	var combat = COMBAT_FEEL_SLICE.new()
+	combat.compiler = MELEE_MOTION_COMPILER.new()
+	combat.runtime_mechanism_handoff = handoff
+	var accepted: bool = combat._load_requested_weapon()
+	var runtime_compiled: Variant = combat._compile_loaded_weapon() if accepted else null
+	var consumed_once := not bool(handoff.call("has_pending")) and (handoff.call("take") as Dictionary).is_empty()
+	var ok: bool = accepted and combat.affordance_profile == affordance
+	ok = ok and bool(combat.launched_from_open_playtest) and runtime_compiled is Resource and consumed_once
+	combat.free()
+	flow.free()
+	return true if ok else "mechanism handoff was not consumed once by the combat compiler"
+
+func _test_automatic_mechanism_ui() -> Variant:
+	var flow = OPEN_IDENTITY_FLOW.new()
+	flow._build_theme()
+	flow.arena = OPEN_IDENTITY_TRAINING_ARENA.new()
+	flow.add_child(flow.arena)
+	flow.ui_layer = CanvasLayer.new()
+	flow.add_child(flow.ui_layer)
+	var loaded: Dictionary = COMBAT_FEEL_ASSET_LOADER.new().load_motion_grammar_asset("frying_pan")
+	flow.current_blueprint = loaded.get("blueprint") as WeaponBlueprint
+	flow.current_asset = loaded.get("asset") as WeaponVisualAsset
+	var frozen_affordance := loaded.get("affordance_profile") as Resource
+	flow.current_blueprint.affordance = frozen_affordance.to_dict()
+	flow.current_blueprint.affordance_source = "ai_semantic_v1_2"
+	flow.visual_identity_confirmed = true
+	flow._accept_visual_identity()
+	var option_controls: Array[Node] = flow.find_children("*", "OptionButton", true, false)
+	var ok: bool = flow.state == "mechanism_summary" and option_controls.is_empty()
+	ok = ok and flow._mechanism_profile_is_ready()
+	ok = ok and bool(flow.current_mechanism_resolution.get("automatic", false))
+	ok = ok and not bool(flow.current_mechanism_resolution.get("player_mechanism_input_used", true))
+	var source := FileAccess.get_file_as_string("res://scripts/open_identity_spike.gd")
+	ok = ok and not source.contains("OptionButton.new()")
+	ok = ok and not source.contains("_answer_clarification(\"heavy_melee\")")
+	flow.free()
+	return true if ok else "automatic mechanism card still exposes player mechanism choices"
+
+func _test_mechanism_scaffold_fallback() -> Variant:
+	var flow = OPEN_IDENTITY_FLOW.new()
+	flow._build_theme()
+	flow.arena = OPEN_IDENTITY_TRAINING_ARENA.new()
+	flow.add_child(flow.arena)
+	flow.ui_layer = CanvasLayer.new()
+	flow.add_child(flow.ui_layer)
+	var loaded: Dictionary = COMBAT_FEEL_ASSET_LOADER.new().load_motion_grammar_asset("frying_pan")
+	flow.current_blueprint = loaded.get("blueprint") as WeaponBlueprint
+	var frozen_affordance := loaded.get("affordance_profile") as Resource
+	flow.current_blueprint.affordance = frozen_affordance.to_dict()
+	flow.current_blueprint.affordance_source = "ai_semantic_v1_2"
+	flow.current_blueprint.visual_structure_brief.clear()
+	flow.current_interpretation_source = "AI TEST"
+	flow.current_explanation = "identity remains pending"
+	flow.provider_mode = "MOCK"
+	var activated: bool = flow._activate_mechanism_scaffold_fallback("TEST_PROVIDER_NOT_CONFIGURED")
+	var ok: bool = activated and flow.state == "review" and flow.current_asset != null
+	ok = ok and flow.current_asset.source_image.get_size() == Vector2i(96, 96)
+	ok = ok and str(flow.current_manifest.get("visual_mode", "")) == "mechanism_scaffold_fallback"
+	ok = ok and not bool(flow.current_manifest.get("external_generator_succeeded", true))
+	ok = ok and str(flow.current_manifest.get("structure_authority", "")) == "mechanism_axes"
+	ok = ok and not bool(flow.current_manifest.get("player_mechanism_confirmation_required", true))
+	ok = ok and not flow.visual_identity_confirmed
+	ok = ok and bool(flow.current_mechanism_visual_gate.get("ok", false))
+	ok = ok and FileAccess.file_exists(flow.current_output_directory.path_join("processed_sprite.png"))
+	var option_controls: Array[Node] = flow.find_children("*", "OptionButton", true, false)
+	ok = ok and option_controls.is_empty()
+	flow.free()
+	return true if ok else "mechanism scaffold fallback did not reach identity-only review honestly"
+
 
 func _test_open_identity_arena_contract() -> Variant:
 	if Array(BLUEPRINT.BEHAVIOR_FAMILIES) != ["sustained_ranged", "returning_thrown", "heavy_melee"]:

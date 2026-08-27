@@ -57,14 +57,20 @@ func _update_melee_attack(just_pressed: bool, delta: float) -> void:
 
 func _update_projectiles(delta: float) -> void:
 	for projectile: Dictionary in projectiles:
-		projectile["pos"] = Vector2(projectile["pos"]) + Vector2(projectile["vel"]) * delta
+		var travel_step := Vector2(projectile["vel"]) * delta
+		projectile["pos"] = Vector2(projectile["pos"]) + travel_step
+		projectile["distance_travelled"] = float(projectile.get("distance_travelled", 0.0)) + travel_step.length()
 		projectile["life"] = float(projectile["life"]) - delta
 		for enemy: Dictionary in enemies:
 			var enemy_id := int(enemy["id"])
 			var hit: Dictionary = projectile["hit"]
 			if not hit.has(enemy_id) and Vector2(projectile["pos"]).distance_to(enemy["pos"]) < 23.0:
 				hit[enemy_id] = true
-				_damage_enemy(enemy, RULES.damage_against(blueprint.behavior_family, enemy["type"], _is_front_hit(enemy), blueprint.modifiers))
+				_damage_enemy(
+					enemy,
+					_projectile_damage_against(projectile, enemy),
+					float(projectile.get("hit_stagger_seconds", 0.12))
+				)
 				match blueprint.effect_type:
 					"thermal_emission": enemy["burn"] = 2.2
 					"electric_current": _chain_damage(enemy, 6.0)
@@ -82,17 +88,24 @@ func _draw_player_and_weapon() -> void:
 	draw_rect(Rect2(player_position + Vector2(-15, -12), Vector2(30, 42)), body_color, true)
 	draw_line(player_position + Vector2(-8, 30), player_position + Vector2(-13, 49), Color("94a3b8"), 7.0)
 	draw_line(player_position + Vector2(8, 30), player_position + Vector2(13, 49), Color("94a3b8"), 7.0)
-	var hand_primary := player_position + Vector2(19.0 * facing, -10.0)
+	var firearm_recoil := Vector2(-weapon_recoil_offset * facing, -weapon_recoil_offset * 0.12) if _uses_firearm_runtime() else Vector2.ZERO
+	var hand_primary := player_position + Vector2(19.0 * facing, -10.0) + firearm_recoil
+	var weapon_rotation := _firearm_recoil_rotation() if _uses_firearm_runtime() else 0.0
+	if _uses_firearm_runtime() and reload_timer > 0.0:
+		var reload_duration := maxf(0.01, float(ranged_runtime_profile.get("reload_seconds", 1.2)))
+		var reload_progress := clampf(1.0 - reload_timer / reload_duration, 0.0, 1.0)
+		weapon_rotation = sin(reload_progress * PI) * 0.52 * facing
+	elif blueprint.delivery == "whole_object_strike" and melee_timer > 0.0:
+		var swing_progress := clampf((0.75 - melee_timer) / 0.67, 0.0, 1.0)
+		weapon_rotation = lerpf(-0.65, 0.75, swing_progress) * facing
 	var relative_secondary := (asset.grip_secondary - asset.grip_primary) * 1.15
-	var hand_secondary := hand_primary + Vector2(relative_secondary.x * facing, relative_secondary.y)
+	var relative_secondary_world := Vector2(relative_secondary.x * facing, relative_secondary.y).rotated(weapon_rotation)
+	var one_hand_firearm := _uses_firearm_runtime() and str(blueprint.affordance.get("support_mode", "")) == "one_hand"
+	var hand_secondary := player_position + Vector2(-9.0 * facing, 12.0) if one_hand_firearm else hand_primary + relative_secondary_world
 	draw_line(player_position + Vector2(0, -5), hand_primary, Color("f0c7a6"), 7.0)
 	draw_line(player_position + Vector2(2, 1), hand_secondary, Color("f0c7a6"), 7.0)
 	var object_is_in_flight := blueprint.delivery == "whole_object_return" and not boomerang.is_empty()
 	if not object_is_in_flight:
-		var weapon_rotation := 0.0
-		if blueprint.delivery == "whole_object_strike" and melee_timer > 0.0:
-			var swing_progress := clampf((0.75 - melee_timer) / 0.67, 0.0, 1.0)
-			weapon_rotation = lerpf(-0.65, 0.75, swing_progress) * facing
 		draw_set_transform(hand_primary, weapon_rotation, Vector2(facing, 1.0))
 		var local_position := -asset.grip_primary * 1.15
 		draw_texture_rect(asset.texture, Rect2(local_position, Vector2(asset.canvas_size) * 1.15), false)
@@ -112,6 +125,9 @@ func _draw_attacks() -> void:
 	for projectile: Dictionary in projectiles:
 		var position: Vector2 = projectile["pos"]
 		match blueprint.effect_type:
+			"ballistic_projectile":
+				draw_line(position - Vector2(10.0 * facing, 0), position + Vector2(4.0 * facing, 0), Color("f8fafc"), 3.0)
+				draw_circle(position + Vector2(4.0 * facing, 0), 2.0, Color("fde047"))
 			"forge_fastener":
 				draw_line(position - Vector2(8.0 * facing, 0), position + Vector2(7.0 * facing, 0), Color("cbd5e1"), 4.0)
 				draw_circle(position - Vector2(7.0 * facing, 0), 4.0, Color("64748b"))
@@ -144,3 +160,11 @@ func _draw_attacks() -> void:
 	if blueprint.delivery == "continuous_emission" and attack_charge > 0.0:
 		var effect_origin := _muzzle_world()
 		draw_arc(effect_origin, 6.0 + minf(attack_charge, 0.35) * 15.0, 0.0, TAU, 16, Color("5eead4"), 3.0)
+	if muzzle_flash_timer > 0.0:
+		var flash_muzzle := _muzzle_world()
+		draw_colored_polygon(PackedVector2Array([
+			flash_muzzle + Vector2(0, -7),
+			flash_muzzle + Vector2(17.0 * facing, 0),
+			flash_muzzle + Vector2(0, 7),
+			flash_muzzle + Vector2(5.0 * facing, 0),
+		]), Color("fde047"))

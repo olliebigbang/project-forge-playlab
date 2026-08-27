@@ -6,9 +6,13 @@ import math
 import time
 from pathlib import Path
 
-import cv2
 import numpy as np
 from PIL import Image, ImageFilter
+
+try:
+    import cv2  # type: ignore
+except ModuleNotFoundError:
+    cv2 = None
 
 
 class SpritePostprocessError(RuntimeError):
@@ -16,14 +20,61 @@ class SpritePostprocessError(RuntimeError):
 
 
 def _largest_component(mask: np.ndarray) -> np.ndarray:
-    count, labels, stats, _ = cv2.connectedComponentsWithStats(mask.astype(np.uint8), 8)
-    if count <= 1:
-        raise SpritePostprocessError("NO_FOREGROUND_COMPONENT")
-    candidates = [(int(stats[index, cv2.CC_STAT_AREA]), index) for index in range(1, count)]
-    area, index = max(candidates)
-    if area < 64:
+    binary = mask.astype(bool)
+    if cv2 is not None:
+        count, labels, stats, _ = cv2.connectedComponentsWithStats(binary.astype(np.uint8), 8)
+        if count <= 1:
+            raise SpritePostprocessError("NO_FOREGROUND_COMPONENT")
+        candidates = [(int(stats[index, cv2.CC_STAT_AREA]), index) for index in range(1, count)]
+        area, index = max(candidates)
+        if area < 64:
+            raise SpritePostprocessError("FOREGROUND_TOO_SMALL")
+        return labels == index
+    height, width = binary.shape
+    visited = np.zeros_like(binary)
+    best: list[tuple[int, int]] = []
+    for start_y, start_x in zip(*np.where(binary)):
+        if visited[start_y, start_x]:
+            continue
+        component: list[tuple[int, int]] = []
+        stack = [(int(start_y), int(start_x))]
+        visited[start_y, start_x] = True
+        while stack:
+            y, x = stack.pop()
+            component.append((y, x))
+            for next_y in range(max(0, y - 1), min(height, y + 2)):
+                for next_x in range(max(0, x - 1), min(width, x + 2)):
+                    if binary[next_y, next_x] and not visited[next_y, next_x]:
+                        visited[next_y, next_x] = True
+                        stack.append((next_y, next_x))
+        if len(component) > len(best):
+            best = component
+    if len(best) < 64:
         raise SpritePostprocessError("FOREGROUND_TOO_SMALL")
-    return labels == index
+    result = np.zeros_like(binary)
+    for y, x in best:
+        result[y, x] = True
+    return result
+
+
+def _binary_close(mask: np.ndarray, radius: int = 2) -> np.ndarray:
+    if cv2 is not None:
+        size = radius * 2 + 1
+        return cv2.morphologyEx(
+            mask.astype(np.uint8), cv2.MORPH_CLOSE, np.ones((size, size), np.uint8)
+        ) > 0
+    height, width = mask.shape
+    padded = np.pad(mask.astype(bool), radius, constant_values=False)
+    dilated = np.zeros_like(mask, dtype=bool)
+    for offset_y in range(radius * 2 + 1):
+        for offset_x in range(radius * 2 + 1):
+            dilated |= padded[offset_y : offset_y + height, offset_x : offset_x + width]
+    padded_dilated = np.pad(dilated, radius, constant_values=False)
+    eroded = np.ones_like(mask, dtype=bool)
+    for offset_y in range(radius * 2 + 1):
+        for offset_x in range(radius * 2 + 1):
+            eroded &= padded_dilated[offset_y : offset_y + height, offset_x : offset_x + width]
+    return eroded
 
 
 def _border_pixels(rgb: np.ndarray) -> np.ndarray:
@@ -42,20 +93,42 @@ def _background_mask(rgb: np.ndarray, expected_rgb: tuple[int, int, int]) -> tup
     if expected_ratio < 0.18:
         raise SpritePostprocessError("BACKGROUND_NOT_HIGH_CONTRAST_CHROMA")
     distance = np.linalg.norm(rgb.astype(np.float32) - border_median, axis=2)
-    permissive = (distance < 82.0).astype(np.uint8)
-    flood_source = permissive.copy()
-    flood_mask = np.zeros((rgb.shape[0] + 2, rgb.shape[1] + 2), dtype=np.uint8)
-    for x in range(rgb.shape[1]):
-        if flood_source[0, x]:
-            cv2.floodFill(flood_source, flood_mask, (x, 0), 2)
-        if flood_source[-1, x]:
-            cv2.floodFill(flood_source, flood_mask, (x, rgb.shape[0] - 1), 2)
-    for y in range(rgb.shape[0]):
-        if flood_source[y, 0]:
-            cv2.floodFill(flood_source, flood_mask, (0, y), 2)
-        if flood_source[y, -1]:
-            cv2.floodFill(flood_source, flood_mask, (rgb.shape[1] - 1, y), 2)
-    return flood_source == 2, border_median, expected_ratio
+    permissive = distance < 82.0
+    if cv2 is not None:
+        flood_source = permissive.astype(np.uint8)
+        flood_mask = np.zeros((rgb.shape[0] + 2, rgb.shape[1] + 2), dtype=np.uint8)
+        for x in range(rgb.shape[1]):
+            if flood_source[0, x]:
+                cv2.floodFill(flood_source, flood_mask, (x, 0), 2)
+            if flood_source[-1, x]:
+                cv2.floodFill(flood_source, flood_mask, (x, rgb.shape[0] - 1), 2)
+        for y in range(rgb.shape[0]):
+            if flood_source[y, 0]:
+                cv2.floodFill(flood_source, flood_mask, (0, y), 2)
+            if flood_source[y, -1]:
+                cv2.floodFill(flood_source, flood_mask, (rgb.shape[1] - 1, y), 2)
+        return flood_source == 2, border_median, expected_ratio
+    height, width = permissive.shape
+    flooded = np.zeros_like(permissive)
+    stack: list[tuple[int, int]] = []
+    for x in range(width):
+        stack.extend(((0, x), (height - 1, x)))
+    for y in range(height):
+        stack.extend(((y, 0), (y, width - 1)))
+    while stack:
+        y, x = stack.pop()
+        if flooded[y, x] or not permissive[y, x]:
+            continue
+        flooded[y, x] = True
+        if y > 0:
+            stack.append((y - 1, x))
+        if y + 1 < height:
+            stack.append((y + 1, x))
+        if x > 0:
+            stack.append((y, x - 1))
+        if x + 1 < width:
+            stack.append((y, x + 1))
+    return flooded, border_median, expected_ratio
 
 
 def _quantize_rgba(image: Image.Image, colors: int) -> Image.Image:
@@ -91,17 +164,29 @@ def process_sprite(
 ) -> dict:
     started = time.perf_counter()
     try:
-        source = Image.open(raw_path).convert("RGB")
-        source.load()
+        source_rgba = Image.open(raw_path).convert("RGBA")
+        source_rgba.load()
     except (OSError, ValueError) as exc:
         raise SpritePostprocessError("INVALID_SOURCE_PNG") from exc
+    source = source_rgba.convert("RGB")
     rgb = np.array(source, dtype=np.uint8)
     if rgb.shape[0] < 64 or rgb.shape[1] < 64:
         raise SpritePostprocessError("RAW_IMAGE_TOO_SMALL")
-    background, border_color, border_match = _background_mask(rgb, expected_background)
-    foreground = _largest_component(~background)
-    foreground = cv2.morphologyEx(foreground.astype(np.uint8), cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8)) > 0
-    foreground = _largest_component(foreground)
+    source_alpha = np.array(source_rgba.getchannel("A"), dtype=np.uint8)
+    native_alpha_coverage = float(np.mean(source_alpha > 8))
+    uses_native_alpha = (
+        int(source_alpha.min(initial=255)) < 250
+        and 0.005 <= native_alpha_coverage <= 0.95
+    )
+    if uses_native_alpha:
+        foreground = _largest_component(source_alpha > 8)
+        border_color = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+        border_match = 1.0
+    else:
+        background, border_color, border_match = _background_mask(rgb, expected_background)
+        foreground = _largest_component(~background)
+        foreground = _binary_close(foreground, 2)
+        foreground = _largest_component(foreground)
     coverage = float(np.mean(foreground))
     if coverage < 0.015 or coverage > 0.82:
         raise SpritePostprocessError("UNRELIABLE_FOREGROUND_COVERAGE")
@@ -110,12 +195,28 @@ def process_sprite(
     y0, y1 = int(ys.min()), int(ys.max()) + 1
     if x0 <= 1 or y0 <= 1 or x1 >= rgb.shape[1] - 1 or y1 >= rgb.shape[0] - 1:
         raise SpritePostprocessError("OBJECT_TOUCHES_RAW_EDGE")
-    distance = np.linalg.norm(rgb.astype(np.float32) - border_color.astype(np.float32), axis=2)
-    soft_alpha = np.clip((distance - 22.0) / 54.0, 0.0, 1.0)
-    keep = cv2.dilate(foreground.astype(np.uint8), np.ones((5, 5), np.uint8), iterations=1) > 0
-    alpha = np.where(keep, soft_alpha, 0.0)
-    alpha = np.maximum(alpha, foreground.astype(np.float32) * 0.88)
-    rgba = np.dstack((rgb, np.rint(alpha * 255.0).astype(np.uint8)))
+    if uses_native_alpha:
+        alpha_bytes = np.where(foreground, source_alpha, 0).astype(np.uint8)
+    else:
+        distance = np.linalg.norm(rgb.astype(np.float32) - border_color.astype(np.float32), axis=2)
+        soft_alpha = np.clip((distance - 22.0) / 54.0, 0.0, 1.0)
+        if cv2 is not None:
+            keep = cv2.dilate(
+                foreground.astype(np.uint8), np.ones((5, 5), np.uint8), iterations=1
+            ) > 0
+        else:
+            padded = np.pad(foreground.astype(bool), 2, constant_values=False)
+            keep = np.zeros_like(foreground, dtype=bool)
+            for offset_y in range(5):
+                for offset_x in range(5):
+                    keep |= padded[
+                        offset_y : offset_y + foreground.shape[0],
+                        offset_x : offset_x + foreground.shape[1],
+                    ]
+        alpha = np.where(keep, soft_alpha, 0.0)
+        alpha = np.maximum(alpha, foreground.astype(np.float32) * 0.88)
+        alpha_bytes = np.rint(alpha * 255.0).astype(np.uint8)
+    rgba = np.dstack((rgb, alpha_bytes))
     cropped = Image.fromarray(rgba[y0:y1, x0:x1], mode="RGBA")
     span = max(cropped.width, cropped.height)
     padding = max(2, int(math.ceil(span * margin_ratio)))
@@ -127,9 +228,17 @@ def process_sprite(
     sprite = Image.new("RGBA", (sprite_size, sprite_size), (0, 0, 0, 0))
     offset = ((sprite_size - resized.width) // 2, (sprite_size - resized.height) // 2)
     sprite.alpha_composite(resized, offset)
+    source_hard_alpha = np.where(
+        np.array(sprite.getchannel("A"), dtype=np.uint8) > 8, 255, 0
+    ).astype(np.uint8)
+    sprite.putalpha(Image.fromarray(source_hard_alpha, mode="L"))
     sprite = _quantize_rgba(sprite, max_colors)
     if outline:
         sprite = _add_outline(sprite)
+    # The runtime and silhouette gates operate on authored pixel clusters, not
+    # antialiased coverage.  Keep a hard binary alpha edge after resizing.
+    hard_alpha = np.where(np.array(sprite.getchannel("A"), dtype=np.uint8) > 8, 255, 0).astype(np.uint8)
+    sprite.putalpha(Image.fromarray(hard_alpha, mode="L"))
     output_alpha = np.array(sprite.getchannel("A"), dtype=np.uint8)
     if output_alpha.max(initial=0) == 0:
         raise SpritePostprocessError("NO_SUBJECT_ALPHA")
@@ -153,6 +262,7 @@ def process_sprite(
         "opaque_bounds": opaque_bounds,
         "background_border_rgb": [round(float(value), 1) for value in border_color],
         "background_expected_match": round(border_match, 4),
+        "background_source": "native_alpha" if uses_native_alpha else "chroma_key",
         "palette_limit": max_colors,
         "outline": outline,
     }

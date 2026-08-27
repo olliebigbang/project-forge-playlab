@@ -6,8 +6,12 @@ const LIVE_INDEX_PATH := "res://data/combat_feel/live_assets/revision_a/index.js
 const RECIPE_INDEX_PATH := "res://data/combat_feel/live_assets/recipe_slice_1b/index.json"
 const MOTION_GRAMMAR_INDEX_PATH := "res://data/combat_feel/live_assets/motion_grammar_slice_1a/index.json"
 const GENERALIZATION_INDEX_PATH := "res://data/combat_feel/live_assets/motion_grammar_generalization_v1/index.json"
+const SOFT_WEAPON_INDEX_PATH := "res://data/combat_feel/live_assets/soft_weapon_v1/index.json"
 const AFFORDANCE_PROFILE := preload("res://scripts/combat_feel/object_affordance_profile.gd")
 const ANCHOR_CALIBRATION := preload("res://scripts/data/semantic_anchor_calibration.gd")
+const MECHANISM_AXIS_RESOLVER := preload("res://scripts/combat_feel/mechanism_axis_resolver.gd")
+const PIXEL_VISUAL_RIG := preload("res://scripts/data/pixel_weapon_visual_rig.gd")
+const AUTOMATIC_PIXEL_VISUAL_RIG := preload("res://scripts/combat_feel/automatic_pixel_visual_rig_builder.gd")
 
 
 func recipe_asset_ids() -> Array[String]:
@@ -35,6 +39,46 @@ func generalization_asset_ids() -> Array[String]:
 		var entry: Dictionary = value
 		ids.append(str(entry.get("id", "")))
 	return ids
+
+
+func soft_weapon_asset_ids() -> Array[String]:
+	var ids: Array[String] = []
+	var index := _read_json(SOFT_WEAPON_INDEX_PATH)
+	for value: Variant in index.get("assets", []):
+		var entry: Dictionary = value
+		ids.append(str(entry.get("id", "")))
+	return ids
+
+
+func load_soft_weapon_asset(asset_id: String) -> Dictionary:
+	var index := _read_json(SOFT_WEAPON_INDEX_PATH)
+	for value: Variant in index.get("assets", []):
+		var entry: Dictionary = value
+		if str(entry.get("id", "")) != asset_id:
+			continue
+		if not bool(entry.get("developer_only", false)) or bool(entry.get("normal_player_flow", true)):
+			return {"ok": false, "error": "SOFT_WEAPON_DEVELOPER_BOUNDARY_INVALID:%s" % asset_id}
+		var manifest := _read_json(str(entry.get("manifest", "")))
+		if not bool(manifest.get("developer_only", false)) \
+			or bool(manifest.get("normal_player_flow", true)) \
+			or bool(manifest.get("playtest_claim", true)):
+			return {"ok": false, "error": "SOFT_WEAPON_MANIFEST_BOUNDARY_INVALID:%s" % asset_id}
+		var fixture_payload_path := str(entry.get("fixture_payload", ""))
+		var loaded := _load_soft_fixture_payload(fixture_payload_path) if not fixture_payload_path.is_empty() else load_live(
+			str(entry.get("sprite", "")),
+			str(entry.get("blueprint", "")),
+			str(entry.get("anchors", "")),
+			str(entry.get("visual_rig", ""))
+		)
+		if not bool(loaded.get("ok", false)):
+			return loaded
+		loaded["asset_id"] = asset_id
+		loaded["developer_only"] = true
+		loaded["normal_player_flow"] = false
+		loaded["source_kind"] = str(entry.get("source_kind", ""))
+		loaded["notice"] = str(index.get("notice", "SOFT WEAPON MECHANISM SAMPLE"))
+		return loaded
+	return {"ok": false, "error": "SOFT_WEAPON_ASSET_NOT_FOUND:%s" % asset_id}
 
 
 func load_generalization_asset(asset_id: String) -> Dictionary:
@@ -263,7 +307,7 @@ func load_fixture(fixture_id: String) -> Dictionary:
 			}
 	return {"ok": false, "error": "FIXTURE_NOT_FOUND:%s" % fixture_id}
 
-func load_live(sprite_path: String, blueprint_path: String, anchors_path: String) -> Dictionary:
+func load_live(sprite_path: String, blueprint_path: String, anchors_path: String, visual_rig_path: String = "") -> Dictionary:
 	if sprite_path.is_empty() or blueprint_path.is_empty() or anchors_path.is_empty():
 		return {"ok": false, "error": "LIVE_HANDOFF_PATHS_REQUIRED"}
 	var image := _load_png(sprite_path)
@@ -277,13 +321,123 @@ func load_live(sprite_path: String, blueprint_path: String, anchors_path: String
 	var anchors := _read_json(anchors_path)
 	if blueprint_data.is_empty() or anchors.is_empty():
 		return {"ok": false, "error": "LIVE_HANDOFF_JSON_INVALID"}
+	var visual_rig_data: Dictionary = {}
+	if not visual_rig_path.is_empty():
+		visual_rig_data = _read_json(visual_rig_path)
+		if visual_rig_data.is_empty():
+			return {"ok": false, "error": "AI_VISUAL_RIG_INVALID_OR_MISSING"}
+	return _load_live_payload(image, blueprint_data, anchors, visual_rig_data)
+
+
+func _load_live_payload(image: Image, blueprint_data: Dictionary, anchors: Dictionary, visual_rig_data: Dictionary = {}) -> Dictionary:
+	if image == null or image.is_empty() or image.get_size() != Vector2i(96, 96) or not _has_useful_alpha(image):
+		return {"ok": false, "error": "LIVE_SPRITE_INVALID"}
+	if blueprint_data.is_empty() or anchors.is_empty():
+		return {"ok": false, "error": "LIVE_HANDOFF_JSON_INVALID"}
 	var blueprint := _blueprint_from_semantic_data(blueprint_data)
 	if not behavior_supported(blueprint.behavior_family):
 		return {"ok": false, "error": "CURRENT_SLICE_ONLY_SUPPORTS_HEAVY_MELEE"}
 	var asset := _asset_from_image_and_anchors(image, anchors)
+	if visual_rig_data.is_empty() and not blueprint.visual_rig.is_empty():
+		visual_rig_data = blueprint.visual_rig.duplicate(true)
+	if not visual_rig_data.is_empty():
+		var attachment := attach_ai_visual_rig(asset, visual_rig_data)
+		if not bool(attachment.get("ok", false)):
+			return attachment
 	blueprint.grip_profile = str(anchors.get("grip_profile", blueprint.grip_profile))
 	blueprint.silhouette_aspect = float(maxi(asset.opaque_bounds.size.x, asset.opaque_bounds.size.y)) / maxf(1.0, float(mini(asset.opaque_bounds.size.x, asset.opaque_bounds.size.y)))
-	return {"ok": true, "fixture": false, "fixture_id": "LIVE", "asset_id": "LIVE", "notice": "LIVE OPEN PLAYTEST HANDOFF", "blueprint": blueprint, "asset": asset, "prompt_zh": blueprint.player_identity_text}
+	var result := {"ok": true, "fixture": false, "fixture_id": "LIVE", "asset_id": "LIVE", "notice": "LIVE OPEN PLAYTEST HANDOFF", "blueprint": blueprint, "asset": asset, "prompt_zh": blueprint.player_identity_text}
+	if not blueprint.affordance.is_empty():
+		var mechanism_resolution: Dictionary = MECHANISM_AXIS_RESOLVER.resolve_ai(
+			asset,
+			blueprint.affordance,
+			blueprint.affordance_source
+		)
+		if not bool(mechanism_resolution.get("ok", false)):
+			return {
+				"ok": false,
+				"error": str(mechanism_resolution.get("error", "AI_AFFORDANCE_INVALID")),
+				"mechanism_resolution": mechanism_resolution,
+			}
+		result["affordance_profile"] = mechanism_resolution.get("profile") as Resource
+		result["mechanism_resolution"] = mechanism_resolution
+		result["automatic_mechanism"] = true
+		result["notice"] = "LIVE AI MECHANISM HANDOFF"
+		var affordance_profile := result.get("affordance_profile") as Resource
+		var uses_soft_visuals := affordance_profile != null and (
+			str(affordance_profile.flex_topology) != "none"
+			or str(affordance_profile.tether_topology) != "none"
+		)
+		if uses_soft_visuals and asset.visual_rig == null:
+			var automatic_rig := build_automatic_visual_rig(asset, affordance_profile)
+			if not bool(automatic_rig.get("ok", false)):
+				return automatic_rig
+			result["visual_rig_autobuild"] = automatic_rig.get("trace", {})
+		if asset.visual_rig != null:
+			var axis_errors := asset.visual_rig.axis_errors(affordance_profile)
+			if not axis_errors.is_empty():
+				return {"ok": false, "error": "AI_VISUAL_RIG_AXIS_MISMATCH:%s" % ",".join(axis_errors)}
+			result["visual_rig"] = asset.visual_rig.summary()
+			result["automatic_visual_rig"] = true
+	return result
+
+
+func build_automatic_visual_rig(asset: WeaponVisualAsset, affordance_profile: Resource) -> Dictionary:
+	var built: Dictionary = AUTOMATIC_PIXEL_VISUAL_RIG.build(asset, affordance_profile)
+	if not bool(built.get("ok", false)):
+		built["retry_required"] = true
+		built["player_confirmation_required"] = false
+		return built
+	asset.visual_rig = built.get("rig") as PixelWeaponVisualRig
+	asset.visual_rig_source = str(built.get("source", "ai_axes_plus_alpha_path_v1"))
+	if built.has("tether_origin"):
+		asset.tether_origin = Vector2(built.get("tether_origin", asset.tip))
+	return {
+		"ok": true,
+		"automatic": true,
+		"player_confirmation_required": false,
+		"source": asset.visual_rig_source,
+		"visual_rig": asset.visual_rig.summary(),
+		"trace": (built.get("trace", {}) as Dictionary).duplicate(true),
+	}
+
+
+func attach_ai_visual_rig(asset: WeaponVisualAsset, visual_rig_data: Dictionary) -> Dictionary:
+	if asset == null or asset.source_image == null or asset.source_image.is_empty():
+		return {"ok": false, "error": "AI_VISUAL_RIG_ASSET_MISSING"}
+	if visual_rig_data.is_empty():
+		return {"ok": false, "error": "AI_VISUAL_RIG_INVALID_OR_MISSING"}
+	var visual_rig: PixelWeaponVisualRig = PIXEL_VISUAL_RIG.from_dict(
+		visual_rig_data,
+		asset.source_image,
+		asset.orientation_flipped
+	)
+	var visual_errors := visual_rig.validation_errors()
+	if not visual_errors.is_empty():
+		return {"ok": false, "error": "AI_VISUAL_RIG_INVALID:%s" % ",".join(visual_errors)}
+	asset.visual_rig = visual_rig
+	asset.visual_rig_source = visual_rig.source
+	return {
+		"ok": true,
+		"automatic": true,
+		"player_confirmation_required": false,
+		"visual_rig": visual_rig.summary(),
+	}
+
+
+func _load_soft_fixture_payload(path: String) -> Dictionary:
+	var payload := _read_json(path)
+	if payload.is_empty():
+		return {"ok": false, "error": "SOFT_WEAPON_FIXTURE_PAYLOAD_INVALID"}
+	var image := _render_pixel_fixture(payload.get("sprite_fixture", {}))
+	if image == null or image.is_empty():
+		return {"ok": false, "error": "SOFT_WEAPON_FIXTURE_SPRITE_INVALID"}
+	return _load_live_payload(
+		image,
+		payload.get("semantic_blueprint", {}),
+		payload.get("anchors", {}),
+		payload.get("visual_rig", {})
+	)
 
 static func behavior_supported(family: String) -> bool:
 	return family == "heavy_melee"
@@ -308,6 +462,75 @@ func _render_fixture(fixture: Dictionary) -> WeaponVisualAsset:
 	var anchor_data: Dictionary = fixture.get("anchors", {})
 	return _asset_from_image_and_anchors(image, anchor_data)
 
+
+func _render_pixel_fixture(value: Variant) -> Image:
+	if not value is Dictionary:
+		return null
+	var fixture: Dictionary = value
+	var size_value: Array = fixture.get("canvas", [96, 96])
+	if size_value.size() < 2 or int(size_value[0]) != 96 or int(size_value[1]) != 96:
+		return null
+	var image := Image.create(96, 96, false, Image.FORMAT_RGBA8)
+	image.fill(Color.TRANSPARENT)
+	for shape_value: Variant in fixture.get("shapes", []):
+		if not shape_value is Dictionary:
+			continue
+		var shape: Dictionary = shape_value
+		var color := Color(str(shape.get("color", "ffffff")))
+		match str(shape.get("type", "")):
+			"rect":
+				var rect: Array = shape.get("rect", [0, 0, 1, 1])
+				if rect.size() >= 4:
+					image.fill_rect(Rect2i(int(rect[0]), int(rect[1]), int(rect[2]), int(rect[3])), color)
+			"circle":
+				var center := _fixture_point(shape.get("center", [48, 48]))
+				var radius := maxi(1, int(shape.get("radius", 1)))
+				_fill_fixture_circle(image, center, radius, color)
+			"line":
+				var points := _fixture_points(shape.get("points", []))
+				var width := maxi(1, int(shape.get("width", 1)))
+				for index: int in range(points.size() - 1):
+					_draw_fixture_line(image, points[index], points[index + 1], color, width)
+	return image
+
+
+func _fixture_points(value: Variant) -> PackedVector2Array:
+	var result := PackedVector2Array()
+	if not value is Array:
+		return result
+	for point_value: Variant in value:
+		result.append(Vector2(_fixture_point(point_value)))
+	return result
+
+
+func _fixture_point(value: Variant) -> Vector2i:
+	if value is Array and value.size() >= 2:
+		return Vector2i(roundi(float(value[0])), roundi(float(value[1])))
+	if value is Dictionary:
+		return Vector2i(roundi(float(value.get("x", 0.0))), roundi(float(value.get("y", 0.0))))
+	return Vector2i.ZERO
+
+
+func _draw_fixture_line(image: Image, start: Vector2, finish: Vector2, color: Color, width: int) -> void:
+	var delta := finish - start
+	var steps := maxi(1, ceili(maxf(absf(delta.x), absf(delta.y))))
+	var radius := maxi(0, width / 2)
+	for step: int in range(steps + 1):
+		var center := Vector2i(start.lerp(finish, float(step) / float(steps)).round())
+		for offset_y: int in range(-radius, radius + 1):
+			for offset_x: int in range(-radius, radius + 1):
+				var pixel := center + Vector2i(offset_x, offset_y)
+				if pixel.x >= 0 and pixel.y >= 0 and pixel.x < image.get_width() and pixel.y < image.get_height():
+					image.set_pixelv(pixel, color)
+
+
+func _fill_fixture_circle(image: Image, center: Vector2i, radius: int, color: Color) -> void:
+	for y: int in range(center.y - radius, center.y + radius + 1):
+		for x: int in range(center.x - radius, center.x + radius + 1):
+			if x >= 0 and y >= 0 and x < image.get_width() and y < image.get_height() \
+					and Vector2i(x, y).distance_squared_to(center) <= radius * radius:
+				image.set_pixel(x, y, color)
+
 func _asset_from_image_and_anchors(image: Image, anchors: Dictionary) -> WeaponVisualAsset:
 	var asset := WeaponVisualAsset.new()
 	asset.source_image = image
@@ -317,6 +540,7 @@ func _asset_from_image_and_anchors(image: Image, anchors: Dictionary) -> WeaponV
 	asset.grip_primary = _point(anchors, ["GripPrimary", "grip_primary"], Vector2(18, 48))
 	asset.grip_secondary = _point(anchors, ["GripSecondary", "grip_secondary"], asset.grip_primary)
 	asset.tip = _point(anchors, ["StrikePoint", "Tip", "strike_point", "tip"], Vector2(asset.opaque_bounds.end.x, asset.opaque_bounds.get_center().y))
+	asset.tether_origin = _point(anchors, ["TetherOrigin", "LineOrigin", "tether_origin", "line_origin"], asset.tip)
 	asset.muzzle = _point(anchors, ["EffectOrigin", "Muzzle", "effect_origin", "muzzle"], asset.tip)
 	asset.spin_pivot = _point(anchors, ["SpinPivot", "spin_pivot"], Vector2(asset.opaque_bounds.get_center()))
 	asset.anchor_confidence = 1.0
@@ -355,6 +579,8 @@ func _normalize_asset_orientation(asset: WeaponVisualAsset, anchors: Dictionary)
 		normalized.rear_contact = _transform_point_x(rear_raw, normalized.orientation_flipped, normalized.canvas_size.x)
 	else:
 		normalized.rear_contact = normalized.grip_primary
+	var tether_raw := _point(anchors, ["TetherOrigin", "LineOrigin", "tether_origin", "line_origin"], asset.tether_origin)
+	normalized.tether_origin = _transform_point_x(tether_raw, normalized.orientation_flipped, normalized.canvas_size.x)
 	return normalized
 
 
@@ -399,6 +625,12 @@ func _blueprint_from_semantic_data(data: Dictionary) -> WeaponBlueprint:
 		"weight_class": _semantic_weight_class(cadence_hint, drawback, payload),
 		"grip_profile": str(payload.get("grip_profile", "two_hand_rear")),
 		"silhouette_mass_distribution": str(payload.get("silhouette_mass_distribution", "balanced")),
+		"affordance": (payload.get("affordance", {}) as Dictionary).duplicate(true) if payload.get("affordance", {}) is Dictionary else {},
+		"affordance_source": str(payload.get("affordance_source", "")),
+		"visual_rig": (payload.get("visual_rig", {}) as Dictionary).duplicate(true) if payload.get("visual_rig", {}) is Dictionary else {},
+		"visual_rig_source": str(payload.get("visual_rig_source", "")),
+		"visual_structure_brief": (payload.get("visual_structure_brief", {}) as Dictionary).duplicate(true) if payload.get("visual_structure_brief", {}) is Dictionary else {},
+		"visual_structure_brief_source": str(payload.get("visual_structure_brief_source", "")),
 		"confidence": float(payload.get("confidence", 1.0)),
 	}
 	return WeaponBlueprint.from_dict(mapped)
@@ -526,6 +758,19 @@ func _affordance_profile_from_dict(data: Dictionary) -> Resource:
 	var contact_surface := str(data.get("contact_surface", ""))
 	var secondary_contact_surface := str(data.get("secondary_contact_surface", ""))
 	var rigidity := str(data.get("rigidity", ""))
+	# Frozen V1/V2 evidence predates the soft-body sub-axes. Preserve its bytes
+	# and add the only backward-compatible behavior at load time: a flexible
+	# object bends as one continuous shaft unless newer AI evidence says more.
+	var flex_topology := str(data.get("flex_topology", "bending_shaft" if rigidity == "flexible" else "none"))
+	var tether_topology := str(data.get("tether_topology", "none"))
+	var terminal_load := str(data.get("terminal_load", "none"))
+	var tether_mode := str(data.get("tether_mode", "none"))
+	# Older frozen evidence did not distinguish a line that pays out from one
+	# that stays attached at a fixed length. Preserve that old runtime behavior.
+	var tether_deployment := str(data.get(
+		"tether_deployment",
+		"fixed_length" if tether_topology != "none" else "none"
+	))
 	var confidence := float(data.get("confidence", -1.0))
 	var evidence_value: Variant = data.get("evidence_parts", [])
 	if handle_length not in ["none", "short", "medium", "long"] \
@@ -535,6 +780,11 @@ func _affordance_profile_from_dict(data: Dictionary) -> Resource:
 		or contact_surface not in ["point", "edge", "broad", "whole_body"] \
 		or secondary_contact_surface not in ["none", "point", "edge", "broad", "whole_body"] \
 		or rigidity not in ["rigid", "semi_rigid", "flexible"] \
+		or flex_topology not in ["none", "bending_shaft", "flexible_line", "linked_segments"] \
+		or tether_topology not in ["none", "flexible_line", "linked_segments"] \
+		or terminal_load not in ["none", "light", "heavy"] \
+		or tether_mode not in ["none", "wrap", "hook"] \
+		or tether_deployment not in ["none", "fixed_length", "cast_retract", "launch_tension"] \
 		or confidence < 0.65 or confidence > 1.0 \
 		or not evidence_value is Array or (evidence_value as Array).is_empty():
 		return null
@@ -546,6 +796,11 @@ func _affordance_profile_from_dict(data: Dictionary) -> Resource:
 	profile.contact_surface = contact_surface
 	profile.secondary_contact_surface = secondary_contact_surface
 	profile.rigidity = rigidity
+	profile.flex_topology = flex_topology
+	profile.tether_topology = tether_topology
+	profile.terminal_load = terminal_load
+	profile.tether_mode = tether_mode
+	profile.tether_deployment = tether_deployment
 	profile.has_point = bool(data.get("has_point"))
 	profile.has_edge = bool(data.get("has_edge"))
 	profile.has_broad_face = bool(data.get("has_broad_face"))

@@ -42,7 +42,7 @@
   "comfyui_commit": "b1693ecba9f5b65f8c80ab36b195ab963ec92413",
   "workflow_contract_version": "forge-flux2-klein-4b-v1",
   "postprocessor": "../../postprocess/process_sprite.py",
-  "postprocessor_sha256": "f748c8e61dfd022d351d84c57c2d68b50b3dc39685403c7af20cc0402eebc0e9",
+  "postprocessor_sha256": "c6fe62c05c18b3fbc79312750080c03b8980bdb5f76b48270b873ecdce4bd3fa",
   "sprite_size": 96,
   "max_colors": 32,
   "outline": true,

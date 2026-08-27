@@ -58,6 +58,8 @@ func build_asset_copy() -> WeaponVisualAsset:
 	else:
 		copy.muzzle = copy.grip_primary
 		copy.tip = copy.grip_primary
+	var source_tether_origin := asset.tether_origin if asset.tether_origin != Vector2.ZERO else asset.tip
+	copy.tether_origin = _transform_point(source_tether_origin, should_flip, copy.canvas_size.x)
 	copy.spin_pivot = training_anchor_point("SpinPivot") if required_anchor_types.has("SpinPivot") else _image_centroid_fallback(copy)
 	copy.anchor_source = "semantic_required+player_calibration"
 	copy.anchor_confidence = _minimum_required_confidence()
@@ -159,6 +161,10 @@ static func _transformed_bounds(bounds: Rect2i, flip_x: bool, width: int) -> Rec
 	if not flip_x:
 		return bounds
 	return Rect2i(width - bounds.end.x, bounds.position.y, bounds.size.x, bounds.size.y)
+
+
+static func _transform_point(point: Vector2, flip_x: bool, width: int) -> Vector2:
+	return Vector2(float(width - 1) - point.x, point.y) if flip_x else point
 
 static func _image_centroid_fallback(value: WeaponVisualAsset) -> Vector2:
 	return Vector2(value.opaque_bounds.get_center())

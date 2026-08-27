@@ -5,6 +5,7 @@ signal stage_completed(stage_name: String, metrics: Dictionary)
 signal metrics_changed(metrics: Dictionary)
 
 const RULES := preload("res://scripts/systems/combat_rules.gd")
+const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
 const WORLD_RECT := Rect2(34, 116, 1212, 568)
 
 var stage_name := "training"
@@ -27,6 +28,12 @@ var attack_charge := 0.0
 var shot_cooldown := 0.0
 var overheat := 0.0
 var overheat_lock := 0.0
+var ranged_runtime_profile: Dictionary = {}
+var ammo_in_magazine := 0
+var reload_timer := 0.0
+var weapon_recoil_offset := 0.0
+var weapon_muzzle_climb_degrees := 0.0
+var muzzle_flash_timer := 0.0
 var melee_timer := 0.0
 var melee_connected: Dictionary = {}
 var dodge_timer := 0.0
@@ -45,6 +52,7 @@ func start_stage(next_stage: String, next_blueprint: WeaponBlueprint, next_asset
 	projectiles.clear()
 	boomerang.clear()
 	attack_charge = 0.0
+	shot_cooldown = 0.0
 	overheat = 0.0
 	overheat_lock = 0.0
 	melee_timer = 0.0
@@ -54,7 +62,19 @@ func start_stage(next_stage: String, next_blueprint: WeaponBlueprint, next_asset
 	dodge_timer = 0.0
 	stage_elapsed = 0.0
 	completion_delay = -1.0
-	metrics = {"damage_taken": 0.0, "overheat_count": 0, "dodge_count": 0, "defeated": 0}
+	ranged_runtime_profile.clear()
+	if str(blueprint.affordance.get("weapon_domain", "")) == "handheld_firearm":
+		var cached_runtime: Variant = blueprint.modifiers.get("ranged_runtime_profile", {})
+		if cached_runtime is Dictionary and bool((cached_runtime as Dictionary).get("ok", false)):
+			ranged_runtime_profile = (cached_runtime as Dictionary).duplicate(true)
+		else:
+			ranged_runtime_profile = RANGED_AXIS_RESOLVER.compile(blueprint.affordance, blueprint.affordance_source)
+	ammo_in_magazine = int(ranged_runtime_profile.get("magazine_size", 0))
+	reload_timer = 0.0
+	weapon_recoil_offset = 0.0
+	weapon_muzzle_climb_degrees = 0.0
+	muzzle_flash_timer = 0.0
+	metrics = {"damage_taken": 0.0, "overheat_count": 0, "dodge_count": 0, "defeated": 0, "shots_fired": 0, "reload_count": 0}
 	_spawn_stage()
 	active = true
 	set_process(true)
@@ -84,6 +104,7 @@ func _process(delta: float) -> void:
 	stage_elapsed += delta
 	shot_cooldown = maxf(0.0, shot_cooldown - delta)
 	overheat_lock = maxf(0.0, overheat_lock - delta)
+	_update_firearm_timers(delta)
 	invulnerable_timer = maxf(0.0, invulnerable_timer - delta)
 	flash_timer = maxf(0.0, flash_timer - delta)
 	_update_player(delta)
@@ -101,8 +122,14 @@ func _update_player(delta: float) -> void:
 	var speed := 220.0
 	if blueprint.weight_class == "heavy":
 		speed = 158.0
+	if _uses_firearm_runtime():
+		speed *= float(ranged_runtime_profile.get("movement_multiplier", 1.0))
+		if shot_cooldown > 0.0:
+			speed *= float(ranged_runtime_profile.get("firing_movement_multiplier", 1.0))
 	if attack_charge > 0.0 or melee_timer > 0.0:
 		speed *= 0.62
+	if reload_timer > 0.0:
+		speed *= 0.82
 	if dodge_timer > 0.0:
 		dodge_timer -= delta
 		speed = 510.0
@@ -125,9 +152,12 @@ func _update_attacks(delta: float) -> void:
 	match blueprint.behavior_family:
 		"returning_thrown": _update_returning_attack(just_pressed, delta)
 		"heavy_melee": _update_melee_attack(just_pressed, delta)
-		_: _update_sustained_attack(attack_down, delta)
+		_: _update_sustained_attack(attack_down, just_pressed, delta)
 
-func _update_sustained_attack(attack_down: bool, delta: float) -> void:
+func _update_sustained_attack(attack_down: bool, just_pressed: bool, delta: float) -> void:
+	if _uses_firearm_runtime():
+		_update_firearm_attack(attack_down, just_pressed)
+		return
 	var heat_multiplier := float(blueprint.modifiers.get("heat_multiplier", 1.0))
 	var rate_multiplier := float(blueprint.modifiers.get("fire_rate_multiplier", 1.0))
 	if overheat_lock > 0.0:
@@ -148,6 +178,55 @@ func _update_sustained_attack(attack_down: bool, delta: float) -> void:
 	else:
 		attack_charge = maxf(0.0, attack_charge - delta * 2.0)
 		overheat = maxf(0.0, overheat - delta * 0.28)
+
+func _update_firearm_attack(attack_down: bool, just_pressed: bool) -> void:
+	attack_charge = 0.0
+	overheat = 0.0
+	if reload_timer > 0.0:
+		return
+	var wants_shot := attack_down if bool(ranged_runtime_profile.get("automatic_fire", false)) else just_pressed
+	if not wants_shot or shot_cooldown > 0.0:
+		return
+	if ammo_in_magazine <= 0:
+		_begin_firearm_reload()
+		return
+	_fire_bullet()
+	ammo_in_magazine -= 1
+	shot_cooldown = float(ranged_runtime_profile.get("shot_interval_seconds", 0.18))
+	weapon_recoil_offset = float(ranged_runtime_profile.get("recoil_pixels", 6.0))
+	weapon_muzzle_climb_degrees = minf(
+		18.0,
+		weapon_muzzle_climb_degrees
+			+ float(ranged_runtime_profile.get("muzzle_climb_degrees_per_shot", 4.0))
+	)
+	muzzle_flash_timer = float(ranged_runtime_profile.get("muzzle_flash_seconds", 0.06))
+	metrics["shots_fired"] = int(metrics.get("shots_fired", 0)) + 1
+	metrics_changed.emit(metrics)
+	if ammo_in_magazine <= 0:
+		_begin_firearm_reload()
+
+func _begin_firearm_reload() -> void:
+	if not _uses_firearm_runtime() or reload_timer > 0.0:
+		return
+	reload_timer = float(ranged_runtime_profile.get("reload_seconds", 1.2))
+	metrics["reload_count"] = int(metrics.get("reload_count", 0)) + 1
+	metrics_changed.emit(metrics)
+
+func _update_firearm_timers(delta: float) -> void:
+	var recoil_recovery := float(ranged_runtime_profile.get("recoil_recovery_pixels_per_second", 70.0))
+	var climb_recovery := float(ranged_runtime_profile.get("muzzle_climb_recovery_degrees_per_second", 24.0))
+	weapon_recoil_offset = move_toward(weapon_recoil_offset, 0.0, delta * recoil_recovery)
+	weapon_muzzle_climb_degrees = move_toward(weapon_muzzle_climb_degrees, 0.0, delta * climb_recovery)
+	muzzle_flash_timer = maxf(0.0, muzzle_flash_timer - delta)
+	if reload_timer <= 0.0:
+		return
+	reload_timer = maxf(0.0, reload_timer - delta)
+	if reload_timer <= 0.0:
+		ammo_in_magazine = int(ranged_runtime_profile.get("magazine_size", 0))
+		metrics_changed.emit(metrics)
+
+func _uses_firearm_runtime() -> bool:
+	return bool(ranged_runtime_profile.get("ok", false)) and str(ranged_runtime_profile.get("schema", "")) == RANGED_AXIS_RESOLVER.RUNTIME_SCHEMA
 
 func _update_returning_attack(just_pressed: bool, delta: float) -> void:
 	if just_pressed and boomerang.is_empty():
@@ -199,22 +278,85 @@ func _update_melee_attack(just_pressed: bool, delta: float) -> void:
 			player_health = minf(100.0, player_health + damage * 0.10)
 
 func _fire_bullet() -> void:
+	var projectile_speed := 610.0
+	var spread_velocity := 12.0
+	var projectile_life := 1.45
+	var projectile_damage := RULES.base_damage("sustained_ranged")
+	var hit_stagger := 0.12
+	var armor_damage_multiplier := 0.45
+	var pierce_budget := 1 if bool(blueprint.modifiers.get("limited_pierce", false)) else 0
+	var falloff_start := 480.0
+	var falloff_end := 800.0
+	var axis_signature := "generic_sustained"
+	if _uses_firearm_runtime():
+		projectile_speed = float(ranged_runtime_profile.get("projectile_speed", projectile_speed))
+		spread_velocity = float(ranged_runtime_profile.get("spread_velocity", spread_velocity))
+		projectile_life = float(ranged_runtime_profile.get("projectile_life_seconds", projectile_life))
+		projectile_damage = float(ranged_runtime_profile.get("projectile_damage", projectile_damage))
+		hit_stagger = float(ranged_runtime_profile.get("hit_stagger_seconds", hit_stagger))
+		armor_damage_multiplier = float(ranged_runtime_profile.get("armor_damage_multiplier", armor_damage_multiplier))
+		pierce_budget = int(ranged_runtime_profile.get("pierce_budget", pierce_budget))
+		falloff_start = float(ranged_runtime_profile.get("damage_falloff_start_pixels", falloff_start))
+		falloff_end = float(ranged_runtime_profile.get("damage_falloff_end_pixels", falloff_end))
+		axis_signature = str(ranged_runtime_profile.get("axis_signature", ""))
+	var origin := _muzzle_world()
+	var shot_direction := Vector2(facing, 0.0).rotated(_firearm_recoil_rotation())
 	projectiles.append({
-		"pos": _muzzle_world(), "vel": Vector2(facing * 610.0, randf_range(-12.0, 12.0)),
-		"life": 1.45, "pierces": 1 if bool(blueprint.modifiers.get("limited_pierce", false)) else 0,
-		"hit": {}
+		"pos": origin,
+		"origin": origin,
+		"distance_travelled": 0.0,
+		"vel": shot_direction * projectile_speed + Vector2(0.0, randf_range(-spread_velocity, spread_velocity)),
+		"life": projectile_life,
+		"damage": projectile_damage,
+		"hit_stagger_seconds": hit_stagger,
+		"armor_damage_multiplier": armor_damage_multiplier,
+		"damage_falloff_start_pixels": falloff_start,
+		"damage_falloff_end_pixels": falloff_end,
+		"pierces": pierce_budget,
+		"hit": {},
+		"axis_signature": axis_signature,
 	})
+
+
+func _projectile_damage_against(projectile: Dictionary, enemy: Dictionary) -> float:
+	if not projectile.has("damage"):
+		return RULES.damage_against(
+			blueprint.behavior_family,
+			str(enemy.get("type", "target")),
+			_is_front_hit(enemy),
+			blueprint.modifiers
+		)
+	var damage := float(projectile.get("damage", RULES.base_damage("sustained_ranged")))
+	var falloff_start := float(projectile.get("damage_falloff_start_pixels", INF))
+	var falloff_end := maxf(
+		falloff_start + 1.0,
+		float(projectile.get("damage_falloff_end_pixels", falloff_start + 1.0))
+	)
+	var travelled := float(projectile.get("distance_travelled", 0.0))
+	if travelled > falloff_start:
+		var falloff := clampf(inverse_lerp(falloff_start, falloff_end, travelled), 0.0, 1.0)
+		damage *= lerpf(1.0, 0.55, falloff)
+	if str(enemy.get("type", "")) == "guard" and _is_front_hit(enemy):
+		damage *= float(projectile.get("armor_damage_multiplier", 0.45))
+	return maxf(1.0, damage)
+
 
 func _update_projectiles(delta: float) -> void:
 	for projectile: Dictionary in projectiles:
-		projectile["pos"] = Vector2(projectile["pos"]) + Vector2(projectile["vel"]) * delta
+		var travel_step := Vector2(projectile["vel"]) * delta
+		projectile["pos"] = Vector2(projectile["pos"]) + travel_step
+		projectile["distance_travelled"] = float(projectile.get("distance_travelled", 0.0)) + travel_step.length()
 		projectile["life"] = float(projectile["life"]) - delta
 		for enemy: Dictionary in enemies:
 			var enemy_id := int(enemy["id"])
 			var hit: Dictionary = projectile["hit"]
 			if not hit.has(enemy_id) and Vector2(projectile["pos"]).distance_to(enemy["pos"]) < 23.0:
 				hit[enemy_id] = true
-				_damage_enemy(enemy, RULES.damage_against(blueprint.behavior_family, enemy["type"], _is_front_hit(enemy), blueprint.modifiers))
+				_damage_enemy(
+					enemy,
+					_projectile_damage_against(projectile, enemy),
+					float(projectile.get("hit_stagger_seconds", 0.12))
+				)
 				enemy["burn"] = 2.2
 				if int(projectile["pierces"]) > 0:
 					projectile["pierces"] = int(projectile["pierces"]) - 1
@@ -263,9 +405,9 @@ func _update_enemies(delta: float) -> void:
 	enemies = enemies.filter(func(enemy: Dictionary) -> bool: return float(enemy["hp"]) > 0.0)
 	metrics["defeated"] = int(metrics["defeated"]) + before - enemies.size()
 
-func _damage_enemy(enemy: Dictionary, amount: float) -> void:
+func _damage_enemy(enemy: Dictionary, amount: float, hurt_seconds: float = 0.12) -> void:
 	enemy["hp"] = float(enemy["hp"]) - amount
-	enemy["hurt"] = 0.12
+	enemy["hurt"] = maxf(float(enemy.get("hurt", 0.0)), hurt_seconds)
 
 func _chain_damage(source: Dictionary, amount: float) -> void:
 	for enemy: Dictionary in enemies:
@@ -315,9 +457,19 @@ func _spawn_enemy(type_name: String, position: Vector2, health: float) -> void:
 func _muzzle_world() -> Vector2:
 	if asset == null:
 		return player_position
-	var hand := Vector2(19.0 * facing, -10.0)
+	var recoil := Vector2(-weapon_recoil_offset * facing, -weapon_recoil_offset * 0.12) if _uses_firearm_runtime() else Vector2.ZERO
+	var hand := Vector2(19.0 * facing, -10.0) + recoil
 	var relative := asset.muzzle - asset.grip_primary
-	return player_position + hand + Vector2(relative.x * 1.15 * facing, relative.y * 1.15)
+	var relative_world := Vector2(relative.x * 1.15 * facing, relative.y * 1.15)
+	if _uses_firearm_runtime():
+		relative_world = relative_world.rotated(_firearm_recoil_rotation())
+	return player_position + hand + relative_world
+
+
+func _firearm_recoil_rotation() -> float:
+	if not _uses_firearm_runtime():
+		return 0.0
+	return deg_to_rad(-weapon_muzzle_climb_degrees) * facing
 
 func _draw() -> void:
 	draw_rect(Rect2(0, 0, 1280, 720), Color("09131f"), true)
@@ -337,11 +489,13 @@ func _draw_player_and_weapon() -> void:
 	draw_rect(Rect2(player_position + Vector2(-15, -12), Vector2(30, 42)), body_color, true)
 	draw_line(player_position + Vector2(-8, 30), player_position + Vector2(-13, 49), Color("94a3b8"), 7.0)
 	draw_line(player_position + Vector2(8, 30), player_position + Vector2(13, 49), Color("94a3b8"), 7.0)
-	var hand_primary := player_position + Vector2(19.0 * facing, -10.0)
+	var firearm_recoil := Vector2(-weapon_recoil_offset * facing, -weapon_recoil_offset * 0.12) if _uses_firearm_runtime() else Vector2.ZERO
+	var hand_primary := player_position + Vector2(19.0 * facing, -10.0) + firearm_recoil
 	var weapon_rotation := _melee_weapon_rotation()
 	var relative_secondary := (asset.grip_secondary - asset.grip_primary) * 1.15
 	var relative_secondary_world := Vector2(relative_secondary.x * facing, relative_secondary.y).rotated(weapon_rotation)
-	var hand_secondary := hand_primary + relative_secondary_world
+	var one_hand_firearm := _uses_firearm_runtime() and str(blueprint.affordance.get("support_mode", "")) == "one_hand"
+	var hand_secondary := player_position + Vector2(-9.0 * facing, 12.0) if one_hand_firearm else hand_primary + relative_secondary_world
 	draw_line(player_position + Vector2(0, -5), hand_primary, Color("f0c7a6"), 7.0)
 	draw_line(player_position + Vector2(2, 1), hand_secondary, Color("f0c7a6"), 7.0)
 	draw_set_transform(hand_primary, weapon_rotation, Vector2(facing, 1.0))
@@ -359,6 +513,12 @@ func _draw_player_and_weapon() -> void:
 		_draw_world_anchor(hand_primary, asset.spin_pivot, asset.grip_primary, "SpinPivot", Color("c084fc"))
 
 func _melee_weapon_rotation() -> float:
+	if _uses_firearm_runtime() and reload_timer > 0.0:
+		var reload_duration := maxf(0.01, float(ranged_runtime_profile.get("reload_seconds", 1.2)))
+		var reload_progress := clampf(1.0 - reload_timer / reload_duration, 0.0, 1.0)
+		return sin(reload_progress * PI) * 0.52 * facing
+	if _uses_firearm_runtime():
+		return _firearm_recoil_rotation()
 	if blueprint == null or blueprint.behavior_family != "heavy_melee" or melee_timer <= 0.0:
 		return 0.0
 	var startup_multiplier := float(blueprint.modifiers.get("startup_multiplier", 1.0))
@@ -403,6 +563,14 @@ func _draw_attacks() -> void:
 	if blueprint != null and blueprint.behavior_family == "sustained_ranged" and attack_charge > 0.0:
 		var muzzle := _muzzle_world()
 		draw_circle(muzzle, 6.0 + minf(attack_charge, 0.35) * 15.0, Color(0.15, 0.78, 1.0, 0.7), false, 3.0)
+	if muzzle_flash_timer > 0.0:
+		var flash_muzzle := _muzzle_world()
+		draw_colored_polygon(PackedVector2Array([
+			flash_muzzle + Vector2(0, -8),
+			flash_muzzle + Vector2(16.0 * facing, 0),
+			flash_muzzle + Vector2(0, 8),
+			flash_muzzle + Vector2(5.0 * facing, 0),
+		]), Color("fde047"))
 
 func _draw_enemies() -> void:
 	for enemy: Dictionary in enemies:

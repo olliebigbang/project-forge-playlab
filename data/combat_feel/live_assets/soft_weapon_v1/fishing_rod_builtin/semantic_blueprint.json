@@ -1,0 +1,57 @@
+{
+  "schema": "forge-semantic-blueprint-soft-mechanism-v1",
+  "id": "fishing-rod-builtin-soft-mechanism",
+  "identity": {
+    "canonical_name_zh": "钓鱼竿",
+    "display_name_zh": "像素钓鱼竿",
+    "required_identity_parts": [
+      "木质握柄",
+      "弯曲长竿",
+      "卷线轮",
+      "垂落鱼线",
+      "金属鱼钩"
+    ]
+  },
+  "combat": {
+    "behavior_family": "heavy_melee",
+    "delivery": "whole_object_strike",
+    "impact_mode": "whole_body_collision",
+    "cadence_hint": "balanced_soft_combo",
+    "drawback": "recovery",
+    "effect_type": "normal"
+  },
+  "visual": {
+    "prompt_en": "chunky 2D pixel-art fishing rod with a bent shaft, reel, hanging line, and hook"
+  },
+  "grip_profile": "rear_grip",
+  "weight_class": "medium",
+  "confidence": 0.92,
+  "affordance_source": "ai_builtin_imagegen_soft_v1",
+  "affordance": {
+    "handle_length": "short",
+    "body_length": "long",
+    "grip_topology": "one_hand_handle",
+    "rigidity": "flexible",
+    "mass_distribution": "balanced",
+    "contact_surface": "whole_body",
+    "secondary_contact_surface": "point",
+    "flex_topology": "bending_shaft",
+    "tether_topology": "flexible_line",
+    "terminal_load": "light",
+    "tether_mode": "hook",
+    "tether_deployment": "cast_retract",
+    "has_point": true,
+    "has_edge": false,
+    "has_broad_face": false,
+    "has_barrel": false,
+    "has_stock": false,
+    "confidence": 0.92,
+    "evidence_parts": [
+      "main body is a continuous slender shaft that visibly bends",
+      "a separate continuous line runs from the shaft tip to the terminal hook",
+      "the hook is a light pointed terminal load",
+      "the reel pays out the attached line and retrieves it after the terminal travels",
+      "the handle is at the rear while alpha mass remains geometrically balanced"
+    ]
+  }
+}

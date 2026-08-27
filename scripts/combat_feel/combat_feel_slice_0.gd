@@ -8,6 +8,22 @@ const CONTROLLER := preload("res://scripts/combat_feel/melee_combat_controller.g
 const ENEMY := preload("res://scripts/combat_feel/combat_feel_enemy.gd")
 const FEEDBACK := preload("res://scripts/combat_feel/impact_feedback_profile.gd")
 const MOTION_PRIMITIVE := preload("res://scripts/combat_feel/motion_primitive.gd")
+const PERCEPTIBLE_CONTACT := preload("res://scripts/combat_feel/perceptible_contact_mechanics.gd")
+const PIXEL_WEAPON_DEFORMER := preload("res://scripts/combat_feel/pixel_weapon_deformer.gd")
+const TUNING_SCHEMA := "forge-combat-feel-tuning-v2"
+const TIMING_KEYS: PackedStringArray = ["startup", "active", "recovery", "combo_window", "input_buffer"]
+const TIMING_CLAMPS := {
+	"startup": Vector2(0.06, 0.45),
+	"active": Vector2(0.04, 0.22),
+	"recovery": Vector2(0.10, 0.60),
+	"combo_window": Vector2(0.20, 0.80),
+	"input_buffer": Vector2(0.10, 0.18),
+}
+const TIMING_REFERENCE_BY_TEMPO := {
+	"rapid": {"startup": 0.13, "active": 0.08, "recovery": 0.18, "combo_window": 0.46, "input_buffer": 0.16},
+	"balanced": {"startup": 0.19, "active": 0.10, "recovery": 0.25, "combo_window": 0.46, "input_buffer": 0.16},
+	"committed": {"startup": 0.29, "active": 0.13, "recovery": 0.36, "combo_window": 0.46, "input_buffer": 0.16},
+}
 
 var asset_loader: Variant
 var compiler: Variant
@@ -50,12 +66,19 @@ var input_to_active_ms := -1
 var normal_attack_attempts: Dictionary = {1: 0, 2: 0, 3: 0}
 var normal_attack_hits: Dictionary = {1: 0, 2: 0, 3: 0}
 var normal_attack_whiffs: Dictionary = {1: 0, 2: 0, 3: 0}
+var attack_root_motion_serial := -1
+var attack_root_motion_applied := 0.0
+var attack_root_motion_direction := 1.0
 var blind_comparison := false
 var blind_label := ""
 var blind_run_completed := false
 var blind_result_path := ""
 var blind_suite := "slice_1a"
 var capture_pose_only := false
+var compiled_timing_defaults: Dictionary = {}
+var runtime_mechanism_handoff: Node
+var last_contact_verb := "none"
+var mechanism_verb_counts: Dictionary = {}
 
 var ui_layer: CanvasLayer
 var title_label: Label
@@ -96,6 +119,7 @@ func _ready() -> void:
 		_show_blocked(MOTION_COMPILER.UNSUPPORTED)
 		return
 	motion_profile = compiled
+	_capture_compiled_timing_defaults()
 	_update_mode_title()
 	controller.configure(motion_profile)
 	_apply_saved_tuning()
@@ -105,7 +129,11 @@ func _ready() -> void:
 	if smoke_seconds > 0.0: _quit_after(smoke_seconds)
 	var capture_dir := _argument_value("--capture-dir=", "")
 	var pose_capture_dir := _argument_value("--pose-capture-dir=", "")
-	if not pose_capture_dir.is_empty(): call_deferred("_capture_pose_visibility", pose_capture_dir)
+	var visual_rig_capture_dir := _argument_value("--visual-rig-capture-dir=", "")
+	if not visual_rig_capture_dir.is_empty():
+		print("PIXEL_VISUAL_RIG_CAPTURE_REQUESTED:", visual_rig_capture_dir)
+		call_deferred("_capture_visual_rig_evidence", visual_rig_capture_dir)
+	elif not pose_capture_dir.is_empty(): call_deferred("_capture_pose_visibility", pose_capture_dir)
 	elif not capture_dir.is_empty(): call_deferred("_capture_evidence", capture_dir)
 
 
@@ -115,20 +143,29 @@ func _compile_loaded_weapon() -> Variant:
 	return compiler.compile(blueprint, asset)
 
 func _load_requested_weapon() -> bool:
+	var runtime_handoff: Node = runtime_mechanism_handoff
+	if runtime_handoff == null and is_inside_tree():
+		runtime_handoff = get_tree().root.get_node_or_null("MechanismHandoff")
 	var sprite_path := _argument_value("--combat-sprite=", "")
 	var blueprint_path := _argument_value("--combat-blueprint=", "")
 	var anchors_path := _argument_value("--combat-anchors=", "")
 	var open_round_path := _argument_value("--open-playtest-round=", "")
 	var requested_generalization_id := _argument_value("--generalization-asset=", "")
 	var requested_motion_grammar_id := _argument_value("--motion-grammar-asset=", "")
+	var requested_soft_weapon_id := _argument_value("--soft-weapon-asset=", "")
 	var requested_recipe_id := _argument_value("--recipe-asset=", "")
 	var requested_live_id := _argument_value("--live-weapon=", "")
 	var requested_fixture := _argument_value("--developer-fixture=", "").to_upper()
 	var result: Dictionary
-	if not requested_generalization_id.is_empty():
+	if runtime_handoff != null and bool(runtime_handoff.call("has_pending")):
+		launched_from_open_playtest = true
+		result = runtime_handoff.call("take") as Dictionary
+	elif not requested_generalization_id.is_empty():
 		result = asset_loader.load_generalization_asset(requested_generalization_id)
 	elif not requested_motion_grammar_id.is_empty():
 		result = asset_loader.load_motion_grammar_asset(requested_motion_grammar_id)
+	elif not requested_soft_weapon_id.is_empty():
+		result = asset_loader.load_soft_weapon_asset(requested_soft_weapon_id)
 	elif not requested_recipe_id.is_empty():
 		result = asset_loader.load_recipe_asset(requested_recipe_id)
 	elif not sprite_path.is_empty() or not blueprint_path.is_empty() or not anchors_path.is_empty():
@@ -174,6 +211,11 @@ func _start_run() -> void:
 	pending_attack_input_msec = -1
 	input_to_visual_ms = -1
 	input_to_active_ms = -1
+	attack_root_motion_serial = -1
+	attack_root_motion_applied = 0.0
+	attack_root_motion_direction = player_facing
+	last_contact_verb = "none"
+	mechanism_verb_counts = {}
 	_reset_normal_attack_stats()
 	blind_run_completed = false
 	result_state = "playing"
@@ -242,22 +284,53 @@ func _update_player_movement(delta: float) -> void:
 		player_position += dodge_direction * 510.0 * delta
 	elif player_hurt <= 0.0:
 		var speed := 205.0
-		if controller.phase in ["startup", "active"]:
+		if controller.phase in ["startup", "active", "recovery"]:
 			var primitive: Variant = _current_attack_primitive()
-			speed *= float(primitive.movement_allowed_ratio) if primitive != null else motion_profile.movement_commitment
+			var allowed: float = float(primitive.movement_allowed_ratio) if primitive != null else float(motion_profile.movement_commitment)
+			if controller.phase == "recovery":
+				allowed = lerpf(allowed, 1.0, controller.phase_ratio())
+			speed *= allowed
 		player_position += input_vector * speed * delta
 		if absf(input_vector.x) > 0.05: player_facing = signf(input_vector.x)
+	_apply_attack_root_motion()
 	player_position.x = clampf(player_position.x, ARENA.position.x + 30.0, ARENA.end.x - 30.0)
 	player_position.y = clampf(player_position.y, ARENA.position.y + 52.0, ARENA.end.y - 28.0)
+
+
+func _apply_attack_root_motion() -> void:
+	if controller == null or controller.current_primitive == null:
+		return
+	if attack_root_motion_serial != controller.attack_serial:
+		return
+	var primitive: Variant = controller.current_primitive
+	var target := float(primitive.root_motion_distance) * _root_motion_progress(
+		controller.phase,
+		controller.phase_ratio(),
+		float(primitive.inertia_ratio)
+	)
+	var distance := maxf(0.0, target - attack_root_motion_applied)
+	player_position.x += distance * attack_root_motion_direction
+	attack_root_motion_applied = maxf(attack_root_motion_applied, target)
+
+
+func _root_motion_progress(phase: String, phase_ratio: float, inertia_ratio: float) -> float:
+	# Rear-weighted objects deliver almost all travel in the active phase and stop
+	# cleanly. Front-weighted objects retain a large, visible recovery carry.
+	var active_fraction := lerpf(0.92, 0.60, clampf(inertia_ratio, 0.0, 1.0))
+	match phase:
+		"startup": return 0.0
+		"active": return active_fraction * smoothstep(0.0, 1.0, phase_ratio)
+		"recovery": return active_fraction + (1.0 - active_fraction) * smoothstep(0.0, 1.0, phase_ratio)
+		"idle": return 1.0
+	return 0.0
 
 func _on_attack_started(kind: String, combo_index: int) -> void:
 	attack_connected = false
 	if kind == "normal" and combo_index in [1, 2, 3]:
 		normal_attack_attempts[combo_index] = int(normal_attack_attempts.get(combo_index, 0)) + 1
-	var timing: Dictionary = controller.current_timing()
-	var primitive: Variant = controller.current_primitive
-	var advance: float = float(primitive.root_motion_distance) if primitive != null else 17.0 * float(timing.get("movement_scale", 1.0))
-	player_position.x += advance * player_facing
+	attack_root_motion_serial = controller.attack_serial
+	attack_root_motion_applied = 0.0
+	attack_root_motion_direction = player_facing
 	_play_tone("swing_heavy" if kind == "charge" or combo_index >= 3 or motion_profile.tempo == "committed" else "swing_light")
 
 func _on_attack_phase_changed(next_phase: String) -> void:
@@ -272,10 +345,26 @@ func _on_attack_phase_changed(next_phase: String) -> void:
 		_play_tone("whiff")
 
 func _resolve_melee_hits() -> void:
-	for enemy: Node2D in enemies:
+	var eligible_enemies: Array[Node2D] = enemies
+	var active_primitive: Variant = controller.current_primitive
+	if _mechanism_experiment_enabled() and PERCEPTIBLE_CONTACT.verb_for(active_primitive) == "pin":
+		eligible_enemies = []
+		var nearest: Node2D
+		var nearest_distance := INF
+		for candidate: Node2D in enemies:
+			if candidate.state == "dead" or not _attack_contains(candidate.position):
+				continue
+			var distance := player_position.distance_squared_to(candidate.position)
+			if distance < nearest_distance:
+				nearest = candidate
+				nearest_distance = distance
+		if nearest != null:
+			eligible_enemies.append(nearest)
+	for enemy: Node2D in eligible_enemies:
 		if enemy.state == "dead": continue
 		if not _attack_contains(enemy.position): continue
 		if not controller.register_hit(enemy.enemy_id): continue
+		var primitive: Variant = controller.current_primitive
 		var feedback: Resource = FEEDBACK.for_attack(motion_profile, controller.attack_kind, controller.combo_index, controller.current_primitive)
 		var finisher_scale := 1.45 if controller.combo_index >= 3 or controller.attack_kind == "charge" else 1.0
 		if has_meta("debug_hitstop"):
@@ -283,23 +372,67 @@ func _resolve_melee_hits() -> void:
 		feedback.knockback_strength *= float(get_meta("debug_knockback", 1.0))
 		feedback.camera_shake_strength *= float(get_meta("debug_shake", 1.0))
 		var damage := _current_damage()
-		var direction: Vector2 = (enemy.position - player_position).normalized()
-		if direction.length() < 0.1: direction = Vector2(player_facing, 0)
-		var knockback: Vector2 = direction * float(feedback.knockback_strength) + Vector2(0, -float(feedback.launch_strength))
-		enemy.apply_hit(damage, knockback, feedback.stagger_strength, feedback.recoil_degrees)
+		var reaction := _hit_reaction(enemy.position, feedback, primitive)
+		var mechanism: Dictionary = {}
+		if _mechanism_experiment_enabled():
+			mechanism = PERCEPTIBLE_CONTACT.outcome_for(primitive, reaction, enemy.state)
+			reaction["knockback"] = mechanism.get("knockback", reaction["knockback"])
+			reaction["stagger"] = mechanism.get("stagger", reaction["stagger"])
+			damage *= float(mechanism.get("damage_multiplier", 1.0))
+			last_contact_verb = str(mechanism.get("verb", "none"))
+			mechanism_verb_counts[last_contact_verb] = int(mechanism_verb_counts.get(last_contact_verb, 0)) + 1
+		var knockback: Vector2 = reaction["knockback"]
+		enemy.apply_hit(damage, knockback, float(reaction["stagger"]), feedback.recoil_degrees, mechanism)
 		controller.begin_hitstop(feedback.hitstop_seconds)
 		shake_strength = maxf(shake_strength, feedback.camera_shake_strength)
 		camera_kick = Vector2(-player_facing * feedback.camera_shake_strength * 0.72, -feedback.camera_shake_strength * 0.18)
 		last_hit_target = "%s:%d" % [enemy.enemy_kind, enemy.enemy_id]
-		current_knockback = feedback.knockback_strength
+		current_knockback = knockback.length()
 		if not attack_connected and controller.attack_kind == "normal" and controller.combo_index in [1, 2, 3]:
 			normal_attack_hits[controller.combo_index] = int(normal_attack_hits.get(controller.combo_index, 0)) + 1
 		attack_connected = true
 		_spawn_impact(enemy.position, feedback.particle_scale, feedback.impact_tier, feedback.ring_count)
+		if not mechanism.is_empty():
+			_spawn_mechanism_feedback(enemy.position, last_contact_verb)
 		_play_tone("heavy_hit" if feedback.impact_tier in ["finisher", "charge"] else "hit")
 
+
+func _mechanism_experiment_enabled() -> bool:
+	return false
+
+
+func _spawn_mechanism_feedback(at: Vector2, verb: String) -> void:
+	var color := PERCEPTIBLE_CONTACT.color_for_verb(verb)
+	particles.append({
+		"kind": "ring",
+		"pos": at,
+		"radius": 10.0,
+		"speed": 175.0,
+		"life": 0.34,
+		"size": 5.5,
+		"color": color,
+	})
+
+
+func _hit_reaction(target_position: Vector2, feedback: Resource, primitive: Variant) -> Dictionary:
+	var away := (target_position - player_position).normalized()
+	if away.length() < 0.1:
+		away = Vector2(player_facing, 0.0)
+	var knockback := away * float(feedback.knockback_strength) + Vector2(0.0, -float(feedback.launch_strength))
+	var stagger := float(feedback.stagger_strength)
+	if primitive != null:
+		match str(primitive.tether_mode):
+			"hook":
+				var toward_player := -away
+				knockback = toward_player * float(primitive.tether_strength) + Vector2(0.0, -float(feedback.launch_strength) * 0.20)
+				stagger *= 1.15
+			"wrap":
+				knockback *= 0.18
+				stagger *= 1.35
+	return {"knockback": knockback, "stagger": stagger}
+
 func _attack_contains(target: Vector2) -> bool:
-	var hand := _hand_world_position()
+	var hand := _hand_world_position() + _run_bob_offset()
 	var to_target := target - hand
 	var primitive: Variant = _current_attack_primitive()
 	if primitive == null:
@@ -310,33 +443,141 @@ func _attack_contains(target: Vector2) -> bool:
 	var hitbox_scale: float = float(primitive.hitbox_multiplier) * float(primitive.hitbox_width_multiplier) if primitive != null else 1.0
 	var hitbox_thickness: float = motion_profile.hitbox_thickness * hitbox_scale
 	var motion_family: String = str(primitive.motion_family)
-	var forward := to_target.x * player_facing
 	var contact_world := _primitive_contact_world(primitive, hand) if primitive != null else hand + Vector2(player_facing * reach * 0.72, 0.0)
-	match motion_family:
-		"bash":
-			return target.distance_to(contact_world) <= hitbox_thickness * 0.58
-		"thrust":
-			return _thrust_hitbox_rect(hand, reach, hitbox_thickness, primitive).has_point(target)
-		"slam":
-			return target.distance_to(contact_world) <= hitbox_thickness + (16.0 if controller.attack_kind == "charge" else 0.0)
-		"spin":
-			return to_target.length() <= reach
-		_:
-			var half_arc := deg_to_rad(motion_profile.swing_arc_degrees * 0.5)
-			var angle := absf(wrapf(to_target.angle() - (0.0 if player_facing > 0 else PI), -PI, PI))
-			return forward >= -hitbox_thickness * 0.45 and to_target.length() <= reach and angle <= half_arc
+	var contact_vector := contact_world - hand
+	contact_vector = _categorical_contact_vector(primitive, contact_vector, reach)
+	var surface := str(primitive.contact_surface)
+	var deadzone := _soft_contact_deadzone(primitive, contact_vector, reach, float(primitive.inner_deadzone_pixels))
+	if to_target.length() < deadzone:
+		return false
+	if _uses_pixel_visual_deformation(primitive):
+		return _soft_visual_attack_contains(target, primitive, hitbox_thickness, deadzone)
+	match surface:
+		"point":
+			if _uses_terminal_contact_collision(primitive):
+				return target.distance_to(contact_world) <= _contact_radius(hitbox_thickness, primitive)
+			if motion_family == "thrust":
+				return _point_lane_contains(to_target, contact_vector, reach, hitbox_thickness, primitive)
+			return target.distance_to(contact_world) <= _contact_radius(hitbox_thickness, primitive)
+		"edge":
+			if motion_family == "spin":
+				return to_target.length() >= deadzone and to_target.length() <= _spin_contact_reach(primitive, contact_vector, reach)
+			return _contact_band_contains(to_target, contact_vector, reach, hitbox_thickness, primitive, deadzone)
+		"broad":
+			return target.distance_to(contact_world) <= _contact_radius(hitbox_thickness, primitive) \
+				+ (16.0 if controller.attack_kind == "charge" else 0.0)
+		"whole_body":
+			if motion_family == "spin":
+				return to_target.length() >= deadzone and to_target.length() <= _spin_contact_reach(primitive, contact_vector, reach)
+			return _contact_band_contains(to_target, contact_vector, reach, hitbox_thickness, primitive, deadzone)
+	return false
+
+
+func _point_lane_contains(to_target: Vector2, contact_vector: Vector2, reach: float, thickness: float, primitive: Variant) -> bool:
+	var direction := _contact_direction(contact_vector)
+	var current_reach := _current_contact_reach(contact_vector, reach)
+	var rear_tolerance := _thrust_rear_tolerance(primitive, thickness)
+	var base_deadzone := float(primitive.inner_deadzone_pixels) if primitive != null else 0.0
+	var deadzone := _soft_contact_deadzone(primitive, contact_vector, reach, base_deadzone)
+	var projected := to_target.dot(direction)
+	var perpendicular := absf(to_target.cross(direction))
+	return current_reach > deadzone \
+		and projected >= deadzone - rear_tolerance \
+		and projected <= current_reach \
+		and perpendicular <= thickness * 0.5
+
+
+func _contact_band_contains(to_target: Vector2, contact_vector: Vector2, reach: float, thickness: float, primitive: Variant, deadzone: float) -> bool:
+	var current_reach := _current_contact_reach(contact_vector, reach)
+	var distance := to_target.length()
+	if current_reach <= deadzone or distance < deadzone or distance > current_reach:
+		return false
+	var contact_angle := _contact_direction(contact_vector).angle()
+	var angular_distance := absf(wrapf(to_target.angle() - contact_angle, -PI, PI))
+	return angular_distance <= deg_to_rad(_instantaneous_contact_arc_degrees(primitive, current_reach, thickness) * 0.5)
+
+
+func _contact_direction(contact_vector: Vector2) -> Vector2:
+	if contact_vector.length_squared() > 0.01:
+		return contact_vector.normalized()
+	return Vector2(player_facing, 0.0)
+
+
+func _categorical_contact_vector(primitive: Variant, contact_vector: Vector2, reach: float) -> Vector2:
+	if _mechanism_experiment_enabled() and primitive != null \
+			and str(primitive.contact_surface) == "whole_body":
+		# A body-gripped object must own a visibly larger space than a point or
+		# edge. Extend the same vector used by collision and rendering so the
+		# affordance is a genuine play difference, not a HUD-only promise.
+		return _contact_direction(contact_vector) * maxf(contact_vector.length(), reach)
+	return contact_vector
+
+
+func _current_contact_reach(contact_vector: Vector2, reach: float) -> float:
+	return minf(reach, contact_vector.length())
+
+
+func _soft_contact_deadzone(primitive: Variant, contact_vector: Vector2, reach: float, base_deadzone: float) -> float:
+	if primitive == null:
+		return base_deadzone
+	return maxf(base_deadzone, _current_contact_reach(contact_vector, reach) * float(primitive.soft_contact_start_ratio))
+
+
+func _uses_terminal_contact_collision(primitive: Variant) -> bool:
+	if primitive == null:
+		return false
+	return str(primitive.flex_topology) in ["flexible_line", "linked_segments"] \
+		or str(primitive.tether_topology) in ["flexible_line", "linked_segments"] \
+		or str(primitive.tether_mode) == "hook"
+
+
+func _spin_contact_reach(primitive: Variant, contact_vector: Vector2, reach: float) -> float:
+	if primitive != null and (str(primitive.flex_topology) != "none" or str(primitive.tether_topology) != "none"):
+		return _current_contact_reach(contact_vector, reach)
+	return reach
+
+
+func _instantaneous_contact_arc_degrees(primitive: Variant, current_reach: float, thickness: float) -> float:
+	var surface := str(primitive.contact_surface) if primitive != null else "edge"
+	var declared_arc := float(primitive.contact_arc_degrees) if primitive != null else 90.0
+	var physical_arc := rad_to_deg(2.0 * atan2(thickness * 0.5, maxf(1.0, current_reach)))
+	match surface:
+		"whole_body":
+			if _mechanism_experiment_enabled():
+				# In the categorical experiment, whole-body contact owns coverage.
+				# The collision and its drawn sector share this value.
+				return clampf(maxf(maxf(physical_arc, declared_arc), 120.0), 120.0, 150.0)
+			return clampf(maxf(physical_arc, declared_arc * 0.32), 32.0, 132.0)
+		"edge": return clampf(maxf(physical_arc, declared_arc * 0.22), 12.0, 54.0)
+		_: return clampf(maxf(physical_arc, declared_arc * 0.18), 10.0, 48.0)
+
+
+func _contact_radius(hitbox_thickness: float, primitive: Variant) -> float:
+	var terminal_scale := 1.0 + 0.45 * float(primitive.terminal_load_ratio)
+	match str(primitive.contact_surface):
+		"point": return hitbox_thickness * 0.30 * terminal_scale
+		"broad": return hitbox_thickness * 0.74 * terminal_scale
+		"whole_body": return hitbox_thickness * terminal_scale
+	return hitbox_thickness * 0.50 * terminal_scale
 
 
 func _thrust_rear_tolerance(primitive: Variant, hitbox_thickness: float) -> float:
 	if primitive == null:
 		return 12.0
+	if float(primitive.inner_deadzone_pixels) > 0.0:
+		return 0.0
 	return minf(36.0, float(primitive.root_motion_distance) * 0.60 + hitbox_thickness * 0.25)
 
 
-func _thrust_hitbox_rect(hand: Vector2, reach: float, hitbox_thickness: float, primitive: Variant) -> Rect2:
+func _point_lane_polygon(hand: Vector2, contact_vector: Vector2, reach: float, hitbox_thickness: float, primitive: Variant) -> PackedVector2Array:
+	var direction := _contact_direction(contact_vector)
+	var normal := Vector2(-direction.y, direction.x) * hitbox_thickness * 0.5
 	var rear_tolerance := _thrust_rear_tolerance(primitive, hitbox_thickness)
-	var left := hand.x - rear_tolerance if player_facing > 0.0 else hand.x - reach
-	return Rect2(Vector2(left, hand.y - hitbox_thickness * 0.5), Vector2(reach + rear_tolerance, hitbox_thickness))
+	var base_deadzone := float(primitive.inner_deadzone_pixels) if primitive != null else 0.0
+	var deadzone := _soft_contact_deadzone(primitive, contact_vector, reach, base_deadzone)
+	var start := hand + direction * (deadzone - rear_tolerance)
+	var finish := hand + direction * _current_contact_reach(contact_vector, reach)
+	return PackedVector2Array([start - normal, finish - normal, finish + normal, start + normal])
 
 
 func _reset_normal_attack_stats() -> void:
@@ -354,6 +595,9 @@ func _normal_attack_stats() -> Dictionary:
 
 func _current_damage() -> float:
 	var base: float = float({"rapid": 22.0, "balanced": 27.0, "committed": 34.0}.get(motion_profile.tempo, 27.0))
+	var primitive: Variant = _current_attack_primitive()
+	if primitive != null:
+		base *= float(primitive.damage_multiplier)
 	if controller.combo_index == 2: base *= 1.12
 	if controller.combo_index >= 3: base *= 1.58
 	if controller.attack_kind == "charge": base *= 1.88
@@ -588,12 +832,20 @@ func _save_tuning_preset() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(path.get_base_dir()))
 	var file := FileAccess.open(path + ".tmp", FileAccess.WRITE)
 	if file == null: return
-	var data: Dictionary = motion_profile.to_dict()
-	data["debug_hitstop"] = get_meta("debug_hitstop", 0.060)
-	data["debug_knockback"] = get_meta("debug_knockback", 1.0)
-	data["debug_shake"] = get_meta("debug_shake", 1.0)
-	data["debug_tell"] = get_meta("debug_tell", 0.55)
-	data["debug_recovery"] = get_meta("debug_recovery", 0.75)
+	if compiled_timing_defaults.is_empty():
+		_capture_compiled_timing_defaults()
+	var data := {
+		"schema": TUNING_SCHEMA,
+		"timing_multipliers": _current_timing_multipliers(),
+		"timing_seconds_at_save": _timing_values(),
+		"debug": {
+			"hitstop": get_meta("debug_hitstop", 0.060),
+			"knockback": get_meta("debug_knockback", 1.0),
+			"shake": get_meta("debug_shake", 1.0),
+			"tell": get_meta("debug_tell", 0.55),
+			"recovery": get_meta("debug_recovery", 0.75),
+		},
+	}
 	file.store_string(JSON.stringify(data, "  ") + "\n"); file.close()
 	var absolute := ProjectSettings.globalize_path(path)
 	if FileAccess.file_exists(absolute): DirAccess.remove_absolute(absolute)
@@ -605,11 +857,94 @@ func _apply_saved_tuning() -> void:
 	var file := FileAccess.open(path, FileAccess.READ)
 	var data: Variant = JSON.parse_string(file.get_as_text()) if file != null else null
 	if not data is Dictionary: return
-	motion_profile.startup_seconds = clampf(float(data.get("startup", motion_profile.startup_seconds)), 0.06, 0.45)
-	motion_profile.active_seconds = clampf(float(data.get("active", motion_profile.active_seconds)), 0.04, 0.22)
-	motion_profile.recovery_seconds = clampf(float(data.get("recovery", motion_profile.recovery_seconds)), 0.10, 0.60)
-	motion_profile.combo_window_seconds = clampf(float(data.get("combo_window", motion_profile.combo_window_seconds)), 0.20, 0.80)
-	motion_profile.input_buffer_seconds = clampf(float(data.get("input_buffer", motion_profile.input_buffer_seconds)), 0.10, 0.18)
+	_apply_tuning_data(data)
+
+
+func _capture_compiled_timing_defaults() -> void:
+	compiled_timing_defaults = _timing_values()
+
+
+func _timing_values() -> Dictionary:
+	if motion_profile == null:
+		return {}
+	return {
+		"startup": motion_profile.startup_seconds,
+		"active": motion_profile.active_seconds,
+		"recovery": motion_profile.recovery_seconds,
+		"combo_window": motion_profile.combo_window_seconds,
+		"input_buffer": motion_profile.input_buffer_seconds,
+	}
+
+
+func _current_timing_multipliers() -> Dictionary:
+	var result := {}
+	var current := _timing_values()
+	for key: String in TIMING_KEYS:
+		var compiled_value := maxf(0.0001, float(compiled_timing_defaults.get(key, current.get(key, 1.0))))
+		result[key] = float(current.get(key, compiled_value)) / compiled_value
+	return result
+
+
+func _apply_tuning_data(data: Dictionary) -> void:
+	if motion_profile == null:
+		return
+	if compiled_timing_defaults.is_empty():
+		_capture_compiled_timing_defaults()
+	var multipliers: Dictionary = data.get("timing_multipliers", {}) if data.get("timing_multipliers", {}) is Dictionary else {}
+	if multipliers.is_empty():
+		multipliers = _legacy_timing_multipliers(data)
+	for key: String in TIMING_KEYS:
+		var multiplier := float(multipliers.get(key, 1.0))
+		if not is_finite(multiplier):
+			multiplier = 1.0
+		multiplier = clampf(multiplier, 0.25, 4.0)
+		var limits: Vector2 = TIMING_CLAMPS[key]
+		var compiled_value := float(compiled_timing_defaults.get(key, _timing_value(key)))
+		_set_timing_value(key, clampf(compiled_value * multiplier, limits.x, limits.y))
+	_apply_debug_tuning(data)
+
+
+func _legacy_timing_multipliers(data: Dictionary) -> Dictionary:
+	# V1 saved absolute seconds together with the source profile's tempo. Treat
+	# those seconds as a style scale against that tempo instead of forcing every
+	# subsequently loaded object to inherit the same absolute timings.
+	var source_tempo := str(data.get("tempo", "balanced"))
+	var reference: Dictionary = TIMING_REFERENCE_BY_TEMPO.get(source_tempo, TIMING_REFERENCE_BY_TEMPO["balanced"])
+	var result := {}
+	for key: String in TIMING_KEYS:
+		if data.has(key):
+			result[key] = float(data[key]) / maxf(0.0001, float(reference[key]))
+		else:
+			result[key] = 1.0
+	return result
+
+
+func _apply_debug_tuning(data: Dictionary) -> void:
+	var debug: Dictionary = data.get("debug", {}) if data.get("debug", {}) is Dictionary else {}
+	set_meta("debug_hitstop", clampf(float(debug.get("hitstop", data.get("debug_hitstop", 0.060))), 0.035, 0.115))
+	set_meta("debug_knockback", clampf(float(debug.get("knockback", data.get("debug_knockback", 1.0))), 0.60, 1.80))
+	set_meta("debug_shake", clampf(float(debug.get("shake", data.get("debug_shake", 1.0))), 0.0, 2.0))
+	set_meta("debug_tell", clampf(float(debug.get("tell", data.get("debug_tell", 0.55))), 0.30, 1.10))
+	set_meta("debug_recovery", clampf(float(debug.get("recovery", data.get("debug_recovery", 0.75))), 0.40, 1.50))
+
+
+func _timing_value(key: String) -> float:
+	match key:
+		"startup": return motion_profile.startup_seconds
+		"active": return motion_profile.active_seconds
+		"recovery": return motion_profile.recovery_seconds
+		"combo_window": return motion_profile.combo_window_seconds
+		"input_buffer": return motion_profile.input_buffer_seconds
+	return 0.0
+
+
+func _set_timing_value(key: String, value: float) -> void:
+	match key:
+		"startup": motion_profile.startup_seconds = value
+		"active": motion_profile.active_seconds = value
+		"recovery": motion_profile.recovery_seconds = value
+		"combo_window": motion_profile.combo_window_seconds = value
+		"input_buffer": motion_profile.input_buffer_seconds = value
 
 func _update_hud() -> void:
 	if blueprint == null or motion_profile == null: return
@@ -634,6 +969,8 @@ func _update_debug() -> void:
 	var primitive: Variant = _current_attack_primitive()
 	var current_family := str(primitive.motion_family) if primitive != null else "idle"
 	debug_label.text = "current_primitive: %s\ncombo_index: %d\nattack_phase: %s %.0f%%\nstartup/active/recovery: %.3f / %.3f / %.3f\nbuffered_input: %s\ncharge_state: %s %.3fs\ndodge_attack_window: %.3f\ninput visual/active: %d / %d ms\nnormal attempts/hits/whiffs: %s / %s / %s\nhitbox: %s %s\nweapon pivot: %s\nenemy state: %s telegraph=%s\nhitstop active: %s %.3f\nlast hit target: %s\ncurrent knockback: %.1f" % [current_family, controller.combo_index, controller.phase, controller.phase_ratio() * 100.0, motion_profile.startup_seconds, motion_profile.active_seconds, motion_profile.recovery_seconds, controller.buffered_input, controller.charge_state, controller.held_seconds, controller.dodge_attack_window, input_to_visual_ms, input_to_active_ms, normal_attack_attempts, normal_attack_hits, normal_attack_whiffs, motion_profile.contact_mode, motion_profile.reach_class, asset.grip_primary, enemy_state, telegraph, controller.hitstop_remaining > 0.0, controller.hitstop_remaining, last_hit_target, current_knockback]
+	if _mechanism_experiment_enabled():
+		debug_label.text += "\ncontact verb: %s\nverb hit counts: %s" % [last_contact_verb, mechanism_verb_counts]
 
 func _update_particles(delta: float) -> void:
 	for particle: Dictionary in particles:
@@ -758,6 +1095,7 @@ func _character_pose() -> Dictionary:
 			result.crouch = 10.0 * contact
 			result.back_foot_local = Vector2(-21.0, 43.0)
 			result.front_foot_local = Vector2(21.0, 43.0)
+	result = _apply_grip_topology_pose(result, contact)
 	if pose_weight < 1.0:
 		result.body_offset = Vector2(result.body_offset) * pose_weight
 		result.hand_local = Vector2(20.0, -12.0).lerp(Vector2(result.hand_local), pose_weight)
@@ -769,6 +1107,34 @@ func _character_pose() -> Dictionary:
 		result.back_foot_local = Vector2(-9.0, 45.0).lerp(Vector2(result.back_foot_local), pose_weight)
 		result.front_foot_local = Vector2(10.0, 45.0).lerp(Vector2(result.front_foot_local), pose_weight)
 	return result
+
+
+func _apply_grip_topology_pose(pose: Dictionary, contact: float) -> Dictionary:
+	if motion_profile == null:
+		return pose
+	match str(motion_profile.grip_topology):
+		"two_hand_handle":
+			pose["crouch"] = float(pose["crouch"]) + 2.0 * contact
+			pose["torso_rotation"] = float(pose["torso_rotation"]) * 1.08
+			pose["back_foot_local"] = Vector2(pose["back_foot_local"]) + Vector2(-4.0, 0.0)
+			pose["front_foot_local"] = Vector2(pose["front_foot_local"]) + Vector2(4.0, 0.0)
+		"body_grip":
+			pose["body_offset"] = Vector2(pose["body_offset"]) * 0.72
+			pose["hand_local"] = Vector2(pose["hand_local"]).lerp(Vector2(24.0, -5.0), 0.28)
+			pose["crouch"] = float(pose["crouch"]) + 6.0 * contact
+			pose["torso_rotation"] = float(pose["torso_rotation"]) * 1.18
+			pose["back_foot_local"] = Vector2(-23.0, 43.0)
+			pose["front_foot_local"] = Vector2(23.0, 43.0)
+		"clamp_grip":
+			pose["body_offset"] = Vector2(pose["body_offset"]) * 0.45
+			pose["hand_local"] = Vector2(pose["hand_local"]).lerp(Vector2(23.0, -9.0), 0.48)
+			pose["torso_rotation"] = float(pose["torso_rotation"]) * 0.58
+			pose["main_elbow_local"] = Vector2(pose["main_elbow_local"]).lerp(Vector2(15.0, -4.0), 0.42)
+			pose["back_foot_local"] = Vector2(-10.0, 45.0)
+			pose["front_foot_local"] = Vector2(12.0, 45.0)
+		_:
+			pose["front_foot_local"] = Vector2(pose["front_foot_local"]) + Vector2(2.0 * contact, 0.0)
+	return pose
 
 
 func _hand_world_position() -> Vector2:
@@ -788,10 +1154,32 @@ func _weapon_pose() -> Dictionary:
 	var primitive: Variant = _current_attack_primitive()
 	if primitive != null:
 		var motion_ratio := _attack_motion_ratio()
-		angle = lerpf(primitive.start_angle, primitive.end_angle, motion_ratio) * player_facing
-		extension = sin(motion_ratio * PI) * primitive.extension_pixels
-		local_offset = primitive.local_start_offset.lerp(primitive.local_end_offset, motion_ratio)
+		var trajectory_ratio := _trajectory_motion_ratio(primitive, motion_ratio)
+		var direction := signf(float(primitive.end_angle) - float(primitive.start_angle))
+		if is_zero_approx(direction): direction = 1.0
+		var follow_phase := clampf((motion_ratio - 0.76) / 0.24, 0.0, 1.0)
+		var follow_through := sin(follow_phase * PI) * float(primitive.follow_through_radians) * direction
+		angle = (lerpf(primitive.start_angle, primitive.end_angle, trajectory_ratio) + follow_through) * player_facing
+		extension = sin(trajectory_ratio * PI) * primitive.extension_pixels
+		local_offset = primitive.local_start_offset.lerp(primitive.local_end_offset, trajectory_ratio)
 	return {"angle": angle, "extension": extension, "local_offset": local_offset}
+
+
+func _trajectory_motion_ratio(primitive: Variant, motion_ratio: float) -> float:
+	var delay := clampf(float(primitive.trajectory_lag_ratio) * 0.22, 0.0, 0.30)
+	var propagated := clampf((motion_ratio - delay) / maxf(0.01, 1.0 - delay), 0.0, 1.0)
+	# Main body and attached tether are independent propagation stages. Composite
+	# mechanisms transfer motion through the body first and the tether second.
+	propagated = _propagate_by_topology(str(primitive.flex_topology), propagated)
+	return _propagate_by_topology(str(primitive.tether_topology), propagated)
+
+
+func _propagate_by_topology(topology: String, ratio: float) -> float:
+	match topology:
+		"bending_shaft": return smoothstep(0.0, 1.0, ratio)
+		"flexible_line": return pow(ratio, 1.60)
+		"linked_segments": return pow(ratio, 1.34)
+	return ratio
 
 
 func _current_attack_primitive() -> Variant:
@@ -878,7 +1266,7 @@ func _draw() -> void:
 func _draw_player() -> void:
 	if asset == null: return
 	var hurt_color := Color("ff8d84") if player_hurt > 0.0 else Color("58cbd2")
-	var run_bob := sin(elapsed_seconds * 12.0) * 2.0 if Input.get_vector("move_left", "move_right", "move_up", "move_down").length() > 0.1 else 0.0
+	var run_bob := _run_bob_offset().y
 	var character_pose := _character_pose()
 	var body_offset: Vector2 = character_pose["body_offset"]
 	var torso_rotation: float = float(character_pose["torso_rotation"])
@@ -902,11 +1290,13 @@ func _draw_player() -> void:
 	var weapon_origin := hand + Vector2(float(pose["extension"]) * player_facing + local_offset.x * player_facing, local_offset.y)
 	var secondary_delta: Vector2 = Vector2((asset.grip_secondary.x - asset.grip_primary.x) * player_facing, asset.grip_secondary.y - asset.grip_primary.y) * motion_profile.render_scale
 	var second_hand: Vector2 = weapon_origin + secondary_delta.rotated(float(pose["angle"]))
+	if motion_profile.grip_topology == "body_grip" and secondary_delta.length() < 2.0:
+		second_hand = weapon_origin + Vector2(-10.0 * player_facing, 5.0)
 	var main_shoulder := _pose_local_point(base, Vector2(character_pose["main_shoulder_local"]) + Vector2(0.0, crouch * 0.28), torso_rotation)
 	var main_elbow := _pose_local_point(base, Vector2(character_pose["main_elbow_local"]) + Vector2(0.0, crouch * 0.24), torso_rotation * 0.55)
 	var support_shoulder := _pose_local_point(base, Vector2(character_pose["support_shoulder_local"]) + Vector2(0.0, crouch * 0.28), torso_rotation)
 	var support_elbow := _pose_local_point(base, Vector2(character_pose["support_elbow_local"]) + Vector2(0.0, crouch * 0.24), torso_rotation * 0.45)
-	if motion_profile.grip_mode == "two_hand":
+	if motion_profile.grip_mode == "two_hand" or motion_profile.grip_topology == "body_grip":
 		draw_line(support_shoulder, support_elbow, Color("d7b994"), 7.0)
 		draw_line(support_elbow, second_hand, Color("e4c8a8"), 7.0)
 		draw_circle(support_elbow, 4.0, Color("e4c8a8"))
@@ -933,13 +1323,354 @@ func _draw_player() -> void:
 	draw_line(main_elbow, weapon_origin, Color("e4c8a8"), 7.0)
 	draw_circle(main_shoulder, 4.0, Color("d7b994"))
 	draw_circle(main_elbow, 4.5, Color("e4c8a8"))
-	draw_set_transform(weapon_origin, float(pose["angle"]), Vector2(player_facing * motion_profile.render_scale, motion_profile.render_scale))
-	draw_texture_rect(asset.texture, Rect2(-asset.grip_primary, Vector2(asset.canvas_size)), false)
-	draw_set_transform(Vector2.ZERO)
+	var primitive: Variant = _current_attack_primitive()
+	if _uses_pixel_visual_deformation(primitive):
+		var soft_geometry := _soft_visual_geometry(primitive, Vector2(0.0, run_bob))
+		_draw_deformed_pixel_weapon(soft_geometry)
+		if debug_visible:
+			_draw_soft_mechanism_overlay(soft_geometry)
+	else:
+		draw_set_transform(weapon_origin, float(pose["angle"]), Vector2(player_facing * motion_profile.render_scale, motion_profile.render_scale))
+		draw_texture_rect(asset.texture, Rect2(-asset.grip_primary, Vector2(asset.canvas_size)), false)
+		draw_set_transform(Vector2.ZERO)
 	draw_circle(weapon_origin, 4.0, Color("f6d1ac"))
 
+
+func _draw_deformed_pixel_weapon(soft_geometry: Dictionary) -> void:
+	if asset == null or asset.visual_rig == null:
+		return
+	var deformation := _pixel_weapon_deformation(soft_geometry)
+	for pixel: Dictionary in deformation.get("pixels", []):
+		var size := float(pixel.get("size", 1.0))
+		var position := Vector2(pixel.get("position", Vector2.ZERO))
+		draw_rect(
+			Rect2(position - Vector2(size, size) * 0.5, Vector2(size, size)),
+			Color(pixel.get("color", Color.WHITE)),
+			true
+		)
+
+
+func _pixel_weapon_deformation(soft_geometry: Dictionary) -> Dictionary:
+	if asset == null or asset.visual_rig == null:
+		return {"pixels": [], "errors": ["PIXEL_VISUAL_RIG_MISSING"]}
+	var pose: Dictionary = soft_geometry.get("pose", {})
+	return PIXEL_WEAPON_DEFORMER.deform(asset.visual_rig, {
+		"body": soft_geometry.get("body", PackedVector2Array()),
+		"tether": soft_geometry.get("tether", PackedVector2Array()),
+		"weapon_origin": soft_geometry.get("weapon_origin", Vector2.ZERO),
+		"source_grip": asset.grip_primary,
+		"contact": soft_geometry.get("contact", Vector2.ZERO),
+		"weapon_angle": float(pose.get("angle", 0.0)),
+		"facing": player_facing,
+		"scale": motion_profile.render_scale,
+		"pixel_snap": true,
+	})
+
+
+func _draw_soft_mechanism_overlay(soft_geometry: Dictionary) -> void:
+	var primitive: Variant = soft_geometry.get("primitive")
+	if primitive == null:
+		return
+	var contact := Vector2(soft_geometry.get("contact", Vector2.ZERO))
+	var paths := {
+		"body": soft_geometry.get("body", PackedVector2Array()),
+		"tether": soft_geometry.get("tether", PackedVector2Array()),
+	}
+	var body_points: PackedVector2Array = paths.get("body", PackedVector2Array())
+	var tether_points: PackedVector2Array = paths.get("tether", PackedVector2Array())
+	if body_points.size() >= 2:
+		draw_polyline(body_points, Color(0.40, 0.91, 0.98, 0.46), 2.0, false)
+		_draw_link_nodes(body_points, str(primitive.flex_topology))
+	if tether_points.size() >= 2:
+		draw_polyline(tether_points, Color(0.98, 0.80, 0.08, 0.46), 1.0, false)
+		_draw_link_nodes(tether_points, str(primitive.tether_topology))
+	draw_circle(contact, 2.0, Color(1.0, 0.55, 0.23, 0.58))
+
+
+func _uses_pixel_visual_deformation(primitive: Variant) -> bool:
+	return primitive != null \
+		and asset != null \
+		and asset.has_pixel_visual_rig() \
+		and (str(primitive.flex_topology) != "none" or str(primitive.tether_topology) != "none")
+
+
+func _soft_visual_geometry(primitive: Variant, bob_offset: Vector2 = Vector2.ZERO) -> Dictionary:
+	if primitive == null or asset == null:
+		return {}
+	var pose := _weapon_pose()
+	var raw_hand := _hand_world_position() + bob_offset
+	var weapon_origin := _weapon_origin_world(raw_hand, pose)
+	var body_origin := _visual_rig_body_origin_world(weapon_origin, pose)
+	var resting_contact := _primitive_contact_world(primitive, raw_hand)
+	var tether_origin := _primitive_tether_origin_world(primitive, raw_hand, weapon_origin, resting_contact, pose)
+	var deployment_target := _tether_delivery_target(primitive, raw_hand, resting_contact)
+	var deployment := _tether_deployment_state(
+		primitive,
+		tether_origin,
+		deployment_target,
+		resting_contact,
+		_attack_motion_ratio()
+	)
+	var contact := Vector2(deployment.get("contact", resting_contact))
+	var paths := _soft_mechanism_paths(body_origin, contact, primitive, tether_origin)
+	return {
+		"primitive": primitive,
+		"pose": pose,
+		"hand": raw_hand,
+		"weapon_origin": weapon_origin,
+		"body_origin": body_origin,
+		"contact": contact,
+		"resting_contact": resting_contact,
+		"deployment_target": deployment_target,
+		"deployment_phase": str(deployment.get("phase", "fixed")),
+		"deployed_ratio": float(deployment.get("deployed_ratio", 1.0)),
+		"tether_origin": tether_origin,
+		"body": paths.get("body", PackedVector2Array()),
+		"tether": paths.get("tether", PackedVector2Array()),
+	}
+
+
+func _tether_delivery_target(primitive: Variant, hand: Vector2, resting_contact: Vector2) -> Vector2:
+	if primitive == null or str(primitive.tether_deployment) not in ["cast_retract", "launch_tension"]:
+		return resting_contact
+	var contact_vector := resting_contact - hand
+	var direction := contact_vector.normalized() if contact_vector.length_squared() > 0.01 else Vector2(player_facing, 0.0)
+	var delivery_reach := contact_vector.length()
+	if motion_profile != null:
+		var timing: Dictionary = controller.current_timing() if controller != null else {}
+		delivery_reach = maxf(
+			delivery_reach,
+			float(motion_profile.reach_pixels)
+				* float(timing.get("reach_scale", primitive.reach_multiplier))
+				* float(primitive.hitbox_length_multiplier)
+		)
+	return hand + direction * delivery_reach
+
+
+func _tether_deployment_state(
+	primitive: Variant,
+	tether_origin: Vector2,
+	deployed_target: Vector2,
+	resting_contact: Vector2,
+	motion_ratio: float
+) -> Dictionary:
+	var mode := str(primitive.tether_deployment) if primitive != null else "none"
+	if mode not in ["cast_retract", "launch_tension"]:
+		return {
+			"contact": resting_contact,
+			"phase": "fixed",
+			"deployed_ratio": 1.0,
+		}
+	var ratio := clampf(motion_ratio, 0.0, 1.0)
+	var full_span := maxf(1.0, tether_origin.distance_to(deployed_target))
+	var tuck_distance := clampf(full_span * 0.16, 10.0, 18.0)
+	var tuck_direction := Vector2(-player_facing * 0.28, 1.0).normalized()
+	var tucked_contact := tether_origin + tuck_direction * tuck_distance
+	var contact := resting_contact
+	var phase := "load"
+
+	if ratio < 0.22:
+		var load_ratio := smoothstep(0.0, 1.0, ratio / 0.22)
+		contact = resting_contact.lerp(tucked_contact, load_ratio)
+	elif ratio < 0.30:
+		contact = tucked_contact
+		phase = "loaded"
+	else:
+		var outbound_end := 0.62 if mode == "cast_retract" else 0.56
+		if ratio < outbound_end:
+			var outbound_ratio := smoothstep(0.0, 1.0, (ratio - 0.30) / (outbound_end - 0.30))
+			var travel := deployed_target - tucked_contact
+			var arc_height := minf(34.0, travel.length() * (0.20 if mode == "cast_retract" else 0.13))
+			contact = tucked_contact.lerp(deployed_target, outbound_ratio) \
+				+ Vector2.UP * sin(outbound_ratio * PI) * arc_height
+			phase = "outbound"
+		elif mode == "launch_tension" or ratio < 0.84:
+			contact = deployed_target
+			phase = "tensioned"
+		elif ratio < 0.96:
+			var retract_ratio := smoothstep(0.0, 1.0, (ratio - 0.84) / 0.12)
+			contact = deployed_target.lerp(tucked_contact, retract_ratio)
+			phase = "retract"
+		else:
+			var settle_ratio := smoothstep(0.0, 1.0, (ratio - 0.96) / 0.04)
+			contact = tucked_contact.lerp(resting_contact, settle_ratio)
+			phase = "settle"
+	return {
+		"contact": contact,
+		"phase": phase,
+		"deployed_ratio": clampf(tether_origin.distance_to(contact) / full_span, 0.0, 1.25),
+	}
+
+
+func _weapon_origin_world(raw_hand: Vector2, pose: Dictionary) -> Vector2:
+	var local_offset: Vector2 = pose.get("local_offset", Vector2.ZERO)
+	return raw_hand + Vector2(
+		float(pose.get("extension", 0.0)) * player_facing + local_offset.x * player_facing,
+		local_offset.y
+	)
+
+
+func _visual_rig_body_origin_world(weapon_origin: Vector2, pose: Dictionary) -> Vector2:
+	if asset == null or asset.visual_rig == null:
+		return weapon_origin
+	var source_path := asset.visual_rig.source_path_for_role("deform_body")
+	if source_path.is_empty():
+		return weapon_origin
+	var local_origin := source_path[0] - asset.grip_primary
+	local_origin = Vector2(local_origin.x * player_facing, local_origin.y) * motion_profile.render_scale
+	return weapon_origin + local_origin.rotated(float(pose.get("angle", 0.0)))
+
+
+func _run_bob_offset() -> Vector2:
+	if Input.get_vector("move_left", "move_right", "move_up", "move_down").length() <= 0.1:
+		return Vector2.ZERO
+	return Vector2(0.0, sin(elapsed_seconds * 12.0) * 2.0)
+
+
+func _soft_mechanism_paths(
+	hand: Vector2,
+	contact: Vector2,
+	primitive: Variant,
+	tether_origin: Vector2 = Vector2(INF, INF)
+) -> Dictionary:
+	var body_topology := str(primitive.flex_topology)
+	var tether_topology := str(primitive.tether_topology)
+	var split := contact
+	if tether_topology != "none":
+		if is_finite(tether_origin.x) and is_finite(tether_origin.y):
+			split = tether_origin
+		else:
+			split = hand.lerp(contact, clampf(float(primitive.tether_origin_ratio), 0.0, 1.0))
+	var motion_ratio := 0.55 if controller == null else _attack_motion_ratio()
+	var combo_index := 1 if controller == null else maxi(1, int(controller.combo_index))
+	var bend_sign := -player_facing if combo_index % 2 == 1 else player_facing
+	var body_points := PackedVector2Array()
+	var tether_points := PackedVector2Array()
+	if body_topology != "none":
+		body_points = _soft_curve_points(
+			hand,
+			split if tether_topology != "none" else contact,
+			body_topology,
+			_propagate_by_topology(body_topology, motion_ratio),
+			bend_sign
+		)
+	if tether_topology != "none":
+		tether_points = _soft_curve_points(
+			split,
+			contact,
+			tether_topology,
+			_propagate_by_topology(tether_topology, motion_ratio),
+			bend_sign
+		)
+	return {"body": body_points, "tether": tether_points, "split": split}
+
+
+func _soft_curve_points(
+	start: Vector2,
+	finish: Vector2,
+	topology: String,
+	propagation: float,
+	bend_sign: float
+) -> PackedVector2Array:
+	var span := finish - start
+	var points := PackedVector2Array()
+	if span.length_squared() < 1.0:
+		points.append(start)
+		points.append(finish)
+		return points
+	var normal := Vector2(-span.y, span.x).normalized()
+	var bend_scale: float = float({
+		"bending_shaft": 0.10,
+		"flexible_line": 0.22,
+		"linked_segments": 0.16,
+	}.get(topology, 0.0))
+	var bend := span.length() * bend_scale * sin((0.18 + propagation * 0.82) * PI)
+	var steps := 9 if topology == "linked_segments" else 14
+	for index: int in range(steps + 1):
+		var ratio := float(index) / float(steps)
+		var envelope := sin(ratio * PI)
+		if topology == "flexible_line":
+			envelope *= 0.45 + ratio * 0.85
+		points.append(start + span * ratio + normal * bend * bend_sign * envelope)
+	return points
+
+
+func _primitive_tether_origin_world(
+	primitive: Variant,
+	raw_hand: Vector2,
+	weapon_origin: Vector2,
+	contact: Vector2,
+	pose: Dictionary = {}
+) -> Vector2:
+	if asset == null or asset.tether_origin == Vector2.ZERO or asset.tether_origin == asset.tip:
+		return weapon_origin.lerp(contact, clampf(float(primitive.tether_origin_ratio), 0.0, 1.0))
+	if pose.is_empty():
+		pose = _weapon_pose()
+	var offset := Vector2(float(pose["extension"]) * player_facing, 0.0)
+	var local_offset: Vector2 = pose.get("local_offset", Vector2.ZERO)
+	offset += Vector2(local_offset.x * player_facing, local_offset.y)
+	var local_anchor := asset.tether_origin - asset.grip_primary
+	local_anchor = Vector2(local_anchor.x * player_facing, local_anchor.y) * motion_profile.render_scale
+	return raw_hand + offset + local_anchor.rotated(float(pose["angle"]))
+
+
+func _draw_link_nodes(points: PackedVector2Array, topology: String) -> void:
+	if topology != "linked_segments":
+		return
+	for index: int in range(1, points.size() - 1):
+		draw_circle(points[index], 2.8, Color("d6d3d1"))
+
+
+func _soft_visual_attack_contains(target: Vector2, primitive: Variant, hitbox_thickness: float, deadzone: float) -> bool:
+	var geometry := _soft_visual_geometry(primitive, _run_bob_offset())
+	if geometry.is_empty():
+		return false
+	var contact := Vector2(geometry.get("contact", Vector2.ZERO))
+	match str(primitive.contact_surface):
+		"point":
+			return target.distance_to(contact) <= _contact_radius(hitbox_thickness, primitive)
+		"broad":
+			return target.distance_to(contact) <= _contact_radius(hitbox_thickness, primitive) \
+				+ (16.0 if controller.attack_kind == "charge" else 0.0)
+		_:
+			var path := PIXEL_WEAPON_DEFORMER.joined_paths(
+				geometry.get("body", PackedVector2Array()),
+				geometry.get("tether", PackedVector2Array())
+			)
+			if path.size() < 2:
+				return false
+			var full_length := float(PIXEL_WEAPON_DEFORMER.path_signature(path).get("length", 0.0))
+			var deadzone_ratio := deadzone / maxf(1.0, full_length)
+			var active_start := maxf(deadzone_ratio, float(primitive.soft_contact_start_ratio))
+			return PIXEL_WEAPON_DEFORMER.distance_to_polyline(target, path, active_start) <= hitbox_thickness * 0.5
+
+
+func _draw_soft_visual_hitbox(primitive: Variant, hitbox_thickness: float, deadzone: float, color: Color) -> void:
+	var geometry := _soft_visual_geometry(primitive, _run_bob_offset())
+	if geometry.is_empty():
+		return
+	var contact := Vector2(geometry.get("contact", Vector2.ZERO))
+	match str(primitive.contact_surface):
+		"point":
+			draw_circle(contact, _contact_radius(hitbox_thickness, primitive), color)
+		"broad":
+			draw_circle(contact, _contact_radius(hitbox_thickness, primitive) + (16.0 if controller.attack_kind == "charge" else 0.0), color)
+		_:
+			var path := PIXEL_WEAPON_DEFORMER.joined_paths(
+				geometry.get("body", PackedVector2Array()),
+				geometry.get("tether", PackedVector2Array())
+			)
+			var full_length := float(PIXEL_WEAPON_DEFORMER.path_signature(path).get("length", 0.0))
+			var deadzone_ratio := deadzone / maxf(1.0, full_length)
+			var active_start := maxf(deadzone_ratio, float(primitive.soft_contact_start_ratio))
+			var active_path := PIXEL_WEAPON_DEFORMER.trim_polyline(path, active_start)
+			if active_path.size() >= 2:
+				draw_polyline(active_path, color, hitbox_thickness, false)
+			elif active_path.size() == 1:
+				draw_circle(active_path[0], hitbox_thickness * 0.5, color)
+
 func _draw_active_hitbox() -> void:
-	var hand := _hand_world_position()
+	var hand := _hand_world_position() + _run_bob_offset()
 	var primitive: Variant = _current_attack_primitive()
 	if primitive == null:
 		return
@@ -951,16 +1682,69 @@ func _draw_active_hitbox() -> void:
 	var motion_family: String = str(primitive.motion_family)
 	var is_finisher: bool = controller.combo_index >= 3 or controller.attack_kind == "charge"
 	var color := Color(1.0, 0.72, 0.22, 0.42) if is_finisher else Color(1.0, 0.38, 0.22, 0.28)
+	if _mechanism_experiment_enabled():
+		color = PERCEPTIBLE_CONTACT.color_for_verb(
+			PERCEPTIBLE_CONTACT.verb_for(primitive),
+			0.48 if is_finisher else 0.34
+		)
 	var contact_world := _primitive_contact_world(primitive, hand) if primitive != null else hand + Vector2(player_facing * reach * 0.72, 0.0)
-	match motion_family:
-		"bash": draw_circle(contact_world, hitbox_thickness * 0.58, color)
-		"thrust": draw_rect(_thrust_hitbox_rect(hand, reach, hitbox_thickness, primitive), color, true)
-		"slam": draw_circle(contact_world, hitbox_thickness + (10.0 if is_finisher else 0.0), color)
-		"spin": draw_arc(hand, reach, 0.0, TAU, 48, color, 28.0)
+	var contact_vector := contact_world - hand
+	contact_vector = _categorical_contact_vector(primitive, contact_vector, reach)
+	var surface := str(primitive.contact_surface)
+	var deadzone := _soft_contact_deadzone(primitive, contact_vector, reach, float(primitive.inner_deadzone_pixels))
+	if _uses_pixel_visual_deformation(primitive):
+		_draw_soft_visual_hitbox(primitive, hitbox_thickness, deadzone, color)
+		if deadzone > 0.0:
+			draw_arc(hand, deadzone, 0.0, TAU, 24, Color(0.2, 0.9, 1.0, 0.65), 2.0)
+		return
+	match surface:
+		"point":
+			if _uses_terminal_contact_collision(primitive): draw_circle(contact_world, _contact_radius(hitbox_thickness, primitive), color)
+			elif motion_family == "thrust": draw_colored_polygon(_point_lane_polygon(hand, contact_vector, reach, hitbox_thickness, primitive), color)
+			else: draw_circle(contact_world, _contact_radius(hitbox_thickness, primitive), color)
+		"edge":
+			if motion_family == "spin": _draw_spin_contact(hand, _spin_contact_reach(primitive, contact_vector, reach), deadzone, color)
+			else: _draw_contact_band(hand, contact_vector, reach, hitbox_thickness, primitive, deadzone, color)
+		"broad":
+			draw_circle(contact_world, _contact_radius(hitbox_thickness, primitive) + (16.0 if controller.attack_kind == "charge" else 0.0), color)
+		"whole_body":
+			if motion_family == "spin": _draw_spin_contact(hand, _spin_contact_reach(primitive, contact_vector, reach), deadzone, color)
+			else: _draw_contact_band(hand, contact_vector, reach, hitbox_thickness, primitive, deadzone, color)
 		_:
-			var half_arc := deg_to_rad(motion_profile.swing_arc_degrees * 0.5)
-			var facing_angle := 0.0 if player_facing > 0 else PI
-			draw_arc(hand, reach, facing_angle - half_arc, facing_angle + half_arc, 36, color, 24.0 if is_finisher else 16.0)
+			_draw_contact_band(hand, contact_vector, reach, hitbox_thickness, primitive, deadzone, color)
+	if deadzone > 0.0:
+		draw_arc(hand, deadzone, 0.0, TAU, 24, Color(0.2, 0.9, 1.0, 0.65), 2.0)
+
+
+func _draw_contact_band(hand: Vector2, contact_vector: Vector2, reach: float, thickness: float, primitive: Variant, deadzone: float, color: Color) -> void:
+	var current_reach := _current_contact_reach(contact_vector, reach)
+	if current_reach <= deadzone:
+		return
+	var arc_degrees := _instantaneous_contact_arc_degrees(primitive, current_reach, thickness)
+	var half_arc := deg_to_rad(arc_degrees * 0.5)
+	var center_angle := _contact_direction(contact_vector).angle()
+	var steps := maxi(4, ceili(arc_degrees / 8.0))
+	var points := PackedVector2Array()
+	for index: int in range(steps + 1):
+		var angle := lerpf(center_angle - half_arc, center_angle + half_arc, float(index) / float(steps))
+		points.append(hand + Vector2.from_angle(angle) * current_reach)
+	if deadzone > 0.0:
+		for index: int in range(steps, -1, -1):
+			var angle := lerpf(center_angle - half_arc, center_angle + half_arc, float(index) / float(steps))
+			points.append(hand + Vector2.from_angle(angle) * deadzone)
+	else:
+		points.append(hand)
+	draw_colored_polygon(points, color)
+
+
+func _draw_spin_contact(hand: Vector2, outer_radius: float, inner_radius: float, color: Color) -> void:
+	if outer_radius <= inner_radius:
+		return
+	if inner_radius > 0.0:
+		var center_radius := (outer_radius + inner_radius) * 0.5
+		draw_arc(hand, center_radius, 0.0, TAU, 48, color, outer_radius - inner_radius, true)
+	else:
+		draw_circle(hand, outer_radius, color)
 
 func _draw_real_weapon_comparison() -> void:
 	var ids: Array[String] = asset_loader.recipe_asset_ids()
@@ -1066,6 +1850,51 @@ func _capture_pose_visibility(directory: String) -> void:
 		controller.phase_elapsed = 0.55
 		capture_caption = "%s — visible contact pose" % family.to_upper()
 		await _capture_frame(directory.path_join("%s_contact.png" % family))
+	controller.phase = "idle"
+	controller.current_primitive = null
+	get_tree().quit()
+
+
+func _capture_visual_rig_evidence(directory: String) -> void:
+	game_active = false
+	capture_pose_only = true
+	debug_visible = false
+	var capture_directory := ProjectSettings.globalize_path(directory) if directory.begins_with("res://") or directory.begins_with("user://") else directory
+	print("PIXEL_VISUAL_RIG_CAPTURE_STARTED:", capture_directory)
+	var directory_error := DirAccess.make_dir_recursive_absolute(capture_directory)
+	if directory_error != OK:
+		push_error("PIXEL_VISUAL_RIG_CAPTURE_DIRECTORY_FAILED:%s:%s" % [capture_directory, error_string(directory_error)])
+		get_tree().quit(1)
+		return
+	_cleanup_enemies()
+	particles.clear()
+	player_position = Vector2(590.0, 410.0)
+	player_facing = 1.0
+	controller.phase = "idle"
+	controller.current_primitive = null
+	var original := Image.new()
+	original.copy_from(asset.source_image)
+	original.resize(original.get_width() * 3, original.get_height() * 3, Image.INTERPOLATE_NEAREST)
+	var original_error := original.save_png(capture_directory.path_join("00_original_silhouette.png"))
+	if original_error != OK:
+		push_error("PIXEL_VISUAL_RIG_CAPTURE_SAVE_FAILED:00:%s" % error_string(original_error))
+	for hit_index: int in [1, 2, 3]:
+		controller.attack_kind = "normal"
+		controller.combo_index = hit_index
+		controller.current_primitive = motion_profile.combo_recipe.primitive_for(hit_index)
+		controller.phase = "active"
+		controller.phase_duration = 1.0
+		controller.phase_elapsed = 0.52
+		var soft_geometry := _soft_visual_geometry(controller.current_primitive)
+		var deformation := _pixel_weapon_deformation(soft_geometry)
+		var raster: Dictionary = PIXEL_WEAPON_DEFORMER.rasterize(deformation, 10, 3)
+		var image := raster.get("image") as Image
+		if image == null:
+			push_error("PIXEL_VISUAL_RIG_CAPTURE_EMPTY:%02d" % hit_index)
+			continue
+		var save_error := image.save_png(capture_directory.path_join("%02d_mechanism_pixels.png" % hit_index))
+		if save_error != OK:
+			push_error("PIXEL_VISUAL_RIG_CAPTURE_SAVE_FAILED:%02d:%s" % [hit_index, error_string(save_error)])
 	controller.phase = "idle"
 	controller.current_primitive = null
 	get_tree().quit()

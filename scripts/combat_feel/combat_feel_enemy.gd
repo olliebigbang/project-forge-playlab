@@ -3,6 +3,7 @@ extends Node2D
 
 signal player_struck(damage: float, direction: Vector2)
 signal defeated(enemy: Node2D)
+signal mechanism_applied(enemy: Node2D, verb: String, status: String)
 
 const PUPPET := "slag_puppet"
 const RAM := "forge_ram"
@@ -24,6 +25,9 @@ var dead_time := 0.0
 var tell_seconds := 0.52
 var recovery_seconds := 0.68
 var arena_bounds := Rect2(45, 145, 1190, 530)
+var mechanism_status := ""
+var mechanism_status_time := 0.0
+var last_mechanism_verb := "none"
 var _player_hit_this_attack := false
 
 func setup(kind: String, id_value: int, spawn_position: Vector2) -> void:
@@ -47,6 +51,9 @@ func setup(kind: String, id_value: int, spawn_position: Vector2) -> void:
 func simulate(delta: float, player_position: Vector2, frozen: bool = false) -> void:
 	flash_time = maxf(0.0, flash_time - delta)
 	recoil_visual_time = maxf(0.0, recoil_visual_time - delta)
+	mechanism_status_time = maxf(0.0, mechanism_status_time - delta)
+	if mechanism_status_time <= 0.0 and not mechanism_status.is_empty():
+		mechanism_status = ""
 	if recoil_visual_time <= 0.0:
 		recoil_tilt = move_toward(recoil_tilt, 0.0, 7.5 * delta)
 	if state == "dead":
@@ -69,7 +76,13 @@ func simulate(delta: float, player_position: Vector2, frozen: bool = false) -> v
 	position.y = clampf(position.y, arena_bounds.position.y + 35.0, arena_bounds.end.y - 20.0)
 	queue_redraw()
 
-func apply_hit(damage: float, knockback: Vector2, stagger_strength: float, recoil_degrees: float = 7.0) -> bool:
+func apply_hit(
+	damage: float,
+	knockback: Vector2,
+	stagger_strength: float,
+	recoil_degrees: float = 7.0,
+	mechanism: Dictionary = {}
+) -> bool:
 	if state == "dead": return false
 	health -= damage
 	flash_time = 0.11
@@ -85,8 +98,25 @@ func apply_hit(damage: float, knockback: Vector2, stagger_strength: float, recoi
 		dead_time = 0.0
 		velocity = knockback * 0.72 + Vector2(0, -80)
 		defeated.emit(self)
+	elif not mechanism.is_empty():
+		_apply_mechanism(mechanism)
 	queue_redraw()
 	return true
+
+
+func _apply_mechanism(mechanism: Dictionary) -> void:
+	last_mechanism_verb = str(mechanism.get("verb", "none"))
+	mechanism_status = str(mechanism.get("status", ""))
+	mechanism_status_time = maxf(0.0, float(mechanism.get("status_seconds", 0.0)))
+	if bool(mechanism.get("immobilize", false)):
+		velocity = Vector2.ZERO
+	if bool(mechanism.get("control_lock", false)):
+		velocity *= 0.35
+	stagger_time = maxf(stagger_time, mechanism_status_time)
+	recoil_visual_time = maxf(recoil_visual_time, mechanism_status_time)
+	if bool(mechanism.get("interrupts_attack", false)) and state in ["tell", "attack", "charge"]:
+		_enter_state("recovery")
+	mechanism_applied.emit(self, last_mechanism_verb, mechanism_status)
 
 func is_attack_dangerous() -> bool:
 	return state in ["attack", "charge"]
@@ -150,6 +180,39 @@ func _draw() -> void:
 	var ratio := clampf(health / maxf(1.0, max_health), 0.0, 1.0)
 	draw_rect(Rect2(-28, -50, 56, 5), Color("14202b"), true)
 	draw_rect(Rect2(-28, -50, 56 * ratio, 5), Color("6ee7a8"), true)
+	_draw_mechanism_status()
+
+
+func _draw_mechanism_status() -> void:
+	if mechanism_status.is_empty():
+		return
+	var color := Color("e2e8f0")
+	match last_mechanism_verb:
+		"pin":
+			color = Color("22d3ee")
+			draw_line(Vector2(-13, 25), Vector2(-13, 42), color, 3.0)
+			draw_line(Vector2(13, 25), Vector2(13, 42), color, 3.0)
+		"cleave":
+			color = Color("fb7185")
+			draw_line(Vector2(-28, 17), Vector2(27, -24), color, 4.0)
+		"shove":
+			color = Color("facc15")
+			draw_line(Vector2(-38 * facing, 2), Vector2(-58 * facing, 2), color, 5.0)
+			draw_colored_polygon(PackedVector2Array([
+				Vector2(-58 * facing, 2), Vector2(-48 * facing, -6), Vector2(-48 * facing, 10),
+			]), color)
+		"sweep_control":
+			color = Color("c084fc")
+			draw_arc(Vector2.ZERO, 43.0, 0.0, TAU, 32, color, 4.0)
+	draw_string(
+		ThemeDB.fallback_font,
+		Vector2(-56, -58),
+		mechanism_status,
+		HORIZONTAL_ALIGNMENT_CENTER,
+		112,
+		14,
+		color
+	)
 
 func _draw_puppet() -> void:
 	var body := Color("fff7df") if flash_time > 0.0 else Color("514a45")

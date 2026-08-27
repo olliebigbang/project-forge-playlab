@@ -59,6 +59,7 @@ func _run() -> void:
 	_test_40_charge_and_dodge_use_recipe_primitives()
 	_test_41_slice_compiles_legacy_live_without_affordance()
 	_test_42_attack_press_enters_visible_startup_immediately()
+	_test_43_saved_tuning_preserves_compiled_tempo_differences()
 	print("COMBAT_FEEL_SLICE_0_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -324,10 +325,12 @@ func _test_39_slice_executes_current_primitive_consistently() -> void:
 	var pose_source := _function_source(source, "func _weapon_pose", "func _current_attack_primitive")
 	var hitbox_source := _function_source(source, "func _draw_active_hitbox", "func _draw_real_weapon_comparison")
 	var started_source := _function_source(source, "func _on_attack_started", "func _on_attack_phase_changed")
+	var root_source := _function_source(source, "func _apply_attack_root_motion", "func _root_motion_progress")
 	var ok: bool = attack_source.contains("_current_attack_primitive()") and attack_source.contains("primitive.hitbox_multiplier")
 	ok = ok and pose_source.contains("primitive.start_angle") and pose_source.contains("primitive.end_angle") and pose_source.contains("primitive.extension_pixels")
 	ok = ok and hitbox_source.contains("_current_attack_primitive()") and hitbox_source.contains("primitive.hitbox_multiplier")
-	ok = ok and started_source.contains("controller.current_primitive") and started_source.contains("primitive.root_motion_distance")
+	ok = ok and started_source.contains("attack_root_motion_serial") and started_source.contains("attack_root_motion_direction")
+	ok = ok and root_source.contains("controller.current_primitive") and root_source.contains("primitive.root_motion_distance")
 	ok = ok and not attack_source.contains("motion_profile.motion_family") and not hitbox_source.contains("motion_profile.motion_family")
 	_check(ok, "39 pose advance collision and debug hitbox share current primitive")
 
@@ -363,6 +366,58 @@ func _test_42_attack_press_enters_visible_startup_immediately() -> void:
 	controller.tick(float(controller.current_timing().get("startup", 0.1)) + 0.001)
 	var committed: bool = controller.phase == "active" and controller.attack_kind == "normal" and is_same(controller.current_primitive, profile.combo_recipe.hit_1)
 	_check(immediate and committed, "42 attack press shows hit-one startup on the next frame and release commits it")
+
+
+func _test_43_saved_tuning_preserves_compiled_tempo_differences() -> void:
+	var legacy_saved := {
+		"tempo": "committed", "startup": 0.29, "active": 0.13,
+		"recovery": 0.365, "combo_window": 0.46, "input_buffer": 0.16,
+	}
+	var rapid: Variant = PROFILE.new()
+	rapid.tempo = "rapid"
+	rapid.configure_timing_from_tempo()
+	var rapid_slice: Variant = SLICE.new()
+	rapid_slice.motion_profile = rapid
+	rapid_slice._capture_compiled_timing_defaults()
+	rapid_slice._apply_tuning_data(legacy_saved)
+	var committed: Variant = PROFILE.new()
+	committed.tempo = "committed"
+	committed.configure_timing_from_tempo()
+	var committed_slice: Variant = SLICE.new()
+	committed_slice.motion_profile = committed
+	committed_slice._capture_compiled_timing_defaults()
+	committed_slice._apply_tuning_data(legacy_saved)
+	var preserved := is_equal_approx(rapid.startup_seconds, 0.13)
+	preserved = preserved and is_equal_approx(committed.startup_seconds, 0.29)
+	preserved = preserved and is_equal_approx(rapid.active_seconds, 0.08)
+	preserved = preserved and is_equal_approx(committed.active_seconds, 0.13)
+	preserved = preserved and rapid.recovery_seconds < committed.recovery_seconds
+	preserved = preserved and is_equal_approx(
+		rapid.recovery_seconds / 0.18,
+		committed.recovery_seconds / 0.36
+	)
+	var migrated_multipliers: Dictionary = rapid_slice._current_timing_multipliers()
+	var balanced: Variant = PROFILE.new()
+	balanced.tempo = "balanced"
+	balanced.configure_timing_from_tempo()
+	var balanced_slice: Variant = SLICE.new()
+	balanced_slice.motion_profile = balanced
+	balanced_slice._capture_compiled_timing_defaults()
+	balanced_slice._apply_tuning_data({
+		"schema": "forge-combat-feel-tuning-v2",
+		"timing_multipliers": migrated_multipliers,
+		"debug": {"hitstop": 0.08},
+	})
+	preserved = preserved and is_equal_approx(balanced.startup_seconds, 0.19)
+	preserved = preserved and is_equal_approx(
+		balanced.recovery_seconds / 0.25,
+		float(migrated_multipliers["recovery"])
+	)
+	preserved = preserved and is_equal_approx(float(balanced_slice.get_meta("debug_hitstop")), 0.08)
+	rapid_slice.free()
+	committed_slice.free()
+	balanced_slice.free()
+	_check(preserved, "43 legacy and v2 tuning preserve compiled tempo differences")
 
 func _controller() -> Variant:
 	var controller: Variant = CONTROLLER.new(); controller.configure(_profile()); return controller

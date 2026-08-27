@@ -81,9 +81,29 @@ class BridgeHardeningTests(unittest.TestCase):
         root = COMFY_ROOT.parents[1]
         prompt_source = (root / "scripts" / "services" / "open_identity_visual_prompt.gd").read_text(encoding="utf-8")
         provider_source = (root / "scripts" / "services" / "local_comfy_forge_visual_provider.gd").read_text(encoding="utf-8")
-        self.assertEqual(bridge.PROMPT_POLICY_VERSION, "forge-open-identity-v2")
-        self.assertIn('POLICY_VERSION := "forge-open-identity-v2"', prompt_source)
+        self.assertEqual(bridge.PROMPT_POLICY_VERSION, "forge-open-identity-v3")
+        self.assertIn('POLICY_VERSION := "forge-open-identity-v3"', prompt_source)
         self.assertIn('"--prompt-policy-version", OPEN_IDENTITY_PROMPT.POLICY_VERSION', provider_source)
+
+    def test_visual_structure_brief_is_bounded_and_machine_owned(self) -> None:
+        valid = {
+            "schema": "forge-mechanism-visual-brief-v1",
+            "source": "ai_mechanism_axes_visual_compiler_v1",
+            "automatic": True,
+            "player_confirmation_required": False,
+            "axes": {"flex_topology": "flexible_line"},
+            "required_roles": ["rigid_root", "deform_body"],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "brief.json"
+            path.write_text(json.dumps(valid), encoding="utf-8")
+            parsed, digest = bridge._load_visual_structure_brief(path)
+            self.assertEqual(parsed, valid)
+            self.assertEqual(len(digest), 64)
+            valid["player_confirmation_required"] = True
+            path.write_text(json.dumps(valid), encoding="utf-8")
+            with self.assertRaisesRegex(bridge.BridgeError, "VISUAL_STRUCTURE_BRIEF_CONTRACT_INVALID"):
+                bridge._load_visual_structure_brief(path)
 
     def test_invalid_prompt_policy_version_fails_before_io(self) -> None:
         with self.assertRaisesRegex(bridge.BridgeError, "PROMPT_POLICY_VERSION_INVALID"):

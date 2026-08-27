@@ -1,0 +1,34 @@
+{
+  "schema": "forge-soft-weapon-mechanism-manifest-v1",
+  "status": "developer_mechanism_sample_ready",
+  "developer_only": true,
+  "normal_player_flow": false,
+  "playtest_claim": false,
+  "manual_playtest_performed": false,
+  "player_mechanism_input_used": false,
+  "player_confirmation_required": false,
+  "source_generator": "openai_builtin_imagegen",
+  "source_image": "res://output/flux2-fishing-rod/final/fishing_rod_builtin_pixel_v2.png",
+  "sprite_conversion": {
+    "canvas": [96, 96],
+    "fit_box": [88, 88],
+    "resampling": "nearest_neighbor",
+    "alpha": "binary_threshold_32_of_255",
+    "palette_colors": 24
+  },
+  "mechanism_contract": {
+    "main_soft_path": "bending_shaft",
+    "attached_soft_path": "flexible_line",
+    "terminal_load": "light",
+    "tether_mode": "hook",
+    "tether_deployment": "cast_retract",
+    "resolution_source": "ai_builtin_imagegen_soft_v1"
+  },
+  "visual_rig_contract": {
+    "schema": "forge-pixel-weapon-visual-rig-v1",
+    "source": "ai_builtin_imagegen_structural_parse_v1",
+    "automatic": true,
+    "player_confirmation_required": false,
+    "parts": ["rigid_root", "deform_body", "tether", "terminal"]
+  }
+}

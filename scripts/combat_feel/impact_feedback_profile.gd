@@ -71,6 +71,29 @@ static func for_attack(profile: Resource, attack_kind: String, combo_index: int,
 		feedback.stagger_strength = 0.48
 		feedback.impact_tier = "light"
 	if primitive != null:
+		# Contact topology owns the enemy reaction. This makes a point, cutting
+		# edge, broad face and whole-body collision mechanically different even
+		# when two attacks happen to share the same motion family.
+		match str(primitive.contact_surface):
+			"point":
+				feedback.knockback_strength *= 0.72
+				feedback.stagger_strength *= 0.82
+				feedback.hitstop_seconds *= 1.14
+				feedback.camera_shake_strength *= 0.86
+			"edge":
+				feedback.knockback_strength *= 0.90
+				feedback.stagger_strength *= 0.94
+				feedback.hitstop_seconds *= 1.02
+			"broad":
+				feedback.knockback_strength *= 1.28
+				feedback.stagger_strength *= 1.24
+				feedback.hitstop_seconds *= 1.10
+				feedback.camera_shake_strength *= 1.16
+			"whole_body":
+				feedback.knockback_strength *= 0.96
+				feedback.stagger_strength *= 1.16
+				feedback.hitstop_seconds *= 0.90
+				feedback.camera_shake_strength *= 0.92
 		feedback.knockback_strength *= float(primitive.knockback_multiplier)
 		feedback.stagger_strength *= float(primitive.stagger_multiplier)
 		feedback.hitstop_seconds *= float(primitive.hitstop_multiplier)

@@ -8,6 +8,11 @@ const MASS_DISTRIBUTIONS: PackedStringArray = ["rear", "balanced", "front"]
 const CONTACT_SURFACES: PackedStringArray = ["point", "edge", "broad", "whole_body"]
 const SECONDARY_CONTACT_SURFACES: PackedStringArray = ["none", "point", "edge", "broad", "whole_body"]
 const RIGIDITIES: PackedStringArray = ["rigid", "semi_rigid", "flexible"]
+const FLEX_TOPOLOGIES: PackedStringArray = ["none", "bending_shaft", "flexible_line", "linked_segments"]
+const TETHER_TOPOLOGIES: PackedStringArray = ["none", "flexible_line", "linked_segments"]
+const TERMINAL_LOADS: PackedStringArray = ["none", "light", "heavy"]
+const TETHER_MODES: PackedStringArray = ["none", "wrap", "hook"]
+const TETHER_DEPLOYMENTS: PackedStringArray = ["none", "fixed_length", "cast_retract", "launch_tension"]
 
 @export_enum("none", "short", "medium", "long") var handle_length := "medium"
 @export_enum("short", "medium", "long") var body_length := "medium"
@@ -16,6 +21,11 @@ const RIGIDITIES: PackedStringArray = ["rigid", "semi_rigid", "flexible"]
 @export_enum("point", "edge", "broad", "whole_body") var contact_surface := "point"
 @export_enum("none", "point", "edge", "broad", "whole_body") var secondary_contact_surface := "none"
 @export_enum("rigid", "semi_rigid", "flexible") var rigidity := "rigid"
+@export_enum("none", "bending_shaft", "flexible_line", "linked_segments") var flex_topology := "none"
+@export_enum("none", "flexible_line", "linked_segments") var tether_topology := "none"
+@export_enum("none", "light", "heavy") var terminal_load := "none"
+@export_enum("none", "wrap", "hook") var tether_mode := "none"
+@export_enum("none", "fixed_length", "cast_retract", "launch_tension") var tether_deployment := "none"
 @export var has_point := false
 @export var has_edge := false
 @export var has_broad_face := false
@@ -35,6 +45,16 @@ func validation_errors() -> Array[String]:
 		errors.append("INVALID_GRIP_TOPOLOGY")
 	if rigidity not in RIGIDITIES:
 		errors.append("INVALID_RIGIDITY")
+	if flex_topology not in FLEX_TOPOLOGIES:
+		errors.append("INVALID_FLEX_TOPOLOGY")
+	if tether_topology not in TETHER_TOPOLOGIES:
+		errors.append("INVALID_TETHER_TOPOLOGY")
+	if terminal_load not in TERMINAL_LOADS:
+		errors.append("INVALID_TERMINAL_LOAD")
+	if tether_mode not in TETHER_MODES:
+		errors.append("INVALID_TETHER_MODE")
+	if tether_deployment not in TETHER_DEPLOYMENTS:
+		errors.append("INVALID_TETHER_DEPLOYMENT")
 	if mass_distribution not in MASS_DISTRIBUTIONS:
 		errors.append("INVALID_MASS_DISTRIBUTION")
 	if contact_surface not in CONTACT_SURFACES:
@@ -45,6 +65,23 @@ func validation_errors() -> Array[String]:
 		errors.append("HANDLELESS_OBJECT_REQUIRES_BODY_OR_CLAMP_GRIP")
 	if handle_length != "none" and grip_topology == "body_grip":
 		errors.append("BODY_GRIP_REQUIRES_HANDLE_LENGTH_NONE")
+	if rigidity == "flexible" and flex_topology == "none":
+		errors.append("FLEXIBLE_OBJECT_REQUIRES_FLEX_TOPOLOGY")
+	if rigidity != "flexible" and flex_topology != "none":
+		errors.append("FLEX_TOPOLOGY_REQUIRES_FLEXIBLE_OBJECT")
+	var has_soft_path := flex_topology != "none" or tether_topology != "none"
+	if not has_soft_path and (terminal_load != "none" or tether_mode != "none"):
+		errors.append("SOFT_FACTORS_REQUIRE_SOFT_PATH")
+	if tether_mode != "none" \
+		and flex_topology not in ["flexible_line", "linked_segments"] \
+		and tether_topology == "none":
+		errors.append("TETHER_MODE_REQUIRES_LINE_OR_LINKS")
+	if tether_mode == "hook" and not (has_point or contact_surface == "point" or secondary_contact_surface == "point"):
+		errors.append("HOOK_TETHER_REQUIRES_POINT_CONTACT")
+	if tether_topology == "none" and tether_deployment != "none":
+		errors.append("TETHER_DEPLOYMENT_REQUIRES_ATTACHED_TETHER")
+	if tether_topology != "none" and tether_deployment == "none":
+		errors.append("ATTACHED_TETHER_REQUIRES_DEPLOYMENT")
 	if not is_finite(confidence) or confidence < 0.65 or confidence > 1.0:
 		errors.append("INVALID_AFFORDANCE_CONFIDENCE")
 	if evidence_parts.is_empty():
@@ -58,6 +95,11 @@ func to_dict() -> Dictionary:
 		"body_length": body_length,
 		"grip_topology": grip_topology,
 		"rigidity": rigidity,
+		"flex_topology": flex_topology,
+		"tether_topology": tether_topology,
+		"terminal_load": terminal_load,
+		"tether_mode": tether_mode,
+		"tether_deployment": tether_deployment,
 		"mass_distribution": mass_distribution,
 		"contact_surface": contact_surface,
 		"secondary_contact_surface": secondary_contact_surface,

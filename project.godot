@@ -7,6 +7,10 @@ config/name="Forge Playlab V1"
 run/main_scene="res://scenes/open_identity_spike.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
+[autoload]
+
+MechanismHandoff="*res://scripts/combat_feel/runtime_mechanism_handoff.gd"
+
 [display]
 
 window/size/viewport_width=1280
