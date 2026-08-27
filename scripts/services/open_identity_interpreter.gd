@@ -7,6 +7,7 @@ const VISUAL_PROMPT_SCRIPT := preload("res://scripts/services/open_identity_visu
 const FIREARM_IDENTITY_CATALOG := preload("res://scripts/combat_feel/firearm_identity_catalog.gd")
 const FIREARM_IDENTITY_AI_RESOLVER := preload("res://scripts/combat_feel/firearm_identity_ai_resolver.gd")
 const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
+const MECHANISM_AXIS_RESOLVER := preload("res://scripts/combat_feel/mechanism_axis_resolver.gd")
 
 const IDENTITY_QUESTION := "你画的是什么？"
 const SOURCE_LABEL := "PLAYER TEXT PASSTHROUGH + LOCAL RULE BEHAVIOR COMPILER"
@@ -147,6 +148,81 @@ func interpret_with_ai_firearm_profile(
 		"identity_passthrough": false,
 		"identity_was_clarified": false,
 		"behavior_compiler": "ai_firearm_identity_dynamic_v1",
+		"affordance": blueprint.affordance.duplicate(true),
+		"affordance_source": blueprint.affordance_source,
+		"player_confirmation_required": false,
+	}
+
+
+func interpret_with_ai_object_profile(
+	player_text: String,
+	sketch_png: PackedByteArray,
+	geometry: Dictionary,
+	profile: Dictionary
+) -> Dictionary:
+	var identity := player_text.strip_edges()
+	if identity.is_empty():
+		return _error_result("AI_GENERAL_OBJECT_IDENTITY_EMPTY", identity)
+	if profile.is_empty() or not profile.get("declaration", {}) is Dictionary:
+		return _error_result("AI_GENERAL_OBJECT_PROFILE_MISSING", identity)
+	if str(profile.get("behavior_family", "")) != "heavy_melee":
+		return _error_result("AI_GENERAL_OBJECT_BEHAVIOR_FAMILY_INVALID", identity)
+	var declaration := (profile.get("declaration", {}) as Dictionary).duplicate(true)
+	var source := str(declaration.get("source", profile.get("catalog_source", "")))
+	var validation := MECHANISM_AXIS_RESOLVER.validate_ai_declaration(declaration, source)
+	if not bool(validation.get("ok", false)):
+		return validation
+	var blueprint := BLUEPRINT_SCRIPT.new() as WeaponBlueprint
+	blueprint.id = "open-object-%s" % identity.sha256_text().left(16)
+	blueprint.display_name = identity.left(48)
+	blueprint.fantasy_summary = "%s；物件结构与攻击方式由 AI 机制轴编译，玩家不选择打法。" % identity
+	blueprint.source_identity = identity
+	blueprint.player_identity_text = identity
+	blueprint.identity_confidence = float(declaration.get("confidence", 0.0))
+	blueprint.preserved_visual_features = ["player_identity_text_verbatim=%s" % identity]
+	for raw_part: Variant in profile.get("required_identity_parts_zh", []):
+		blueprint.preserved_visual_features.append("required_visible_part=%s" % str(raw_part))
+	blueprint.visual_description = "%s; %s" % [
+		identity,
+		str(profile.get("visual_description_en", identity)),
+	]
+	blueprint.weapon_form = "general_object_%s" % str(profile.get("scale_treatment", "handheld"))
+	blueprint.palette_hint = "preserve_source_identity"
+	blueprint.confidence = float(declaration.get("confidence", 0.0))
+	_apply_behavior_profile(blueprint, "heavy_melee", identity)
+	blueprint.grip_profile = {
+		"one_hand_handle": "rear_grip",
+		"two_hand_handle": "two_hand_rear",
+		"body_grip": "throwable_center",
+		"clamp_grip": "throwable_center",
+	}.get(str(declaration.get("grip_topology", "body_grip")), "throwable_center")
+	blueprint.affordance = declaration
+	blueprint.affordance_source = source
+	blueprint.silhouette_aspect = {"short": 1.25, "medium": 2.0, "long": 3.4}.get(
+		str(declaration.get("body_length", "medium")), 2.0
+	)
+	blueprint.silhouette_curvature = "curved" if str(declaration.get("rigidity", "rigid")) != "rigid" else "structural"
+	blueprint.silhouette_mass_distribution = str(declaration.get("mass_distribution", "balanced"))
+	blueprint.silhouette_handle_region = "center" if str(declaration.get("grip_topology", "")) in ["body_grip", "clamp_grip"] else "rear"
+	blueprint.modifiers["general_object_profile_id"] = str(profile.get("id", ""))
+	blueprint.modifiers["general_object_canonical_name"] = str(profile.get("canonical_name", identity))
+	blueprint.modifiers["general_object_scale_treatment"] = str(profile.get("scale_treatment", "handheld"))
+	blueprint.modifiers["general_object_visual_exclusions"] = (profile.get("confusable_exclusions_en", []) as Array).duplicate()
+	_apply_geometry_evidence(blueprint, sketch_png, geometry)
+	blueprint.visual_prompt = VISUAL_PROMPT_SCRIPT.build(blueprint)
+	blueprint.validate_and_repair()
+	return {
+		"ok": true,
+		"needs_clarification": false,
+		"confidence": blueprint.confidence,
+		"blueprint": blueprint,
+		"explanation": "AI 已从“%s”的真实结构生成握法、软硬、重量分布、接触面和软线机制；动作由机制轴自动编译。" % identity,
+		"source": source,
+		"ai_interpretation_used": true,
+		"identity_semantics_understood": true,
+		"identity_passthrough": false,
+		"identity_was_clarified": false,
+		"behavior_compiler": "ai_general_object_affordance_v1",
 		"affordance": blueprint.affordance.duplicate(true),
 		"affordance_source": blueprint.affordance_source,
 		"player_confirmation_required": false,

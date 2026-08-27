@@ -71,10 +71,10 @@ try {
         $env:FAL_KEY = $FalKeyText
     }
 
-    Write-Host "Starting Forge with dynamic firearm-name AI enabled."
-    Write-Host "The AI fills a strict identity card; Godot validates and compiles all mechanics locally."
+    Write-Host "Starting Forge with dynamic firearm and general-object AI enabled."
+    Write-Host "The AI fills strict identity and affordance cards; Godot validates and compiles all mechanics locally."
     if ($VisualProvider -eq "FAL_FIREARM") {
-        Write-Host "FAL renders transparent identity art and converts it to bounded-palette pixel art; this mode uses paid API calls."
+        Write-Host "FAL renders firearms or general objects as transparent identity art and converts them to bounded-palette pixel art; this mode uses paid API calls."
     }
     $Arguments = @(
         "--path", $PlaylabRoot,
@@ -82,6 +82,8 @@ try {
         "--",
         "--firearm-ai=anthropic",
         "--firearm-ai-python=$Python",
+        "--object-ai=anthropic",
+        "--object-ai-python=$Python",
         "--fal-python=$Python",
         "--visual-provider=$VisualProvider"
     )
