@@ -201,7 +201,13 @@ static func _validate_profile(profile: Dictionary) -> Dictionary:
 	if declarations.size() != 2:
 		return _failure("AI_ENEMY_CACHE_PROFILE_INVALID")
 	for declaration: Variant in declarations:
-		if not declaration is Dictionary or not bool(ATTACK_COMPILER.compile(declaration as Dictionary).get("ok", false)):
+		if not declaration is Dictionary:
+			return _failure("AI_ENEMY_CACHE_PROFILE_INVALID")
+		var selection := (declaration as Dictionary).get("selection", {}) as Dictionary
+		for integer_field: String in ["base_priority", "coordination_cost", "selection_rank"]:
+			if selection.has(integer_field):
+				selection[integer_field] = int(selection[integer_field])
+		if not bool(ATTACK_COMPILER.compile(declaration as Dictionary).get("ok", false)):
 			return _failure("AI_ENEMY_CACHE_PROFILE_INVALID")
 	return {"ok": true}
 

@@ -21,6 +21,8 @@ func _run_all() -> void:
 	_check("Illegal AI attack coverage fails closed", _test_illegal_coverage_rejected)
 	_check("Enemy identity visual axes produce a readable arachnid body contract", _test_identity_visual)
 	_check("Combat arena spawns anonymous generated enemies from blueprint data", _test_blueprint_arena_spawn)
+	_check("Solo AI enemies can execute higher-cost pressure attacks", _test_solo_enemy_coordination_budget)
+	_check("Cached AI enemies preserve integer attack selection fields", _test_cache_round_trip)
 	_check("AI enemy playtest accepts a compiled blueprint without player mechanics", _test_playtest_handoff)
 	var provider_result: Variant = await _test_offline_provider_handoff()
 	_check("Offline AI bridge hands one strict response back to Godot", func() -> Variant: return provider_result)
@@ -122,6 +124,29 @@ func _test_playtest_handoff() -> Variant:
 	return true if ok else diagnostics
 
 
+func _test_solo_enemy_coordination_budget() -> Variant:
+	var profile: Dictionary = RESOLVER.accept_ai_response("机械蜘蛛", _fixture(), "AI_TEST", false)
+	if not bool(profile.get("ok", false)):
+		return profile
+	var declarations := profile.get("attack_declarations", []) as Array
+	var pressure := declarations[1] as Dictionary
+	var selection := pressure.get("selection", {}) as Dictionary
+	selection["coordination_cost"] = 2
+	var arena: Node2D = ARENA.new()
+	arena.stage_name = "ai_enemy"
+	arena.player_position = Vector2(500, 400)
+	arena._spawn_enemy_blueprint(profile, Vector2(1000, 400))
+	var enemy: Dictionary = arena.enemies[0]
+	var runtime: Variant = enemy.get("attack_runtime", null)
+	arena._update_enemies(0.01)
+	var ok := int(enemy.get("coordination_budget", 0)) == 3
+	ok = ok and runtime != null and runtime.is_running()
+	ok = ok and runtime.current_delivery() == "projectile"
+	var diagnostics := {"enemy": enemy, "runtime": runtime.snapshot() if runtime != null else {}}
+	arena.free()
+	return true if ok else diagnostics
+
+
 func _test_offline_provider_handoff() -> Variant:
 	var provider: RefCounted = PROVIDER.new()
 	provider.offline_fixture_path = FIXTURE_PATH
@@ -140,6 +165,27 @@ func _test_offline_provider_handoff() -> Variant:
 		await create_timer(0.02).timeout
 	provider.cancel_current()
 	return "OFFLINE_PROVIDER_TIMEOUT"
+
+
+func _test_cache_round_trip() -> Variant:
+	var cache_path := "user://playlab/tests/enemy_ai_cache_round_trip.json"
+	var absolute_path := ProjectSettings.globalize_path(cache_path)
+	if FileAccess.file_exists(absolute_path):
+		DirAccess.remove_absolute(absolute_path)
+	var stored: Dictionary = RESOLVER.accept_ai_response("机械蜘蛛", _fixture(), "AI_TEST", true, cache_path)
+	if not bool(stored.get("ok", false)):
+		return stored
+	var cached: Dictionary = RESOLVER.resolve_cached("机械蜘蛛", cache_path)
+	if FileAccess.file_exists(absolute_path):
+		DirAccess.remove_absolute(absolute_path)
+	if not bool(cached.get("ok", false)):
+		return cached
+	var declarations := cached.get("attack_declarations", []) as Array
+	var selection := (declarations[0] as Dictionary).get("selection", {}) as Dictionary
+	var ok := typeof(selection.get("base_priority")) == TYPE_INT
+	ok = ok and typeof(selection.get("coordination_cost")) == TYPE_INT
+	ok = ok and typeof(selection.get("selection_rank")) == TYPE_INT
+	return true if ok else selection
 
 
 func _test_no_player_confirmation() -> Variant:

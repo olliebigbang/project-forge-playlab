@@ -515,7 +515,7 @@ func _begin_compiled_enemy_attack(enemy: Dictionary, attack_runtime: Variant, to
 	var selected: Dictionary = attack_runtime.begin_attack({
 		"distance_pixels": to_player.length(),
 		"depth_delta_pixels": to_player.y,
-		"available_coordination_budget": 1,
+		"available_coordination_budget": int(enemy.get("coordination_budget", 1)),
 		"clear_path": true,
 	}, Vector2(enemy["pos"]), player_position)
 	if not bool(selected.get("ok", false)):
@@ -776,6 +776,7 @@ func _spawn_enemy_blueprint(profile: Dictionary, position: Vector2) -> void:
 	var attack_configuration: Dictionary = attack_runtime.configure(declarations) if not declarations.is_empty() else {"ok": false}
 	var maximum_health := float(profile.get("max_health", 80.0))
 	var type_name := str(profile.get("type_name", "generated_enemy"))
+	var default_coordination_budget := 3 if type_name == "generated_enemy" else 1
 	enemies.append({
 		"id": enemies.size() + 1, "type": type_name, "pos": position, "hp": maximum_health,
 		"max_hp": maximum_health, "facing": -1.0, "cooldown": 0.0, "hurt": 0.0,
@@ -785,6 +786,7 @@ func _spawn_enemy_blueprint(profile: Dictionary, position: Vector2) -> void:
 		"mass_class": str(profile.get("mass_class", "medium")),
 		"armor_integrity": float(profile.get("armor_integrity", 0.0)),
 		"move_speed": float(profile.get("move_speed", 54.0)),
+		"coordination_budget": int(profile.get("coordination_budget", default_coordination_budget)),
 		"visual_identity_axes": (profile.get("visual_identity_axes", {}) as Dictionary).duplicate(true),
 		"pin_seconds": 0.0, "entangle_seconds": 0.0, "suppression_seconds": 0.0,
 		"interaction_status": "", "interaction_status_time": 0.0,
