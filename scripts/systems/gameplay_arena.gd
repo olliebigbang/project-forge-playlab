@@ -41,6 +41,17 @@ const TARGET_ATTACK_DECLARATIONS := {
 			"preferred_range": "mid", "depth_fit": "tolerant", "base_priority": 72,
 			"coordination_cost": 1, "requires_clear_path": true, "selection_rank": 10,
 		},
+	}, {
+		"attack_key": "slot_marked_crash",
+		"axes": {
+			"delivery": "marked_impact", "target_lock": "point_on_commit",
+			"hit_shape": "circle", "depth_path": "depth_band", "tempo": "committed",
+			"stability": "fragile", "recovery": "extended",
+		},
+		"selection": {
+			"preferred_range": "far", "depth_fit": "any", "base_priority": 66,
+			"coordination_cost": 1, "requires_clear_path": false, "selection_rank": 20,
+		},
 	}],
 	"guard": [{
 		"attack_key": "slot_guard_arc",
@@ -53,6 +64,17 @@ const TARGET_ATTACK_DECLARATIONS := {
 			"preferred_range": "close", "depth_fit": "aligned", "base_priority": 58,
 			"coordination_cost": 1, "requires_clear_path": false, "selection_rank": 10,
 		},
+	}, {
+		"attack_key": "slot_guard_projectile",
+		"axes": {
+			"delivery": "projectile", "target_lock": "direction_on_commit",
+			"hit_shape": "capsule", "depth_path": "same_lane", "tempo": "standard",
+			"stability": "tell_interruptible", "recovery": "punishable",
+		},
+		"selection": {
+			"preferred_range": "far", "depth_fit": "aligned", "base_priority": 64,
+			"coordination_cost": 1, "requires_clear_path": true, "selection_rank": 20,
+		},
 	}],
 }
 
@@ -64,6 +86,7 @@ var player_health := 100.0
 var facing := 1.0
 var enemies: Array[Dictionary] = []
 var projectiles: Array[Dictionary] = []
+var enemy_attack_hazards: Array[Dictionary] = []
 var boomerang: Dictionary = {}
 var active := false
 var debug_anchors := false
@@ -98,6 +121,7 @@ func start_stage(next_stage: String, next_blueprint: WeaponBlueprint, next_asset
 	player_position = Vector2(250, 420)
 	player_health = 100.0
 	projectiles.clear()
+	enemy_attack_hazards.clear()
 	boomerang.clear()
 	attack_charge = 0.0
 	shot_cooldown = 0.0
@@ -159,6 +183,7 @@ func _process(delta: float) -> void:
 	_update_attacks(delta)
 	_update_projectiles(delta)
 	_update_enemies(delta)
+	_update_enemy_attack_hazards(delta)
 	_check_completion(delta)
 	queue_redraw()
 
@@ -493,6 +518,9 @@ func _update_compiled_enemy_attack(enemy: Dictionary, attack_runtime: Variant, d
 	enemy["attack_phase"] = str(result.get("phase", "idle"))
 	enemy["last_attack_mechanism"] = result.duplicate(true)
 	var delivery := str(result.get("delivery", attack_runtime.current_delivery()))
+	var activation_event := result.get("activation_event", {}) as Dictionary
+	if bool(activation_event.get("ok", false)) and delivery in ["projectile", "marked_impact"]:
+		_spawn_enemy_attack_hazard(enemy, activation_event)
 	var active_seconds := float(result.get("active_seconds_this_step", 0.0))
 	if active_seconds <= 0.0:
 		return
@@ -500,7 +528,7 @@ func _update_compiled_enemy_attack(enemy: Dictionary, attack_runtime: Variant, d
 		var motion := result.get("attack_motion", {}) as Dictionary
 		var direction: Vector2 = Vector2(result.get("locked_direction", Vector2(float(enemy.get("facing", -1.0)), 0.0)))
 		enemy["pos"] = Vector2(enemy["pos"]) + direction * float(motion.get("travel_speed_pixels_per_second", 0.0)) * active_seconds
-	if attack_runtime.active_hit_registered or invulnerable_timer > 0.0:
+	if delivery not in ["contact", "rush"] or attack_runtime.active_hit_registered or invulnerable_timer > 0.0:
 		return
 	if not attack_runtime.current_hit_contains(Vector2(enemy["pos"]), player_position):
 		return
@@ -510,6 +538,71 @@ func _update_compiled_enemy_attack(enemy: Dictionary, attack_runtime: Variant, d
 	metrics["damage_taken"] = float(metrics["damage_taken"]) + damage
 	flash_timer = 0.14
 	metrics_changed.emit(metrics)
+
+
+func _spawn_enemy_attack_hazard(enemy: Dictionary, activation_event: Dictionary) -> void:
+	var delivery := str(activation_event.get("delivery", ""))
+	if delivery not in ["projectile", "marked_impact"]:
+		return
+	var origin: Vector2 = Vector2(activation_event.get("origin", enemy.get("pos", Vector2.ZERO)))
+	var lifetime := float(activation_event.get("hazard_lifetime_seconds", 0.0))
+	enemy_attack_hazards.append({
+		"schema": "forge-enemy-attack-hazard-v1",
+		"owner_id": int(enemy.get("id", -1)),
+		"attack_key": str(activation_event.get("attack_key", "")),
+		"mechanism_signature": str(activation_event.get("mechanism_signature", "")),
+		"delivery": delivery,
+		"pos": origin,
+		"previous_pos": origin,
+		"vel": Vector2(activation_event.get("velocity", Vector2.ZERO)),
+		"life": lifetime,
+		"maximum_life": lifetime,
+		"hit_region": (activation_event.get("hit_region", {}) as Dictionary).duplicate(true),
+		"damage": 8.0 if delivery == "projectile" else 10.0,
+		"hit_player": false,
+		"player_confirmation_required": false,
+	})
+
+
+func _update_enemy_attack_hazards(delta: float) -> void:
+	for hazard: Dictionary in enemy_attack_hazards:
+		hazard["previous_pos"] = Vector2(hazard.get("pos", Vector2.ZERO))
+		if str(hazard.get("delivery", "")) == "projectile":
+			hazard["pos"] = Vector2(hazard["pos"]) + Vector2(hazard.get("vel", Vector2.ZERO)) * delta
+		hazard["life"] = float(hazard.get("life", 0.0)) - delta
+		if bool(hazard.get("hit_player", false)) or invulnerable_timer > 0.0:
+			continue
+		if not _enemy_attack_hazard_contains(hazard, player_position):
+			continue
+		hazard["hit_player"] = true
+		hazard["life"] = 0.0
+		var damage := float(hazard.get("damage", 0.0))
+		player_health = maxf(1.0, player_health - damage)
+		metrics["damage_taken"] = float(metrics["damage_taken"]) + damage
+		flash_timer = 0.14
+		metrics_changed.emit(metrics)
+	enemy_attack_hazards = enemy_attack_hazards.filter(func(hazard: Dictionary) -> bool:
+		return float(hazard.get("life", 0.0)) > 0.0 and WORLD_RECT.grow(100.0).has_point(Vector2(hazard.get("pos", Vector2.ZERO)))
+	)
+
+
+func _enemy_attack_hazard_contains(hazard: Dictionary, point: Vector2) -> bool:
+	var region := hazard.get("hit_region", {}) as Dictionary
+	if str(hazard.get("delivery", "")) == "marked_impact":
+		return point.distance_to(Vector2(hazard.get("pos", Vector2.ZERO))) <= float(region.get("radius_pixels", 0.0))
+	var start: Vector2 = Vector2(hazard.get("previous_pos", hazard.get("pos", Vector2.ZERO)))
+	var finish: Vector2 = Vector2(hazard.get("pos", Vector2.ZERO))
+	var radius := maxf(4.0, float(region.get("width_pixels", 0.0)) * 0.5)
+	return _distance_to_segment(point, start, finish) <= radius
+
+
+func _distance_to_segment(point: Vector2, start: Vector2, finish: Vector2) -> float:
+	var segment := finish - start
+	var length_squared := segment.length_squared()
+	if length_squared <= 0.000001:
+		return point.distance_to(start)
+	var amount := clampf((point - start).dot(segment) / length_squared, 0.0, 1.0)
+	return point.distance_to(start + segment * amount)
 
 
 func _resolve_projectile_hit(projectile: Dictionary, enemy: Dictionary) -> Dictionary:
@@ -764,6 +857,21 @@ func _draw_attacks() -> void:
 		var position: Vector2 = boomerang["pos"]
 		draw_arc(position, 20.0, 0.0, TAU, 16, Color("5eead4"), 5.0)
 		draw_line(position - Vector2(16, 0), position + Vector2(16, 0), Color("a78bfa"), 4.0)
+	for hazard: Dictionary in enemy_attack_hazards:
+		var hazard_position: Vector2 = Vector2(hazard.get("pos", Vector2.ZERO))
+		if str(hazard.get("delivery", "")) == "projectile":
+			var velocity: Vector2 = Vector2(hazard.get("vel", Vector2.ZERO))
+			var direction := velocity.normalized() if velocity.length() > 0.001 else Vector2.RIGHT
+			draw_line(hazard_position - direction * 18.0, hazard_position, Color(1.0, 0.32, 0.18, 0.72), 5.0)
+			draw_circle(hazard_position, 7.0, Color("fb923c"))
+			draw_circle(hazard_position, 3.0, Color("fff7ed"))
+		else:
+			var region := hazard.get("hit_region", {}) as Dictionary
+			var radius := float(region.get("radius_pixels", 0.0))
+			var life_ratio := clampf(float(hazard.get("life", 0.0)) / maxf(0.001, float(hazard.get("maximum_life", 0.0))), 0.0, 1.0)
+			draw_circle(hazard_position, radius, Color(0.95, 0.18, 0.12, 0.22))
+			draw_arc(hazard_position, radius, 0.0, TAU, 32, Color("fb7185"), 5.0)
+			draw_arc(hazard_position, radius * life_ratio, 0.0, TAU, 28, Color("fde047"), 3.0)
 	if blueprint != null and blueprint.behavior_family == "heavy_melee" and melee_timer > 0.08 and melee_timer < 0.34:
 		draw_arc(player_position, 104.0, -0.8 if facing > 0 else PI - 0.8, 0.8 if facing > 0 else PI + 0.8, 24, Color("fb7185"), 8.0)
 	if blueprint != null and blueprint.behavior_family == "sustained_ranged" and attack_charge > 0.0:
@@ -819,16 +927,32 @@ func _draw_enemy_attack_preview(enemy: Dictionary) -> void:
 	if attack_runtime == null or not attack_runtime.is_telegraphing() or attack_runtime.current_attack.is_empty():
 		return
 	var region := attack_runtime.current_attack.get("hit_region", {}) as Dictionary
+	var attack_axes := attack_runtime.current_attack.get("axes", {}) as Dictionary
+	var attack_motion := attack_runtime.current_attack.get("attack_motion", {}) as Dictionary
 	var origin: Vector2 = Vector2(enemy["pos"])
 	var direction: Vector2 = Vector2(attack_runtime.locked_direction).normalized()
 	var color := Color(1.0, 0.28, 0.20, 0.58)
+	if str(attack_axes.get("delivery", "")) == "projectile":
+		var path_length := minf(
+			720.0,
+			float(attack_motion.get("travel_speed_pixels_per_second", 0.0))
+				* float(attack_motion.get("hazard_lifetime_seconds", 0.0))
+		)
+		for segment_index: int in range(0, int(path_length), 32):
+			var segment_start := origin + direction * float(segment_index)
+			var segment_end := origin + direction * minf(path_length, float(segment_index + 18))
+			draw_line(segment_start, segment_end, Color(1.0, 0.52, 0.22, 0.42), 2.0)
 	match str(region.get("shape", "capsule")):
 		"arc":
 			var half_arc := deg_to_rad(float(region.get("arc_degrees", 0.0)) * 0.5)
 			var angle := direction.angle()
 			draw_arc(origin, float(region.get("radius_pixels", 0.0)), angle - half_arc, angle + half_arc, 24, color, 4.0)
 		"circle":
-			draw_circle(Vector2(attack_runtime.locked_point), float(region.get("radius_pixels", 0.0)), color, false, 4.0)
+			var impact_point: Vector2 = Vector2(attack_runtime.locked_point)
+			var impact_radius := float(region.get("radius_pixels", 0.0))
+			draw_circle(impact_point, impact_radius, color, false, 4.0)
+			draw_line(impact_point - Vector2(10, 0), impact_point + Vector2(10, 0), color, 3.0)
+			draw_line(impact_point - Vector2(0, 10), impact_point + Vector2(0, 10), color, 3.0)
 		"strip", "capsule":
 			var length := float(region.get("length_pixels", 0.0))
 			var side: Vector2 = direction.orthogonal() * float(region.get("width_pixels", 0.0)) * 0.5

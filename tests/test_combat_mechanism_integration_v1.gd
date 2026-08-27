@@ -18,6 +18,9 @@ func _initialize() -> void:
 	_run("Weak weapon reaction does not invent an interruption", _test_weak_reaction_does_not_interrupt)
 	_run("Armored commit resists control during its protected phase", _test_armored_commit_protection)
 	_run("Ranged arena enemies use the same attack and interruption bridge", _test_ranged_arena_bridge)
+	_run("Projectile activation preserves its committed direction and compiled lifetime", _test_projectile_activation_event)
+	_run("Marked impact activates at its committed point with the compiled circle", _test_marked_activation_event)
+	_run("Ranged arena materializes and resolves both detached hazard families", _test_arena_detached_hazards)
 	_run("Runtime bridge remains identity-free and asks no player question", _test_runtime_boundary)
 	print("COMBAT_MECHANISM_INTEGRATION_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
@@ -168,6 +171,85 @@ func _test_ranged_arena_bridge() -> Variant:
 	var interrupted: bool = attack_runtime.phase == "recovery" and str(enemy.get("attack_phase", "")) == "recovery"
 	arena.free()
 	return true if began and interrupted else {"began": began, "interrupted": interrupted, "outcome": outcome}
+
+
+func _test_projectile_activation_event() -> Variant:
+	var driver: RefCounted = DRIVER.new()
+	driver.configure([_declaration({
+		"delivery": "projectile", "target_lock": "direction_on_commit", "hit_shape": "capsule",
+	})])
+	driver.begin_attack(_context(300.0, 0.0), Vector2.ZERO, Vector2(300, 0))
+	var timeline := driver.current_attack.get("timeline", {}) as Dictionary
+	driver.step(float(timeline["telegraph_seconds"]) + 0.001, Vector2.ZERO, Vector2(300, 0))
+	var result: Dictionary = driver.step(float(timeline["commit_seconds"]) + 0.001, Vector2.ZERO, Vector2(0, 300))
+	var event := result.get("activation_event", {}) as Dictionary
+	var velocity: Vector2 = Vector2(event.get("velocity", Vector2.ZERO))
+	var region := event.get("hit_region", {}) as Dictionary
+	var ok := str(event.get("delivery", "")) == "projectile"
+	ok = ok and velocity.x > 500.0 and absf(velocity.y) < 0.001
+	ok = ok and is_equal_approx(float(event.get("hazard_lifetime_seconds", 0.0)), 1.35)
+	ok = ok and str(region.get("shape", "")) == "capsule"
+	return true if ok else event
+
+
+func _test_marked_activation_event() -> Variant:
+	var driver: RefCounted = DRIVER.new()
+	driver.configure([_declaration({
+		"delivery": "marked_impact", "target_lock": "point_on_commit",
+		"hit_shape": "circle", "depth_path": "depth_band",
+	})])
+	var committed_point := Vector2(280, 45)
+	driver.begin_attack(_context(committed_point.length(), committed_point.y), Vector2.ZERO, committed_point)
+	var timeline := driver.current_attack.get("timeline", {}) as Dictionary
+	driver.step(float(timeline["telegraph_seconds"]) + 0.001, Vector2.ZERO, committed_point)
+	var result: Dictionary = driver.step(float(timeline["commit_seconds"]) + 0.001, Vector2.ZERO, Vector2(-250, -80))
+	var event := result.get("activation_event", {}) as Dictionary
+	var region := event.get("hit_region", {}) as Dictionary
+	var ok := str(event.get("delivery", "")) == "marked_impact"
+	ok = ok and Vector2(event.get("origin", Vector2.ZERO)).is_equal_approx(committed_point)
+	ok = ok and Vector2(event.get("velocity", Vector2.ONE)).is_zero_approx()
+	ok = ok and str(region.get("shape", "")) == "circle" and is_equal_approx(float(region.get("radius_pixels", 0.0)), 68.0)
+	return true if ok else event
+
+
+func _test_arena_detached_hazards() -> Variant:
+	var projectile_arena: Node2D = ARENA.new()
+	projectile_arena.stage_name = "wave"
+	projectile_arena.player_position = Vector2(700, 400)
+	projectile_arena._spawn_enemy("guard", Vector2(300, 400), 100.0)
+	var guard: Dictionary = projectile_arena.enemies[0]
+	projectile_arena._update_enemies(0.01)
+	var guard_runtime: Variant = guard["attack_runtime"]
+	var guard_timeline := guard_runtime.current_attack.get("timeline", {}) as Dictionary
+	projectile_arena._update_enemies(float(guard_timeline["telegraph_seconds"]) + float(guard_timeline["commit_seconds"]) + 0.01)
+	var projectile_spawned: bool = projectile_arena.enemy_attack_hazards.size() == 1 \
+		and str(projectile_arena.enemy_attack_hazards[0].get("delivery", "")) == "projectile"
+	var projectile_health: float = float(projectile_arena.player_health)
+	projectile_arena._update_enemy_attack_hazards(0.75)
+	var projectile_hit: bool = projectile_arena.player_health < projectile_health and projectile_arena.enemy_attack_hazards.is_empty()
+	projectile_arena.free()
+
+	var marked_arena: Node2D = ARENA.new()
+	marked_arena.stage_name = "wave"
+	marked_arena.player_position = Vector2(700, 400)
+	marked_arena._spawn_enemy("rusher", Vector2(300, 400), 100.0)
+	var rusher: Dictionary = marked_arena.enemies[0]
+	marked_arena._update_enemies(0.01)
+	var rusher_runtime: Variant = rusher["attack_runtime"]
+	var rusher_timeline := rusher_runtime.current_attack.get("timeline", {}) as Dictionary
+	marked_arena._update_enemies(float(rusher_timeline["telegraph_seconds"]) + float(rusher_timeline["commit_seconds"]) + 0.01)
+	var marked_spawned: bool = marked_arena.enemy_attack_hazards.size() == 1 \
+		and str(marked_arena.enemy_attack_hazards[0].get("delivery", "")) == "marked_impact"
+	var marked_health: float = float(marked_arena.player_health)
+	marked_arena._update_enemy_attack_hazards(0.01)
+	var marked_hit: bool = marked_arena.player_health < marked_health and marked_arena.enemy_attack_hazards.is_empty()
+	marked_arena.free()
+	return true if projectile_spawned and projectile_hit and marked_spawned and marked_hit else {
+		"projectile_spawned": projectile_spawned,
+		"projectile_hit": projectile_hit,
+		"marked_spawned": marked_spawned,
+		"marked_hit": marked_hit,
+	}
 
 
 func _control_outcome(level: String, context: Dictionary) -> Dictionary:

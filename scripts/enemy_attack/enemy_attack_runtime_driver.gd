@@ -82,6 +82,7 @@ func step(delta: float, source_position: Vector2, target_position: Vector2) -> D
 	var active_seconds_this_step := 0.0
 	var entered_active := false
 	var completed_attack := false
+	var activation_event: Dictionary = {}
 	var remaining := maxf(0.0, delta)
 	var transition_guard := 0
 	while remaining > 0.000001 and phase != "idle" and transition_guard < 8:
@@ -97,13 +98,16 @@ func step(delta: float, source_position: Vector2, target_position: Vector2) -> D
 		if phase_elapsed + 0.000001 < duration:
 			break
 		var transition := _advance_phase(source_position, target_position)
-		entered_active = entered_active or str(transition.get("entered", "")) == "active"
+		if str(transition.get("entered", "")) == "active":
+			entered_active = true
+			activation_event = _activation_event(source_position)
 		completed_attack = completed_attack or bool(transition.get("completed", false))
 		if phase_remaining <= 0.000001 and consumed <= 0.000001 and phase != "idle":
 			continue
 	var result := snapshot()
 	result["active_seconds_this_step"] = active_seconds_this_step
 	result["entered_active"] = entered_active
+	result["activation_event"] = activation_event
 	result["completed_attack"] = completed_attack
 	return result
 
@@ -233,6 +237,36 @@ func snapshot() -> Dictionary:
 		"recovery": (attack.get("recovery", {}) as Dictionary).duplicate(true),
 		"active_hit_registered": active_hit_registered,
 		"last_transition_reason": last_transition_reason,
+		"identity_inputs_used": false,
+		"player_confirmation_required": false,
+	}
+
+
+func _activation_event(source_position: Vector2) -> Dictionary:
+	if current_attack.is_empty():
+		return {}
+	var axes := current_attack.get("axes", {}) as Dictionary
+	var motion := current_attack.get("attack_motion", {}) as Dictionary
+	var region := current_attack.get("hit_region", {}) as Dictionary
+	var delivery := str(axes.get("delivery", ""))
+	var origin := source_position
+	if str(motion.get("origin_mode", "attacker")) == "locked_point":
+		origin = locked_point
+	var speed := float(motion.get("travel_speed_pixels_per_second", 0.0))
+	return {
+		"ok": true,
+		"schema": "forge-enemy-attack-activation-event-v1",
+		"attack_key": str(current_attack.get("attack_key", "")),
+		"mechanism_signature": str(current_attack.get("mechanism_signature", "")),
+		"delivery": delivery,
+		"origin": origin,
+		"locked_direction": locked_direction,
+		"locked_point": locked_point,
+		"velocity": locked_direction * speed,
+		"hazard_lifetime_seconds": float(motion.get("hazard_lifetime_seconds", 0.0)),
+		"active_seconds": _timeline_seconds(current_attack, "active_seconds"),
+		"hit_region": region.duplicate(true),
+		"attack_motion": motion.duplicate(true),
 		"identity_inputs_used": false,
 		"player_confirmation_required": false,
 	}
