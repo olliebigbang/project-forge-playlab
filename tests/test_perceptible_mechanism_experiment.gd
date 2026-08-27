@@ -121,8 +121,8 @@ func _test_surface_samples_are_data_driven() -> void:
 func _test_experiment_boundary_and_entrypoints() -> void:
 	var resolver_source := FileAccess.get_file_as_string("res://scripts/combat_feel/perceptible_contact_mechanics.gd").to_lower()
 	var index_source := FileAccess.get_file_as_string("res://data/combat_feel/perceptible_mechanism_experiment_assets.json")
-	var slice_source := FileAccess.get_file_as_string("res://scripts/combat_feel/combat_feel_slice_0.gd")
-	var experiment_source := FileAccess.get_file_as_string("res://scripts/combat_feel/perceptible_mechanism_experiment.gd")
+	var slice_source := FileAccess.get_file_as_string("res://scripts/combat_feel/combat_feel_slice_0.gd").replace("\r\n", "\n")
+	var experiment_source := FileAccess.get_file_as_string("res://scripts/combat_feel/perceptible_mechanism_experiment.gd").replace("\r\n", "\n")
 	var ok := not resolver_source.contains("longsword") and not resolver_source.contains("spear") and not resolver_source.contains("chair")
 	ok = ok and index_source.contains('"developer_experiment_only": true') and index_source.contains('"frozen_evidence_claim": false')
 	ok = ok and slice_source.contains("func _mechanism_experiment_enabled() -> bool:\n\treturn false")

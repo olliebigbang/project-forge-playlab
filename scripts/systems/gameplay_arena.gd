@@ -6,7 +6,16 @@ signal metrics_changed(metrics: Dictionary)
 
 const RULES := preload("res://scripts/systems/combat_rules.gd")
 const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
+const TARGET_INTERACTION := preload("res://scripts/combat_feel/weapon_target_interaction_resolver.gd")
 const WORLD_RECT := Rect2(34, 116, 1212, 568)
+
+const TARGET_MECHANICAL_PROFILES := {
+	"swarmling": {"mass_class": "light", "armor_integrity": 0.0},
+	"rusher": {"mass_class": "medium", "armor_integrity": 0.0},
+	"guard": {"mass_class": "heavy", "armor_integrity": 1.0},
+	"target": {"mass_class": "medium", "armor_integrity": 0.0},
+	"moving_target": {"mass_class": "medium", "armor_integrity": 0.0},
+}
 
 var stage_name := "training"
 var blueprint: WeaponBlueprint
@@ -301,6 +310,10 @@ func _fire_bullet() -> void:
 		axis_signature = str(ranged_runtime_profile.get("axis_signature", ""))
 	var origin := _muzzle_world()
 	var shot_direction := Vector2(facing, 0.0).rotated(_firearm_recoil_rotation())
+	var target_interaction_profile := TARGET_INTERACTION.compile_ranged(
+		blueprint.affordance,
+		ranged_runtime_profile
+	)
 	projectiles.append({
 		"pos": origin,
 		"origin": origin,
@@ -315,6 +328,7 @@ func _fire_bullet() -> void:
 		"pierces": pierce_budget,
 		"hit": {},
 		"axis_signature": axis_signature,
+		"target_interaction_profile": target_interaction_profile,
 	})
 
 
@@ -336,7 +350,7 @@ func _projectile_damage_against(projectile: Dictionary, enemy: Dictionary) -> fl
 	if travelled > falloff_start:
 		var falloff := clampf(inverse_lerp(falloff_start, falloff_end, travelled), 0.0, 1.0)
 		damage *= lerpf(1.0, 0.55, falloff)
-	if str(enemy.get("type", "")) == "guard" and _is_front_hit(enemy):
+	if float(enemy.get("armor_integrity", 0.0)) > 0.0 and _is_front_hit(enemy):
 		damage *= float(projectile.get("armor_damage_multiplier", 0.45))
 	return maxf(1.0, damage)
 
@@ -352,11 +366,7 @@ func _update_projectiles(delta: float) -> void:
 			var hit: Dictionary = projectile["hit"]
 			if not hit.has(enemy_id) and Vector2(projectile["pos"]).distance_to(enemy["pos"]) < 23.0:
 				hit[enemy_id] = true
-				_damage_enemy(
-					enemy,
-					_projectile_damage_against(projectile, enemy),
-					float(projectile.get("hit_stagger_seconds", 0.12))
-				)
+				_resolve_projectile_hit(projectile, enemy)
 				enemy["burn"] = 2.2
 				if int(projectile["pierces"]) > 0:
 					projectile["pierces"] = int(projectile["pierces"]) - 1
@@ -366,14 +376,16 @@ func _update_projectiles(delta: float) -> void:
 
 func _update_enemies(delta: float) -> void:
 	for enemy: Dictionary in enemies:
+		_tick_target_interaction(enemy, delta)
 		enemy["hurt"] = maxf(0.0, float(enemy.get("hurt", 0.0)) - delta)
 		enemy["cooldown"] = maxf(0.0, float(enemy.get("cooldown", 0.0)) - delta)
 		if float(enemy.get("burn", 0.0)) > 0.0:
 			enemy["burn"] = float(enemy["burn"]) - delta
 			enemy["hp"] = float(enemy["hp"]) - 5.0 * delta
 		if stage_name == "training":
-			if enemy["type"] == "moving_target":
-				enemy["pos"] = Vector2(enemy["pos"]) + Vector2(float(enemy["patrol"]), 0) * 75.0 * delta
+			if enemy["type"] == "moving_target" and not _target_is_immobilized(enemy):
+				var training_speed := 75.0 * _target_suppression_speed(enemy)
+				enemy["pos"] = Vector2(enemy["pos"]) + Vector2(float(enemy["patrol"]), 0) * training_speed * delta
 				if float(Vector2(enemy["pos"]).x) < 680.0 or float(Vector2(enemy["pos"]).x) > 1120.0:
 					enemy["patrol"] = -float(enemy["patrol"])
 			if float(enemy["hp"]) <= 0.0:
@@ -381,6 +393,8 @@ func _update_enemies(delta: float) -> void:
 			continue
 		var to_player := player_position - Vector2(enemy["pos"])
 		enemy["facing"] = signf(to_player.x)
+		if _target_is_immobilized(enemy):
+			continue
 		var speed := 54.0
 		if enemy["type"] == "rusher":
 			enemy["charge"] = float(enemy.get("charge", 0.0)) + delta
@@ -392,6 +406,9 @@ func _update_enemies(delta: float) -> void:
 			speed = 82.0
 		elif enemy["type"] == "guard":
 			speed = 42.0
+		speed *= _target_suppression_speed(enemy)
+		if float(enemy.get("suppression_seconds", 0.0)) > 0.0:
+			enemy["cooldown"] = maxf(float(enemy.get("cooldown", 0.0)), 0.18)
 		if to_player.length() > 28.0:
 			enemy["pos"] = Vector2(enemy["pos"]) + to_player.normalized() * speed * delta
 		elif float(enemy["cooldown"]) <= 0.0 and invulnerable_timer <= 0.0:
@@ -408,6 +425,89 @@ func _update_enemies(delta: float) -> void:
 func _damage_enemy(enemy: Dictionary, amount: float, hurt_seconds: float = 0.12) -> void:
 	enemy["hp"] = float(enemy["hp"]) - amount
 	enemy["hurt"] = maxf(float(enemy.get("hurt", 0.0)), hurt_seconds)
+
+
+func _resolve_projectile_hit(projectile: Dictionary, enemy: Dictionary) -> Dictionary:
+	var interaction_profile: Dictionary = projectile.get("target_interaction_profile", {}) as Dictionary
+	if not bool(interaction_profile.get("ok", false)):
+		interaction_profile = TARGET_INTERACTION.compile_ranged(
+			blueprint.affordance if blueprint != null else {},
+			ranged_runtime_profile
+		)
+	var direction := Vector2(projectile.get("vel", Vector2(facing, 0.0))).normalized()
+	if direction.length() < 0.1:
+		direction = Vector2(facing, 0.0)
+	var base_damage := _projectile_damage_against(projectile, enemy)
+	var outcome := TARGET_INTERACTION.resolve(
+		interaction_profile,
+		_target_interaction_context(enemy),
+		base_damage,
+		{
+			"knockback": direction * 22.0,
+			"stagger": float(projectile.get("hit_stagger_seconds", 0.12)),
+		}
+	)
+	_damage_enemy(
+		enemy,
+		float(outcome.get("health_damage", base_damage)),
+		float(outcome.get("stagger_seconds", projectile.get("hit_stagger_seconds", 0.12)))
+	)
+	_apply_target_interaction(enemy, outcome)
+	return outcome
+
+
+func _target_interaction_context(enemy: Dictionary) -> Dictionary:
+	return {
+		"mass_class": str(enemy.get("mass_class", "medium")),
+		"armor_integrity": float(enemy.get("armor_integrity", 0.0)),
+		"state": "attack" if float(enemy.get("cooldown", 0.0)) <= 0.0 else "recovery",
+	}
+
+
+func _apply_target_interaction(enemy: Dictionary, outcome: Dictionary) -> void:
+	if not bool(outcome.get("ok", false)):
+		return
+	var armor_before := float(enemy.get("armor_integrity", 0.0))
+	enemy["armor_integrity"] = maxf(0.0, armor_before - float(outcome.get("armor_damage", 0.0)))
+	var status := str(outcome.get("status", ""))
+	if armor_before > 0.0 and float(enemy["armor_integrity"]) <= 0.0:
+		status = "ARMOR BROKEN"
+	enemy["interaction_status"] = status
+	enemy["interaction_status_time"] = maxf(
+		float(enemy.get("interaction_status_time", 0.0)),
+		float(outcome.get("status_seconds", 0.0))
+	)
+	enemy["pin_seconds"] = maxf(float(enemy.get("pin_seconds", 0.0)), float(outcome.get("pin_seconds", 0.0)))
+	enemy["entangle_seconds"] = maxf(float(enemy.get("entangle_seconds", 0.0)), float(outcome.get("entangle_seconds", 0.0)))
+	enemy["suppression_seconds"] = maxf(float(enemy.get("suppression_seconds", 0.0)), float(outcome.get("suppression_seconds", 0.0)))
+	enemy["last_target_interaction"] = outcome.duplicate(true)
+	var displacement: Vector2 = outcome.get("knockback", Vector2.ZERO)
+	match str(outcome.get("displacement_mode", "away")):
+		"hold": displacement = Vector2.ZERO
+		"toward_source": displacement *= -1.0
+	if displacement.length() > 0.0:
+		var moved := Vector2(enemy["pos"]) + displacement
+		var target_bounds := WORLD_RECT.grow(-26.0)
+		moved.x = clampf(moved.x, target_bounds.position.x, target_bounds.end.x)
+		moved.y = clampf(moved.y, target_bounds.position.y, target_bounds.end.y)
+		enemy["pos"] = moved
+	if bool(outcome.get("interrupts_attack", false)):
+		enemy["cooldown"] = maxf(float(enemy.get("cooldown", 0.0)), float(outcome.get("status_seconds", 0.0)))
+
+
+func _tick_target_interaction(enemy: Dictionary, delta: float) -> void:
+	for timer: String in ["pin_seconds", "entangle_seconds", "suppression_seconds", "interaction_status_time"]:
+		enemy[timer] = maxf(0.0, float(enemy.get(timer, 0.0)) - delta)
+	if float(enemy.get("interaction_status_time", 0.0)) <= 0.0:
+		enemy["interaction_status"] = ""
+
+
+func _target_is_immobilized(enemy: Dictionary) -> bool:
+	return float(enemy.get("pin_seconds", 0.0)) > 0.0 or float(enemy.get("entangle_seconds", 0.0)) > 0.0
+
+
+func _target_suppression_speed(enemy: Dictionary) -> float:
+	return 0.55 if float(enemy.get("suppression_seconds", 0.0)) > 0.0 else 1.0
 
 func _chain_damage(source: Dictionary, amount: float) -> void:
 	for enemy: Dictionary in enemies:
@@ -448,10 +548,16 @@ func _spawn_stage() -> void:
 			_spawn_enemy("moving_target", Vector2(980, 520), 150.0)
 
 func _spawn_enemy(type_name: String, position: Vector2, health: float) -> void:
+	var mechanical: Dictionary = (TARGET_MECHANICAL_PROFILES.get(type_name, TARGET_MECHANICAL_PROFILES["target"]) as Dictionary).duplicate(true)
 	enemies.append({
 		"id": enemies.size() + 1, "type": type_name, "pos": position, "hp": health,
 		"max_hp": health, "facing": -1.0, "cooldown": 0.0, "hurt": 0.0,
-		"burn": 0.0, "charge": 0.0, "patrol": 1.0
+		"burn": 0.0, "charge": 0.0, "patrol": 1.0,
+		"mass_class": str(mechanical.get("mass_class", "medium")),
+		"armor_integrity": float(mechanical.get("armor_integrity", 0.0)),
+		"pin_seconds": 0.0, "entangle_seconds": 0.0, "suppression_seconds": 0.0,
+		"interaction_status": "", "interaction_status_time": 0.0,
+		"last_target_interaction": {},
 	})
 
 func _muzzle_world() -> Vector2:
@@ -587,8 +693,10 @@ func _draw_enemies() -> void:
 					draw_arc(position, 29.0, 0, TAU, 24, Color("ef4444"), 3.0)
 			"guard":
 				draw_rect(Rect2(position - Vector2(18, 22), Vector2(36, 44)), color, true)
-				var shield_x := 23.0 * float(enemy["facing"])
-				draw_rect(Rect2(position + Vector2(shield_x - 6, -27), Vector2(12, 54)), Color("64748b"), true)
+				if float(enemy.get("armor_integrity", 0.0)) > 0.0:
+					var shield_x := 23.0 * float(enemy["facing"])
+					var armor_color := Color("64748b").lerp(Color("fb7185"), 1.0 - float(enemy.get("armor_integrity", 0.0)))
+					draw_rect(Rect2(position + Vector2(shield_x - 6, -27), Vector2(12, 54)), armor_color, true)
 			"moving_target":
 				draw_circle(position, 25.0, Color("475569"))
 				draw_circle(position, 14.0, Color("38bdf8"))
@@ -598,7 +706,30 @@ func _draw_enemies() -> void:
 				draw_circle(position - Vector2(0, 33), 25.0, Color("ef4444"), false, 7.0)
 		if float(enemy.get("burn", 0.0)) > 0.0:
 			draw_circle(position + Vector2(0, -30), 8.0, Color("38bdf8"))
+		_draw_target_interaction(enemy)
 		var max_hp := float(enemy["max_hp"])
 		var ratio := clampf(float(enemy["hp"]) / maxf(1.0, max_hp), 0.0, 1.0)
 		draw_rect(Rect2(position + Vector2(-24, -40), Vector2(48, 5)), Color("0f172a"), true)
 		draw_rect(Rect2(position + Vector2(-24, -40), Vector2(48 * ratio, 5)), Color("4ade80"), true)
+
+
+func _draw_target_interaction(enemy: Dictionary) -> void:
+	var status := str(enemy.get("interaction_status", ""))
+	if status.is_empty():
+		return
+	var position: Vector2 = enemy["pos"]
+	var color := Color("facc15")
+	if float(enemy.get("pin_seconds", 0.0)) > 0.0:
+		color = Color("22d3ee")
+		draw_line(position + Vector2(-12, 19), position + Vector2(-12, 37), color, 3.0)
+		draw_line(position + Vector2(12, 19), position + Vector2(12, 37), color, 3.0)
+	elif float(enemy.get("entangle_seconds", 0.0)) > 0.0:
+		color = Color("c084fc")
+		draw_arc(position, 31.0, 0.0, TAU, 24, color, 3.0)
+	elif float(enemy.get("suppression_seconds", 0.0)) > 0.0:
+		color = Color("f59e0b")
+		for offset: float in [-7.0, 0.0, 7.0]:
+			draw_line(position + Vector2(-28, offset), position + Vector2(28, offset), color, 2.0)
+	elif status == "ARMOR BROKEN":
+		color = Color("fb7185")
+	draw_string(ThemeDB.fallback_font, position + Vector2(-48, -48), status, HORIZONTAL_ALIGNMENT_CENTER, 96, 12, color)
