@@ -9,6 +9,7 @@ const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanis
 const TARGET_INTERACTION := preload("res://scripts/combat_feel/weapon_target_interaction_resolver.gd")
 const ENEMY_ATTACK_RUNTIME := preload("res://scripts/enemy_attack/enemy_attack_runtime_driver.gd")
 const ENEMY_ATTACK_VISUAL := preload("res://scripts/enemy_attack/enemy_attack_visual_language.gd")
+const ENEMY_ATTACK_SPRITE := preload("res://scripts/enemy_attack/enemy_attack_sprite_language.gd")
 const WORLD_RECT := Rect2(34, 116, 1212, 568)
 
 const TARGET_MECHANICAL_PROFILES := {
@@ -890,37 +891,374 @@ func _draw_attacks() -> void:
 func _draw_enemies() -> void:
 	for enemy: Dictionary in enemies:
 		var position: Vector2 = enemy["pos"]
-		var color := Color("f8fafc") if float(enemy["hurt"]) > 0.0 else Color("f59e0b")
-		match enemy["type"]:
-			"swarmling":
-				draw_circle(position, 15.0, color)
-				draw_circle(position + Vector2(-5, -2), 2.0, Color("111827"))
-				draw_circle(position + Vector2(5, -2), 2.0, Color("111827"))
-			"rusher":
-				draw_colored_polygon(PackedVector2Array([position + Vector2(-20, -18), position + Vector2(24, 0), position + Vector2(-20, 18)]), color)
-				if float(enemy.get("charge", 0.0)) > 1.05:
-					draw_arc(position, 29.0, 0, TAU, 24, Color("ef4444"), 3.0)
-			"guard":
-				draw_rect(Rect2(position - Vector2(18, 22), Vector2(36, 44)), color, true)
-				if float(enemy.get("armor_integrity", 0.0)) > 0.0:
-					var shield_x := 23.0 * float(enemy["facing"])
-					var armor_color := Color("64748b").lerp(Color("fb7185"), 1.0 - float(enemy.get("armor_integrity", 0.0)))
-					draw_rect(Rect2(position + Vector2(shield_x - 6, -27), Vector2(12, 54)), armor_color, true)
-			"moving_target":
-				draw_circle(position, 25.0, Color("475569"))
-				draw_circle(position, 14.0, Color("38bdf8"))
-				draw_circle(position, 5.0, Color("f8fafc"))
-			_:
-				draw_rect(Rect2(position - Vector2(8, 34), Vector2(16, 68)), Color("64748b"), true)
-				draw_circle(position - Vector2(0, 33), 25.0, Color("ef4444"), false, 7.0)
+		var sprite_attack := _enemy_sprite_attack(enemy)
+		var mechanism_sprite_drawn := false
+		if not sprite_attack.is_empty():
+			mechanism_sprite_drawn = _draw_enemy_axis_sprite(enemy, sprite_attack)
+		if not mechanism_sprite_drawn:
+			_draw_noncombat_target(enemy, position)
 		if float(enemy.get("burn", 0.0)) > 0.0:
-			draw_circle(position + Vector2(0, -30), 8.0, Color("38bdf8"))
+			draw_rect(Rect2(position + Vector2(-6, -74), Vector2(12, 12)), Color("38bdf8"), true)
 		_draw_enemy_attack_preview(enemy)
 		_draw_target_interaction(enemy)
 		var max_hp := float(enemy["max_hp"])
 		var ratio := clampf(float(enemy["hp"]) / maxf(1.0, max_hp), 0.0, 1.0)
-		draw_rect(Rect2(position + Vector2(-24, -40), Vector2(48, 5)), Color("0f172a"), true)
-		draw_rect(Rect2(position + Vector2(-24, -40), Vector2(48 * ratio, 5)), Color("4ade80"), true)
+		var health_y := -58.0 if mechanism_sprite_drawn else -40.0
+		draw_rect(Rect2(position + Vector2(-24, health_y), Vector2(48, 5)), Color("0f172a"), true)
+		draw_rect(Rect2(position + Vector2(-24, health_y), Vector2(48 * ratio, 5)), Color("4ade80"), true)
+
+
+func _enemy_sprite_attack(enemy: Dictionary) -> Dictionary:
+	var attack_runtime: Variant = enemy.get("attack_runtime", null)
+	if attack_runtime == null:
+		return {}
+	if not attack_runtime.current_attack.is_empty():
+		return attack_runtime.current_attack
+	var compiled: Array = attack_runtime.compiled_attacks
+	if compiled.is_empty():
+		return {}
+	return compiled[0] as Dictionary
+
+
+func _draw_noncombat_target(enemy: Dictionary, position: Vector2) -> void:
+	if str(enemy.get("type", "")) == "moving_target":
+		draw_circle(position, 25.0, Color("475569"))
+		draw_circle(position, 14.0, Color("38bdf8"))
+		draw_circle(position, 5.0, Color("f8fafc"))
+		return
+	draw_rect(Rect2(position - Vector2(8, 34), Vector2(16, 68)), Color("64748b"), true)
+	draw_circle(position - Vector2(0, 33), 25.0, Color("ef4444"), false, 7.0)
+
+
+func _draw_enemy_axis_sprite(enemy: Dictionary, compiled_attack: Dictionary) -> bool:
+	var sprite: Dictionary = ENEMY_ATTACK_SPRITE.compile(compiled_attack)
+	if not bool(sprite.get("ok", false)):
+		return false
+	var attack_runtime: Variant = enemy.get("attack_runtime", null)
+	var phase := "idle"
+	var phase_elapsed := 0.0
+	var direction := Vector2(float(enemy.get("facing", -1.0)), 0.0)
+	if attack_runtime != null and not attack_runtime.current_attack.is_empty():
+		phase = str(attack_runtime.phase)
+		phase_elapsed = float(attack_runtime.phase_elapsed)
+		direction = Vector2(attack_runtime.locked_direction).normalized()
+	if direction.is_zero_approx():
+		direction = Vector2(float(enemy.get("facing", -1.0)), 0.0)
+	var facing_sign := -1.0 if direction.x < 0.0 else 1.0
+	var progress := _enemy_sprite_phase_progress(compiled_attack, phase, phase_elapsed)
+	var animation_hz := float(sprite.get("animation_hz", 4.0))
+	var animation_frame := int(floor(phase_elapsed * animation_hz)) % 2
+	var body_width := float(sprite.get("body_width", 28.0))
+	var body_height := float(sprite.get("body_height", 32.0))
+	var pose_offset := _enemy_sprite_pose_offset(sprite, phase, progress, animation_frame, facing_sign)
+	var base := _snap_enemy_pixel(Vector2(enemy["pos"]) + pose_offset)
+	var outline := Color("111827")
+	var body_color := Color("f8fafc") if float(enemy.get("hurt", 0.0)) > 0.0 else Color(str(sprite.get("body_color", "64748b")))
+	var accent := Color(str(sprite.get("accent_color", "facc15")))
+	_draw_enemy_axis_stance(base, body_width, body_height, facing_sign, str(sprite.get("stance_family", "narrow")), outline, body_color)
+	_draw_enemy_axis_chassis(base, body_width, body_height, int(sprite.get("armor_plate_count", 0)), outline, body_color)
+	_draw_enemy_axis_tool(base, body_width, body_height, facing_sign, direction, phase, progress, sprite, outline, accent)
+	_draw_enemy_axis_sensor(base, body_height, facing_sign, str(sprite.get("sensor_family", "tracking_eye")), outline, accent)
+	return true
+
+
+func _enemy_sprite_phase_progress(compiled_attack: Dictionary, phase: String, phase_elapsed: float) -> float:
+	if phase == "idle":
+		return 0.0
+	var timeline := compiled_attack.get("timeline", {}) as Dictionary
+	var duration := float(timeline.get("%s_seconds" % phase, 0.0))
+	if duration <= 0.0001:
+		return 1.0
+	return clampf(phase_elapsed / duration, 0.0, 1.0)
+
+
+func _enemy_sprite_pose_offset(
+	sprite: Dictionary,
+	phase: String,
+	progress: float,
+	animation_frame: int,
+	facing_sign: float
+) -> Vector2:
+	var family := str(sprite.get("tool_family", "swing_limb"))
+	var pixel_pulse := -2.0 if animation_frame == 1 and phase in ["telegraph", "commit"] else 0.0
+	match phase:
+		"telegraph":
+			if family == "ram_prongs":
+				return Vector2(-facing_sign * lerpf(0.0, 7.0, progress), lerpf(0.0, 6.0, progress) + pixel_pulse)
+			return Vector2(-facing_sign * lerpf(0.0, 3.0, progress), pixel_pulse)
+		"commit":
+			return Vector2(facing_sign * lerpf(0.0, 3.0, progress), pixel_pulse)
+		"active":
+			if family == "ram_prongs":
+				return Vector2(facing_sign * 9.0, 0.0)
+			if family == "barrel":
+				return Vector2(-facing_sign * 6.0, 0.0)
+			return Vector2(facing_sign * 4.0, -2.0)
+		"recovery":
+			return Vector2(0.0, lerpf(0.0, float(sprite.get("recovery_drop_pixels", 2.0)), progress))
+	return Vector2.ZERO
+
+
+func _draw_enemy_axis_stance(
+	base: Vector2,
+	body_width: float,
+	body_height: float,
+	facing_sign: float,
+	stance_family: String,
+	outline: Color,
+	body_color: Color
+) -> void:
+	var hip_y := body_height * 0.42
+	var left_foot := Vector2(-6, hip_y + 14)
+	var right_foot := Vector2(6, hip_y + 14)
+	match stance_family:
+		"staggered":
+			left_foot = Vector2(-8 * facing_sign, hip_y + 9)
+			right_foot = Vector2(12 * facing_sign, hip_y + 17)
+		"wide":
+			left_foot = Vector2(-body_width * 0.46, hip_y + 14)
+			right_foot = Vector2(body_width * 0.46, hip_y + 14)
+	for foot: Vector2 in [left_foot, right_foot]:
+		draw_line(base + Vector2(signf(foot.x) * 5.0, hip_y), base + foot, outline, 8.0)
+		draw_line(base + Vector2(signf(foot.x) * 5.0, hip_y), base + foot, body_color, 4.0)
+		draw_rect(Rect2(base + foot + Vector2(-5, -2), Vector2(10, 5)), outline, true)
+
+
+func _draw_enemy_axis_chassis(
+	base: Vector2,
+	body_width: float,
+	body_height: float,
+	armor_plate_count: int,
+	outline: Color,
+	body_color: Color
+) -> void:
+	draw_rect(Rect2(base - Vector2(body_width * 0.5 + 3.0, body_height * 0.5 + 3.0), Vector2(body_width + 6.0, body_height + 6.0)), outline, true)
+	draw_rect(Rect2(base - Vector2(body_width * 0.5, body_height * 0.5), Vector2(body_width, body_height)), body_color, true)
+	if armor_plate_count <= 0:
+		draw_rect(Rect2(base + Vector2(-4, -body_height * 0.35), Vector2(8, body_height * 0.7)), body_color.lightened(0.22), true)
+		return
+	var plate_color := body_color.lightened(0.24)
+	var plate_width := maxf(5.0, (body_width - 8.0) / float(armor_plate_count))
+	for index: int in range(armor_plate_count):
+		var x := -body_width * 0.5 + 4.0 + float(index) * plate_width
+		draw_rect(Rect2(base + Vector2(x, -body_height * 0.33), Vector2(plate_width - 2.0, body_height * 0.66)), plate_color, true)
+
+
+func _draw_enemy_axis_sensor(
+	base: Vector2,
+	body_height: float,
+	facing_sign: float,
+	sensor_family: String,
+	outline: Color,
+	accent: Color
+) -> void:
+	var head := base + Vector2(0, -body_height * 0.5 - 9.0)
+	draw_rect(Rect2(head - Vector2(9, 7), Vector2(18, 14)), outline, true)
+	draw_rect(Rect2(head - Vector2(6, 4), Vector2(12, 8)), Color("cbd5e1"), true)
+	match sensor_family:
+		"direction_slit":
+			draw_rect(Rect2(head + Vector2(-1 if facing_sign > 0.0 else -9, -2), Vector2(10, 4)), accent, true)
+		"point_diamond":
+			var diamond := PackedVector2Array([
+				head + Vector2(0, -6), head + Vector2(6, 0),
+				head + Vector2(0, 6), head + Vector2(-6, 0),
+			])
+			draw_colored_polygon(diamond, accent)
+		_:
+			var eye_x := 2.0 * facing_sign
+			draw_rect(Rect2(head + Vector2(eye_x - 3.0, -3), Vector2(6, 6)), accent, true)
+
+
+func _draw_enemy_axis_tool(
+	base: Vector2,
+	body_width: float,
+	body_height: float,
+	facing_sign: float,
+	aim_direction: Vector2,
+	phase: String,
+	progress: float,
+	sprite: Dictionary,
+	outline: Color,
+	accent: Color
+) -> void:
+	match str(sprite.get("tool_family", "swing_limb")):
+		"ram_prongs":
+			_draw_enemy_ram_prongs(base, body_width, facing_sign, phase, progress, outline, accent)
+		"barrel":
+			_draw_enemy_barrel(base, body_width, body_height, facing_sign, aim_direction, phase, progress, outline, accent)
+		"focus_orb":
+			_draw_enemy_focus_orb(base, body_width, body_height, facing_sign, phase, progress, outline, accent)
+		_:
+			_draw_enemy_swing_limb(base, body_width, body_height, facing_sign, phase, progress, str(sprite.get("tool_head", "rod")), outline, accent)
+
+
+func _draw_enemy_swing_limb(
+	base: Vector2,
+	body_width: float,
+	body_height: float,
+	facing_sign: float,
+	phase: String,
+	progress: float,
+	head_style: String,
+	outline: Color,
+	accent: Color
+) -> void:
+	var shoulder := base + Vector2(facing_sign * body_width * 0.38, -body_height * 0.24)
+	var idle_end := base + Vector2(facing_sign * 25.0, 1.0)
+	var endpoint := idle_end
+	match phase:
+		"telegraph": endpoint = idle_end.lerp(base + Vector2(-facing_sign * 18.0, -28.0), progress)
+		"commit": endpoint = base + Vector2(-facing_sign * 18.0, -28.0).lerp(Vector2(facing_sign * 5.0, -32.0), progress)
+		"active": endpoint = base + Vector2(facing_sign * 5.0, -32.0).lerp(Vector2(facing_sign * 40.0, 5.0), progress)
+		"recovery": endpoint = base + Vector2(facing_sign * 40.0, 5.0).lerp(Vector2(facing_sign * 15.0, 23.0), progress)
+	var elbow := shoulder.lerp(endpoint, 0.48) + Vector2(0, 5)
+	draw_line(shoulder, elbow, outline, 9.0)
+	draw_line(shoulder, elbow, Color("94a3b8"), 5.0)
+	draw_line(elbow, endpoint, outline, 8.0)
+	draw_line(elbow, endpoint, accent, 4.0)
+	_draw_enemy_tool_head(endpoint, (endpoint - elbow).normalized(), head_style, outline, accent)
+
+
+func _draw_enemy_ram_prongs(
+	base: Vector2,
+	body_width: float,
+	facing_sign: float,
+	phase: String,
+	progress: float,
+	outline: Color,
+	accent: Color
+) -> void:
+	var reach := 18.0
+	if phase == "telegraph": reach = lerpf(12.0, 20.0, progress)
+	elif phase == "commit": reach = lerpf(20.0, 27.0, progress)
+	elif phase == "active": reach = 34.0
+	elif phase == "recovery": reach = lerpf(28.0, 12.0, progress)
+	var front_x := facing_sign * body_width * 0.5
+	for y: float in [-10.0, 10.0]:
+		var root := base + Vector2(front_x, y)
+		var tip := root + Vector2(facing_sign * reach, 0)
+		var prong := PackedVector2Array([
+			root + Vector2(0, -6), tip, root + Vector2(0, 6),
+		])
+		draw_colored_polygon(prong, outline)
+		var inset := PackedVector2Array([
+			root + Vector2(facing_sign * 3.0, -3), tip - Vector2(facing_sign * 4.0, 0),
+			root + Vector2(facing_sign * 3.0, 3),
+		])
+		draw_colored_polygon(inset, accent)
+	if phase == "active":
+		for offset: float in [8.0, 18.0, 28.0]:
+			draw_rect(Rect2(base + Vector2(-facing_sign * (body_width * 0.5 + offset), -8), Vector2(6, 6)), accent, true)
+
+
+func _draw_enemy_barrel(
+	base: Vector2,
+	body_width: float,
+	body_height: float,
+	facing_sign: float,
+	aim_direction: Vector2,
+	phase: String,
+	progress: float,
+	outline: Color,
+	accent: Color
+) -> void:
+	var direction := aim_direction.normalized()
+	if direction.is_zero_approx():
+		direction = Vector2(facing_sign, 0)
+	var shoulder := base + Vector2(facing_sign * body_width * 0.34, -body_height * 0.20)
+	var recoil := lerpf(8.0, 2.0, progress) if phase == "active" else 0.0
+	var center := shoulder + direction * (19.0 - recoil)
+	draw_colored_polygon(_oriented_box(center, direction, 23.0, 8.0), outline)
+	draw_colored_polygon(_oriented_box(center, direction, 20.0, 5.0), accent)
+	var muzzle := center + direction * 24.0
+	draw_colored_polygon(_oriented_box(muzzle, direction, 4.0, 10.0), outline)
+	var stock := shoulder - direction * 10.0
+	draw_colored_polygon(_oriented_box(stock, direction, 9.0, 7.0), Color("475569"))
+	if phase == "active":
+		var flash := PackedVector2Array([
+			muzzle + direction * 18.0,
+			muzzle + direction.orthogonal() * 8.0,
+			muzzle - direction.orthogonal() * 8.0,
+		])
+		draw_colored_polygon(flash, Color("fde047"))
+
+
+func _draw_enemy_focus_orb(
+	base: Vector2,
+	body_width: float,
+	body_height: float,
+	facing_sign: float,
+	phase: String,
+	progress: float,
+	outline: Color,
+	accent: Color
+) -> void:
+	var shoulder := base + Vector2(facing_sign * body_width * 0.36, -body_height * 0.18)
+	var idle_point := base + Vector2(facing_sign * 22.0, -8.0)
+	var raised_point := base + Vector2(facing_sign * 18.0, -35.0)
+	var orb := idle_point
+	if phase == "telegraph": orb = idle_point.lerp(raised_point, progress)
+	elif phase in ["commit", "active"]: orb = raised_point
+	elif phase == "recovery": orb = raised_point.lerp(base + Vector2(facing_sign * 14.0, 18.0), progress)
+	draw_line(shoulder, orb, outline, 9.0)
+	draw_line(shoulder, orb, Color("94a3b8"), 5.0)
+	draw_rect(Rect2(orb - Vector2(9, 9), Vector2(18, 18)), outline, true)
+	var diamond := PackedVector2Array([
+		orb + Vector2(0, -7), orb + Vector2(7, 0),
+		orb + Vector2(0, 7), orb + Vector2(-7, 0),
+	])
+	draw_colored_polygon(diamond, accent)
+	if phase in ["commit", "active"]:
+		draw_line(orb + Vector2(0, -17), orb + Vector2(0, -10), accent, 4.0)
+		draw_line(orb + Vector2(0, 10), orb + Vector2(0, 17), accent, 4.0)
+		draw_line(orb + Vector2(-17, 0), orb + Vector2(-10, 0), accent, 4.0)
+		draw_line(orb + Vector2(10, 0), orb + Vector2(17, 0), accent, 4.0)
+
+
+func _draw_enemy_tool_head(point: Vector2, direction: Vector2, style: String, outline: Color, accent: Color) -> void:
+	var forward := direction.normalized()
+	if forward.is_zero_approx():
+		forward = Vector2.RIGHT
+	var side := forward.orthogonal()
+	match style:
+		"blade":
+			var blade := PackedVector2Array([
+				point + forward * 13.0, point + side * 9.0,
+				point - forward * 5.0, point - side * 5.0,
+			])
+			draw_colored_polygon(blade, outline)
+			draw_line(point + side * 5.0, point + forward * 9.0, accent, 4.0)
+		"orb":
+			draw_rect(Rect2(point - Vector2(8, 8), Vector2(16, 16)), outline, true)
+			draw_rect(Rect2(point - Vector2(4, 4), Vector2(8, 8)), accent, true)
+		"wedge":
+			var wedge := PackedVector2Array([
+				point + forward * 12.0, point + side * 10.0,
+				point - forward * 7.0 + side * 6.0, point - forward * 7.0 - side * 6.0,
+				point - side * 10.0,
+			])
+			draw_colored_polygon(wedge, outline)
+			draw_line(point - side * 6.0, point + side * 6.0, accent, 5.0)
+		_:
+			draw_colored_polygon(_oriented_box(point, forward, 9.0, 5.0), outline)
+			draw_colored_polygon(_oriented_box(point, forward, 6.0, 2.0), accent)
+
+
+func _oriented_box(center: Vector2, direction: Vector2, half_length: float, half_width: float) -> PackedVector2Array:
+	var forward := direction.normalized()
+	if forward.is_zero_approx():
+		forward = Vector2.RIGHT
+	var side := forward.orthogonal()
+	return PackedVector2Array([
+		center - forward * half_length - side * half_width,
+		center + forward * half_length - side * half_width,
+		center + forward * half_length + side * half_width,
+		center - forward * half_length + side * half_width,
+	])
+
+
+func _snap_enemy_pixel(point: Vector2) -> Vector2:
+	return Vector2(snappedf(point.x, 2.0), snappedf(point.y, 2.0))
 
 
 func _draw_enemy_attack_preview(enemy: Dictionary) -> void:

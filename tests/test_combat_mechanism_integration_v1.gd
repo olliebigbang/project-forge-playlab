@@ -5,6 +5,7 @@ const INTERACTION := preload("res://scripts/combat_feel/weapon_target_interactio
 const ENEMY := preload("res://scripts/combat_feel/combat_feel_enemy.gd")
 const ARENA := preload("res://scripts/systems/gameplay_arena.gd")
 const ATTACK_VISUAL := preload("res://scripts/enemy_attack/enemy_attack_visual_language.gd")
+const ATTACK_SPRITE := preload("res://scripts/enemy_attack/enemy_attack_sprite_language.gd")
 const PLAYTEST_SCENE := preload("res://scenes/combat_mechanism_playtest.tscn")
 
 var passed := 0
@@ -25,6 +26,8 @@ func _initialize() -> void:
 	_run("Ranged arena materializes and resolves both detached hazard families", _test_arena_detached_hazards)
 	_run("Dedicated playtest opens the formal attack-enabled enemy room", _test_playtest_room_wiring)
 	_run("Attack-axis visual language is distinct and identity-free", _test_attack_axis_visual_language)
+	_run("Attack axes assemble distinct pixel bodies and action tools", _test_attack_axis_sprite_language)
+	_run("Pixel-body parameters obey single-axis ownership", _test_attack_sprite_axis_ownership)
 	_run("Runtime bridge remains identity-free and asks no player question", _test_runtime_boundary)
 	print("COMBAT_MECHANISM_INTEGRATION_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
@@ -340,6 +343,116 @@ func _test_attack_axis_visual_language() -> Variant:
 		"identity_free": identity_free,
 		"owners": owners,
 	}
+
+
+func _test_attack_axis_sprite_language() -> Variant:
+	var contact := _compile_attack_sprite({
+		"target_lock": "live_until_active", "hit_shape": "arc", "tempo": "quick",
+		"stability": "fragile", "recovery": "brief",
+	})
+	var rush := _compile_attack_sprite({
+		"delivery": "rush", "target_lock": "direction_on_commit", "hit_shape": "strip",
+		"depth_path": "cross_depth", "tempo": "committed", "stability": "armored_commit",
+		"recovery": "extended",
+	})
+	var projectile := _compile_attack_sprite({
+		"delivery": "projectile", "target_lock": "direction_on_commit", "hit_shape": "capsule",
+		"tempo": "standard", "stability": "tell_interruptible", "recovery": "punishable",
+	})
+	var marked := _compile_attack_sprite({
+		"delivery": "marked_impact", "target_lock": "point_on_commit", "hit_shape": "circle",
+		"depth_path": "depth_band", "tempo": "committed", "stability": "fragile",
+		"recovery": "extended",
+	})
+	for sprite: Dictionary in [contact, rush, projectile, marked]:
+		if not bool(sprite.get("ok", false)):
+			return sprite
+	var tools := {
+		str(contact.get("tool_family", "")): true,
+		str(rush.get("tool_family", "")): true,
+		str(projectile.get("tool_family", "")): true,
+		str(marked.get("tool_family", "")): true,
+	}
+	var source := FileAccess.get_file_as_string("res://scripts/enemy_attack/enemy_attack_sprite_language.gd").to_lower()
+	var identity_free := true
+	for forbidden: String in ["guard", "rusher", "swarmling", "enemy_type", "enemy_kind"]:
+		identity_free = identity_free and not source.contains(forbidden)
+	var ok := tools.size() == 4
+	ok = ok and str(contact.get("sensor_family", "")) == "tracking_eye"
+	ok = ok and str(rush.get("sensor_family", "")) == "direction_slit"
+	ok = ok and str(marked.get("sensor_family", "")) == "point_diamond"
+	ok = ok and str(contact.get("tool_head", "")) == "blade"
+	ok = ok and str(rush.get("tool_head", "")) == "wedge"
+	ok = ok and str(projectile.get("tool_head", "")) == "rod"
+	ok = ok and str(marked.get("tool_head", "")) == "orb"
+	ok = ok and str(contact.get("stance_family", "")) == "narrow"
+	ok = ok and str(rush.get("stance_family", "")) == "staggered"
+	ok = ok and str(marked.get("stance_family", "")) == "wide"
+	ok = ok and float(contact.get("animation_hz", 0.0)) > float(projectile.get("animation_hz", 0.0))
+	ok = ok and float(projectile.get("animation_hz", 0.0)) > float(rush.get("animation_hz", 0.0))
+	ok = ok and float(contact.get("body_width", 0.0)) < float(projectile.get("body_width", 0.0))
+	ok = ok and float(projectile.get("body_width", 0.0)) < float(rush.get("body_width", 0.0))
+	ok = ok and int(contact.get("armor_plate_count", -1)) == 0
+	ok = ok and int(projectile.get("armor_plate_count", -1)) == 1
+	ok = ok and int(rush.get("armor_plate_count", -1)) == 3
+	ok = ok and float(contact.get("recovery_drop_pixels", 0.0)) < float(projectile.get("recovery_drop_pixels", 0.0))
+	ok = ok and float(projectile.get("recovery_drop_pixels", 0.0)) < float(rush.get("recovery_drop_pixels", 0.0))
+	ok = ok and identity_free and not bool(projectile.get("identity_inputs_used", true))
+	return true if ok else {
+		"contact": contact,
+		"rush": rush,
+		"projectile": projectile,
+		"marked": marked,
+		"identity_free": identity_free,
+	}
+
+
+func _test_attack_sprite_axis_ownership() -> Variant:
+	var driver: RefCounted = DRIVER.new()
+	var configured: Dictionary = driver.configure([_declaration({
+		"target_lock": "live_until_active", "hit_shape": "capsule", "depth_path": "same_lane",
+		"tempo": "standard", "stability": "fragile", "recovery": "brief",
+	})])
+	if not bool(configured.get("ok", false)):
+		return configured
+	var compiled: Dictionary = driver.compiled_attacks[0]
+	var baseline: Dictionary = ATTACK_SPRITE.compile(compiled)
+	var variants := {
+		"delivery": "projectile",
+		"target_lock": "point_on_commit",
+		"hit_shape": "circle",
+		"depth_path": "cross_depth",
+		"tempo": "quick",
+		"stability": "armored_commit",
+		"recovery": "extended",
+	}
+	var owners := baseline.get("sprite_parameter_owners", {}) as Dictionary
+	var changed_by_axis: Dictionary = {}
+	for axis: String in variants:
+		var changed_attack := compiled.duplicate(true)
+		var changed_axes := changed_attack.get("axes", {}) as Dictionary
+		changed_axes[axis] = variants[axis]
+		var changed: Dictionary = ATTACK_SPRITE.compile(changed_attack)
+		if not bool(changed.get("ok", false)):
+			return changed
+		var changed_fields: Array[String] = []
+		for field: String in owners:
+			if baseline.get(field) != changed.get(field):
+				changed_fields.append(field)
+				if str(owners.get(field, "")) != axis:
+					return {"axis": axis, "field": field, "declared_owner": owners.get(field), "changed": changed}
+		if changed_fields.is_empty():
+			return {"axis": axis, "error": "AXIS_HAS_NO_VISIBLE_SPRITE_EFFECT"}
+		changed_by_axis[axis] = changed_fields
+	return true if changed_by_axis.size() == 7 else changed_by_axis
+
+
+func _compile_attack_sprite(overrides: Dictionary) -> Dictionary:
+	var driver: RefCounted = DRIVER.new()
+	var configured: Dictionary = driver.configure([_declaration(overrides)])
+	if not bool(configured.get("ok", false)):
+		return configured
+	return ATTACK_SPRITE.compile(driver.compiled_attacks[0])
 
 
 func _control_outcome(level: String, context: Dictionary) -> Dictionary:

@@ -45,7 +45,8 @@ func _process(_delta: float) -> void:
 		"敌人攻击 × 武器反应 试玩\n"
 		+ "WASD/方向键移动　空格或 J 射击　Shift 或 K 闪避　R 重开　Esc 退出\n"
 		+ "生命 %.0f　敌方弹体/地面危险区 %d\n" % [float(arena.player_health), arena.enemy_attack_hazards.size()]
-		+ "看图形：断续射线＝弹体　连续箭头＝冲撞　同心准星＝落点　短扇形＝近战\n"
+		+ "看本体：炮管＝弹体　撞角＝冲撞　聚焦核心＝落点　挥击肢体＝近战\n"
+		+ "看范围：断续射线＝弹道　连续箭头＝冲撞通道　同心准星＝落点\n"
 		+ "敌人状态：" + "　|　".join(enemy_lines)
 	)
 
@@ -70,12 +71,12 @@ func _build_overlay() -> void:
 	add_child(layer)
 	var panel := ColorRect.new()
 	panel.position = Vector2(18, 14)
-	panel.size = Vector2(1244, 92)
+	panel.size = Vector2(1244, 112)
 	panel.color = Color(0.02, 0.05, 0.09, 0.88)
 	layer.add_child(panel)
 	status_label = Label.new()
 	status_label.position = Vector2(30, 22)
-	status_label.size = Vector2(1220, 82)
+	status_label.size = Vector2(1220, 104)
 	status_label.add_theme_font_override("font", load("res://assets/fonts/NotoSansCJKsc-Regular.otf") as Font)
 	status_label.add_theme_font_size_override("font_size", 15)
 	status_label.add_theme_color_override("font_color", Color("e2e8f0"))
