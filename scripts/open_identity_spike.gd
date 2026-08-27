@@ -4,6 +4,7 @@ const OPEN_INTERPRETER := preload("res://scripts/services/open_identity_interpre
 const OPEN_VISUAL_PROMPT := preload("res://scripts/services/open_identity_visual_prompt.gd")
 const LOCAL_PROVIDER := preload("res://scripts/services/local_comfy_forge_visual_provider.gd")
 const FAL_FIREARM_PROVIDER := preload("res://scripts/services/fal_firearm_visual_provider.gd")
+const FAL_GENERAL_OBJECT_PROVIDER := preload("res://scripts/services/fal_general_object_visual_provider.gd")
 const MOCK_PROVIDER := preload("res://scripts/services/mock_forge_visual_provider.gd")
 const SKETCH_CANVAS := preload("res://scripts/ui/sketch_canvas.gd")
 const WEAPON_PREVIEW := preload("res://scripts/ui/weapon_preview.gd")
@@ -21,6 +22,8 @@ const FIREARM_VISUAL_IDENTITY_CARD := preload("res://scripts/combat_feel/firearm
 const FIREARM_SCAFFOLD_PIPELINE := preload("res://scripts/combat_feel/firearm_visual_scaffold_pipeline.gd")
 const FIREARM_IDENTITY_AI_RESOLVER := preload("res://scripts/combat_feel/firearm_identity_ai_resolver.gd")
 const FIREARM_IDENTITY_AI_PROVIDER := preload("res://scripts/services/firearm_identity_ai_provider.gd")
+const GENERAL_OBJECT_AI_RESOLVER := preload("res://scripts/combat_feel/general_object_ai_resolver.gd")
+const GENERAL_OBJECT_AI_PROVIDER := preload("res://scripts/services/general_object_ai_provider.gd")
 const MODE_MOCK := "MOCK"
 const MODE_LOCAL_COMFYUI := "LOCAL_COMFYUI"
 const MODE_FAL_FIREARM := "FAL_FIREARM"
@@ -71,6 +74,10 @@ var firearm_identity_provider
 var firearm_identity_pending := false
 var firearm_identity_started_msec := 0
 var pending_firearm_identity := ""
+var general_object_provider
+var general_object_pending := false
+var general_object_started_msec := 0
+var pending_general_object_identity := ""
 
 func _ready() -> void:
 	if _has_user_argument("--mode=combat-feel-slice-0"):
@@ -90,6 +97,9 @@ func _ready() -> void:
 	_show_forge()
 
 func _process(_delta: float) -> void:
+	if general_object_pending:
+		_poll_general_object_ai()
+		return
 	if firearm_identity_pending:
 		_poll_firearm_identity_ai()
 		return
@@ -101,7 +111,9 @@ func _process(_delta: float) -> void:
 			if status_label != null and is_instance_valid(status_label):
 				var elapsed := float(Time.get_ticks_msec() - generation_started_msec) / 1000.0
 				status_label.text = (
-					"FAL 正在辨认枪型、转成像素图并等待 Godot 自动验收…… %.1f / 240 秒" % elapsed
+					("FAL 正在辨认枪型、转成像素图并等待 Godot 自动验收…… %.1f / 240 秒" % elapsed
+					if _requires_ranged_mechanism_profile()
+					else "FAL 正在画出原物件、转成像素图并等待机制轴验收…… %.1f / 240 秒" % elapsed)
 					if provider_mode == MODE_FAL_FIREARM
 					else "本地 ComfyUI 正在生成、去背景并验证 Alpha…… %.1f / 120 秒" % elapsed
 				)
@@ -190,6 +202,8 @@ func _show_forge() -> void:
 	generation_pending = false
 	firearm_identity_pending = false
 	pending_firearm_identity = ""
+	general_object_pending = false
+	pending_general_object_identity = ""
 	visual_identity_confirmed = false
 	_reset_mechanism_state()
 	if provider != null:
@@ -198,6 +212,9 @@ func _show_forge() -> void:
 	if firearm_identity_provider != null:
 		firearm_identity_provider.cancel_current()
 	firearm_identity_provider = null
+	if general_object_provider != null:
+		general_object_provider.cancel_current()
+	general_object_provider = null
 	arena.stop()
 	arena.visible = false
 	var root := _new_page()
@@ -285,6 +302,9 @@ func _set_provider_mode(next_mode: String) -> void:
 		error_label.text = _provider_badge_text()
 
 func _provider_badge_text() -> String:
+	if _general_object_ai_enabled():
+		var visual_text := "FAL 画原物件并转像素；Godot 验机制结构" if provider_mode == MODE_FAL_FIREARM else "%s 负责视觉" % provider_mode
+		return "%s · 任意物品名称 AI 解析已开启；握法和攻击模式不询问玩家" % visual_text
 	if _firearm_ai_enabled():
 		var visual_text := "FAL 负责枪械成品像素图" if provider_mode == MODE_FAL_FIREARM else "%s 负责视觉" % provider_mode
 		return "%s · 任意枪械名称 AI 解析已开启；射击机制与结构验收都不询问玩家" % visual_text
@@ -322,10 +342,137 @@ func _submit_forge() -> void:
 		"",
 		_stored_clarification()
 	)
+	if _should_request_general_object_ai(result, interpretation_text):
+		var cached: Dictionary = GENERAL_OBJECT_AI_RESOLVER.resolve_identity(interpretation_text)
+		if bool(cached.get("ok", false)):
+			var cached_interpretation: Dictionary = interpreter.interpret_with_ai_object_profile(
+				interpretation_text, saved_sketch_png, saved_geometry, cached
+			)
+			_handle_interpretation_result(cached_interpretation)
+			return
+		_begin_general_object_ai(interpretation_text)
+		return
 	if _should_request_firearm_identity_ai(result, interpretation_text):
 		_begin_firearm_identity_ai(interpretation_text)
 		return
 	_handle_interpretation_result(result)
+
+
+func _general_object_ai_enabled() -> bool:
+	return _argument_value("--object-ai=", "off").to_lower() == "anthropic"
+
+
+func _should_request_general_object_ai(result: Dictionary, identity: String) -> bool:
+	if not _general_object_ai_enabled() or identity.strip_edges().is_empty():
+		return false
+	if bool(result.get("ok", false)):
+		var blueprint := result.get("blueprint") as WeaponBlueprint
+		return blueprint != null and blueprint.behavior_family == "heavy_melee" and blueprint.affordance.is_empty()
+	return (
+		str(result.get("error", "")) == "AI_BEHAVIOR_REANALYSIS_REQUIRED"
+		and str(result.get("reason", "")) == "behavior_action_unclear"
+	)
+
+
+func _begin_general_object_ai(identity: String) -> void:
+	if OS.has_feature("web"):
+		_show_ai_semantic_failure("AI_GENERAL_OBJECT_DESKTOP_ONLY")
+		return
+	if general_object_provider != null:
+		general_object_provider.cancel_current()
+	var ai_provider = GENERAL_OBJECT_AI_PROVIDER.new()
+	var configured: Dictionary = ai_provider.configure(
+		_argument_value("--object-ai-python=", _argument_value("--firearm-ai-python=", "python"))
+	)
+	if not bool(configured.get("ok", false)):
+		_show_ai_semantic_failure(str(configured.get("error", "AI_GENERAL_OBJECT_PROVIDER_CONFIG_FAILED")))
+		return
+	general_object_provider = ai_provider
+	pending_general_object_identity = identity.strip_edges()
+	general_object_started_msec = Time.get_ticks_msec()
+	general_object_pending = true
+	ai_provider.request_identity(pending_general_object_identity)
+	_show_general_object_resolving()
+
+
+func _poll_general_object_ai() -> void:
+	if general_object_provider == null:
+		general_object_pending = false
+		_show_ai_semantic_failure("AI_GENERAL_OBJECT_PROVIDER_MISSING")
+		return
+	var result: Dictionary = general_object_provider.poll()
+	match str(result.get("status", "idle")):
+		"running":
+			if status_label != null and is_instance_valid(status_label):
+				var elapsed := float(Time.get_ticks_msec() - general_object_started_msec) / 1000.0
+				status_label.text = "AI 正在把物件翻译成握法、软硬、接触面和动作轴…… %.1f / 70 秒" % elapsed
+		"success":
+			general_object_pending = false
+			var identity := pending_general_object_identity
+			var payload := (result.get("response", {}) as Dictionary).duplicate(true)
+			if not payload.has("model_id"):
+				payload["model_id"] = str(result.get("model_id", ""))
+			var compiled := _accept_general_object_ai_payload(
+				identity, payload, str(result.get("source", "")), true
+			)
+			pending_general_object_identity = ""
+			if not bool(compiled.get("ok", false)):
+				var error := str(compiled.get("error", "AI_GENERAL_OBJECT_RESPONSE_REJECTED"))
+				if error == "AI_GENERAL_OBJECT_FIREARM_ROUTE_REQUIRED" and _firearm_ai_enabled():
+					_begin_firearm_identity_ai(identity)
+					return
+				_show_ai_semantic_failure(error)
+				return
+			_handle_interpretation_result(compiled.get("interpretation", {}) as Dictionary)
+		"failed":
+			general_object_pending = false
+			pending_general_object_identity = ""
+			_show_ai_semantic_failure(str(result.get("failure_reason", "AI_GENERAL_OBJECT_BRIDGE_FAILED")))
+
+
+func _accept_general_object_ai_payload(
+	identity: String,
+	payload: Dictionary,
+	source: String,
+	persist: bool = true
+) -> Dictionary:
+	var accepted: Dictionary = GENERAL_OBJECT_AI_RESOLVER.accept_ai_response(
+		identity, payload, source, persist
+	)
+	if not bool(accepted.get("ok", false)):
+		return accepted
+	var interpretation: Dictionary = interpreter.interpret_with_ai_object_profile(
+		identity, saved_sketch_png, saved_geometry, accepted
+	)
+	if not bool(interpretation.get("ok", false)):
+		return interpretation
+	return {
+		"ok": true,
+		"profile": accepted,
+		"interpretation": interpretation,
+		"player_confirmation_required": false,
+	}
+
+
+func _show_general_object_resolving() -> void:
+	state = "general_object_resolving"
+	if arena != null:
+		arena.visible = false
+	var root := _new_page()
+	var card := _center_card(900, 460)
+	root.add_child(card)
+	var content := card.get_child(0) as VBoxContainer
+	content.add_child(_badge("AI 通用物品解析", Color("7c3aed")))
+	content.add_child(_large_label("正在识别“%s”" % pending_general_object_identity, 30))
+	var explanation := Label.new()
+	explanation.text = "AI 自动填写完整机制轴；本地校验通过后才会画图和编译动作，不会让玩家决定怎么打。"
+	explanation.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(explanation)
+	status_label = Label.new()
+	status_label.text = "请求已提交；物体结构不明确、机制矛盾或属于载具时会停止。"
+	status_label.modulate = Color("ddd6fe")
+	content.add_child(status_label)
+	content.add_child(_button("取消并返回 Forge", _show_forge))
 
 
 func _firearm_ai_enabled() -> bool:
@@ -776,7 +923,7 @@ func _persist_mechanism_visual_gate(gate: Variant) -> void:
 
 func _ai_semantic_failure_zh(code: String) -> String:
 	if code.contains("MISSING_API_KEY"):
-		return "开发者还没有启动枪械名称 AI，当前不会对陌生型号发起请求。"
+		return "开发者还没有启动名称 AI，当前不会对陌生物品发起请求。"
 	if code.contains("MISSING_MODEL_ID"):
 		return "开发者没有配置语义模型。"
 	if code == "AI_FIREARM_STRUCTURE_FAMILY_UNSUPPORTED":
@@ -789,6 +936,16 @@ func _ai_semantic_failure_zh(code: String) -> String:
 		return "AI 对这个型号没有足够把握，因此没有套用通用枪。"
 	if code.begins_with("AI_FIREARM_BRIDGE_"):
 		return "枪械名称 AI 没有返回可用结果；没有生成或缓存猜测。"
+	if code == "AI_GENERAL_OBJECT_FIREARM_ROUTE_REQUIRED":
+		return "AI 判断这是枪械，必须转交枪械结构解析器。"
+	if code == "AI_GENERAL_OBJECT_POWERED_VEHICLE_ACTOR_REQUIRED":
+		return "AI 判断这是带动力的载具；它需要载具与底盘编译器，不能缩成普通手持物。"
+	if code == "AI_GENERAL_OBJECT_LIVING_ACTOR_REQUIRED":
+		return "AI 判断这是活体或角色，而不是可生成的物件。"
+	if code in ["AI_GENERAL_OBJECT_IDENTITY_UNCERTAIN", "AI_GENERAL_OBJECT_CONFIDENCE_TOO_LOW"]:
+		return "AI 对物件结构没有足够把握，因此没有套用通用攻击。"
+	if code.begins_with("AI_GENERAL_OBJECT_BRIDGE_"):
+		return "通用物品 AI 没有返回完整结构卡；没有生成或缓存猜测。"
 	return "AI 没有返回完整且一致的身份与机制声明。"
 
 
@@ -868,11 +1025,25 @@ func _answer_identity_clarification() -> void:
 	var result: Dictionary = interpreter.interpret(
 		"", saved_sketch_png, saved_geometry, null, "", clarification
 	)
+	if _should_request_general_object_ai(result, identity_answer):
+		var cached: Dictionary = GENERAL_OBJECT_AI_RESOLVER.resolve_identity(identity_answer)
+		if bool(cached.get("ok", false)):
+			_handle_interpretation_result(interpreter.interpret_with_ai_object_profile(
+				identity_answer, saved_sketch_png, saved_geometry, cached
+			))
+			return
+		_begin_general_object_ai(identity_answer)
+		return
+	if _should_request_firearm_identity_ai(result, identity_answer):
+		_begin_firearm_identity_ai(identity_answer)
+		return
 	_handle_interpretation_result(result)
 
 func _begin_visual_generation() -> void:
-	if provider_mode == MODE_FAL_FIREARM:
+	if provider_mode == MODE_FAL_FIREARM and _requires_ranged_mechanism_profile():
 		_begin_fal_firearm_generation()
+	elif provider_mode == MODE_FAL_FIREARM and _requires_mechanism_profile():
+		_begin_fal_general_object_generation()
 	else:
 		_begin_local_generation()
 
@@ -893,6 +1064,37 @@ func _begin_fal_firearm_generation() -> void:
 	var configured: Dictionary = fal_provider.configure(python_path)
 	if not bool(configured.get("ok", false)):
 		_show_generation_failure(str(configured.get("error", "FIREARM_VISUAL_FAL_CONFIG_FAILED")))
+		return
+	visual_identity_confirmed = false
+	current_blueprint.visual_rig.clear()
+	current_blueprint.visual_rig_source = ""
+	fal_provider.request_visual(
+		current_blueprint,
+		current_blueprint.player_identity_text,
+		PackedByteArray(),
+		0.0
+	)
+	generation_pending = true
+	generation_started_msec = Time.get_ticks_msec()
+	_show_generating()
+
+
+func _begin_fal_general_object_generation() -> void:
+	if OS.has_feature("web"):
+		_show_generation_failure("GENERAL_OBJECT_VISUAL_FAL_DESKTOP_ONLY")
+		return
+	if not _requires_mechanism_profile():
+		_show_generation_failure("GENERAL_OBJECT_VISUAL_FAL_REQUIRES_MELEE_OBJECT")
+		return
+	var fal_provider = FAL_GENERAL_OBJECT_PROVIDER.new()
+	provider = fal_provider
+	var python_path := _argument_value(
+		"--fal-python=", _argument_value("--object-ai-python=", "python")
+	)
+	var configured: Dictionary = fal_provider.configure(python_path)
+	if not bool(configured.get("ok", false)):
+		if not _activate_mechanism_scaffold_fallback(str(configured.get("error", "GENERAL_OBJECT_VISUAL_FAL_CONFIG_FAILED"))):
+			_show_generation_failure(str(configured.get("error", "GENERAL_OBJECT_VISUAL_FAL_CONFIG_FAILED")))
 		return
 	visual_identity_confirmed = false
 	current_blueprint.visual_rig.clear()
@@ -951,7 +1153,8 @@ func _show_generating() -> void:
 	root.add_child(card)
 	var content := card.get_child(0) as VBoxContainer
 	content.add_child(_badge(
-		"FAL AI · 枪械成品像素图" if provider_mode == MODE_FAL_FIREARM else "LOCAL_COMFYUI · 真实生成",
+		("FAL AI · 枪械成品像素图" if _requires_ranged_mechanism_profile() else "FAL AI · 原物件像素图")
+		if provider_mode == MODE_FAL_FIREARM else "LOCAL_COMFYUI · 真实生成",
 		Color("164e63")
 	))
 	var generation_title := "正在保留物件身份并生成视觉"
@@ -960,7 +1163,9 @@ func _show_generating() -> void:
 	content.add_child(_large_label(generation_title, 32))
 	status_label = Label.new()
 	status_label.text = (
-		"请求已提交；AI 先画准确枪型，再转为有限色像素图。Godot 自动验收，不会把隐藏方块骨架展示给玩家。"
+		("请求已提交；AI 先画准确枪型，再转为有限色像素图。Godot 自动验收，不会把隐藏方块骨架展示给玩家。"
+		if _requires_ranged_mechanism_profile()
+		else "请求已提交；AI 先画原物件，再转为有限色像素图。Godot 自动检查机制结构，玩家只确认它是否仍像原物件。")
 		if provider_mode == MODE_FAL_FIREARM
 		else "请求已提交；外部画图只负责外观。隐藏机制骨架只用于约束和诊断，不会冒充成品武器。"
 	)

@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-general-object-ai-response-v1",
+  "title": "Forge general object identity and affordance response V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "requested_identity",
+    "classification",
+    "canonical_name",
+    "confidence",
+    "identity_evidence",
+    "visual_description_en",
+    "required_identity_parts_zh",
+    "confusable_exclusions_en",
+    "behavior_family",
+    "scale_treatment",
+    "declaration"
+  ],
+  "properties": {
+    "schema": {"type": "string", "const": "forge-general-object-ai-response-v1"},
+    "requested_identity": {"type": "string", "minLength": 1, "maxLength": 160},
+    "classification": {
+      "type": "string",
+      "enum": [
+        "improvised_object_supported",
+        "firearm_route_required",
+        "powered_vehicle_actor_required",
+        "living_actor_required",
+        "unknown"
+      ]
+    },
+    "canonical_name": {"type": "string", "minLength": 1, "maxLength": 96},
+    "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+    "identity_evidence": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 6,
+      "items": {"type": "string", "minLength": 1, "maxLength": 240}
+    },
+    "visual_description_en": {"type": "string", "maxLength": 360},
+    "required_identity_parts_zh": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 6,
+      "items": {"type": "string", "minLength": 1, "maxLength": 64}
+    },
+    "confusable_exclusions_en": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 8,
+      "items": {"type": "string", "minLength": 1, "maxLength": 220}
+    },
+    "behavior_family": {"type": "string", "enum": ["heavy_melee", "not_applicable"]},
+    "scale_treatment": {
+      "type": "string",
+      "enum": ["handheld", "bulky_two_hand", "oversized_fantasy", "not_applicable"]
+    },
+    "declaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "handle_length",
+        "body_length",
+        "grip_topology",
+        "rigidity",
+        "mass_distribution",
+        "contact_surface",
+        "secondary_contact_surface",
+        "flex_topology",
+        "tether_topology",
+        "terminal_load",
+        "tether_mode",
+        "tether_deployment",
+        "has_point",
+        "has_edge",
+        "has_broad_face",
+        "has_barrel",
+        "has_stock"
+      ],
+      "properties": {
+        "handle_length": {"type": "string", "enum": ["none", "short", "medium", "long", "not_applicable"]},
+        "body_length": {"type": "string", "enum": ["short", "medium", "long", "not_applicable"]},
+        "grip_topology": {"type": "string", "enum": ["one_hand_handle", "two_hand_handle", "body_grip", "clamp_grip", "not_applicable"]},
+        "rigidity": {"type": "string", "enum": ["rigid", "semi_rigid", "flexible", "not_applicable"]},
+        "mass_distribution": {"type": "string", "enum": ["rear", "balanced", "front", "not_applicable"]},
+        "contact_surface": {"type": "string", "enum": ["point", "edge", "broad", "whole_body", "not_applicable"]},
+        "secondary_contact_surface": {"type": "string", "enum": ["none", "point", "edge", "broad", "whole_body", "not_applicable"]},
+        "flex_topology": {"type": "string", "enum": ["none", "bending_shaft", "flexible_line", "linked_segments", "not_applicable"]},
+        "tether_topology": {"type": "string", "enum": ["none", "flexible_line", "linked_segments", "not_applicable"]},
+        "terminal_load": {"type": "string", "enum": ["none", "light", "heavy", "not_applicable"]},
+        "tether_mode": {"type": "string", "enum": ["none", "wrap", "hook", "not_applicable"]},
+        "tether_deployment": {"type": "string", "enum": ["none", "fixed_length", "cast_retract", "launch_tension", "not_applicable"]},
+        "has_point": {"type": "boolean"},
+        "has_edge": {"type": "boolean"},
+        "has_broad_face": {"type": "boolean"},
+        "has_barrel": {"type": "boolean"},
+        "has_stock": {"type": "boolean"}
+      }
+    }
+  }
+}

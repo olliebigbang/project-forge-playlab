@@ -10,10 +10,11 @@ The active flow is:
 
 ```text
 player text + optional rough sketch
-→ identity passthrough
-→ deterministic action-only behavior compiler
-→ local ComfyUI visual request
-→ validated transparent sprite
+→ strict AI identity router
+→ firearm parser or general-object affordance parser
+→ local Godot mechanism validation and compilation
+→ FAL or local ComfyUI visual request
+→ validated transparent 96px sprite
 → existing training area
 ```
 
@@ -25,9 +26,9 @@ Only these behavior families remain:
 
 They decide how an object attacks, never its name or appearance. The active scene does not enter either combat room. No V2, enemy, room, behavior-family, balance, survey, or anchor-calibration expansion is part of Spike 2.
 
-The machine audit found no installed, callable local text LLM or VLM. Spike 2 therefore labels itself accurately as **player text passthrough + local rule behavior compiler**. It does not claim AI semantic understanding. A sketch without text asks exactly `你画的是什么？` once and cannot default to a fixed weapon.
+The active desktop AI launcher now supports strict Anthropic identity cards for arbitrary firearm and general-object nouns. AI decides the complete mechanism declaration; Godot validates and compiles it locally, and never asks the player how the object should attack. A sketch without text may still ask exactly `你画的是什么？` once and cannot default to a fixed weapon.
 
-## Important result
+## Historical Spike 2 visual result
 
 The architecture and safety boundary are implemented, but the real visual semantic gate failed.
 
@@ -49,7 +50,15 @@ See [the full Spike 2 report](tools/comfyui/open_identity/reports/SPIKE2_REPORT.
 - Windows PowerShell for the primary scripts.
 - The already configured local ComfyUI install for real visual generation.
 
-No script downloads models, installs custom nodes, invokes a paid API, exposes a provider key, or listens beyond `127.0.0.1`.
+The local ComfyUI path downloads nothing and listens only on `127.0.0.1`. The explicit AI launcher can call paid Anthropic and FAL APIs; credentials stay in the launcher process and are not written to manifests or caches.
+
+For arbitrary name parsing and FAL object pixels, run:
+
+```powershell
+.\scripts\run_open_identity_ai.ps1 -EnvFile "C:\path\to\.env"
+```
+
+See [General Object AI Parser V1](docs/GENERAL_OBJECT_AI_PARSER_V1.md).
 
 ## Run Spike 2
 

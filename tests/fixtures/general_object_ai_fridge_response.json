@@ -1,0 +1,38 @@
+{
+  "schema": "forge-general-object-ai-response-v1",
+  "requested_identity": "冰箱",
+  "classification": "improvised_object_supported",
+  "canonical_name": "冰箱",
+  "confidence": 0.96,
+  "identity_evidence": [
+    "tall rigid rectangular cabinet with a large hinged front door",
+    "the cabinet is a broad whole-body mass rather than a handled striking tool"
+  ],
+  "visual_description_en": "chunky side-view refrigerator with a tall rectangular cabinet, one large front door, a thick side handle, and a short base plinth",
+  "required_identity_parts_zh": ["高矩形柜体", "大块前门", "侧边竖把手", "短底座"],
+  "confusable_exclusions_en": [
+    "not a thin flat-screen television",
+    "not a narrow locker with multiple small doors"
+  ],
+  "behavior_family": "heavy_melee",
+  "scale_treatment": "oversized_fantasy",
+  "declaration": {
+    "handle_length": "none",
+    "body_length": "medium",
+    "grip_topology": "body_grip",
+    "rigidity": "rigid",
+    "mass_distribution": "balanced",
+    "contact_surface": "whole_body",
+    "secondary_contact_surface": "broad",
+    "flex_topology": "none",
+    "tether_topology": "none",
+    "terminal_load": "none",
+    "tether_mode": "none",
+    "tether_deployment": "none",
+    "has_point": false,
+    "has_edge": false,
+    "has_broad_face": true,
+    "has_barrel": false,
+    "has_stock": false
+  }
+}
