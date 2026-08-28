@@ -3,6 +3,8 @@ extends RefCounted
 
 const FIREARM_CATALOG := preload("res://scripts/combat_feel/firearm_identity_catalog.gd")
 const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
+const FIREARM_SCAFFOLD_PIPELINE := preload("res://scripts/combat_feel/firearm_visual_scaffold_pipeline.gd")
+const CACHE_POLICY := preload("res://scripts/combat_feel/firearm_visual_cache_policy.gd")
 const OPEN_IDENTITY_INTERPRETER := preload("res://scripts/services/open_identity_interpreter.gd")
 const ANCHOR_RESOLVER := preload("res://scripts/systems/anchor_resolver.gd")
 
@@ -103,18 +105,11 @@ func _load_visual_entry(directory_path: String, cached_profiles: Dictionary) -> 
 	var record := _read_dictionary(directory_path.path_join("cache_record.json"))
 	var manifest := _read_dictionary(directory_path.path_join("manifest.json"))
 	var sprite_path := directory_path.path_join("processed_sprite.png")
-	if (
-		record.is_empty()
-		or manifest.is_empty()
-		or not FileAccess.file_exists(sprite_path)
-		or str(manifest.get("status", "")) != "success"
-		or not bool(manifest.get("finished_art", false))
-		or not bool(manifest.get("presentable_to_player", false))
-		or not bool(manifest.get("firearm_visual_gate_passed", false))
-	):
+	if record.is_empty() or manifest.is_empty() or not FileAccess.file_exists(sprite_path):
 		return {}
-	var expected_hash := str(record.get("processed_sprite_sha256", ""))
-	if expected_hash.is_empty() or expected_hash != _sha256_file(sprite_path):
+	var sprite_bytes := FileAccess.get_file_as_bytes(sprite_path)
+	_sprite_hash_reads += 1
+	if not CACHE_POLICY.evidence_errors(record, manifest, sprite_bytes, "", true).is_empty():
 		return {}
 	var identity := str(record.get("identity", manifest.get("identity", ""))).strip_edges()
 	var canonical_name := str(record.get("canonical_name", manifest.get("canonical_identity", identity))).strip_edges()
@@ -141,14 +136,40 @@ func _load_visual_entry(directory_path: String, cached_profiles: Dictionary) -> 
 	if not bool(runtime.get("ok", false)):
 		return {}
 	blueprint.modifiers["ranged_runtime_profile"] = runtime.duplicate(true)
-	var image := Image.load_from_file(ProjectSettings.globalize_path(sprite_path))
+	var image := Image.new()
+	var image_error := image.load_png_from_buffer(sprite_bytes)
 	_images_decoded += 1
-	if image == null or image.is_empty():
+	if image_error != OK or image.is_empty():
 		return {}
-	var asset: WeaponVisualAsset = ANCHOR_RESOLVER.resolve(image, blueprint)
+	var asset: WeaponVisualAsset
+	var pipeline_version := str(record.get("pipeline_version", ""))
+	if pipeline_version != CACHE_POLICY.CURRENT_PIPELINE_VERSION:
+		var preparation := FIREARM_SCAFFOLD_PIPELINE.prepare(blueprint)
+		if not bool(preparation.get("ok", false)):
+			return {}
+		var resolution := FIREARM_SCAFFOLD_PIPELINE.resolve_asset(image, blueprint, preparation)
+		if not bool(resolution.get("ok", false)):
+			return {}
+		asset = resolution.get("asset") as WeaponVisualAsset
+		var key := str(record.get("key", ""))
+		manifest = CACHE_POLICY.upgraded_manifest(
+			manifest,
+			resolution.get("visual_identity_gate", {}) as Dictionary,
+			key
+		)
+		record = CACHE_POLICY.upgraded_record(record, key, sprite_bytes)
+		if (
+			_write_json_atomic(directory_path.path_join("manifest.json"), manifest) != OK
+			or _write_json_atomic(directory_path.path_join("cache_record.json"), record) != OK
+		):
+			return {}
+	else:
+		asset = ANCHOR_RESOLVER.resolve(image, blueprint)
+		if asset == null:
+			return {}
+		_apply_finished_art_anchors(asset, manifest)
 	if asset == null:
 		return {}
-	_apply_finished_art_anchors(asset, manifest)
 	var modified := int(FileAccess.get_modified_time(directory_path.path_join("manifest.json")))
 	return {
 		"ok": true,
@@ -162,6 +183,8 @@ func _load_visual_entry(directory_path: String, cached_profiles: Dictionary) -> 
 		"cached_unix_time": modified,
 		"source_kind": "fal_firearm_cache",
 		"cache_status": "validated_local_finished_art",
+		"visual_pipeline_version": str(record.get("pipeline_version", "")),
+		"locally_revalidated": pipeline_version != CACHE_POLICY.CURRENT_PIPELINE_VERSION,
 		"legacy_axis_migration": bool(profile.get("legacy_axis_migration", false)),
 		"paid_api_call_used_for_selection": false,
 	}
@@ -285,6 +308,21 @@ func _sha256_file(path: String) -> String:
 	context.start(HashingContext.HASH_SHA256)
 	context.update(bytes)
 	return context.finish().hex_encode()
+
+
+func _write_json_atomic(target: String, value: Dictionary) -> Error:
+	var temporary := "%s.%s.tmp" % [target, str(Time.get_ticks_usec())]
+	var file := FileAccess.open(temporary, FileAccess.WRITE)
+	if file == null:
+		return FileAccess.get_open_error()
+	file.store_string(JSON.stringify(value, "  "))
+	file.close()
+	if FileAccess.file_exists(target):
+		DirAccess.remove_absolute(target)
+	var error := DirAccess.rename_absolute(temporary, target)
+	if error != OK and FileAccess.file_exists(temporary):
+		DirAccess.remove_absolute(temporary)
+	return error
 
 
 func _normalize(value: String) -> String:

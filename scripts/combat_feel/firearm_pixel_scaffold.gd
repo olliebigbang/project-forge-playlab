@@ -18,6 +18,9 @@ static func build(declaration: Dictionary, source: String = "") -> Dictionary:
 		"bullpup": anchors = _draw_bullpup(image, declaration, palette)
 		"conventional_rifle": anchors = _draw_conventional_rifle(image, declaration, palette)
 		"pistol": anchors = _draw_pistol(image, declaration, palette)
+		"conventional_shotgun": anchors = _draw_conventional_shotgun(image, declaration, palette)
+		"revolver": anchors = _draw_revolver(image, declaration, palette)
+		"belt_fed_support": anchors = _draw_belt_fed_support(image, declaration, palette)
 		_: return _failure("FIREARM_PIXEL_LAYOUT_UNSUPPORTED")
 	var opaque_pixels := _opaque_pixel_count(image)
 	if opaque_pixels < 120:
@@ -120,6 +123,80 @@ static func _draw_pistol(image: Image, _declaration: Dictionary, palette: Dictio
 	}
 
 
+static func _draw_conventional_shotgun(image: Image, _declaration: Dictionary, palette: Dictionary) -> Dictionary:
+	var body := palette["body"] as Color
+	var accent := palette["accent"] as Color
+	var wood := palette["stock"] as Color
+	var highlight := palette["highlight"] as Color
+	_segment(image, Vector2(7, 48), Vector2(31, 46), 18, 12, wood)
+	_outlined_rect(image, Rect2i(28, 37, 28, 18), body)
+	_segment(image, Vector2(39, 52), Vector2(36, 72), 13, 8, accent)
+	_segment(image, Vector2(54, 42), Vector2(93, 42), 7, 3, accent)
+	_segment(image, Vector2(55, 49), Vector2(88, 49), 6, 2, highlight)
+	_outlined_rect(image, Rect2i(58, 46, 22, 10), wood)
+	for x: int in range(61, 79, 5):
+		_fill_rect(image, Rect2i(x, 48, 2, 6), highlight)
+	_outlined_rect(image, Rect2i(90, 38, 4, 8), highlight)
+	_draw_trigger_hint(image, Vector2(43, 55), accent)
+	return {
+		"GripPrimary": [36.0, 64.0],
+		"GripSecondary": [69.0, 51.0],
+		"Muzzle": [93.0, 42.0],
+		"Tip": [93.0, 42.0],
+		"RearContact": [7.0, 48.0],
+		"FeedCenter": [50.0, 51.0],
+	}
+
+
+static func _draw_revolver(image: Image, _declaration: Dictionary, palette: Dictionary) -> Dictionary:
+	var body := palette["body"] as Color
+	var accent := palette["accent"] as Color
+	var highlight := palette["highlight"] as Color
+	_outlined_rect(image, Rect2i(25, 36, 30, 17), body)
+	_fill_circle(image, Vector2i(52, 47), 12, OUTLINE)
+	_fill_circle(image, Vector2i(52, 47), 9, accent)
+	for angle: float in [0.0, TAU / 3.0, TAU * 2.0 / 3.0]:
+		_fill_circle(image, Vector2i((Vector2(52, 47) + Vector2.from_angle(angle) * 5.0).round()), 2, highlight)
+	_segment(image, Vector2(58, 42), Vector2(84, 42), 9, 5, body)
+	_outlined_rect(image, Rect2i(82, 38, 5, 8), highlight)
+	_segment(image, Vector2(40, 52), Vector2(33, 75), 18, 12, palette["stock"] as Color)
+	_draw_trigger_hint(image, Vector2(43, 55), accent)
+	return {
+		"GripPrimary": [35.0, 65.0],
+		"GripSecondary": [47.0, 51.0],
+		"Muzzle": [86.0, 42.0],
+		"Tip": [86.0, 42.0],
+		"RearContact": [25.0, 44.0],
+		"FeedCenter": [52.0, 47.0],
+	}
+
+
+static func _draw_belt_fed_support(image: Image, _declaration: Dictionary, palette: Dictionary) -> Dictionary:
+	var body := palette["body"] as Color
+	var accent := palette["accent"] as Color
+	var highlight := palette["highlight"] as Color
+	_segment(image, Vector2(6, 47), Vector2(28, 46), 18, 12, palette["stock"] as Color)
+	_outlined_rect(image, Rect2i(26, 33, 40, 21), body)
+	_segment(image, Vector2(39, 51), Vector2(36, 73), 13, 8, accent)
+	_outlined_rect(image, Rect2i(48, 53, 24, 20), palette["magazine"] as Color)
+	for x: int in range(47, 69, 5):
+		_fill_circle(image, Vector2i(x, 53), 2, Color("c79748"))
+	_outlined_rect(image, Rect2i(63, 37, 20, 13), palette["handguard"] as Color)
+	_segment(image, Vector2(79, 41), Vector2(94, 41), 7, 3, accent)
+	_segment(image, Vector2(70, 52), Vector2(62, 78), 5, 2, highlight)
+	_segment(image, Vector2(72, 52), Vector2(82, 78), 5, 2, highlight)
+	_segment(image, Vector2(28, 30), Vector2(65, 30), 5, 2, highlight)
+	_draw_trigger_hint(image, Vector2(43, 55), accent)
+	return {
+		"GripPrimary": [36.0, 64.0],
+		"GripSecondary": [72.0, 45.0],
+		"Muzzle": [94.0, 41.0],
+		"Tip": [94.0, 41.0],
+		"RearContact": [6.0, 47.0],
+		"FeedCenter": [58.0, 62.0],
+	}
+
+
 static func _draw_magazine(image: Image, root: Vector2, shape: String, color: Color, direction: float) -> void:
 	if shape == "straight":
 		_segment(image, root, root + Vector2(2.0 * direction, 19.0), 12, 7, color)
@@ -154,9 +231,14 @@ static func _draw_trigger_hint(image: Image, center: Vector2, color: Color) -> v
 
 static func _required_roles(declaration: Dictionary) -> Array[String]:
 	var roles: Array[String] = ["receiver", "primary_grip", "muzzle", "feed"]
-	if str(declaration.get("support_mode", "")) == "two_hand_shouldered":
+	match str(declaration.get("layout", "")):
+		"conventional_shotgun": roles.append_array(["stock", "pump_fore_end", "tube_magazine"])
+		"revolver": roles.append_array(["cylinder", "hammer", "revolver_grip"])
+		"belt_fed_support": roles.append_array(["stock", "feed_cover", "ammunition_belt", "belt_box", "support_grip"])
+		_: pass
+	if str(declaration.get("support_mode", "")) == "two_hand_shouldered" and "support_grip" not in roles:
 		roles.append_array(["stock", "support_grip"])
-	else:
+	elif str(declaration.get("layout", "")) == "pistol":
 		roles.append("slide")
 	roles.append(str(declaration.get("upper_profile", "upper_profile")))
 	return roles

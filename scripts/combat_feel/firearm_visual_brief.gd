@@ -72,6 +72,9 @@ static func _required_visible_parts(declaration: Dictionary) -> Array[String]:
 	match str(declaration.get("layout", "")):
 		"pistol": parts.append_array(["slide", "grip_housed_magazine"])
 		"bullpup": parts.append_array(["integrated_stock", "magazine_behind_grip", "support_hand_region"])
+		"conventional_shotgun": parts.append_array(["rear_stock", "pump_fore_end", "tube_magazine", "loading_port"])
+		"revolver": parts.append_array(["exposed_cylinder", "revolver_grip", "hammer"])
+		"belt_fed_support": parts.append_array(["rear_stock", "feed_cover", "visible_ammunition_belt", "belt_box", "support_hand_region"])
 		_: parts.append_array(["rear_stock", "magazine_ahead_of_grip", "support_hand_region"])
 	match str(declaration.get("upper_profile", "")):
 		"carry_handle": parts.append("carry_handle_gap")
@@ -86,6 +89,9 @@ static func _layout_clause(value: String) -> String:
 		"bullpup": return "Use a compact bullpup layout with the ammunition feed visibly behind the primary grip"
 		"conventional_rifle": return "Use a conventional rifle layout with a rear stock and the ammunition feed visibly ahead of the primary grip"
 		"pistol": return "Use a compact pistol layout with one grip under a short slide and no shoulder stock"
+		"conventional_shotgun": return "Use a conventional shoulder-fired shotgun layout with a long barrel, a separate pump fore-end and a tube beneath the barrel"
+		"revolver": return "Use a compact revolver layout with one exposed round cylinder between the grip and barrel, plus a visible hammer"
+		"belt_fed_support": return "Use a heavy shoulder-fired support layout with a broad feed cover, visible ammunition belt and separate belt box"
 	return "Keep the declared firearm layout visible"
 
 
@@ -103,11 +109,17 @@ static func _feed_clause(position: String, shape: String) -> String:
 		"behind_grip": "behind the primary grip",
 		"ahead_of_grip": "ahead of the primary grip",
 		"in_grip": "inside the primary grip",
+		"under_barrel": "beneath and parallel to the barrel",
+		"cylinder_center": "between the primary grip and barrel",
+		"side_feed": "at the side and underside of the receiver",
 	}.get(position, "at the declared feed position")
 	var shape_text: String = {
 		"straight": "a straight detachable magazine",
 		"curved": "a clearly curved detachable magazine",
 		"in_grip": "a magazine contained by the grip silhouette",
+		"tube": "a tube magazine beneath the barrel",
+		"cylinder": "an exposed rotating cylinder",
+		"belt_box": "a hanging ammunition belt and separate belt box",
 	}.get(shape, "the declared magazine")
 	return "Place %s %s" % [shape_text, position_text]
 

@@ -71,7 +71,11 @@ func _test_finished_art_local_hit() -> Variant:
 	provider.request_visual(blueprint, "", PackedByteArray(), 0.0)
 	if provider.request_route() != "remote_generation_unavailable" or provider.process_id != -1:
 		return {"first_route": provider.request_route(), "process_id": provider.process_id}
-	var cache_key: String = provider.active_cache_key
+	var current_cache_key: String = provider.active_cache_key
+	var cache_key: String = provider._cache_key_for_version(
+		provider.active_request_payload,
+		"fal-gpt-image-1.5-image2pixel24-anthropic-identity-v3"
+	)
 	var cache_directory: String = str(provider.cache_root).path_join(cache_key)
 	var absolute_directory := ProjectSettings.globalize_path(cache_directory)
 	if cache_key.is_empty() or DirAccess.make_dir_recursive_absolute(absolute_directory) != OK:
@@ -98,7 +102,7 @@ func _test_finished_art_local_hit() -> Variant:
 	_write_json(cache_directory.path_join("cache_record.json"), {
 		"schema": FAL_PROVIDER.CACHE_SCHEMA,
 		"key": cache_key,
-		"pipeline_version": FAL_PROVIDER.VISUAL_PIPELINE_VERSION,
+		"pipeline_version": "fal-gpt-image-1.5-image2pixel24-anthropic-identity-v3",
 		"identity": "M4A1",
 		"canonical_name": "M4A1",
 		"processed_sprite_sha256": _sha256(sprite_bytes),
@@ -113,17 +117,20 @@ func _test_finished_art_local_hit() -> Variant:
 		and provider.process_id == -1
 		and str(result.get("status", "")) == "success"
 		and str(result.get("cache_status", "")) == "local_immediate_hit"
+		and bool(((result.get("manifest", {}) as Dictionary).get("cache", {}) as Dictionary).get("locally_revalidated", false))
 		and not bool(result.get("external_process_started", true))
 		and result.get("asset") is WeaponVisualAsset
 		and bool((result.get("manifest", {}) as Dictionary).get("finished_art", false))
 	)
 	# A changed cache record must invalidate the memory-free provider path.
-	_write_json(cache_directory.path_join("cache_record.json"), {
-		"schema": FAL_PROVIDER.CACHE_SCHEMA,
-		"key": cache_key,
-		"pipeline_version": FAL_PROVIDER.VISUAL_PIPELINE_VERSION,
-		"processed_sprite_sha256": "corrupted",
-	})
+	_remove_tree(ProjectSettings.globalize_path(cache_directory))
+	var current_cache_directory: String = str(provider.cache_root).path_join(current_cache_key)
+	var current_record: Variant = JSON.parse_string(FileAccess.get_file_as_string(
+		current_cache_directory.path_join("cache_record.json")
+	))
+	var corrupted_record := (current_record as Dictionary).duplicate(true) if current_record is Dictionary else {}
+	corrupted_record["processed_sprite_sha256"] = "corrupted"
+	_write_json(current_cache_directory.path_join("cache_record.json"), corrupted_record)
 	provider.request_visual(blueprint, "", PackedByteArray(), 0.0)
 	var corrupt_route := provider.request_route()
 	var corrupt_result: Dictionary = provider.poll()
@@ -144,15 +151,25 @@ func _test_armory_memory_cache() -> Variant:
 	var sprite_bytes := FileAccess.get_file_as_bytes(SPRITE_FIXTURE)
 	_write_bytes(cache_directory.path_join("processed_sprite.png"), sprite_bytes)
 	_write_json(cache_directory.path_join("cache_record.json"), {
+		"schema": FAL_PROVIDER.CACHE_SCHEMA,
+		"key": "legacy-armory-m4a1",
+		"pipeline_version": "fal-gpt-image-1.5-image2pixel24-anthropic-identity-v3",
 		"identity": "M4A1",
 		"canonical_name": "M4A1",
 		"processed_sprite_sha256": _sha256(sprite_bytes),
 	})
 	var valid_manifest := {
+		"schema": FAL_PROVIDER.MANIFEST_SCHEMA,
 		"status": "success",
 		"finished_art": true,
 		"presentable_to_player": true,
 		"firearm_visual_gate_passed": true,
+		"ai_visual_identity_verification": {
+			"schema": FAL_PROVIDER.VISUAL_VERIFICATION_SCHEMA,
+			"ok": true,
+			"passed": true,
+		},
+		"firearm_visual_identity_gate": {"schema": "forge-firearm-visual-identity-gate-v1", "anchors": {}},
 	}
 	_write_json(cache_directory.path_join("manifest.json"), valid_manifest)
 	var armory = PLAYER_ARMORY.new()

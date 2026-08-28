@@ -5,6 +5,11 @@ const CANVAS_SIZE := Vector2i(96, 96)
 const ALPHA_THRESHOLD := 0.10
 const MIN_OPAQUE_COLORS := 8
 const MAX_OPAQUE_COLORS := 32
+const SCHEMA := "forge-firearm-visual-identity-gate-v2"
+const SUPPORTED_LAYOUTS: PackedStringArray = [
+	"pistol", "conventional_rifle", "bullpup",
+	"conventional_shotgun", "revolver", "belt_fed_support",
+]
 
 
 static func evaluate(
@@ -22,7 +27,7 @@ static func evaluate(
 	var declaration := blueprint.affordance
 	var identity_card := brief.get("visual_identity_card", {}) as Dictionary
 	var layout := str(declaration.get("layout", ""))
-	if layout not in ["pistol", "conventional_rifle", "bullpup"]:
+	if layout not in SUPPORTED_LAYOUTS:
 		return _failure("FIREARM_VISUAL_LAYOUT_UNSUPPORTED")
 	var expected_scaffold_sha := str(contract.get("scaffold_rgba_sha256", ""))
 	var actual_rgba_sha := _bytes_sha256(image.get_data())
@@ -35,7 +40,7 @@ static func evaluate(
 	var aspect := float(bounds.size.x) / float(maxi(1, bounds.size.y))
 	var opaque_colors := _opaque_color_count(image)
 	var metrics := {
-		"schema": "forge-firearm-visual-identity-gate-v1",
+		"schema": SCHEMA,
 		"layout": layout,
 		"canvas": [CANVAS_SIZE.x, CANVAS_SIZE.y],
 		"bounds": [bounds.position.x, bounds.position.y, bounds.size.x, bounds.size.y],
@@ -77,9 +82,14 @@ static func evaluate(
 		return _metric_failure("FIREARM_VISUAL_FEED_MUST_BE_BEHIND_GRIP", metrics)
 	if layout == "pistol" and feed.distance_to(grip) > 5.0:
 		return _metric_failure("FIREARM_VISUAL_PISTOL_FEED_MUST_BE_IN_GRIP", metrics)
+	if layout in ["conventional_shotgun", "revolver", "belt_fed_support"] and feed.x <= grip.x:
+		return _metric_failure("FIREARM_VISUAL_SPECIAL_FEED_MUST_BE_AHEAD_OF_GRIP", metrics)
+	var action_cycle := _action_cycle_anchor(image, bounds, layout, anchors)
+	if action_cycle.x < 0.0:
+		return _metric_failure("FIREARM_VISUAL_ACTION_ANCHOR_MISSING", metrics)
 	return {
 		"ok": true,
-		"schema": "forge-firearm-visual-identity-gate-v1",
+		"schema": SCHEMA,
 		"automatic": true,
 		"finished_art": true,
 		"scaffold_presentable": false,
@@ -94,7 +104,10 @@ static func evaluate(
 			"Tip": _pair(anchors.get("Muzzle") as Vector2),
 			"RearContact": _pair(anchors.get("RearContact") as Vector2),
 			"FeedCenter": _pair(feed),
+			"ActionCycle": _pair(action_cycle),
+			"ActionReload": _pair(feed),
 		},
+		"action_anchor_contract": true,
 	}
 
 
@@ -145,6 +158,12 @@ static func _role_metrics(image: Image, bounds: Rect2i, layout: String) -> Dicti
 		metrics["feed_region"] = _region_coverage(image, bounds, Rect2(0.20, 0.48, 0.24, 0.52))
 	elif layout == "conventional_rifle":
 		metrics["feed_region"] = _region_coverage(image, bounds, Rect2(0.42, 0.46, 0.34, 0.54))
+	elif layout == "conventional_shotgun":
+		metrics["feed_region"] = _region_coverage(image, bounds, Rect2(0.45, 0.42, 0.40, 0.42))
+	elif layout == "revolver":
+		metrics["feed_region"] = _region_coverage(image, bounds, Rect2(0.34, 0.18, 0.32, 0.46))
+	elif layout == "belt_fed_support":
+		metrics["feed_region"] = _region_coverage(image, bounds, Rect2(0.38, 0.42, 0.40, 0.58))
 	else:
 		metrics["feed_region"] = float(metrics["lower_rear"])
 	return metrics
@@ -193,6 +212,27 @@ static func _layout_error(layout: String, aspect: float, metrics: Dictionary) ->
 				return "FIREARM_VISUAL_INTEGRATED_STOCK_NOT_READABLE"
 			if float(metrics.get("feed_region", 0.0)) < 0.08:
 				return "FIREARM_VISUAL_REAR_MAGAZINE_NOT_READABLE"
+		"conventional_shotgun":
+			if aspect < 2.15 or aspect > 5.20:
+				return "FIREARM_VISUAL_SHOTGUN_PROPORTIONS_INVALID"
+			if float(metrics.get("rear_structure", 0.0)) < 0.08:
+				return "FIREARM_VISUAL_SHOTGUN_STOCK_NOT_READABLE"
+			if float(metrics.get("feed_region", 0.0)) < 0.10:
+				return "FIREARM_VISUAL_SHOTGUN_PUMP_TUBE_NOT_READABLE"
+		"revolver":
+			if aspect < 1.25 or aspect > 3.10:
+				return "FIREARM_VISUAL_REVOLVER_PROPORTIONS_INVALID"
+			if float(metrics.get("feed_region", 0.0)) < 0.16:
+				return "FIREARM_VISUAL_REVOLVER_CYLINDER_NOT_READABLE"
+			if float(metrics.get("lower_rear", 0.0)) < 0.12:
+				return "FIREARM_VISUAL_REVOLVER_GRIP_NOT_READABLE"
+		"belt_fed_support":
+			if aspect < 1.75 or aspect > 4.80:
+				return "FIREARM_VISUAL_BELT_FED_PROPORTIONS_INVALID"
+			if float(metrics.get("rear_structure", 0.0)) < 0.08:
+				return "FIREARM_VISUAL_BELT_FED_STOCK_NOT_READABLE"
+			if float(metrics.get("feed_region", 0.0)) < 0.14:
+				return "FIREARM_VISUAL_BELT_BOX_NOT_READABLE"
 	return ""
 
 
@@ -206,6 +246,15 @@ static func _resolve_anchors(image: Image, bounds: Rect2i, layout: String) -> Di
 		"bullpup":
 			grip_region = Rect2(0.42, 0.42, 0.22, 0.58)
 			feed_region = Rect2(0.18, 0.42, 0.25, 0.58)
+		"conventional_shotgun":
+			grip_region = Rect2(0.20, 0.42, 0.28, 0.58)
+			feed_region = Rect2(0.43, 0.35, 0.40, 0.50)
+		"revolver":
+			grip_region = Rect2(0.02, 0.44, 0.40, 0.56)
+			feed_region = Rect2(0.32, 0.16, 0.34, 0.50)
+		"belt_fed_support":
+			grip_region = Rect2(0.20, 0.42, 0.28, 0.58)
+			feed_region = Rect2(0.38, 0.42, 0.40, 0.58)
 		_:
 			grip_region = Rect2(0.20, 0.42, 0.30, 0.58)
 			feed_region = Rect2(0.42, 0.42, 0.34, 0.58)
@@ -227,6 +276,23 @@ static func _resolve_anchors(image: Image, bounds: Rect2i, layout: String) -> Di
 		"Muzzle": muzzle,
 		"RearContact": rear,
 	}
+
+
+static func _action_cycle_anchor(
+	image: Image,
+	bounds: Rect2i,
+	layout: String,
+	anchors: Dictionary
+) -> Vector2:
+	match layout:
+		"conventional_shotgun":
+			return _region_centroid(image, bounds, Rect2(0.54, 0.30, 0.30, 0.45))
+		"revolver":
+			return anchors.get("FeedCenter", Vector2(-1, -1)) as Vector2
+		"belt_fed_support":
+			return _region_centroid(image, bounds, Rect2(0.38, 0.12, 0.34, 0.34))
+		_:
+			return _region_centroid(image, bounds, Rect2(0.38, 0.12, 0.30, 0.38))
 
 
 static func _region_coverage(image: Image, bounds: Rect2i, normalized: Rect2) -> float:

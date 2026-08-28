@@ -3,15 +3,16 @@ extends "res://scripts/services/forge_visual_provider.gd"
 
 const OPEN_IDENTITY_PROMPT := preload("res://scripts/services/open_identity_visual_prompt.gd")
 const FIREARM_SCAFFOLD_PIPELINE := preload("res://scripts/combat_feel/firearm_visual_scaffold_pipeline.gd")
+const CACHE_POLICY := preload("res://scripts/combat_feel/firearm_visual_cache_policy.gd")
 const ANCHOR_RESOLVER := preload("res://scripts/systems/anchor_resolver.gd")
 const BRIDGE_SCRIPT := "res://tools/visual/fal_firearm_pixel_bridge.py"
 const REQUEST_SCHEMA := "forge-fal-firearm-visual-request-v2"
-const MANIFEST_SCHEMA := "forge-fal-firearm-visual-manifest-v1"
+const MANIFEST_SCHEMA := CACHE_POLICY.MANIFEST_SCHEMA
 const OUTPUT_ROOT := "user://playlab/fal_firearm_visual/requests"
 const CACHE_ROOT := "user://playlab/fal_firearm_visual/cache_v1"
-const CACHE_SCHEMA := "forge-fal-firearm-visual-cache-v1"
-const VISUAL_VERIFICATION_SCHEMA := "forge-firearm-ai-visual-verification-v1"
-const VISUAL_PIPELINE_VERSION := "fal-gpt-image-1.5-image2pixel24-anthropic-identity-v3"
+const CACHE_SCHEMA := CACHE_POLICY.CACHE_SCHEMA
+const VISUAL_VERIFICATION_SCHEMA := CACHE_POLICY.VERIFICATION_SCHEMA
+const VISUAL_PIPELINE_VERSION := CACHE_POLICY.CURRENT_PIPELINE_VERSION
 const CANVAS_SIZE := Vector2i(96, 96)
 const SUBJECT_SPAN := 82
 
@@ -131,6 +132,12 @@ func request_visual(
 	active_cache_key = _cache_key(active_request_payload)
 	var cache_directory := _absolute_path(cache_root.path_join(active_cache_key))
 	if _cache_entry_valid(cache_directory, active_cache_key):
+		active_output_directory = cache_directory
+		active_cache_hit = true
+		active_request_route = "local_immediate_hit"
+		process_id = -1
+		return active_revision
+	if _try_migrate_legacy_cache(cache_directory, active_cache_key):
 		active_output_directory = cache_directory
 		active_cache_hit = true
 		active_request_route = "local_immediate_hit"
@@ -390,6 +397,10 @@ func _load_accepted_cache_result(manifest: Dictionary, sprite_bytes: PackedByteA
 		"hit": true,
 		"key": active_cache_key,
 		"pipeline_version": VISUAL_PIPELINE_VERSION,
+		"locally_revalidated": bool(
+			(manifest.get("cache", {}) as Dictionary).get("locally_revalidated", false)
+		),
+		"remote_generation_used": false,
 	}
 	delivered = true
 	return {
@@ -404,7 +415,7 @@ func _load_accepted_cache_result(manifest: Dictionary, sprite_bytes: PackedByteA
 		"ai_visual_rig": {},
 		"ai_visual_rig_source": "",
 		"firearm_visual_identity_gate": gate.duplicate(true),
-		"cache_status": "local_immediate_hit",
+		"cache_status": active_request_route,
 		"external_process_started": false,
 	}
 
@@ -459,10 +470,14 @@ func _build_request_payload(blueprint: WeaponBlueprint, preparation: Dictionary)
 
 
 func _cache_key(request_payload: Dictionary) -> String:
+	return _cache_key_for_version(request_payload, VISUAL_PIPELINE_VERSION)
+
+
+func _cache_key_for_version(request_payload: Dictionary, pipeline_version: String) -> String:
 	var identity_card := (request_payload.get("identity_card", {}) as Dictionary).duplicate(true)
 	identity_card.erase("requested_identity")
 	var fingerprint := {
-		"pipeline_version": VISUAL_PIPELINE_VERSION,
+		"pipeline_version": pipeline_version,
 		"normalized_identity": _normalize_identity(str(request_payload.get("identity", ""))),
 		"canonical_name": str(request_payload.get("canonical_name", "")),
 		"identity_card": identity_card,
@@ -481,7 +496,6 @@ func _cache_entry_valid(directory: String, key: String) -> bool:
 	if (
 		not FileAccess.file_exists(record_path)
 		or not FileAccess.file_exists(manifest_path)
-		or not FileAccess.file_exists(directory.path_join("raw_pixel_art.png"))
 		or not FileAccess.file_exists(directory.path_join("processed_sprite.png"))
 	):
 		return false
@@ -491,29 +505,66 @@ func _cache_entry_valid(directory: String, key: String) -> bool:
 		return false
 	var record := record_value as Dictionary
 	var manifest := manifest_value as Dictionary
-	var verification := manifest.get("ai_visual_identity_verification", {}) as Dictionary
-	var expected_sprite_hash := str(record.get("processed_sprite_sha256", ""))
 	var sprite_bytes := FileAccess.get_file_as_bytes(directory.path_join("processed_sprite.png"))
-	var valid := (
-		str(record.get("schema", "")) == CACHE_SCHEMA
-		and str(record.get("key", "")) == key
-		and str(record.get("pipeline_version", "")) == VISUAL_PIPELINE_VERSION
-		and str(manifest.get("schema", "")) == MANIFEST_SCHEMA
-		and str(manifest.get("status", "")) == "success"
-		and bool(manifest.get("finished_art", false))
-		and bool(manifest.get("presentable_to_player", false))
-		and bool(manifest.get("firearm_visual_gate_passed", false))
-		and str(verification.get("schema", "")) == VISUAL_VERIFICATION_SCHEMA
-		and bool(verification.get("ok", false))
-		and bool(verification.get("passed", false))
-		and not expected_sprite_hash.is_empty()
-		and not sprite_bytes.is_empty()
-		and _bytes_sha256(sprite_bytes) == expected_sprite_hash
-	)
+	var valid := CACHE_POLICY.evidence_errors(record, manifest, sprite_bytes, key, false).is_empty()
 	if valid:
 		validated_cache_manifest = manifest.duplicate(true)
 		validated_cache_sprite_bytes = sprite_bytes.duplicate()
 	return valid
+
+
+func _try_migrate_legacy_cache(target_directory: String, target_key: String) -> bool:
+	for legacy_version: String in CACHE_POLICY.LEGACY_PIPELINE_VERSIONS:
+		var legacy_key := _cache_key_for_version(active_request_payload, legacy_version)
+		var legacy_directory := _absolute_path(cache_root.path_join(legacy_key))
+		if _migrate_cache_directory(legacy_directory, target_directory, legacy_key, target_key):
+			return _cache_entry_valid(target_directory, target_key)
+	return false
+
+
+func _migrate_cache_directory(
+	source_directory: String,
+	target_directory: String,
+	source_key: String,
+	target_key: String
+) -> bool:
+	var record_path := source_directory.path_join("cache_record.json")
+	var manifest_path := source_directory.path_join("manifest.json")
+	var sprite_path := source_directory.path_join("processed_sprite.png")
+	if not FileAccess.file_exists(record_path) or not FileAccess.file_exists(manifest_path) or not FileAccess.file_exists(sprite_path):
+		return false
+	var record_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(record_path))
+	var manifest_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(manifest_path))
+	if not record_value is Dictionary or not manifest_value is Dictionary:
+		return false
+	var record := record_value as Dictionary
+	var manifest := manifest_value as Dictionary
+	var sprite_bytes := FileAccess.get_file_as_bytes(sprite_path)
+	if not CACHE_POLICY.evidence_errors(record, manifest, sprite_bytes, source_key, true).is_empty():
+		return false
+	var image := Image.new()
+	if image.load_png_from_buffer(sprite_bytes) != OK or image.is_empty():
+		return false
+	var resolution := FIREARM_SCAFFOLD_PIPELINE.resolve_asset(
+		image,
+		active_blueprint,
+		active_preparation
+	)
+	if not bool(resolution.get("ok", false)):
+		return false
+	var gate := resolution.get("visual_identity_gate", {}) as Dictionary
+	var upgraded_manifest := CACHE_POLICY.upgraded_manifest(manifest, gate, target_key)
+	var upgraded_record := CACHE_POLICY.upgraded_record(record, target_key, sprite_bytes)
+	if DirAccess.make_dir_recursive_absolute(target_directory) != OK:
+		return false
+	if (
+		_write_bytes_atomic(target_directory.path_join("raw_pixel_art.png"), sprite_bytes) != OK
+		or _write_bytes_atomic(target_directory.path_join("processed_sprite.png"), sprite_bytes) != OK
+		or _write_json_atomic(target_directory.path_join("manifest.json"), upgraded_manifest) != OK
+		or _write_json_atomic(target_directory.path_join("cache_record.json"), upgraded_record) != OK
+	):
+		return false
+	return true
 
 
 func _persist_cache(source_directory: String, manifest: Dictionary) -> Dictionary:
