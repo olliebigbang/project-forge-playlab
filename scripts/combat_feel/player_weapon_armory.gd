@@ -2,6 +2,7 @@ class_name PlayerWeaponArmory
 extends RefCounted
 
 const FIREARM_CATALOG := preload("res://scripts/combat_feel/firearm_identity_catalog.gd")
+const FIREARM_IDENTITY_AI_RESOLVER := preload("res://scripts/combat_feel/firearm_identity_ai_resolver.gd")
 const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
 const FIREARM_SCAFFOLD_PIPELINE := preload("res://scripts/combat_feel/firearm_visual_scaffold_pipeline.gd")
 const CACHE_POLICY := preload("res://scripts/combat_feel/firearm_visual_cache_policy.gd")
@@ -10,6 +11,7 @@ const ANCHOR_RESOLVER := preload("res://scripts/systems/anchor_resolver.gd")
 
 const DEFAULT_VISUAL_CACHE_ROOT := "user://playlab/fal_firearm_visual/cache_v1"
 const DEFAULT_PROFILE_CACHE_PATHS := [
+	FIREARM_IDENTITY_AI_RESOLVER.CACHE_PATH,
 	"user://playlab/firearm_identity_ai/cache_v3.json",
 	"user://playlab/firearm_identity_ai/cache_v2.json",
 	"user://playlab/firearm_identity_ai/cache_v1.json",
@@ -221,6 +223,8 @@ func _load_cached_profiles() -> Dictionary:
 			var declaration := profile.get("declaration", {}) as Dictionary
 			var source := str(declaration.get("source", profile.get("catalog_source", "")))
 			if not bool(RANGED_AXIS_RESOLVER.validate_ai_declaration(declaration, source).get("ok", false)):
+				continue
+			if not FIREARM_IDENTITY_AI_RESOLVER._mechanism_family_error(declaration).is_empty():
 				continue
 			var timestamp := int(entry.get("cached_unix_time", 0))
 			var aliases: Array[String] = [

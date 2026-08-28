@@ -24,7 +24,9 @@ func _initialize() -> void:
 	_run("V5 cycle overhead wins and total climb is preserved", _test_v5_timing_and_climb)
 	_run("Facing mirrors a shared muzzle anchor without drift", _test_facing_and_muzzle)
 	_run("Shotgun revolver and belt-fed structures expose action anchors", _test_new_structures)
+	_run("A readable slender pump shotgun is not judged by rifle thickness", _test_slender_shotgun_gate)
 	_run("Belt-fed side_feed produces a specific visual brief", _test_side_feed_brief)
+	_run("A redraw never excludes the target identity itself", _test_retry_keeps_target_identity)
 	_run("Legacy finished art migrates locally and tampered art is rejected", _test_local_cache_migration)
 	_run("Armory applies the same local V5 migration policy", _test_armory_migration)
 	_run("Training arena consumes the shared choreography", _test_training_uses_shared_choreography)
@@ -137,6 +139,29 @@ func _test_new_structures() -> Variant:
 	return true
 
 
+func _test_slender_shotgun_gate() -> Variant:
+	var source := Image.create(96, 96, false, Image.FORMAT_RGBA8)
+	source.fill(Color.TRANSPARENT)
+	SCAFFOLD._draw_conventional_shotgun(source, {}, SCAFFOLD._palette("wood_steel"))
+	var source_bounds := _alpha_bounds(source)
+	var cropped := source.get_region(source_bounds)
+	cropped.resize(82, 14, Image.INTERPOLATE_NEAREST)
+	var slender := Image.create(96, 96, false, Image.FORMAT_RGBA8)
+	slender.fill(Color.TRANSPARENT)
+	slender.blit_rect(cropped, Rect2i(Vector2i.ZERO, cropped.get_size()), Vector2i(7, 41))
+	_add_authored_palette_variation(slender)
+	var blueprint := WeaponBlueprint.new()
+	blueprint.behavior_family = "sustained_ranged"
+	blueprint.affordance = {"layout": "conventional_shotgun"}
+	var gate := GATE.evaluate(slender, blueprint, {}, {})
+	if not bool(gate.get("ok", false)):
+		return gate
+	var bounds := (gate.get("metrics", {}) as Dictionary).get("bounds", []) as Array
+	if bounds.size() < 4 or int(bounds[2]) < 80 or int(bounds[3]) > 16:
+		return bounds
+	return true
+
+
 func _test_side_feed_brief() -> Variant:
 	var parts := BRIEF._required_visible_parts({"layout": "belt_fed_support", "upper_profile": "top_rail"}) as Array[String]
 	var clause := BRIEF._feed_clause("side_feed", "belt_box")
@@ -144,6 +169,24 @@ func _test_side_feed_brief() -> Variant:
 		return parts
 	if not clause.contains("side and underside") or clause.contains("declared feed position"):
 		return clause
+	return true
+
+
+func _test_retry_keeps_target_identity() -> Variant:
+	var provider = FAL_PROVIDER.new()
+	provider.active_request_payload = {
+		"identity": "M249",
+		"canonical_name": "M249 Light Machine Gun",
+	}
+	var prompt: String = provider._visual_verification_retry_prompt({
+		"verdict": {
+			"required_landmarks_missing": ["feed cover hump"],
+			"contradictions": [],
+			"closest_confusable_identity": "M249",
+		},
+	})
+	if not prompt.contains("feed cover hump") or prompt.contains("do not resemble M249"):
+		return prompt
 	return true
 
 
@@ -336,6 +379,22 @@ func _add_authored_palette_variation(image: Image) -> void:
 				cursor += 1
 				if cursor >= colors.size():
 					return
+
+
+func _alpha_bounds(image: Image) -> Rect2i:
+	var min_x := image.get_width()
+	var min_y := image.get_height()
+	var max_x := -1
+	var max_y := -1
+	for y: int in range(image.get_height()):
+		for x: int in range(image.get_width()):
+			if image.get_pixel(x, y).a <= 0.10:
+				continue
+			min_x = mini(min_x, x)
+			min_y = mini(min_y, y)
+			max_x = maxi(max_x, x)
+			max_y = maxi(max_y, y)
+	return Rect2i(min_x, min_y, max_x - min_x + 1, max_y - min_y + 1)
 
 
 func _write_json(path: String, value: Dictionary) -> void:

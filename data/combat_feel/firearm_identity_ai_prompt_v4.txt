@@ -42,4 +42,10 @@ Structural invariants:
 - revolver: revolver family, no stock, cylinder_center feed, cylinder magazine, revolver_frame, one_hand;
 - belt_fed_support: light_machine_gun, non-none stock, side_feed, belt_box magazine, feed_cover, two_hand_shouldered.
 
+Feed and capacity invariants:
+- internal_tube uses very_low or compact capacity only; never standard, extended, or belt;
+- revolving_cylinder uses very_low capacity only;
+- belt_box uses belt capacity only;
+- detachable_box never uses belt capacity.
+
 For every other classification, set every declaration field and every visual_identity_axes field to not_applicable, leave required_identity_parts_zh, required_landmarks_en, and confusable_exclusions_en empty, and leave visual_description_en empty. Do not force an uncertain name into the nearest gun.

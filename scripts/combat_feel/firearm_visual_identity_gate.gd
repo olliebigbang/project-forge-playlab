@@ -10,6 +10,13 @@ const SUPPORTED_LAYOUTS: PackedStringArray = [
 	"pistol", "conventional_rifle", "bullpup",
 	"conventional_shotgun", "revolver", "belt_fed_support",
 ]
+const DEFAULT_MIN_SILHOUETTE_SIZE := Vector2i(56, 22)
+const MIN_SILHOUETTE_SIZE_BY_LAYOUT := {
+	# A side-profile pump shotgun is legitimately much thinner than a rifle with
+	# a detachable box magazine. Keep the same minimum readable length while
+	# allowing its barrel/tube pair and stock to define a slender silhouette.
+	"conventional_shotgun": Vector2i(56, 12),
+}
 
 
 static func evaluate(
@@ -59,7 +66,12 @@ static func evaluate(
 		return _metric_failure("FIREARM_VISUAL_TOO_FEW_AUTHORED_COLORS", metrics)
 	if opaque_colors > MAX_OPAQUE_COLORS:
 		return _metric_failure("FIREARM_VISUAL_PALETTE_NOT_PIXEL_BOUNDED", metrics)
-	if bounds.size.x < 56 or bounds.size.y < 22:
+	var minimum_bounds: Vector2i = MIN_SILHOUETTE_SIZE_BY_LAYOUT.get(
+		layout,
+		DEFAULT_MIN_SILHOUETTE_SIZE
+	) as Vector2i
+	metrics["minimum_bounds"] = [minimum_bounds.x, minimum_bounds.y]
+	if bounds.size.x < minimum_bounds.x or bounds.size.y < minimum_bounds.y:
 		return _metric_failure("FIREARM_VISUAL_SILHOUETTE_TOO_SMALL", metrics)
 	var role_metrics := _role_metrics(image, bounds, layout)
 	metrics["role_coverage"] = role_metrics.duplicate(true)
@@ -213,7 +225,7 @@ static func _layout_error(layout: String, aspect: float, metrics: Dictionary) ->
 			if float(metrics.get("feed_region", 0.0)) < 0.08:
 				return "FIREARM_VISUAL_REAR_MAGAZINE_NOT_READABLE"
 		"conventional_shotgun":
-			if aspect < 2.15 or aspect > 5.20:
+			if aspect < 2.15 or aspect > 7.20:
 				return "FIREARM_VISUAL_SHOTGUN_PROPORTIONS_INVALID"
 			if float(metrics.get("rear_structure", 0.0)) < 0.08:
 				return "FIREARM_VISUAL_SHOTGUN_STOCK_NOT_READABLE"

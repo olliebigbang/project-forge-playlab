@@ -621,7 +621,14 @@ func _visual_verification_retry_prompt(verification: Dictionary) -> String:
 	if not contradictions.is_empty():
 		details.append("remove these lookalike conflicts: %s" % "; ".join(contradictions))
 	var closest := str(verdict.get("closest_confusable_identity", "")).strip_edges()
-	if not closest.is_empty() and closest.to_lower() != "none":
+	var normalized_closest := _normalize_identity(closest)
+	var normalized_requested := _normalize_identity(str(active_request_payload.get("identity", "")))
+	var normalized_canonical := _normalize_identity(str(active_request_payload.get("canonical_name", "")))
+	var closest_is_target := (
+		not normalized_closest.is_empty()
+		and normalized_closest in [normalized_requested, normalized_canonical]
+	)
+	if not closest.is_empty() and closest.to_lower() != "none" and not closest_is_target:
 		details.append("do not resemble %s" % closest)
 	if details.is_empty():
 		details.append("redraw the exact named model so its identity remains readable at 96 pixels")

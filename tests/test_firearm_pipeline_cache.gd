@@ -17,6 +17,7 @@ func _initialize() -> void:
 	print("Forge firearm cache-first pipeline tests")
 	_run("Dynamic firearm canonical aliases hit semantic cache locally", _test_semantic_alias_cache)
 	_run("Validated finished art bypasses Python and remote configuration", _test_finished_art_local_hit)
+	_run("Armory reads the current dynamic firearm semantic cache", _test_armory_current_semantic_cache)
 	_run("Armory reopens from memory and invalidates changed evidence", _test_armory_memory_cache)
 	_run("Forge labels local hits separately from first generation", _test_cache_status_copy)
 	print("FIREARM CACHE PIPELINE RESULT: %d passed, %d failed" % [passed, failed])
@@ -140,6 +141,13 @@ func _test_finished_art_local_hit() -> Variant:
 	if corrupt_route != "remote_generation_unavailable" or str(corrupt_result.get("status", "")) != "failed":
 		return {"corrupt_route": corrupt_route, "corrupt_result": corrupt_result}
 	print("CACHE_TIMING local_finished_art_hit_usec=%d" % local_hit_elapsed)
+	return true
+
+
+func _test_armory_current_semantic_cache() -> Variant:
+	var paths := PLAYER_ARMORY.DEFAULT_PROFILE_CACHE_PATHS
+	if paths.is_empty() or str(paths[0]) != AI_RESOLVER.CACHE_PATH:
+		return {"armory_paths": paths, "current_cache": AI_RESOLVER.CACHE_PATH}
 	return true
 
 

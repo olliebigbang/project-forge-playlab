@@ -189,7 +189,7 @@ def _verdict_tool(card: Mapping[str, Any]) -> dict[str, Any]:
                     "items": {"type": "string", "enum": landmarks},
                 },
                 "contradictions": {"type": "array", "items": {"type": "string"}},
-                "closest_confusable_identity": {"type": "string"},
+                "closest_confusable_identity": {"type": "string", "maxLength": 96},
                 "confidence": {"type": "number"},
                 "summary": {"type": "string"},
             },
@@ -452,13 +452,12 @@ def build_consensus_record(
     if len(verdicts) != VERIFICATION_PASSES:
         raise FirearmVisualVerifierError("CONSENSUS_PASS_COUNT_INVALID")
     required = list(card["required_landmarks"])
-    missing: list[str] = []
+    missing_votes = {item: 0 for item in required}
     contradictions: list[str] = []
     confusable: list[str] = []
     for verdict in verdicts:
         for item in verdict["required_landmarks_missing"]:
-            if item not in missing:
-                missing.append(item)
+            missing_votes[item] += 1
         for item in verdict["contradictions"]:
             if item not in contradictions:
                 contradictions.append(item)
@@ -468,18 +467,24 @@ def build_consensus_record(
     exact = all(bool(verdict["exact_identity_match"]) for verdict in verdicts)
     readable = all(bool(verdict["identity_readable_at_96px"]) for verdict in verdicts)
     confidence = min(float(verdict["confidence"]) for verdict in verdicts)
+    unanimously_missing = [
+        item for item in required if missing_votes[item] == VERIFICATION_PASSES
+    ]
+    landmark_disagreements = [
+        item for item in required if 0 < missing_votes[item] < VERIFICATION_PASSES
+    ]
     consensus_verdict = {
         "schema": VERDICT_SCHEMA,
         "exact_identity_match": exact,
         "identity_readable_at_96px": readable,
-        "required_landmarks_present": [item for item in required if item not in missing],
-        "required_landmarks_missing": missing,
+        "required_landmarks_present": [item for item in required if item not in unanimously_missing],
+        "required_landmarks_missing": unanimously_missing,
         "contradictions": contradictions,
         "closest_confusable_identity": "; ".join(confusable) if confusable else "none",
         "confidence": confidence,
         "summary": (
             "Two independent visual checks unanimously accepted the exact identity."
-            if exact and readable and not missing and not contradictions and confidence >= MIN_PASS_CONFIDENCE
+            if exact and readable and not unanimously_missing and not contradictions and confidence >= MIN_PASS_CONFIDENCE
             else "At least one visual check found an exact-identity conflict or insufficient evidence."
         ),
     }
@@ -510,14 +515,53 @@ def build_consensus_record(
         "verification_passes_required": VERIFICATION_PASSES,
         "verification_passes_completed": len(verdicts),
         "unanimous_pass_required": True,
+        "unanimous_core_identity_required": True,
         "reference_comparison_used": reference_comparison_used,
         "failure_reasons": failure_reasons,
         "verdict": consensus_verdict,
         "individual_verdicts": [dict(verdict) for verdict in verdicts],
+        "landmark_disagreements": landmark_disagreements,
+        "landmark_acceptance_policy": (
+            "unanimous_exact_identity_and_readability+no_contradictions+"
+            "at_least_one_independent_observer_per_landmark"
+        ),
         "usage": usage,
         "mechanics_authority": False,
         "player_confirmation_required": False,
     }
+
+
+def recompute_consensus_record(identity_card: Any, verification: Any) -> dict[str, Any]:
+    card = validate_identity_card(identity_card)
+    if not isinstance(verification, Mapping):
+        raise FirearmVisualVerifierError("RECOMPUTE_VERIFICATION_INVALID")
+    if "ai_visual_identity_verification" in verification:
+        verification = verification["ai_visual_identity_verification"]
+    if not isinstance(verification, Mapping) or verification.get("schema") != VERIFICATION_SCHEMA:
+        raise FirearmVisualVerifierError("RECOMPUTE_VERIFICATION_INVALID")
+    raw_verdicts = verification.get("individual_verdicts")
+    if not isinstance(raw_verdicts, list) or len(raw_verdicts) != VERIFICATION_PASSES:
+        raise FirearmVisualVerifierError("RECOMPUTE_VERDICTS_INVALID")
+    verdicts = [validate_verdict(card, value) for value in raw_verdicts]
+    model_id = _clean_text(
+        verification.get("model_id"), maximum=96, code="RECOMPUTE_MODEL_INVALID"
+    )
+    recomputed = build_consensus_record(
+        card,
+        verdicts,
+        [{} for _ in verdicts],
+        model_id,
+        bool(verification.get("reference_comparison_used", False)),
+    )
+    usage_value = verification.get("usage", {})
+    if isinstance(usage_value, Mapping):
+        recomputed["usage"] = {
+            key: int(value)
+            for key, value in usage_value.items()
+            if isinstance(key, str) and isinstance(value, int) and value >= 0
+        }
+    recomputed["recomputed_from_existing_independent_verdicts"] = True
+    return recomputed
 
 
 def verify_candidate(
@@ -569,30 +613,39 @@ def _atomic_write_json(path: Path, value: Mapping[str, Any]) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--request", required=True, type=Path)
-    parser.add_argument("--image", required=True, type=Path)
+    parser.add_argument("--image", type=Path)
     parser.add_argument("--reference-image", type=Path)
+    parser.add_argument("--recompute-verification", type=Path)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args(argv)
     try:
         request_value = json.loads(args.request.read_text(encoding="utf-8"))
         if not isinstance(request_value, Mapping) or "identity_card" not in request_value:
             raise FirearmVisualVerifierError("REQUEST_IDENTITY_CARD_MISSING")
-        reference_bytes = b""
-        reference_media_type = ""
-        if args.reference_image is not None:
-            reference_bytes = args.reference_image.resolve().read_bytes()
-            if reference_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
-                reference_media_type = "image/png"
-            elif reference_bytes.startswith(b"\xff\xd8\xff"):
-                reference_media_type = "image/jpeg"
-            else:
-                raise FirearmVisualVerifierError("REFERENCE_IMAGE_FORMAT_INVALID")
-        record = verify_candidate(
-            request_value["identity_card"],
-            args.image.resolve(),
-            reference_bytes,
-            reference_media_type,
-        )
+        if args.recompute_verification is not None:
+            if args.image is not None or args.reference_image is not None:
+                raise FirearmVisualVerifierError("RECOMPUTE_ARGUMENTS_INVALID")
+            prior = json.loads(args.recompute_verification.resolve().read_text(encoding="utf-8"))
+            record = recompute_consensus_record(request_value["identity_card"], prior)
+        else:
+            if args.image is None:
+                raise FirearmVisualVerifierError("IMAGE_MISSING")
+            reference_bytes = b""
+            reference_media_type = ""
+            if args.reference_image is not None:
+                reference_bytes = args.reference_image.resolve().read_bytes()
+                if reference_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
+                    reference_media_type = "image/png"
+                elif reference_bytes.startswith(b"\xff\xd8\xff"):
+                    reference_media_type = "image/jpeg"
+                else:
+                    raise FirearmVisualVerifierError("REFERENCE_IMAGE_FORMAT_INVALID")
+            record = verify_candidate(
+                request_value["identity_card"],
+                args.image.resolve(),
+                reference_bytes,
+                reference_media_type,
+            )
         exit_code = 0 if record["passed"] else 1
     except FirearmVisualVerifierError as exc:
         record = {

@@ -91,12 +91,25 @@ CURATED_IDENTITY_REFERENCES: dict[str, dict[str, str]] = {
     }
 }
 AXIS_LEGAL_VALUES = {
-    "layout": frozenset({"bullpup", "conventional_rifle", "pistol"}),
+    "layout": frozenset(
+        {
+            "bullpup",
+            "conventional_rifle",
+            "pistol",
+            "conventional_shotgun",
+            "revolver",
+            "belt_fed_support",
+        }
+    ),
     "stock_structure": frozenset({"integrated", "telescoping", "fixed", "none"}),
-    "feed_position": frozenset({"behind_grip", "ahead_of_grip", "in_grip"}),
-    "magazine_shape": frozenset({"straight", "curved", "in_grip"}),
+    "feed_position": frozenset(
+        {"behind_grip", "ahead_of_grip", "in_grip", "under_barrel", "cylinder_center", "side_feed"}
+    ),
+    "magazine_shape": frozenset({"straight", "curved", "in_grip", "tube", "cylinder", "belt_box"}),
     "barrel_length": frozenset({"short", "medium", "long"}),
-    "upper_profile": frozenset({"carry_handle", "top_rail", "raised_gas_tube", "slide"}),
+    "upper_profile": frozenset(
+        {"carry_handle", "top_rail", "raised_gas_tube", "slide", "ribbed_barrel", "revolver_frame", "feed_cover"}
+    ),
     "support_mode": frozenset({"one_hand", "two_hand_shouldered"}),
     "finish_palette": frozenset({"gunmetal_black", "olive_black", "wood_steel", "dark_polymer"}),
 }
@@ -190,6 +203,31 @@ def _validate_axes(value: Any) -> dict[str, str]:
         and axes["support_mode"] == "one_hand"
     ):
         raise FalFirearmBridgeError("AXES_PISTOL_CONFLICT")
+    if layout == "conventional_shotgun" and not (
+        axes["stock_structure"] != "none"
+        and axes["feed_position"] == "under_barrel"
+        and axes["magazine_shape"] == "tube"
+        and axes["upper_profile"] == "ribbed_barrel"
+        and axes["support_mode"] == "two_hand_shouldered"
+    ):
+        raise FalFirearmBridgeError("AXES_SHOTGUN_CONFLICT")
+    if layout == "revolver" and not (
+        axes["stock_structure"] == "none"
+        and axes["feed_position"] == "cylinder_center"
+        and axes["magazine_shape"] == "cylinder"
+        and axes["barrel_length"] != "long"
+        and axes["upper_profile"] == "revolver_frame"
+        and axes["support_mode"] == "one_hand"
+    ):
+        raise FalFirearmBridgeError("AXES_REVOLVER_CONFLICT")
+    if layout == "belt_fed_support" and not (
+        axes["stock_structure"] != "none"
+        and axes["feed_position"] == "side_feed"
+        and axes["magazine_shape"] == "belt_box"
+        and axes["upper_profile"] == "feed_cover"
+        and axes["support_mode"] == "two_hand_shouldered"
+    ):
+        raise FalFirearmBridgeError("AXES_BELT_FED_SUPPORT_CONFLICT")
     return axes
 
 
@@ -317,6 +355,21 @@ def build_generation_prompt(request: Mapping[str, Any]) -> str:
         ),
         "raised_gas_tube": "Show a raised gas-tube line, but no carry-handle loop.",
         "slide": "Show one short solid pistol slide over the frame, with no rifle upper structure.",
+        "ribbed_barrel": (
+            "Show a long upper barrel and a separately readable tubular magazine and sliding "
+            "ribbed pump fore-end below it."
+        ),
+        "revolver_frame": (
+            "Show a clearly exposed round cylinder between the barrel and grip, with a compact "
+            "revolver frame and no pistol slide."
+        ),
+        "feed_cover": (
+            "NON-NEGOTIABLE upper silhouette: show a raised broad rectangular feed-cover hump "
+            "directly on top of the receiver, visibly separate from the ribbed fore-end and directly "
+            "beneath a tall backward-leaning arched carrying handle with a clearly transparent open "
+            "gap; the handle must not collapse into a flat rail or rear sight. Also show a separate "
+            "side-hanging belt box connected by a short visible linked ammunition belt."
+        ),
     }[axes["upper_profile"]]
     retry_clause = ""
     if request["retry_index"] > 0:
@@ -339,6 +392,11 @@ def build_generation_prompt(request: Mapping[str, Any]) -> str:
             "stock, magazine spacing, fore-end, sight placement, and exposed muzzle section while "
             "redrawing a new clean isolated sprite."
         )
+    ammunition_exclusion = (
+        "No loose ammunition outside the short linked belt,"
+        if axes["layout"] == "belt_fed_support"
+        else "No ammunition,"
+    )
     return (
         "Asset type: one production-ready 2D game weapon sprite designed to remain readable at "
         "96 by 96 pixels. Primary subject: exactly the firearm identity named \""
@@ -358,7 +416,7 @@ def build_generation_prompt(request: Mapping[str, Any]) -> str:
         "The hidden block scaffold is only a role and proportion guide and must never be copied as "
         "finished art. Preserve the exact named firearm's ordinary real-world silhouette; do not "
         "replace it with a generic rifle, generic pistol, toy, fantasy gun, or sci-fi redesign."
-        f"{reference_clause}{retry_clause} No text, labels, logos, watermark, person, hands, ammunition, muzzle flash, "
+        f"{reference_clause}{retry_clause} No text, labels, logos, watermark, person, hands. {ammunition_exclusion} muzzle flash, "
         "ground, or shadow."
     )
 
@@ -370,8 +428,14 @@ def build_negative_prompt(request: Mapping[str, Any]) -> str:
         exclusions.append("conventional rifle layout, magazine ahead of grip, separate rear shoulder stock")
     elif axes["layout"] == "conventional_rifle":
         exclusions.append("bullpup layout, magazine behind grip")
-    else:
+    elif axes["layout"] == "pistol":
         exclusions.append("rifle stock, rifle handguard, rifle magazine ahead of grip")
+    elif axes["layout"] == "conventional_shotgun":
+        exclusions.append("detachable box magazine, pistol layout, revolver cylinder, belt box, rifle gas system")
+    elif axes["layout"] == "revolver":
+        exclusions.append("pistol slide, detachable magazine, shoulder stock, rifle handguard, long gun layout")
+    else:
+        exclusions.append("pistol layout, revolver cylinder, tubular shotgun magazine, bullpup layout")
     if axes["stock_structure"] == "telescoping":
         exclusions.append("solid fixed stock, triangular fixed stock, full rifle stock, M16-style fixed stock")
     elif axes["stock_structure"] == "fixed":
@@ -578,7 +642,11 @@ def build_identity_renderer_call(
 ) -> tuple[str, str, dict[str, Any]]:
     payload: dict[str, Any] = {
         "prompt": renderer_prompt,
-        "image_size": "1024x1024" if request["axes"]["layout"] == "pistol" else "1536x1024",
+        "image_size": (
+            "1024x1024"
+            if request["axes"]["layout"] in {"pistol", "revolver"}
+            else "1536x1024"
+        ),
         "background": "transparent",
         "quality": "medium",
         "num_images": 1,
@@ -702,6 +770,27 @@ def _prepare_identity_reference(
                 request["identity_card"], _reference_cache_root(output_directory)
             )
         except WikimediaReferenceError as exc:
+            if exc.code in {
+                "NO_LICENSED_REFERENCE_CANDIDATES",
+                "NO_VISUALLY_VERIFIED_REFERENCE",
+            }:
+                # Absence of a trustworthy public reference is not evidence that
+                # the requested firearm is unsupported. Generate from the strict
+                # identity card, then keep both independent candidate checks and
+                # the Godot structural gate as mandatory acceptance boundaries.
+                working_request["identity_reference"] = {}
+                return (
+                    working_request,
+                    "",
+                    {},
+                    b"",
+                    {
+                        "passed": False,
+                        "fallback_used": True,
+                        "reason": exc.code,
+                        "candidate_verification_still_required": True,
+                    },
+                )
             raise FalFirearmBridgeError(f"IDENTITY_REFERENCE_{exc.code}") from exc
         actual_reference = dict(resolved["reference"])
         image_bytes = bytes(resolved["image_bytes"])
@@ -733,7 +822,9 @@ def generate(request: Mapping[str, Any], output_directory: Path, api_key: str) -
     prompt = build_generation_prompt(request)
     negative_prompt = build_negative_prompt(request)
     renderer_prompt = f"{prompt} Additional exclusions: {negative_prompt}."
-    aspect_ratio = "1:1" if request["axes"]["layout"] == "pistol" else "3:2"
+    aspect_ratio = (
+        "1:1" if request["axes"]["layout"] in {"pistol", "revolver"} else "3:2"
+    )
     identity_endpoint, identity_model, identity_payload = build_identity_renderer_call(
         request, renderer_prompt, reference_image_input
     )

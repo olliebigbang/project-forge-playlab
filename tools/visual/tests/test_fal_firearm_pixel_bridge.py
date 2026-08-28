@@ -83,6 +83,79 @@ class FalFirearmPixelBridgeTests(unittest.TestCase):
         with self.assertRaisesRegex(BRIDGE.FalFirearmBridgeError, "AXES_CONVENTIONAL_CONFLICT"):
             BRIDGE.validate_request(value)
 
+    def test_v5_shotgun_revolver_and_belt_fed_layouts_reach_the_renderer(self) -> None:
+        cases = [
+            (
+                {
+                    "layout": "conventional_shotgun",
+                    "stock_structure": "fixed",
+                    "feed_position": "under_barrel",
+                    "magazine_shape": "tube",
+                    "barrel_length": "medium",
+                    "upper_profile": "ribbed_barrel",
+                    "support_mode": "two_hand_shouldered",
+                },
+                "tubular magazine",
+                "1536x1024",
+            ),
+            (
+                {
+                    "layout": "revolver",
+                    "stock_structure": "none",
+                    "feed_position": "cylinder_center",
+                    "magazine_shape": "cylinder",
+                    "barrel_length": "medium",
+                    "upper_profile": "revolver_frame",
+                    "support_mode": "one_hand",
+                },
+                "exposed round cylinder",
+                "1024x1024",
+            ),
+            (
+                {
+                    "layout": "belt_fed_support",
+                    "stock_structure": "fixed",
+                    "feed_position": "side_feed",
+                    "magazine_shape": "belt_box",
+                    "barrel_length": "long",
+                    "upper_profile": "feed_cover",
+                    "support_mode": "two_hand_shouldered",
+                },
+                "side-hanging belt box",
+                "1536x1024",
+            ),
+        ]
+        for axes, prompt_evidence, image_size in cases:
+            with self.subTest(layout=axes["layout"]):
+                value = request_fixture()
+                value["axes"].update(axes)
+                request = BRIDGE.validate_request(value)
+                prompt = BRIDGE.build_generation_prompt(request)
+                _, _, payload = BRIDGE.build_identity_renderer_call(request, prompt)
+                self.assertIn(prompt_evidence, prompt)
+                self.assertEqual(payload["image_size"], image_size)
+
+    def test_belt_fed_prompt_requires_a_separate_feed_cover_hump(self) -> None:
+        value = request_fixture()
+        value["axes"].update(
+            {
+                "layout": "belt_fed_support",
+                "stock_structure": "fixed",
+                "feed_position": "side_feed",
+                "magazine_shape": "belt_box",
+                "barrel_length": "long",
+                "upper_profile": "feed_cover",
+                "support_mode": "two_hand_shouldered",
+                "finish_palette": "olive_black",
+            }
+        )
+        prompt = BRIDGE.build_generation_prompt(BRIDGE.validate_request(value))
+        self.assertIn("raised broad rectangular feed-cover hump", prompt)
+        self.assertIn("backward-leaning arched carrying handle", prompt)
+        self.assertIn("short visible linked ammunition belt", prompt)
+        self.assertIn("No loose ammunition outside the short linked belt", prompt)
+        self.assertNotIn("hands, ammunition", prompt)
+
     def test_curated_reference_uses_high_fidelity_edit_without_exposing_player_url(self) -> None:
         value = request_fixture()
         value["identity"] = "81杠"
@@ -178,6 +251,42 @@ class FalFirearmPixelBridgeTests(unittest.TestCase):
             BRIDGE.FalFirearmBridgeError, "AUTO_REQUIRES_DYNAMIC_IDENTITY"
         ):
             BRIDGE.validate_request(curated_value)
+
+    def test_missing_public_reference_falls_back_to_strict_candidate_verification(self) -> None:
+        value = request_fixture()
+        value["identity_card"]["identity_id"] = "ai_m4a1"
+        value["identity_reference_id"] = BRIDGE.AUTO_REFERENCE_ID
+        request = BRIDGE.validate_request(value)
+        with tempfile.TemporaryDirectory() as directory, mock.patch.object(
+            BRIDGE,
+            "resolve_wikimedia_reference",
+            side_effect=BRIDGE.WikimediaReferenceError("NO_VISUALLY_VERIFIED_REFERENCE"),
+        ):
+            prepared, data_uri, fetch, image_bytes, verification = (
+                BRIDGE._prepare_identity_reference(request, Path(directory))
+            )
+        self.assertEqual(prepared["identity_reference"], {})
+        self.assertEqual(data_uri, "")
+        self.assertEqual(fetch, {})
+        self.assertEqual(image_bytes, b"")
+        self.assertTrue(verification["fallback_used"])
+        self.assertTrue(verification["candidate_verification_still_required"])
+
+    def test_public_reference_network_failure_still_fails_closed(self) -> None:
+        value = request_fixture()
+        value["identity_card"]["identity_id"] = "ai_m4a1"
+        value["identity_reference_id"] = BRIDGE.AUTO_REFERENCE_ID
+        request = BRIDGE.validate_request(value)
+        with tempfile.TemporaryDirectory() as directory, mock.patch.object(
+            BRIDGE,
+            "resolve_wikimedia_reference",
+            side_effect=BRIDGE.WikimediaReferenceError("API_NETWORK_FAILED"),
+        ):
+            with self.assertRaisesRegex(
+                BRIDGE.FalFirearmBridgeError,
+                "IDENTITY_REFERENCE_API_NETWORK_FAILED",
+            ):
+                BRIDGE._prepare_identity_reference(request, Path(directory))
 
     def test_two_stage_generation_uses_transparency_and_bounded_palette(self) -> None:
         request = BRIDGE.validate_request(request_fixture())

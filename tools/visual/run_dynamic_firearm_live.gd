@@ -4,6 +4,7 @@ const IDENTITY_RESOLVER := preload("res://scripts/combat_feel/firearm_identity_a
 const IDENTITY_PROVIDER := preload("res://scripts/services/firearm_identity_ai_provider.gd")
 const INTERPRETER := preload("res://scripts/services/open_identity_interpreter.gd")
 const VISUAL_PROVIDER := preload("res://scripts/services/fal_firearm_visual_provider.gd")
+const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
 
 var identity := ""
 var python_path := "python"
@@ -14,6 +15,7 @@ var stage := "idle"
 var retry_count := 0
 var max_retries := 0
 var identity_cache_hit := false
+var identity_only := false
 var finished := false
 
 
@@ -21,6 +23,7 @@ func _initialize() -> void:
 	identity = _argument_value("--identity=", "M16A2").strip_edges()
 	python_path = _argument_value("--python=", "python").strip_edges()
 	max_retries = clampi(int(_argument_value("--max-retries=", "1")), 0, 2)
+	identity_only = _argument_value("--identity-only=", "false").to_lower() in ["1", "true", "yes"]
 	if identity.is_empty():
 		_finish("DYNAMIC_FIREARM_IDENTITY_EMPTY", 2)
 		return
@@ -31,6 +34,9 @@ func _initialize() -> void:
 			identity, PackedByteArray(), {}, cached
 		)
 		if not _accept_interpretation(interpreted):
+			return
+		if identity_only:
+			_finish_identity_only()
 			return
 		_start_visual_request()
 		return
@@ -77,6 +83,9 @@ func _poll_identity() -> void:
 	)
 	if not _accept_interpretation(interpreted):
 		return
+	if identity_only:
+		_finish_identity_only()
+		return
 	_start_visual_request()
 
 
@@ -109,6 +118,26 @@ func _start_visual_request() -> void:
 		return
 	stage = "visual"
 	visual_provider.request_visual(blueprint, identity, PackedByteArray(), 0.0)
+
+
+func _finish_identity_only() -> void:
+	var runtime := RANGED_AXIS_RESOLVER.compile(
+		blueprint.affordance,
+		blueprint.affordance_source
+	)
+	print("DYNAMIC_FIREARM_IDENTITY_RESULT=%s" % JSON.stringify({
+		"status": "success",
+		"identity": identity,
+		"canonical_identity": blueprint.display_name,
+		"identity_cache_hit": identity_cache_hit,
+		"firearm_family": str(blueprint.affordance.get("firearm_family", "")),
+		"feed_system": str(blueprint.affordance.get("feed_system", "")),
+		"magazine_capacity": str(blueprint.affordance.get("magazine_capacity", "")),
+		"magazine_size": int(runtime.get("magazine_size", 0)),
+		"player_confirmation_required": false,
+	}))
+	finished = true
+	quit(0)
 
 
 func _poll_visual() -> void:

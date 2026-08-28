@@ -28,6 +28,7 @@ func _initialize() -> void:
 	print("Forge firearm V5 contract tests")
 	_run("Six curated firearms declare complete V5 axes", _test_curated_profiles)
 	_run("Shotgun, revolver, and belt-fed fixtures parse and compile", _test_family_fixtures)
+	_run("Feed systems reject impossible capacity classes", _test_feed_capacity_invariants)
 	_run("Every frozen V5 output is clamped, owned, and finite-difference covered", _test_frozen_parameter_audit)
 	_run("Revolver cylinder creates a real post-shot cycle lock", _test_revolver_cycle_causality)
 	_run("Legacy V3 response and cache fail closed", _test_v3_fail_closed)
@@ -85,6 +86,25 @@ func _test_family_fixtures() -> Variant:
 			or int(runtime.get("magazine_size", -1)) != int(fixture["capacity"])
 		):
 			return {"fixture": fixture["identity"], "runtime": runtime}
+	return true
+
+
+func _test_feed_capacity_invariants() -> Variant:
+	var cases := [
+		{"path": FIXTURES[0]["path"], "capacity": "standard", "error": "INTERNAL_TUBE_CAPACITY"},
+		{"path": FIXTURES[1]["path"], "capacity": "compact", "error": "REVOLVER_CAPACITY"},
+		{"path": FIXTURES[2]["path"], "capacity": "extended", "error": "BELT_CAPACITY"},
+	]
+	for test_case: Dictionary in cases:
+		var payload := JSON.parse_string(FileAccess.get_file_as_string(str(test_case["path"]))) as Dictionary
+		var declaration := (payload.get("declaration", {}) as Dictionary).duplicate(true)
+		declaration["magazine_capacity"] = str(test_case["capacity"])
+		payload["declaration"] = declaration
+		var validation := AI_RESOLVER.accept_ai_response(
+			str(payload.get("requested_identity", "")), payload, SOURCE, false
+		)
+		if bool(validation.get("ok", false)) or not str(validation.get("error", "")).contains(str(test_case["error"])):
+			return validation
 	return true
 
 

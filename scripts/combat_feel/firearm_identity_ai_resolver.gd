@@ -280,6 +280,7 @@ static func _mechanism_family_error(declaration: Dictionary) -> String:
 	var shot_pattern := str(declaration.get("shot_pattern", ""))
 	var sustained := str(declaration.get("sustained_climb", ""))
 	var fire_control := str(declaration.get("fire_control", ""))
+	var capacity := str(declaration.get("magazine_capacity", ""))
 	if layout == "conventional_shotgun" and (
 		action != "pump_action"
 		or feed_system != "internal_tube"
@@ -312,6 +313,14 @@ static func _mechanism_family_error(declaration: Dictionary) -> String:
 		return "AI_FIREARM_BOLT_ACTION_MECHANISM_CONFLICT"
 	if layout in ["bullpup", "pistol"] and action != "self_loading":
 		return "AI_FIREARM_SELF_LOADING_MECHANISM_CONFLICT"
+	if feed_system == "internal_tube" and capacity not in ["very_low", "compact"]:
+		return "AI_FIREARM_INTERNAL_TUBE_CAPACITY_CONFLICT"
+	if feed_system == "revolving_cylinder" and capacity != "very_low":
+		return "AI_FIREARM_REVOLVER_CAPACITY_CONFLICT"
+	if feed_system == "belt_box" and capacity != "belt":
+		return "AI_FIREARM_BELT_CAPACITY_CONFLICT"
+	if feed_system == "detachable_box" and capacity == "belt":
+		return "AI_FIREARM_DETACHABLE_BOX_CAPACITY_CONFLICT"
 	return ""
 
 

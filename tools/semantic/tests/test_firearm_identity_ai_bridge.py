@@ -146,6 +146,19 @@ class FirearmIdentityAIBridgeTests(unittest.TestCase):
         with self.assertRaisesRegex(bridge.FirearmIdentityBridgeError, "CONVENTIONAL_CONFLICT"):
             bridge.validate_response("AK-47", value)
 
+    def test_feed_system_capacity_relationships_fail_closed(self) -> None:
+        cases = (
+            ("firearm_ai_mossberg_500_response_v4.json", "standard", "INTERNAL_TUBE_CAPACITY"),
+            ("firearm_ai_sw_686_response_v4.json", "compact", "REVOLVER_CAPACITY"),
+            ("firearm_ai_m249_response_v4.json", "extended", "BELT_CAPACITY"),
+        )
+        for filename, capacity, error in cases:
+            with self.subTest(filename=filename):
+                value = json.loads((FIXTURES / filename).read_text(encoding="utf-8"))
+                value["declaration"]["magazine_capacity"] = capacity
+                with self.assertRaisesRegex(bridge.FirearmIdentityBridgeError, error):
+                    bridge.validate_response(value["requested_identity"], value)
+
     def test_vehicle_has_no_fake_handheld_declaration(self) -> None:
         value = classification_payload("99A主战坦克", "vehicle_weapon_platform")
         value["visual_description_en"] = "inert vehicle silhouette text that must not reach gameplay"

@@ -220,6 +220,7 @@ def _validate_declaration(value: Any, classification: str) -> dict[str, str]:
     feed_system = declaration["feed_system"]
     shot_pattern = declaration["shot_pattern"]
     sustained_climb = declaration["sustained_climb"]
+    capacity = declaration["magazine_capacity"]
     legal_layouts = {
         "semi_auto_pistol": {"pistol"},
         "shotgun": {"conventional_shotgun"},
@@ -296,6 +297,20 @@ def _validate_declaration(value: Any, classification: str) -> dict[str, str]:
         raise FirearmIdentityBridgeError("DECLARATION_ACTION_CONFLICT")
     if action == "bolt_action" and layout != "conventional_rifle":
         raise FirearmIdentityBridgeError("DECLARATION_BOLT_ACTION_CONFLICT")
+    if feed_system == "internal_tube" and not (
+        layout == "conventional_shotgun" and capacity in {"very_low", "compact"}
+    ):
+        raise FirearmIdentityBridgeError("DECLARATION_INTERNAL_TUBE_CAPACITY_CONFLICT")
+    if feed_system == "revolving_cylinder" and not (
+        layout == "revolver" and capacity == "very_low"
+    ):
+        raise FirearmIdentityBridgeError("DECLARATION_REVOLVER_CAPACITY_CONFLICT")
+    if feed_system == "belt_box" and not (
+        layout == "belt_fed_support" and capacity == "belt"
+    ):
+        raise FirearmIdentityBridgeError("DECLARATION_BELT_CAPACITY_CONFLICT")
+    if feed_system == "detachable_box" and capacity == "belt":
+        raise FirearmIdentityBridgeError("DECLARATION_DETACHABLE_BOX_CAPACITY_CONFLICT")
     return dict(declaration)
 
 

@@ -58,6 +58,8 @@ class AnthropicFirearmVisualVerifierTests(unittest.TestCase):
         self.assertEqual(payload["tool_choice"]["name"], VERIFIER.TOOL_NAME)
         self.assertTrue(payload["tool_choice"]["disable_parallel_tool_use"])
         self.assertNotIn("disable_parallel_tool_use", payload)
+        verdict_schema = payload["tools"][0]["input_schema"]["properties"]
+        self.assertEqual(verdict_schema["closest_confusable_identity"]["maxLength"], 96)
 
     def test_payload_compares_curated_reference_before_candidate(self) -> None:
         card = VERIFIER.validate_identity_card(card_fixture())
@@ -177,7 +179,45 @@ class AnthropicFirearmVisualVerifierTests(unittest.TestCase):
         self.assertFalse(record["passed"])
         self.assertTrue(record["unanimous_pass_required"])
         self.assertEqual(record["usage"]["input_tokens"], 21)
-        self.assertIn("required_landmarks_missing", record["failure_reasons"])
+        self.assertIn("exact_identity_mismatch", record["failure_reasons"])
+        self.assertIn("confusable_identity_contradiction", record["failure_reasons"])
+
+    def test_one_landmark_observer_is_enough_when_core_identity_is_unanimous(self) -> None:
+        card = VERIFIER.validate_identity_card(card_fixture())
+        accepted = {
+            "schema": VERIFIER.VERDICT_SCHEMA,
+            "exact_identity_match": True,
+            "identity_readable_at_96px": True,
+            "required_landmarks_present": card["required_landmarks"],
+            "required_landmarks_missing": [],
+            "contradictions": [],
+            "closest_confusable_identity": card["canonical_name"],
+            "confidence": 0.91,
+            "summary": "accepted",
+        }
+        partial = dict(accepted)
+        partial["required_landmarks_present"] = [card["required_landmarks"][0]]
+        partial["required_landmarks_missing"] = [card["required_landmarks"][1]]
+        partial["confidence"] = 0.84
+        record = VERIFIER.build_consensus_record(
+            card, [accepted, partial], [{}, {}], "exact-test-model"
+        )
+        self.assertTrue(record["passed"])
+        self.assertEqual(record["verdict"]["required_landmarks_missing"], [])
+        self.assertEqual(record["landmark_disagreements"], [card["required_landmarks"][1]])
+
+        recomputed = VERIFIER.recompute_consensus_record(
+            card,
+            {
+                "schema": VERIFIER.VERIFICATION_SCHEMA,
+                "model_id": "exact-test-model",
+                "individual_verdicts": [accepted, partial],
+                "usage": {"input_tokens": 42},
+            },
+        )
+        self.assertTrue(recomputed["passed"])
+        self.assertTrue(recomputed["recomputed_from_existing_independent_verdicts"])
+        self.assertEqual(recomputed["usage"]["input_tokens"], 42)
 
     def test_duplicate_contradictions_are_deduplicated_not_lost(self) -> None:
         card = VERIFIER.validate_identity_card(card_fixture())
