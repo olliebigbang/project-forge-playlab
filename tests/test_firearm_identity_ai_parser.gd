@@ -17,6 +17,7 @@ var failed := 0
 func _initialize() -> void:
 	print("Forge dynamic firearm identity AI parser tests")
 	_run("Unknown AK model compiles from a strict AI identity card", _test_unknown_rifle_compiles)
+	_run("Unknown bolt-action model preserves the AI-owned manual-cycle mechanism", _test_manual_cycle_rifle_compiles)
 	_run("Shoulder-stocked submachine gun uses the conventional compact axes", _test_unknown_smg_compiles)
 	_run("Unknown pistol compiles through the same generic axes", _test_unknown_pistol_compiles)
 	_run("Dynamic AI card reaches the external-art boundary without a mechanism question", _test_flow_integration)
@@ -68,6 +69,25 @@ func _test_unknown_rifle_compiles() -> Variant:
 	var runtime: Dictionary = RANGED_AXES.compile(blueprint.affordance, blueprint.affordance_source)
 	if not bool(built.get("ok", false)) or not bool(runtime.get("ok", false)):
 		return "visual or runtime compiler rejected validated profile"
+	return true
+
+
+func _test_manual_cycle_rifle_compiles() -> Variant:
+	var payload := _rifle_payload("M24A2")
+	(payload.get("declaration", {}) as Dictionary)["fire_control"] = "manual_cycle"
+	var accepted: Dictionary = AI_RESOLVER.accept_ai_response("M24A2", payload, TEST_SOURCE, false)
+	if not bool(accepted.get("ok", false)):
+		return accepted
+	var declaration := accepted.get("declaration", {}) as Dictionary
+	var runtime: Dictionary = RANGED_AXES.compile(declaration, TEST_SOURCE)
+	if (
+		not bool(runtime.get("ok", false))
+		or not bool(runtime.get("manual_cycle_required", false))
+		or float(runtime.get("manual_cycle_lock_seconds", 0.0)) <= 0.0
+		or bool(runtime.get("automatic_fire", true))
+		or int(runtime.get("burst_size", -1)) != 0
+	):
+		return "manual-cycle declaration collapsed: %s" % str(runtime)
 	return true
 
 

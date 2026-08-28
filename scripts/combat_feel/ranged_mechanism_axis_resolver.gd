@@ -1,8 +1,8 @@
 class_name RangedMechanismAxisResolver
 extends RefCounted
 
-const RUNTIME_SCHEMA := "forge-ranged-runtime-profile-v3"
-const AUDIT_SCHEMA := "forge-ranged-mechanism-finite-difference-audit-v3"
+const RUNTIME_SCHEMA := "forge-ranged-runtime-profile-v4"
+const AUDIT_SCHEMA := "forge-ranged-mechanism-finite-difference-audit-v4"
 
 const STRUCTURAL_AXES: PackedStringArray = [
 	"weapon_domain", "layout", "stock_structure", "feed_position",
@@ -30,7 +30,7 @@ const LEGAL_VALUES := {
 	"barrel_length": ["short", "medium", "long"],
 	"upper_profile": ["carry_handle", "top_rail", "raised_gas_tube", "slide"],
 	"support_mode": ["one_hand", "two_hand_shouldered"],
-	"fire_control": ["semi_auto", "three_round_burst", "select_fire_auto"],
+	"fire_control": ["semi_auto", "three_round_burst", "select_fire_auto", "manual_cycle"],
 	"cadence": ["deliberate", "balanced", "rapid"],
 	"recoil": ["light", "medium", "strong"],
 	"recoil_recovery": ["quick", "balanced", "slow"],
@@ -80,6 +80,7 @@ const OPTION_LABELS_ZH := {
 		"semi_auto": "按一下打一发",
 		"three_round_burst": "按一下三连发",
 		"select_fire_auto": "按住连续射击",
+		"manual_cycle": "每发后自动拉栓",
 	},
 	"cadence": {"deliberate": "从容", "balanced": "均衡", "rapid": "快速"},
 	"recoil": {"light": "轻", "medium": "中", "strong": "强"},
@@ -99,6 +100,8 @@ const OPTION_LABELS_ZH := {
 const PARAMETER_OWNERS := {
 	"automatic_fire": "fire_control",
 	"burst_size": "fire_control",
+	"manual_cycle_required": "fire_control",
+	"manual_cycle_lock_seconds": "fire_control",
 	"shot_interval_seconds": "cadence",
 	"recoil_pixels": "recoil",
 	"recoil_recovery_pixels_per_second": "recoil_recovery",
@@ -122,7 +125,8 @@ const PARAMETER_OWNERS := {
 	"magazine_size": "magazine_capacity",
 }
 const AUDITED_PARAMETERS: PackedStringArray = [
-	"automatic_fire", "burst_size", "shot_interval_seconds", "recoil_pixels",
+	"automatic_fire", "burst_size", "manual_cycle_required", "manual_cycle_lock_seconds",
+	"shot_interval_seconds", "recoil_pixels",
 	"recoil_recovery_pixels_per_second", "muzzle_climb_recovery_degrees_per_second",
 	"muzzle_climb_degrees_per_shot", "spread_velocity", "projectile_damage",
 	"hit_stagger_seconds", "projectile_radius_pixels", "armor_damage_multiplier",
@@ -134,6 +138,7 @@ const AUDITED_PARAMETERS: PackedStringArray = [
 const PARAMETER_BOUNDS := {
 	"shot_interval_seconds": [0.08, 0.36],
 	"burst_size": [0, 3],
+	"manual_cycle_lock_seconds": [0.0, 1.20],
 	"recoil_pixels": [2.0, 14.0],
 	"recoil_recovery_pixels_per_second": [30.0, 130.0],
 	"muzzle_climb_recovery_degrees_per_second": [10.0, 45.0],
@@ -156,6 +161,7 @@ const PARAMETER_BOUNDS := {
 	"magazine_size": [6, 40],
 }
 const INTEGER_PARAMETERS: PackedStringArray = ["burst_size", "pierce_budget", "magazine_size"]
+const BOOLEAN_PARAMETERS: PackedStringArray = ["automatic_fire", "manual_cycle_required"]
 
 
 static func validate_ai_declaration(payload: Dictionary, source: String) -> Dictionary:
@@ -372,6 +378,8 @@ static func _raw_parameter_matrix(payload: Dictionary) -> Dictionary:
 	return {
 		"automatic_fire": str(payload.get("fire_control", "semi_auto")) == "select_fire_auto",
 		"burst_size": 3 if str(payload.get("fire_control", "semi_auto")) == "three_round_burst" else 0,
+		"manual_cycle_required": str(payload.get("fire_control", "semi_auto")) == "manual_cycle",
+		"manual_cycle_lock_seconds": 0.82 if str(payload.get("fire_control", "semi_auto")) == "manual_cycle" else 0.0,
 		"shot_interval_seconds": float({"deliberate": 0.28, "balanced": 0.17, "rapid": 0.10}[cadence]),
 		"recoil_pixels": float({"light": 3.0, "medium": 7.0, "strong": 12.0}[recoil]),
 		"recoil_recovery_pixels_per_second": float({"quick": 112.0, "balanced": 70.0, "slow": 42.0}[recoil_recovery]),
@@ -401,7 +409,7 @@ static func _clamp_parameter_matrix(raw: Dictionary) -> Dictionary:
 	var clamp_events: Array[Dictionary] = []
 	for parameter: String in AUDITED_PARAMETERS:
 		var raw_value: Variant = raw.get(parameter)
-		if parameter == "automatic_fire":
+		if parameter in BOOLEAN_PARAMETERS:
 			final[parameter] = bool(raw_value)
 			continue
 		var bounds := PARAMETER_BOUNDS.get(parameter, []) as Array

@@ -84,7 +84,7 @@ LEGAL_VALUES = {
     "upper_profile": frozenset({"carry_handle", "top_rail", "raised_gas_tube", "slide"}),
     "support_mode": frozenset({"one_hand", "two_hand_shouldered"}),
     "fire_control": frozenset(
-        {"semi_auto", "three_round_burst", "select_fire_auto"}
+        {"semi_auto", "three_round_burst", "select_fire_auto", "manual_cycle"}
     ),
     "cadence": frozenset({"deliberate", "balanced", "rapid"}),
     "recoil": frozenset({"light", "medium", "strong"}),

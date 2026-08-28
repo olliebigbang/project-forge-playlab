@@ -100,6 +100,12 @@ class FirearmIdentityAIBridgeTests(unittest.TestCase):
         result = bridge.validate_response("M16A2", value)
         self.assertEqual(result["declaration"]["fire_control"], "three_round_burst")
 
+    def test_manual_cycle_is_a_legal_fire_control_mechanism(self) -> None:
+        value = rifle_payload("M24A2")
+        value["declaration"]["fire_control"] = "manual_cycle"
+        result = bridge.validate_response("M24A2", value)
+        self.assertEqual(result["declaration"]["fire_control"], "manual_cycle")
+
     def test_conflicting_axis_is_rejected_before_godot(self) -> None:
         value = rifle_payload()
         value["declaration"]["feed_position"] = "behind_grip"
@@ -156,6 +162,7 @@ class FirearmIdentityAIBridgeTests(unittest.TestCase):
         self.assertIn("recoil_recovery", prompt)
         self.assertIn("impact_force", prompt)
         self.assertIn("three_round_burst", prompt)
+        self.assertIn("manual_cycle", prompt)
 
     def test_schema_is_closed_at_root_and_declaration(self) -> None:
         schema = json.loads(bridge.SCHEMA_PATH.read_text(encoding="utf-8"))

@@ -6,7 +6,7 @@ Your job is to identify whether the exact input names a real handheld firearm, a
 
 Use handheld_firearm_supported only when the real object can be represented honestly by all supplied Forge axes. The currently supported visual families are:
 - magazine-fed bullpup rifles;
-- magazine-fed conventional shoulder-fired rifles, compact carbines, and submachine guns with a shoulder stock;
+- magazine-fed conventional shoulder-fired rifles, including detachable-magazine bolt-action rifles whose visible structure fits the supplied axes, compact carbines, and submachine guns with a shoulder stock;
 - magazine-fed semi-automatic pistols.
 
 Use handheld_firearm_unsupported for revolvers, tube-fed or break-action shotguns, belt-fed weapons, launchers, fictional weapons whose real structure is undefined, or any firearm whose signature silhouette cannot be represented by the legal axes. Use vehicle_weapon_platform for tanks, armored vehicles, aircraft, ships, or mounted weapon platforms. Never turn a vehicle into a handheld gun.
@@ -17,6 +17,7 @@ For handheld_firearm_supported:
 - fill every declaration axis with one legal non-not_applicable value;
 - infer mechanism axes from the identified model; never ask the player to select cadence, recoil, recovery, climb, accuracy, impact, penetration, reload, range, handling, or capacity;
 - use three_round_burst when one trigger press mechanically fires a fixed three-shot burst; never approximate that mechanism as unrestricted automatic fire;
+- use manual_cycle for a firearm that requires the action or bolt to be cycled between shots; Forge performs that mechanical cycle automatically after each shot, so never approximate it as semi_auto and never ask the player to operate the bolt;
 - recoil is the immediate kick, recoil_recovery is how quickly the weapon returns, and muzzle_climb is the upward rotation per shot; do not collapse these into one answer;
 - impact_force controls game hit damage and stagger while penetration controls armor retention and target pierce; do not use either as a synonym for accuracy or range;
 - required_identity_parts_zh contains 2-6 silhouette parts that distinguish the model at 96x96 pixels;

@@ -102,6 +102,7 @@ var attack_was_down := false
 var attack_charge := 0.0
 var shot_cooldown := 0.0
 var burst_shots_remaining := 0
+var manual_cycle_timer := 0.0
 var overheat := 0.0
 var overheat_lock := 0.0
 var ranged_runtime_profile: Dictionary = {}
@@ -139,6 +140,7 @@ func start_stage(
 	attack_charge = 0.0
 	shot_cooldown = 0.0
 	burst_shots_remaining = 0
+	manual_cycle_timer = 0.0
 	overheat = 0.0
 	overheat_lock = 0.0
 	melee_timer = 0.0
@@ -151,7 +153,11 @@ func start_stage(
 	ranged_runtime_profile.clear()
 	if str(blueprint.affordance.get("weapon_domain", "")) == "handheld_firearm":
 		var cached_runtime: Variant = blueprint.modifiers.get("ranged_runtime_profile", {})
-		if cached_runtime is Dictionary and bool((cached_runtime as Dictionary).get("ok", false)):
+		if (
+			cached_runtime is Dictionary
+			and bool((cached_runtime as Dictionary).get("ok", false))
+			and str((cached_runtime as Dictionary).get("schema", "")) == RANGED_AXIS_RESOLVER.RUNTIME_SCHEMA
+		):
 			ranged_runtime_profile = (cached_runtime as Dictionary).duplicate(true)
 		else:
 			ranged_runtime_profile = RANGED_AXIS_RESOLVER.compile(blueprint.affordance, blueprint.affordance_source)
@@ -160,7 +166,7 @@ func start_stage(
 	weapon_recoil_offset = 0.0
 	weapon_muzzle_climb_degrees = 0.0
 	muzzle_flash_timer = 0.0
-	metrics = {"damage_taken": 0.0, "overheat_count": 0, "dodge_count": 0, "defeated": 0, "shots_fired": 0, "reload_count": 0}
+	metrics = {"damage_taken": 0.0, "overheat_count": 0, "dodge_count": 0, "defeated": 0, "shots_fired": 0, "reload_count": 0, "manual_cycle_count": 0}
 	_spawn_stage()
 	active = true
 	set_process(true)
@@ -269,7 +275,7 @@ func _update_sustained_attack(attack_down: bool, just_pressed: bool, delta: floa
 func _update_firearm_attack(attack_down: bool, just_pressed: bool) -> void:
 	attack_charge = 0.0
 	overheat = 0.0
-	if reload_timer > 0.0:
+	if reload_timer > 0.0 or manual_cycle_timer > 0.0:
 		return
 	var burst_size := int(ranged_runtime_profile.get("burst_size", 0))
 	if burst_size > 1 and just_pressed and burst_shots_remaining <= 0:
@@ -289,6 +295,9 @@ func _update_firearm_attack(attack_down: bool, just_pressed: bool) -> void:
 	if burst_size > 1:
 		burst_shots_remaining = maxi(0, burst_shots_remaining - 1)
 	shot_cooldown = float(ranged_runtime_profile.get("shot_interval_seconds", 0.18))
+	if bool(ranged_runtime_profile.get("manual_cycle_required", false)):
+		manual_cycle_timer = float(ranged_runtime_profile.get("manual_cycle_lock_seconds", 0.0))
+		metrics["manual_cycle_count"] = int(metrics.get("manual_cycle_count", 0)) + 1
 	weapon_recoil_offset = float(ranged_runtime_profile.get("recoil_pixels", 6.0))
 	weapon_muzzle_climb_degrees = minf(
 		18.0,
@@ -305,6 +314,7 @@ func _begin_firearm_reload() -> void:
 	if not _uses_firearm_runtime() or reload_timer > 0.0:
 		return
 	burst_shots_remaining = 0
+	manual_cycle_timer = 0.0
 	reload_timer = float(ranged_runtime_profile.get("reload_seconds", 1.2))
 	metrics["reload_count"] = int(metrics.get("reload_count", 0)) + 1
 	metrics_changed.emit(metrics)
@@ -315,6 +325,7 @@ func _update_firearm_timers(delta: float) -> void:
 	weapon_recoil_offset = move_toward(weapon_recoil_offset, 0.0, delta * recoil_recovery)
 	weapon_muzzle_climb_degrees = move_toward(weapon_muzzle_climb_degrees, 0.0, delta * climb_recovery)
 	muzzle_flash_timer = maxf(0.0, muzzle_flash_timer - delta)
+	manual_cycle_timer = maxf(0.0, manual_cycle_timer - delta)
 	if reload_timer <= 0.0:
 		return
 	reload_timer = maxf(0.0, reload_timer - delta)
@@ -874,6 +885,10 @@ func _melee_weapon_rotation() -> float:
 		var reload_duration := maxf(0.01, float(ranged_runtime_profile.get("reload_seconds", 1.2)))
 		var reload_progress := clampf(1.0 - reload_timer / reload_duration, 0.0, 1.0)
 		return sin(reload_progress * PI) * 0.52 * facing
+	if _uses_firearm_runtime() and manual_cycle_timer > 0.0:
+		var cycle_duration := maxf(0.01, float(ranged_runtime_profile.get("manual_cycle_lock_seconds", 0.01)))
+		var cycle_progress := clampf(1.0 - manual_cycle_timer / cycle_duration, 0.0, 1.0)
+		return _firearm_recoil_rotation() + sin(cycle_progress * PI) * 0.18 * facing
 	if _uses_firearm_runtime():
 		return _firearm_recoil_rotation()
 	if blueprint == null or blueprint.behavior_family != "heavy_melee" or melee_timer <= 0.0:

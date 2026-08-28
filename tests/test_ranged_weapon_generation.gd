@@ -16,6 +16,7 @@ const REQUIRED_CASES: Array[Dictionary] = [
 	{"input": "中国95式步枪", "id": "qbz_95", "layout": "bullpup", "feed": "behind_grip", "automatic": true},
 	{"input": "M4A1", "id": "m4a1", "layout": "conventional_rifle", "feed": "ahead_of_grip", "automatic": true},
 	{"input": "M16A2", "id": "m16a2", "layout": "conventional_rifle", "feed": "ahead_of_grip", "automatic": false, "burst": 3},
+	{"input": "M24A2", "id": "m24a2", "layout": "conventional_rifle", "feed": "ahead_of_grip", "automatic": false, "manual_cycle": true},
 	{"input": "81杠", "id": "type_81", "layout": "conventional_rifle", "feed": "ahead_of_grip", "automatic": true},
 	{"input": "92式手枪", "id": "qsz_92", "layout": "pistol", "feed": "in_grip", "automatic": false},
 ]
@@ -26,14 +27,14 @@ var failed := 0
 
 func _initialize() -> void:
 	print("Forge ranged identity and mechanism tests")
-	_run("Five firearm names and common aliases resolve without a player behavior question", _test_alias_resolution)
+	_run("Six firearm names and common aliases resolve without a player behavior question", _test_alias_resolution)
 	_run("Model-only input receives an AI-owned ranged declaration", _test_model_only_interpretation)
 	_run("All ranged axes validate and compile to distinct runtime matrices", _test_axis_compilation)
-	_run("V3 single-variable finite differences expose every mechanism axis", _test_v3_finite_difference_audit)
-	_run("Five 96px silhouettes remain structurally distinct", _test_distinct_pixel_silhouettes)
+	_run("V4 single-variable finite differences expose every mechanism axis", _test_v4_finite_difference_audit)
+	_run("Six 96px silhouettes remain structurally distinct", _test_distinct_pixel_silhouettes)
 	_run("Independent structural axes own visible pixels", _test_structural_axis_pixel_differences)
 	_run("Scaffold anchors come from the declared firearm structure", _test_scaffold_anchor_contract)
-	_run("Five exact-model visual identity cards are automatic and cannot own mechanics", _test_visual_identity_cards)
+	_run("Six exact-model visual identity cards are automatic and cannot own mechanics", _test_visual_identity_cards)
 	_run("Finished AI pixel sprites pass while Godot scaffolds cannot masquerade as art", _test_finished_pixel_identity_gate)
 	_run("Provider promotes only gated firearm pixels to finished player-facing art", _test_finished_pixel_provider_handoff)
 	_run("FAL candidate is normalized then promoted only after the same automatic firearm gate", _test_fal_finished_pixel_provider_handoff)
@@ -41,8 +42,8 @@ func _initialize() -> void:
 	_run("Empty pixelizer output falls back to AI identity art and still must pass the firearm gate", _test_fal_pixelizer_fallback)
 	_run("Versioned visual cache normalizes aliases and changes with the identity card", _test_visual_cache_key)
 	_run("Default Forge flow refuses to present a Godot firearm scaffold as finished art", _test_mock_flow_integration)
-	_run("Semi-auto, three-round burst, automatic fire, recoil and reload follow compiled axes", _test_runtime_mechanisms)
-	_run("V3 impact, penetration, recovery and muzzle climb reach runtime", _test_v3_runtime_causality)
+	_run("Semi-auto, three-round burst, automatic fire, manual cycling, recoil and reload follow compiled axes", _test_runtime_mechanisms)
+	_run("V4 impact, penetration, recovery and muzzle climb reach runtime", _test_v4_runtime_causality)
 	_run("Impact, penetration and range axes remain visible in projectile proportions", _test_projectile_visual_causality)
 	_run("Runtime contains no firearm-model name branches", _test_no_model_name_runtime_branches)
 	print("RANGED WEAPON RESULT: %d passed, %d failed" % [passed, failed])
@@ -64,6 +65,7 @@ func _test_alias_resolution() -> Variant:
 		"QBZ95": "qbz_95",
 		"M4-A1": "m4a1",
 		"M16-A2": "m16a2",
+		"M24 A2": "m24a2",
 		"81式自动步枪": "type_81",
 		"QSZ-92": "qsz_92",
 	}
@@ -114,7 +116,7 @@ func _test_axis_compilation() -> Variant:
 		if not bool(runtime.get("ok", false)):
 			return "axis compile failed: %s" % str(runtime)
 		if str(runtime.get("schema", "")) != AXES.RUNTIME_SCHEMA:
-			return "runtime did not upgrade to V3: %s" % str(runtime.get("schema", ""))
+			return "runtime did not upgrade to V4: %s" % str(runtime.get("schema", ""))
 		var final_parameters := runtime.get("final_parameters", {}) as Dictionary
 		if final_parameters.size() != AXES.AUDITED_PARAMETERS.size():
 			return "final clamped matrix is incomplete: %s" % str(final_parameters)
@@ -125,6 +127,8 @@ func _test_axis_compilation() -> Variant:
 		runtime_matrices[str(profile.get("id", ""))] = [
 			bool(runtime.get("automatic_fire", false)),
 			int(runtime.get("burst_size", 0)),
+			bool(runtime.get("manual_cycle_required", false)),
+			float(runtime.get("manual_cycle_lock_seconds", 0.0)),
 			float(runtime.get("shot_interval_seconds", 0.0)),
 			float(runtime.get("recoil_pixels", 0.0)),
 			float(runtime.get("spread_velocity", 0.0)),
@@ -137,12 +141,19 @@ func _test_axis_compilation() -> Variant:
 		return "fire-control axis did not own automatic/semi behavior"
 	if int((runtime_matrices["m16a2"] as Array)[1]) != 3 or bool((runtime_matrices["m16a2"] as Array)[0]):
 		return "three-round burst collapsed into semi-auto or unrestricted automatic fire"
-	if float((runtime_matrices["type_81"] as Array)[3]) <= float((runtime_matrices["m4a1"] as Array)[3]):
+	if (
+		not bool((runtime_matrices["m24a2"] as Array)[2])
+		or float((runtime_matrices["m24a2"] as Array)[3]) <= 0.0
+		or bool((runtime_matrices["m24a2"] as Array)[0])
+		or int((runtime_matrices["m24a2"] as Array)[1]) != 0
+	):
+		return "manual-cycle fire control collapsed into semi-auto"
+	if float((runtime_matrices["type_81"] as Array)[5]) <= float((runtime_matrices["m4a1"] as Array)[5]):
 		return "recoil axis direction collapsed"
 	return true
 
 
-func _test_v3_finite_difference_audit() -> Variant:
+func _test_v4_finite_difference_audit() -> Variant:
 	for profile: Dictionary in CATALOG.all_profiles():
 		var declaration := profile.get("declaration", {}) as Dictionary
 		var audit: Dictionary = AXES.finite_difference_audit(
@@ -155,7 +166,7 @@ func _test_v3_finite_difference_audit() -> Variant:
 				str(audit),
 			]
 		if (audit.get("axis_cases", {}) as Dictionary).size() != AXES.MECHANISM_AXES.size():
-			return "not every V3 mechanism axis was varied: %s" % str(profile.get("id", ""))
+			return "not every V4 mechanism axis was varied: %s" % str(profile.get("id", ""))
 		if (audit.get("baseline_final_parameters", {}) as Dictionary).size() != AXES.AUDITED_PARAMETERS.size():
 			return "audit omitted final clamp parameters: %s" % str(profile.get("id", ""))
 		for issue_key: String in [
@@ -583,6 +594,30 @@ func _test_runtime_mechanisms() -> Variant:
 	burst._update_sustained_attack(false, false, 0.016)
 	if burst.projectiles.size() != 3:
 		return "three-round burst continued into unrestricted automatic fire"
+	var manual_bundle: Dictionary = _runtime_bundle("M24A2")
+	var manual := manual_bundle.get("arena") as GameplayArena
+	if manual == null:
+		return "manual-cycle arena missing"
+	manual._update_sustained_attack(true, true, 0.016)
+	var cycle_duration := float(manual.ranged_runtime_profile.get("manual_cycle_lock_seconds", 0.0))
+	if manual.projectiles.size() != 1 or manual.manual_cycle_timer <= 0.0 or cycle_duration <= 0.0:
+		return "manual-cycle shot did not start its compiled action lock"
+	manual.shot_cooldown = 0.0
+	for ignored_press: int in range(4):
+		manual._update_sustained_attack(true, true, 0.016)
+	if manual.projectiles.size() != 1:
+		return "rapid trigger presses skipped the manual-cycle action lock"
+	manual._update_firearm_timers(cycle_duration * 0.5)
+	manual._update_sustained_attack(true, true, 0.016)
+	if manual.projectiles.size() != 1:
+		return "manual-cycle lock ended before its compiled duration"
+	manual._update_firearm_timers(manual.manual_cycle_timer + 0.01)
+	manual._update_sustained_attack(true, false, 0.016)
+	if manual.projectiles.size() != 1:
+		return "holding attack turned manual cycling into automatic fire"
+	manual._update_sustained_attack(true, true, 0.016)
+	if manual.projectiles.size() != 2 or int(manual.metrics.get("manual_cycle_count", 0)) != 2:
+		return "manual-cycle rifle did not fire after a fresh press following completed cycling"
 	var m4_recoil := rifle.weapon_recoil_offset
 	var heavy_bundle: Dictionary = _runtime_bundle("81杠")
 	var heavy := heavy_bundle.get("arena") as GameplayArena
@@ -600,11 +635,12 @@ func _test_runtime_mechanisms() -> Variant:
 	pistol.free()
 	rifle.free()
 	burst.free()
+	manual.free()
 	heavy.free()
 	return true
 
 
-func _test_v3_runtime_causality() -> Variant:
+func _test_v4_runtime_causality() -> Variant:
 	var pistol_bundle: Dictionary = _runtime_bundle("92式手枪")
 	var pistol := pistol_bundle.get("arena") as GameplayArena
 	var m4_bundle: Dictionary = _runtime_bundle("M4A1")
@@ -612,14 +648,14 @@ func _test_v3_runtime_causality() -> Variant:
 	var type81_bundle: Dictionary = _runtime_bundle("81杠")
 	var type81 := type81_bundle.get("arena") as GameplayArena
 	if pistol == null or m4 == null or type81 == null:
-		return "V3 runtime arenas are incomplete"
+		return "V4 runtime arenas are incomplete"
 	for arena: GameplayArena in [pistol, m4, type81]:
 		arena._update_sustained_attack(true, true, 0.016)
 		if arena.projectiles.size() != 1 or arena.weapon_muzzle_climb_degrees <= 0.0:
-			return "V3 shot did not create a projectile and muzzle climb"
+			return "V4 shot did not create a projectile and muzzle climb"
 		var projectile := arena.projectiles[0] as Dictionary
 		if not projectile.has("damage") or not projectile.has("armor_damage_multiplier"):
-			return "V3 impact or penetration payload did not reach the projectile"
+			return "V4 impact or penetration payload did not reach the projectile"
 	var m4_kick_before := m4.weapon_recoil_offset
 	var m4_climb_before := m4.weapon_muzzle_climb_degrees
 	m4._update_firearm_timers(0.05)
@@ -687,7 +723,7 @@ func _test_no_model_name_runtime_branches() -> Variant:
 		FileAccess.get_file_as_string("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd"),
 		FileAccess.get_file_as_string("res://scripts/combat_feel/firearm_pixel_scaffold.gd"),
 	])
-	for forbidden: String in ["qbz_95", "m4a1", "m16a2", "type_81", "qsz_92", "95式", "M16A2", "81杠", "92式"]:
+	for forbidden: String in ["qbz_95", "m4a1", "m16a2", "m24a2", "type_81", "qsz_92", "95式", "M16A2", "M24A2", "81杠", "92式"]:
 		if runtime_sources.to_lower().contains(forbidden.to_lower()):
 			return "model-name branch leaked into generic runtime: %s" % forbidden
 	return true

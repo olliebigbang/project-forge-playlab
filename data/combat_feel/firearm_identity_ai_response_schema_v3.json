@@ -145,7 +145,7 @@
         "barrel_length": {"type": "string", "enum": ["short", "medium", "long", "not_applicable"]},
         "upper_profile": {"type": "string", "enum": ["carry_handle", "top_rail", "raised_gas_tube", "slide", "not_applicable"]},
         "support_mode": {"type": "string", "enum": ["one_hand", "two_hand_shouldered", "not_applicable"]},
-        "fire_control": {"type": "string", "enum": ["semi_auto", "three_round_burst", "select_fire_auto", "not_applicable"]},
+        "fire_control": {"type": "string", "enum": ["semi_auto", "three_round_burst", "select_fire_auto", "manual_cycle", "not_applicable"]},
         "cadence": {"type": "string", "enum": ["deliberate", "balanced", "rapid", "not_applicable"]},
         "recoil": {"type": "string", "enum": ["light", "medium", "strong", "not_applicable"]},
         "recoil_recovery": {"type": "string", "enum": ["quick", "balanced", "slow", "not_applicable"]},

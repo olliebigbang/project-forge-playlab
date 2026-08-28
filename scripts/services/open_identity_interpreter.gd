@@ -278,6 +278,8 @@ func player_explanation(blueprint: WeaponBlueprint) -> String:
 			firing_text = "按住连续射击"
 		elif fire_control == "three_round_burst":
 			firing_text = "每按一次自动完成三连发"
+		elif fire_control == "manual_cycle":
+			firing_text = "每按一次发射一发，随后自动完成拉栓，上膛结束前无法再次开火"
 		return "AI 已把“%s”识别为具体枪械；外形按枪托、握把、弹匣和枪口位置绘制，%s，后坐、散布、弹匣和换弹全部由远程机制轴决定。" % [identity, firing_text]
 	match blueprint.behavior_family:
 		"returning_thrown":

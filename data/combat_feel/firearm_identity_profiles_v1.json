@@ -216,6 +216,59 @@
       }
     },
     {
+      "id": "m24a2",
+      "canonical_name_zh": "M24A2狙击步枪",
+      "aliases": ["M24A2", "M24 A2", "M24A2 SWS", "M24A2狙击步枪", "M24A2 sniper rifle"],
+      "visual_description_en": "recognizable M24A2 style long bolt-action sniper rifle, full fixed precision stock, straight detachable magazine ahead of the grip, raised receiver rail and long free-floating barrel",
+      "required_identity_parts_zh": ["固定式精确射击枪托", "握把前方直弹匣", "机匣上方导轨", "长护木与长枪管"],
+      "visual_identity_card": {
+        "schema": "forge-firearm-visual-identity-card-v1",
+        "visual_axes": {
+          "stock_profile": "full fixed precision stock with a raised comb and solid shoulder contact",
+          "upper_landmark": "raised receiver scope rail above a stepped bolt-action receiver",
+          "magazine_profile": "compact straight detachable box magazine ahead of the primary grip",
+          "fore_end_profile": "long straight precision fore-end below a long free-floating barrel",
+          "receiver_profile": "slender bolt-action receiver between the fixed stock and long barrel"
+        },
+        "required_landmarks_en": [
+          "full fixed precision stock with raised comb",
+          "compact straight detachable magazine visibly ahead of the primary grip",
+          "raised scope rail and stepped bolt-action receiver",
+          "long straight fore-end and full-length barrel"
+        ],
+        "confusable_exclusions_en": [
+          "not a semi-automatic M16 or M4 receiver with a carry handle or telescoping stock",
+          "not an AK-pattern rifle with a curved magazine and raised gas tube",
+          "not a flush-magazine original M24 silhouette"
+        ]
+      },
+      "declaration": {
+        "source": "CURATED_AI_FIREARM_IDENTITY_V4",
+        "confidence": 0.96,
+        "weapon_domain": "handheld_firearm",
+        "layout": "conventional_rifle",
+        "stock_structure": "fixed",
+        "feed_position": "ahead_of_grip",
+        "magazine_shape": "straight",
+        "barrel_length": "long",
+        "upper_profile": "top_rail",
+        "support_mode": "two_hand_shouldered",
+        "fire_control": "manual_cycle",
+        "cadence": "deliberate",
+        "recoil": "strong",
+        "recoil_recovery": "slow",
+        "muzzle_climb": "medium",
+        "accuracy": "precise",
+        "impact_force": "strong",
+        "penetration": "strong",
+        "reload": "slow",
+        "effective_range": "long",
+        "handling": "heavy",
+        "magazine_capacity": "compact",
+        "finish_palette": "olive_black"
+      }
+    },
+    {
       "id": "qsz_92",
       "canonical_name_zh": "92式手枪",
       "aliases": ["92式手枪", "中国92式手枪", "QSZ-92", "QSZ92", "Type 92 pistol"],

@@ -1467,6 +1467,8 @@ func _ranged_mechanism_is_ready() -> bool:
 	)
 
 func _ranged_fire_mode_text(runtime: Dictionary) -> String:
+	if bool(runtime.get("manual_cycle_required", false)):
+		return "每次按下只打一发；随后自动拉栓 %.2f 秒，完成前锁住击发" % float(runtime.get("manual_cycle_lock_seconds", 0.0))
 	if bool(runtime.get("automatic_fire", false)):
 		return "按住连续射击"
 	var burst_size := int(runtime.get("burst_size", 0))
@@ -1475,6 +1477,8 @@ func _ranged_fire_mode_text(runtime: Dictionary) -> String:
 	return "每次按下只发射一发"
 
 func _ranged_attack_input_text(runtime: Dictionary) -> String:
+	if bool(runtime.get("manual_cycle_required", false)):
+		return "点按射击（每发后自动拉栓）"
 	if bool(runtime.get("automatic_fire", false)):
 		return "按住连射"
 	if int(runtime.get("burst_size", 0)) > 1:
@@ -1677,7 +1681,7 @@ func _show_ranged_mechanism_summary() -> void:
 		]
 		details.add_child(line)
 	var result_label := Label.new()
-	result_label.text = "编译后的游戏表现\n• %s\n• 每 %.2f 秒一发；后坐 %.1f 像素，以 %.1f 像素/秒回正；单发上跳 %.1f°\n• 单发伤害 %.1f；正面护甲保留 %.0f%%；可继续穿过 %d 个目标\n• 散布 %.1f；弹匣 %d 发；换弹 %.2f 秒" % [
+	result_label.text = "编译后的游戏表现\n• %s\n• 基础击发间隔 %.2f 秒；后坐 %.1f 像素，以 %.1f 像素/秒回正；单发上跳 %.1f°\n• 单发伤害 %.1f；正面护甲保留 %.0f%%；可继续穿过 %d 个目标\n• 散布 %.1f；弹匣 %d 发；换弹 %.2f 秒" % [
 		_ranged_fire_mode_text(current_ranged_mechanism),
 		float(current_ranged_mechanism.get("shot_interval_seconds", 0.0)),
 		float(current_ranged_mechanism.get("recoil_pixels", 0.0)),
