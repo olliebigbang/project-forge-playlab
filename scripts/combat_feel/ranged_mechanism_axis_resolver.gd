@@ -1,36 +1,43 @@
 class_name RangedMechanismAxisResolver
 extends RefCounted
 
-const RUNTIME_SCHEMA := "forge-ranged-runtime-profile-v4"
-const AUDIT_SCHEMA := "forge-ranged-mechanism-finite-difference-audit-v4"
+const RUNTIME_SCHEMA := "forge-ranged-runtime-profile-v5"
+const AUDIT_SCHEMA := "forge-ranged-mechanism-finite-difference-audit-v5"
 
 const STRUCTURAL_AXES: PackedStringArray = [
-	"weapon_domain", "layout", "stock_structure", "feed_position",
+	"weapon_domain", "firearm_family", "layout", "stock_structure", "feed_position",
 	"magazine_shape", "barrel_length", "upper_profile", "support_mode",
 ]
 const MECHANISM_AXES: PackedStringArray = [
-	"fire_control", "cadence", "recoil", "recoil_recovery", "muzzle_climb",
+	"fire_control", "action_mechanism", "feed_system", "shot_pattern", "sustained_climb",
+	"cadence", "recoil", "recoil_recovery", "muzzle_climb",
 	"accuracy", "impact_force", "penetration", "reload", "effective_range",
 	"handling", "magazine_capacity",
 ]
 const REQUIRED_AXES: PackedStringArray = [
-	"weapon_domain", "layout", "stock_structure", "feed_position",
+	"weapon_domain", "firearm_family", "layout", "stock_structure", "feed_position",
 	"magazine_shape", "barrel_length", "upper_profile", "support_mode",
-	"fire_control", "cadence", "recoil", "recoil_recovery", "muzzle_climb",
+	"fire_control", "action_mechanism", "feed_system", "shot_pattern", "sustained_climb",
+	"cadence", "recoil", "recoil_recovery", "muzzle_climb",
 	"accuracy", "impact_force", "penetration", "reload", "effective_range",
 	"handling", "magazine_capacity",
 ]
 
 const LEGAL_VALUES := {
 	"weapon_domain": ["handheld_firearm"],
-	"layout": ["bullpup", "conventional_rifle", "pistol"],
+	"firearm_family": ["semi_auto_pistol", "revolver", "submachine_gun", "rifle", "precision_rifle", "shotgun", "light_machine_gun"],
+	"layout": ["bullpup", "conventional_rifle", "pistol", "conventional_shotgun", "revolver", "belt_fed_support"],
 	"stock_structure": ["integrated", "telescoping", "fixed", "none"],
-	"feed_position": ["behind_grip", "ahead_of_grip", "in_grip"],
-	"magazine_shape": ["straight", "curved", "in_grip"],
+	"feed_position": ["behind_grip", "ahead_of_grip", "in_grip", "under_barrel", "cylinder_center", "side_feed"],
+	"magazine_shape": ["straight", "curved", "in_grip", "tube", "cylinder", "belt_box"],
 	"barrel_length": ["short", "medium", "long"],
-	"upper_profile": ["carry_handle", "top_rail", "raised_gas_tube", "slide"],
+	"upper_profile": ["carry_handle", "top_rail", "raised_gas_tube", "slide", "ribbed_barrel", "revolver_frame", "feed_cover"],
 	"support_mode": ["one_hand", "two_hand_shouldered"],
-	"fire_control": ["semi_auto", "three_round_burst", "select_fire_auto", "manual_cycle"],
+	"fire_control": ["semi_auto", "three_round_burst", "select_fire_auto"],
+	"action_mechanism": ["self_loading", "bolt_action", "pump_action", "revolving_cylinder"],
+	"feed_system": ["detachable_box", "internal_tube", "revolving_cylinder", "belt_box"],
+	"shot_pattern": ["single_projectile", "pellet_cloud"],
+	"sustained_climb": ["none", "controlled", "progressive"],
 	"cadence": ["deliberate", "balanced", "rapid"],
 	"recoil": ["light", "medium", "strong"],
 	"recoil_recovery": ["quick", "balanced", "slow"],
@@ -41,11 +48,12 @@ const LEGAL_VALUES := {
 	"reload": ["quick", "standard", "slow"],
 	"effective_range": ["short", "medium", "long"],
 	"handling": ["agile", "balanced", "heavy"],
-	"magazine_capacity": ["compact", "standard", "extended"],
+	"magazine_capacity": ["very_low", "compact", "standard", "extended", "belt"],
 }
 
 const AXIS_LABELS_ZH := {
 	"weapon_domain": "武器平台",
+	"firearm_family": "枪械家族",
 	"layout": "枪身布局",
 	"stock_structure": "枪托结构",
 	"feed_position": "供弹位置",
@@ -54,6 +62,10 @@ const AXIS_LABELS_ZH := {
 	"upper_profile": "上方轮廓",
 	"support_mode": "持枪方式",
 	"fire_control": "击发方式",
+	"action_mechanism": "机械循环",
+	"feed_system": "供弹系统",
+	"shot_pattern": "弹丸形态",
+	"sustained_climb": "持续上跳",
 	"cadence": "射击节奏",
 	"recoil": "后坐冲量",
 	"recoil_recovery": "后坐恢复",
@@ -69,19 +81,23 @@ const AXIS_LABELS_ZH := {
 
 const OPTION_LABELS_ZH := {
 	"weapon_domain": {"handheld_firearm": "手持枪械"},
-	"layout": {"bullpup": "无托式", "conventional_rifle": "常规步枪", "pistol": "手枪"},
+	"firearm_family": {"semi_auto_pistol": "半自动手枪", "revolver": "左轮手枪", "submachine_gun": "冲锋枪", "rifle": "步枪", "precision_rifle": "精确射击步枪", "shotgun": "霰弹枪", "light_machine_gun": "轻机枪"},
+	"layout": {"bullpup": "无托式", "conventional_rifle": "常规步枪", "pistol": "手枪", "conventional_shotgun": "常规霰弹枪", "revolver": "左轮枪身", "belt_fed_support": "弹链支援武器"},
 	"stock_structure": {"integrated": "一体式后托", "telescoping": "伸缩托", "fixed": "固定托", "none": "无枪托"},
-	"feed_position": {"behind_grip": "握把后供弹", "ahead_of_grip": "握把前供弹", "in_grip": "握把内供弹"},
-	"magazine_shape": {"straight": "直弹匣", "curved": "弯弹匣", "in_grip": "藏在握把内"},
+	"feed_position": {"behind_grip": "握把后供弹", "ahead_of_grip": "握把前供弹", "in_grip": "握把内供弹", "under_barrel": "枪管下方管式供弹", "cylinder_center": "中央转轮供弹", "side_feed": "机匣侧方弹链供弹"},
+	"magazine_shape": {"straight": "直弹匣", "curved": "弯弹匣", "in_grip": "藏在握把内", "tube": "管式弹仓", "cylinder": "转轮弹巢", "belt_box": "弹链箱"},
 	"barrel_length": {"short": "短", "medium": "中等", "long": "长"},
-	"upper_profile": {"carry_handle": "提把轮廓", "top_rail": "平直导轨", "raised_gas_tube": "抬高导气结构", "slide": "手枪套筒"},
+	"upper_profile": {"carry_handle": "提把轮廓", "top_rail": "平直导轨", "raised_gas_tube": "抬高导气结构", "slide": "手枪套筒", "ribbed_barrel": "霰弹枪枪管与护木", "revolver_frame": "转轮枪架", "feed_cover": "弹链供弹盖"},
 	"support_mode": {"one_hand": "单手", "two_hand_shouldered": "双手抵肩"},
 	"fire_control": {
 		"semi_auto": "按一下打一发",
 		"three_round_burst": "按一下三连发",
 		"select_fire_auto": "按住连续射击",
-		"manual_cycle": "每发后自动拉栓",
 	},
+	"action_mechanism": {"self_loading": "自动完成循环", "bolt_action": "每发后拉栓", "pump_action": "每发后泵动", "revolving_cylinder": "扳机带动转轮"},
+	"feed_system": {"detachable_box": "可拆弹匣", "internal_tube": "内置管式弹仓", "revolving_cylinder": "转轮弹巢", "belt_box": "弹链箱"},
+	"shot_pattern": {"single_projectile": "单弹丸", "pellet_cloud": "霰弹云"},
+	"sustained_climb": {"none": "无持续累积", "controlled": "可控累积", "progressive": "递增累积"},
 	"cadence": {"deliberate": "从容", "balanced": "均衡", "rapid": "快速"},
 	"recoil": {"light": "轻", "medium": "中", "strong": "强"},
 	"recoil_recovery": {"quick": "快速回正", "balanced": "均衡回正", "slow": "缓慢回正"},
@@ -92,7 +108,7 @@ const OPTION_LABELS_ZH := {
 	"reload": {"quick": "快", "standard": "标准", "slow": "慢"},
 	"effective_range": {"short": "短", "medium": "中", "long": "长"},
 	"handling": {"agile": "灵活", "balanced": "均衡", "heavy": "沉重"},
-	"magazine_capacity": {"compact": "小", "standard": "标准", "extended": "大"},
+	"magazine_capacity": {"very_low": "极小", "compact": "小", "standard": "标准", "extended": "大", "belt": "弹链"},
 }
 
 # Every audited parameter has exactly one declared owner. Multi-output axes are
@@ -100,8 +116,21 @@ const OPTION_LABELS_ZH := {
 const PARAMETER_OWNERS := {
 	"automatic_fire": "fire_control",
 	"burst_size": "fire_control",
-	"manual_cycle_required": "fire_control",
-	"manual_cycle_overhead_seconds": "fire_control",
+	"cycle_action_code": "action_mechanism",
+	"cycle_required": "action_mechanism",
+	"cycle_overhead_seconds": "action_mechanism",
+	"reload_feed_code": "feed_system",
+	"reload_rounds_per_step": "feed_system",
+	"pellet_count": "shot_pattern",
+	"pellet_spread_degrees": "shot_pattern",
+	"pellet_damage_multiplier": "shot_pattern",
+	"damage_falloff_min_multiplier": "shot_pattern",
+	"muzzle_flash_seconds": "shot_pattern",
+	"muzzle_flash_scale": "shot_pattern",
+	"sustained_climb_per_shot_degrees": "sustained_climb",
+	"sustained_climb_cap_degrees": "sustained_climb",
+	"sustained_recovery_multiplier": "sustained_climb",
+	"sustained_window_seconds": "sustained_climb",
 	"shot_interval_seconds": "cadence",
 	"recoil_pixels": "recoil",
 	"recoil_recovery_pixels_per_second": "recoil_recovery",
@@ -125,7 +154,12 @@ const PARAMETER_OWNERS := {
 	"magazine_size": "magazine_capacity",
 }
 const AUDITED_PARAMETERS: PackedStringArray = [
-	"automatic_fire", "burst_size", "manual_cycle_required", "manual_cycle_overhead_seconds",
+	"automatic_fire", "burst_size", "cycle_action_code", "cycle_required", "cycle_overhead_seconds",
+	"reload_feed_code", "reload_rounds_per_step",
+	"pellet_count", "pellet_spread_degrees", "pellet_damage_multiplier",
+	"damage_falloff_min_multiplier", "muzzle_flash_seconds", "muzzle_flash_scale",
+	"sustained_climb_per_shot_degrees", "sustained_climb_cap_degrees",
+	"sustained_recovery_multiplier", "sustained_window_seconds",
 	"shot_interval_seconds", "recoil_pixels",
 	"recoil_recovery_pixels_per_second", "muzzle_climb_recovery_degrees_per_second",
 	"muzzle_climb_degrees_per_shot", "spread_velocity", "projectile_damage",
@@ -138,7 +172,21 @@ const AUDITED_PARAMETERS: PackedStringArray = [
 const PARAMETER_BOUNDS := {
 	"shot_interval_seconds": [0.08, 0.36],
 	"burst_size": [0, 3],
-	"manual_cycle_overhead_seconds": [0.0, 0.90],
+	"cycle_action_code": [0, 3],
+	"cycle_required": [false, true],
+	"cycle_overhead_seconds": [0.0, 0.90],
+	"reload_feed_code": [0, 3],
+	"reload_rounds_per_step": [0, 32],
+	"pellet_count": [1, 16],
+	"pellet_spread_degrees": [0.0, 18.0],
+	"pellet_damage_multiplier": [0.25, 1.0],
+	"damage_falloff_min_multiplier": [0.20, 0.75],
+	"muzzle_flash_seconds": [0.04, 0.12],
+	"muzzle_flash_scale": [0.80, 1.60],
+	"sustained_climb_per_shot_degrees": [0.0, 1.20],
+	"sustained_climb_cap_degrees": [0.0, 12.0],
+	"sustained_recovery_multiplier": [0.50, 1.50],
+	"sustained_window_seconds": [0.0, 1.20],
 	"recoil_pixels": [2.0, 14.0],
 	"recoil_recovery_pixels_per_second": [30.0, 130.0],
 	"muzzle_climb_recovery_degrees_per_second": [10.0, 45.0],
@@ -158,10 +206,10 @@ const PARAMETER_BOUNDS := {
 	"tracer_length_pixels": [8.0, 26.0],
 	"movement_multiplier": [0.70, 1.0],
 	"firing_movement_multiplier": [0.55, 0.98],
-	"magazine_size": [6, 40],
+	"magazine_size": [6, 100],
 }
-const INTEGER_PARAMETERS: PackedStringArray = ["burst_size", "pierce_budget", "magazine_size"]
-const BOOLEAN_PARAMETERS: PackedStringArray = ["automatic_fire", "manual_cycle_required"]
+const INTEGER_PARAMETERS: PackedStringArray = ["burst_size", "cycle_action_code", "reload_feed_code", "reload_rounds_per_step", "pellet_count", "pierce_budget", "magazine_size"]
+const BOOLEAN_PARAMETERS: PackedStringArray = ["automatic_fire", "cycle_required"]
 
 
 static func validate_ai_declaration(payload: Dictionary, source: String) -> Dictionary:
@@ -223,7 +271,6 @@ static func compile(payload: Dictionary, source: String) -> Dictionary:
 		"final_parameters": final_parameters,
 		"clamp_events": clamped.get("clamp_events", []),
 		"parameter_owners": PARAMETER_OWNERS.duplicate(true),
-		"muzzle_flash_seconds": 0.065,
 		"player_mechanism_input_used": false,
 		"player_confirmation_required": false,
 	}
@@ -233,12 +280,14 @@ static func compile(payload: Dictionary, source: String) -> Dictionary:
 
 
 static func manual_cycle_total_seconds(runtime_profile: Dictionary) -> float:
-	if not bool(runtime_profile.get("manual_cycle_required", false)):
+	return cycle_lock_total_seconds(runtime_profile)
+
+
+static func cycle_lock_total_seconds(runtime_profile: Dictionary) -> float:
+	if not bool(runtime_profile.get("cycle_required", false)):
 		return 0.0
-	return (
-		maxf(0.0, float(runtime_profile.get("shot_interval_seconds", 0.0)))
-		+ maxf(0.0, float(runtime_profile.get("manual_cycle_overhead_seconds", 0.0)))
-	)
+	return maxf(0.0, float(runtime_profile.get("shot_interval_seconds", 0.0))) \
+		+ maxf(0.0, float(runtime_profile.get("cycle_overhead_seconds", 0.0)))
 
 
 static func finite_difference_audit(payload: Dictionary, source: String) -> Dictionary:
@@ -384,11 +433,28 @@ static func _raw_parameter_matrix(payload: Dictionary) -> Dictionary:
 	var effective_range := str(payload.get("effective_range", "medium"))
 	var handling := str(payload.get("handling", "balanced"))
 	var capacity := str(payload.get("magazine_capacity", "standard"))
+	var action := str(payload.get("action_mechanism", "self_loading"))
+	var feed_system := str(payload.get("feed_system", "detachable_box"))
+	var shot_pattern := str(payload.get("shot_pattern", "single_projectile"))
+	var sustained_climb := str(payload.get("sustained_climb", "none"))
 	return {
 		"automatic_fire": str(payload.get("fire_control", "semi_auto")) == "select_fire_auto",
 		"burst_size": 3 if str(payload.get("fire_control", "semi_auto")) == "three_round_burst" else 0,
-		"manual_cycle_required": str(payload.get("fire_control", "semi_auto")) == "manual_cycle",
-		"manual_cycle_overhead_seconds": 0.54 if str(payload.get("fire_control", "semi_auto")) == "manual_cycle" else 0.0,
+		"cycle_action_code": int({"self_loading": 0, "bolt_action": 1, "pump_action": 2, "revolving_cylinder": 3}[action]),
+		"cycle_required": action in ["bolt_action", "pump_action", "revolving_cylinder"],
+		"cycle_overhead_seconds": float({"self_loading": 0.0, "bolt_action": 0.54, "pump_action": 0.42, "revolving_cylinder": 0.12}[action]),
+		"reload_feed_code": int({"detachable_box": 0, "internal_tube": 1, "revolving_cylinder": 2, "belt_box": 3}[feed_system]),
+		"reload_rounds_per_step": int({"detachable_box": 0, "internal_tube": 1, "revolving_cylinder": 1, "belt_box": 25}[feed_system]),
+		"pellet_count": int({"single_projectile": 1, "pellet_cloud": 8}[shot_pattern]),
+		"pellet_spread_degrees": float({"single_projectile": 0.0, "pellet_cloud": 12.0}[shot_pattern]),
+		"pellet_damage_multiplier": float({"single_projectile": 1.0, "pellet_cloud": 0.42}[shot_pattern]),
+		"damage_falloff_min_multiplier": float({"single_projectile": 0.60, "pellet_cloud": 0.28}[shot_pattern]),
+		"muzzle_flash_seconds": float({"single_projectile": 0.065, "pellet_cloud": 0.085}[shot_pattern]),
+		"muzzle_flash_scale": float({"single_projectile": 1.0, "pellet_cloud": 1.35}[shot_pattern]),
+		"sustained_climb_per_shot_degrees": float({"none": 0.0, "controlled": 0.35, "progressive": 0.75}[sustained_climb]),
+		"sustained_climb_cap_degrees": float({"none": 0.0, "controlled": 4.0, "progressive": 9.0}[sustained_climb]),
+		"sustained_recovery_multiplier": float({"none": 1.0, "controlled": 1.20, "progressive": 0.80}[sustained_climb]),
+		"sustained_window_seconds": float({"none": 0.0, "controlled": 0.50, "progressive": 0.90}[sustained_climb]),
 		"shot_interval_seconds": float({"deliberate": 0.28, "balanced": 0.17, "rapid": 0.10}[cadence]),
 		"recoil_pixels": float({"light": 3.0, "medium": 7.0, "strong": 12.0}[recoil]),
 		"recoil_recovery_pixels_per_second": float({"quick": 112.0, "balanced": 70.0, "slow": 42.0}[recoil_recovery]),
@@ -409,7 +475,7 @@ static func _raw_parameter_matrix(payload: Dictionary) -> Dictionary:
 		"tracer_length_pixels": float({"short": 10.0, "medium": 16.0, "long": 24.0}[effective_range]),
 		"movement_multiplier": float({"agile": 1.0, "balanced": 0.90, "heavy": 0.78}[handling]),
 		"firing_movement_multiplier": float({"agile": 0.95, "balanced": 0.82, "heavy": 0.65}[handling]),
-		"magazine_size": int({"compact": 10, "standard": 24, "extended": 32}[capacity]),
+		"magazine_size": int({"very_low": 6, "compact": 10, "standard": 24, "extended": 32, "belt": 80}[capacity]),
 	}
 
 
@@ -466,6 +532,7 @@ static func _axis_snapshot(payload: Dictionary) -> Dictionary:
 
 static func _combination_errors(payload: Dictionary) -> PackedStringArray:
 	var errors := PackedStringArray()
+	var family := str(payload.get("firearm_family", ""))
 	var layout := str(payload.get("layout", ""))
 	var stock := str(payload.get("stock_structure", ""))
 	var feed := str(payload.get("feed_position", ""))
@@ -483,6 +550,26 @@ static func _combination_errors(payload: Dictionary) -> PackedStringArray:
 		"pistol":
 			if feed != "in_grip" or magazine != "in_grip" or stock != "none" or support != "one_hand" or barrel != "short" or upper != "slide":
 				errors.append("AI_RANGED_STRUCTURE_CONFLICT:PISTOL")
+		"conventional_shotgun":
+			if feed != "under_barrel" or magazine != "tube" or stock == "none" or support != "two_hand_shouldered" or upper != "ribbed_barrel":
+				errors.append("AI_RANGED_STRUCTURE_CONFLICT:SHOTGUN")
+		"revolver":
+			if feed != "cylinder_center" or magazine != "cylinder" or stock != "none" or support != "one_hand" or barrel == "long" or upper != "revolver_frame":
+				errors.append("AI_RANGED_STRUCTURE_CONFLICT:REVOLVER")
+		"belt_fed_support":
+			if feed != "side_feed" or magazine != "belt_box" or stock == "none" or support != "two_hand_shouldered" or upper != "feed_cover":
+				errors.append("AI_RANGED_STRUCTURE_CONFLICT:BELT_FED_SUPPORT")
+	var legal_layouts_by_family := {
+		"semi_auto_pistol": ["pistol"],
+		"shotgun": ["conventional_shotgun"],
+		"revolver": ["revolver"],
+		"submachine_gun": ["conventional_rifle"],
+		"rifle": ["bullpup", "conventional_rifle"],
+		"precision_rifle": ["conventional_rifle"],
+		"light_machine_gun": ["belt_fed_support"],
+	}
+	if layout not in (legal_layouts_by_family.get(family, []) as Array):
+		errors.append("AI_RANGED_STRUCTURE_CONFLICT:FIREARM_FAMILY")
 	return errors
 
 

@@ -7,8 +7,8 @@ const RANGED_AXES := preload("res://scripts/combat_feel/ranged_mechanism_axis_re
 const OPEN_FLOW := preload("res://scripts/open_identity_spike.gd")
 const AI_PROVIDER := preload("res://scripts/services/firearm_identity_ai_provider.gd")
 
-const TEST_SOURCE := "AI_TEST_FIXTURE_FIREARM_IDENTITY_V3"
-const TEST_CACHE := "user://playlab/test_firearm_identity_ai_cache_v3.json"
+const TEST_SOURCE := "AI_TEST_FIXTURE_FIREARM_IDENTITY_V4"
+const TEST_CACHE := "user://playlab/test_firearm_identity_ai_cache_v4.json"
 
 var passed := 0
 var failed := 0
@@ -17,7 +17,7 @@ var failed := 0
 func _initialize() -> void:
 	print("Forge dynamic firearm identity AI parser tests")
 	_run("Unknown AK model compiles from a strict AI identity card", _test_unknown_rifle_compiles)
-	_run("Unknown bolt-action model preserves the AI-owned manual-cycle mechanism", _test_manual_cycle_rifle_compiles)
+	_run("Unknown bolt-action model preserves the AI-owned cycle mechanism", _test_bolt_action_rifle_compiles)
 	_run("Shoulder-stocked submachine gun uses the conventional compact axes", _test_unknown_smg_compiles)
 	_run("Unknown pistol compiles through the same generic axes", _test_unknown_pistol_compiles)
 	_run("Dynamic AI card reaches the external-art boundary without a mechanism question", _test_flow_integration)
@@ -72,9 +72,12 @@ func _test_unknown_rifle_compiles() -> Variant:
 	return true
 
 
-func _test_manual_cycle_rifle_compiles() -> Variant:
+func _test_bolt_action_rifle_compiles() -> Variant:
 	var payload := _rifle_payload("M24A2")
-	(payload.get("declaration", {}) as Dictionary)["fire_control"] = "manual_cycle"
+	var payload_declaration := payload.get("declaration", {}) as Dictionary
+	payload_declaration["firearm_family"] = "precision_rifle"
+	payload_declaration["fire_control"] = "semi_auto"
+	payload_declaration["action_mechanism"] = "bolt_action"
 	var accepted: Dictionary = AI_RESOLVER.accept_ai_response("M24A2", payload, TEST_SOURCE, false)
 	if not bool(accepted.get("ok", false)):
 		return accepted
@@ -82,12 +85,13 @@ func _test_manual_cycle_rifle_compiles() -> Variant:
 	var runtime: Dictionary = RANGED_AXES.compile(declaration, TEST_SOURCE)
 	if (
 		not bool(runtime.get("ok", false))
-		or not bool(runtime.get("manual_cycle_required", false))
-		or float(runtime.get("manual_cycle_overhead_seconds", 0.0)) <= 0.0
+		or not bool(runtime.get("cycle_required", false))
+		or int(runtime.get("cycle_action_code", 0)) != 1
+		or float(runtime.get("cycle_overhead_seconds", 0.0)) <= 0.0
 		or bool(runtime.get("automatic_fire", true))
 		or int(runtime.get("burst_size", -1)) != 0
 	):
-		return "manual-cycle declaration collapsed: %s" % str(runtime)
+		return "bolt-action declaration collapsed: %s" % str(runtime)
 	return true
 
 
@@ -127,6 +131,7 @@ func _test_unknown_smg_compiles() -> Variant:
 	]
 	var declaration := payload.get("declaration", {}) as Dictionary
 	declaration["stock_structure"] = "telescoping"
+	declaration["firearm_family"] = "submachine_gun"
 	declaration["magazine_shape"] = "straight"
 	declaration["barrel_length"] = "short"
 	declaration["upper_profile"] = "top_rail"
@@ -204,8 +209,8 @@ func _test_vehicle_boundary() -> Variant:
 
 
 func _test_unsupported_firearm_boundary() -> Variant:
-	var payload := _non_handheld_payload("Colt Python revolver", "handheld_firearm_unsupported")
-	var accepted: Dictionary = AI_RESOLVER.accept_ai_response("Colt Python revolver", payload, TEST_SOURCE, false)
+	var payload := _non_handheld_payload("Beretta 686 break-action shotgun", "handheld_firearm_unsupported")
+	var accepted: Dictionary = AI_RESOLVER.accept_ai_response("Beretta 686 break-action shotgun", payload, TEST_SOURCE, false)
 	return true if str(accepted.get("error", "")) == "AI_FIREARM_STRUCTURE_FAMILY_UNSUPPORTED" else accepted
 
 
@@ -259,7 +264,7 @@ func _test_cache_round_trip() -> Variant:
 
 func _rifle_payload(identity: String) -> Dictionary:
 	return {
-		"schema": "forge-firearm-identity-ai-response-v3",
+		"schema": "forge-firearm-identity-ai-response-v4",
 		"requested_identity": identity,
 		"classification": "handheld_firearm_supported",
 		"canonical_name": identity,
@@ -285,6 +290,7 @@ func _rifle_payload(identity: String) -> Dictionary:
 		],
 		"declaration": {
 			"weapon_domain": "handheld_firearm",
+			"firearm_family": "rifle",
 			"layout": "conventional_rifle",
 			"stock_structure": "fixed",
 			"feed_position": "ahead_of_grip",
@@ -293,6 +299,10 @@ func _rifle_payload(identity: String) -> Dictionary:
 			"upper_profile": "raised_gas_tube",
 			"support_mode": "two_hand_shouldered",
 			"fire_control": "select_fire_auto",
+			"action_mechanism": "self_loading",
+			"feed_system": "detachable_box",
+			"shot_pattern": "single_projectile",
+			"sustained_climb": "controlled",
 			"cadence": "balanced",
 			"recoil": "strong",
 			"recoil_recovery": "slow",
@@ -312,7 +322,7 @@ func _rifle_payload(identity: String) -> Dictionary:
 
 func _pistol_payload(identity: String) -> Dictionary:
 	return {
-		"schema": "forge-firearm-identity-ai-response-v3",
+		"schema": "forge-firearm-identity-ai-response-v4",
 		"requested_identity": identity,
 		"classification": "handheld_firearm_supported",
 		"canonical_name": identity,
@@ -338,6 +348,7 @@ func _pistol_payload(identity: String) -> Dictionary:
 		],
 		"declaration": {
 			"weapon_domain": "handheld_firearm",
+			"firearm_family": "semi_auto_pistol",
 			"layout": "pistol",
 			"stock_structure": "none",
 			"feed_position": "in_grip",
@@ -346,6 +357,10 @@ func _pistol_payload(identity: String) -> Dictionary:
 			"upper_profile": "slide",
 			"support_mode": "one_hand",
 			"fire_control": "semi_auto",
+			"action_mechanism": "self_loading",
+			"feed_system": "detachable_box",
+			"shot_pattern": "single_projectile",
+			"sustained_climb": "none",
 			"cadence": "balanced",
 			"recoil": "medium",
 			"recoil_recovery": "balanced",
@@ -366,15 +381,16 @@ func _pistol_payload(identity: String) -> Dictionary:
 func _non_handheld_payload(identity: String, classification: String) -> Dictionary:
 	var declaration := {}
 	for axis: String in [
-		"weapon_domain", "layout", "stock_structure", "feed_position", "magazine_shape",
-		"barrel_length", "upper_profile", "support_mode", "fire_control", "cadence",
+		"weapon_domain", "firearm_family", "layout", "stock_structure", "feed_position", "magazine_shape",
+		"barrel_length", "upper_profile", "support_mode", "fire_control", "action_mechanism",
+		"feed_system", "shot_pattern", "sustained_climb", "cadence",
 		"recoil", "recoil_recovery", "muzzle_climb", "accuracy", "impact_force",
 		"penetration", "reload", "effective_range", "handling",
 		"magazine_capacity", "finish_palette",
 	]:
 		declaration[axis] = "not_applicable"
 	return {
-		"schema": "forge-firearm-identity-ai-response-v3",
+		"schema": "forge-firearm-identity-ai-response-v4",
 		"requested_identity": identity,
 		"classification": classification,
 		"canonical_name": identity,

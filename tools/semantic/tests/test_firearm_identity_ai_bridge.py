@@ -9,6 +9,7 @@ from pathlib import Path
 
 
 PLAYLAB = Path(__file__).resolve().parents[3]
+FIXTURES = PLAYLAB / "tests" / "fixtures"
 BRIDGE_ROOT = PLAYLAB / "tools" / "semantic" / "bridge"
 sys.path.insert(0, str(BRIDGE_ROOT))
 
@@ -46,6 +47,7 @@ def rifle_payload(identity: str = "AK-47") -> dict:
         ],
         "declaration": {
             "weapon_domain": "handheld_firearm",
+            "firearm_family": "rifle",
             "layout": "conventional_rifle",
             "stock_structure": "fixed",
             "feed_position": "ahead_of_grip",
@@ -54,6 +56,10 @@ def rifle_payload(identity: str = "AK-47") -> dict:
             "upper_profile": "raised_gas_tube",
             "support_mode": "two_hand_shouldered",
             "fire_control": "select_fire_auto",
+            "action_mechanism": "self_loading",
+            "feed_system": "detachable_box",
+            "shot_pattern": "single_projectile",
+            "sustained_climb": "controlled",
             "cadence": "balanced",
             "recoil": "strong",
             "recoil_recovery": "slow",
@@ -100,11 +106,39 @@ class FirearmIdentityAIBridgeTests(unittest.TestCase):
         result = bridge.validate_response("M16A2", value)
         self.assertEqual(result["declaration"]["fire_control"], "three_round_burst")
 
-    def test_manual_cycle_is_a_legal_fire_control_mechanism(self) -> None:
+    def test_bolt_action_is_independent_of_fire_control(self) -> None:
+        value = rifle_payload("M24A2")
+        value["declaration"]["fire_control"] = "semi_auto"
+        value["declaration"]["firearm_family"] = "precision_rifle"
+        value["declaration"]["action_mechanism"] = "bolt_action"
+        result = bridge.validate_response("M24A2", value)
+        self.assertEqual(result["declaration"]["fire_control"], "semi_auto")
+        self.assertEqual(result["declaration"]["action_mechanism"], "bolt_action")
+
+    def test_removed_manual_cycle_value_fails_closed(self) -> None:
         value = rifle_payload("M24A2")
         value["declaration"]["fire_control"] = "manual_cycle"
-        result = bridge.validate_response("M24A2", value)
-        self.assertEqual(result["declaration"]["fire_control"], "manual_cycle")
+        with self.assertRaisesRegex(bridge.FirearmIdentityBridgeError, "FIRE_CONTROL"):
+            bridge.validate_response("M24A2", value)
+
+    def test_v4_family_fixtures_pass_strict_validation(self) -> None:
+        cases = (
+            ("Mossberg 500", "firearm_ai_mossberg_500_response_v4.json", "pump_action", "very_low"),
+            ("S&W 686", "firearm_ai_sw_686_response_v4.json", "revolving_cylinder", "very_low"),
+            ("M249", "firearm_ai_m249_response_v4.json", "self_loading", "belt"),
+        )
+        for identity, filename, action, capacity in cases:
+            with self.subTest(identity=identity):
+                value = json.loads((FIXTURES / filename).read_text(encoding="utf-8"))
+                result = bridge.validate_response(identity, value)
+                self.assertEqual(result["declaration"]["action_mechanism"], action)
+                self.assertEqual(result["declaration"]["magazine_capacity"], capacity)
+
+    def test_break_action_shotgun_stays_unsupported(self) -> None:
+        value = classification_payload("Beretta 686", "handheld_firearm_unsupported")
+        result = bridge.validate_response("Beretta 686", value)
+        self.assertEqual(result["classification"], "handheld_firearm_unsupported")
+        self.assertTrue(all(item == "not_applicable" for item in result["declaration"].values()))
 
     def test_conflicting_axis_is_rejected_before_godot(self) -> None:
         value = rifle_payload()
@@ -150,7 +184,7 @@ class FirearmIdentityAIBridgeTests(unittest.TestCase):
             self.assertEqual(exit_code, 0)
             result = json.loads((output / "result.json").read_text(encoding="utf-8"))
             self.assertEqual(result["status"], "success")
-            self.assertEqual(result["source"], "AI_TEST_FIXTURE_FIREARM_IDENTITY_V3")
+            self.assertEqual(result["source"], "AI_TEST_FIXTURE_FIREARM_IDENTITY_V4")
             self.assertFalse(result["player_confirmation_required"])
             self.assertNotIn("ANTHROPIC_API_KEY", json.dumps(result))
 
@@ -162,7 +196,8 @@ class FirearmIdentityAIBridgeTests(unittest.TestCase):
         self.assertIn("recoil_recovery", prompt)
         self.assertIn("impact_force", prompt)
         self.assertIn("three_round_burst", prompt)
-        self.assertIn("manual_cycle", prompt)
+        self.assertIn("bolt_action", prompt)
+        self.assertIn("removed manual_cycle", prompt)
 
     def test_schema_is_closed_at_root_and_declaration(self) -> None:
         schema = json.loads(bridge.SCHEMA_PATH.read_text(encoding="utf-8"))

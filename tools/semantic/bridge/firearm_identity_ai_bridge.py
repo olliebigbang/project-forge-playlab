@@ -24,12 +24,12 @@ from anthropic_semantic_compiler import (
 
 PLAYLAB_ROOT = Path(__file__).resolve().parents[3]
 SCHEMA_PATH = (
-    PLAYLAB_ROOT / "data" / "combat_feel" / "firearm_identity_ai_response_schema_v3.json"
+    PLAYLAB_ROOT / "data" / "combat_feel" / "firearm_identity_ai_response_schema_v4.json"
 )
 PROMPT_PATH = (
-    PLAYLAB_ROOT / "data" / "combat_feel" / "firearm_identity_ai_prompt_v3.txt"
+    PLAYLAB_ROOT / "data" / "combat_feel" / "firearm_identity_ai_prompt_v4.txt"
 )
-RESPONSE_SCHEMA = "forge-firearm-identity-ai-response-v3"
+RESPONSE_SCHEMA = "forge-firearm-identity-ai-response-v4"
 REQUEST_SCHEMA = "forge-firearm-identity-ai-request-v1"
 RESULT_SCHEMA = "forge-firearm-identity-ai-bridge-result-v1"
 SUPPORTED_CLASSIFICATION = "handheld_firearm_supported"
@@ -46,6 +46,7 @@ MIN_ACCEPTED_CONFIDENCE = 0.72
 MAX_IDENTITY_LENGTH = 160
 DECLARATION_KEYS = (
     "weapon_domain",
+    "firearm_family",
     "layout",
     "stock_structure",
     "feed_position",
@@ -54,6 +55,10 @@ DECLARATION_KEYS = (
     "upper_profile",
     "support_mode",
     "fire_control",
+    "action_mechanism",
+    "feed_system",
+    "shot_pattern",
+    "sustained_climb",
     "cadence",
     "recoil",
     "recoil_recovery",
@@ -76,16 +81,19 @@ VISUAL_AXIS_KEYS = (
 )
 LEGAL_VALUES = {
     "weapon_domain": frozenset({"handheld_firearm"}),
-    "layout": frozenset({"bullpup", "conventional_rifle", "pistol"}),
+    "firearm_family": frozenset({"semi_auto_pistol", "revolver", "submachine_gun", "rifle", "precision_rifle", "shotgun", "light_machine_gun"}),
+    "layout": frozenset({"bullpup", "conventional_rifle", "pistol", "conventional_shotgun", "revolver", "belt_fed_support"}),
     "stock_structure": frozenset({"integrated", "telescoping", "fixed", "none"}),
-    "feed_position": frozenset({"behind_grip", "ahead_of_grip", "in_grip"}),
-    "magazine_shape": frozenset({"straight", "curved", "in_grip"}),
+    "feed_position": frozenset({"behind_grip", "ahead_of_grip", "in_grip", "under_barrel", "cylinder_center", "side_feed"}),
+    "magazine_shape": frozenset({"straight", "curved", "in_grip", "tube", "cylinder", "belt_box"}),
     "barrel_length": frozenset({"short", "medium", "long"}),
-    "upper_profile": frozenset({"carry_handle", "top_rail", "raised_gas_tube", "slide"}),
+    "upper_profile": frozenset({"carry_handle", "top_rail", "raised_gas_tube", "slide", "ribbed_barrel", "revolver_frame", "feed_cover"}),
     "support_mode": frozenset({"one_hand", "two_hand_shouldered"}),
-    "fire_control": frozenset(
-        {"semi_auto", "three_round_burst", "select_fire_auto", "manual_cycle"}
-    ),
+    "fire_control": frozenset({"semi_auto", "three_round_burst", "select_fire_auto"}),
+    "action_mechanism": frozenset({"self_loading", "bolt_action", "pump_action", "revolving_cylinder"}),
+    "feed_system": frozenset({"detachable_box", "internal_tube", "revolving_cylinder", "belt_box"}),
+    "shot_pattern": frozenset({"single_projectile", "pellet_cloud"}),
+    "sustained_climb": frozenset({"none", "controlled", "progressive"}),
     "cadence": frozenset({"deliberate", "balanced", "rapid"}),
     "recoil": frozenset({"light", "medium", "strong"}),
     "recoil_recovery": frozenset({"quick", "balanced", "slow"}),
@@ -96,7 +104,7 @@ LEGAL_VALUES = {
     "reload": frozenset({"quick", "standard", "slow"}),
     "effective_range": frozenset({"short", "medium", "long"}),
     "handling": frozenset({"agile", "balanced", "heavy"}),
-    "magazine_capacity": frozenset({"compact", "standard", "extended"}),
+    "magazine_capacity": frozenset({"very_low", "compact", "standard", "extended", "belt"}),
     "finish_palette": frozenset({"gunmetal_black", "olive_black", "wood_steel", "dark_polymer"}),
 }
 _UNSUPPORTED_TRANSPORT_SCHEMA_KEYS = frozenset(
@@ -200,6 +208,7 @@ def _validate_declaration(value: Any, classification: str) -> dict[str, str]:
     for axis, legal in LEGAL_VALUES.items():
         if declaration[axis] not in legal:
             raise FirearmIdentityBridgeError(f"DECLARATION_AXIS_INVALID_{axis.upper()}")
+    family = declaration["firearm_family"]
     layout = declaration["layout"]
     stock = declaration["stock_structure"]
     feed = declaration["feed_position"]
@@ -207,6 +216,21 @@ def _validate_declaration(value: Any, classification: str) -> dict[str, str]:
     support = declaration["support_mode"]
     barrel = declaration["barrel_length"]
     upper = declaration["upper_profile"]
+    action = declaration["action_mechanism"]
+    feed_system = declaration["feed_system"]
+    shot_pattern = declaration["shot_pattern"]
+    sustained_climb = declaration["sustained_climb"]
+    legal_layouts = {
+        "semi_auto_pistol": {"pistol"},
+        "shotgun": {"conventional_shotgun"},
+        "revolver": {"revolver"},
+        "submachine_gun": {"conventional_rifle"},
+        "rifle": {"bullpup", "conventional_rifle"},
+        "precision_rifle": {"conventional_rifle"},
+        "light_machine_gun": {"belt_fed_support"},
+    }
+    if layout not in legal_layouts[family]:
+        raise FirearmIdentityBridgeError("DECLARATION_FIREARM_FAMILY_CONFLICT")
     if layout == "bullpup" and not (
         feed == "behind_grip" and stock == "integrated" and support == "two_hand_shouldered"
     ):
@@ -224,6 +248,54 @@ def _validate_declaration(value: Any, classification: str) -> dict[str, str]:
         and upper == "slide"
     ):
         raise FirearmIdentityBridgeError("DECLARATION_PISTOL_CONFLICT")
+    if layout == "conventional_shotgun" and not (
+        feed == "under_barrel"
+        and magazine == "tube"
+        and stock != "none"
+        and support == "two_hand_shouldered"
+        and upper == "ribbed_barrel"
+        and action == "pump_action"
+        and feed_system == "internal_tube"
+        and shot_pattern == "pellet_cloud"
+        and declaration["fire_control"] == "semi_auto"
+    ):
+        raise FirearmIdentityBridgeError("DECLARATION_SHOTGUN_CONFLICT")
+    if layout == "revolver" and not (
+        feed == "cylinder_center"
+        and magazine == "cylinder"
+        and stock == "none"
+        and support == "one_hand"
+        and barrel != "long"
+        and upper == "revolver_frame"
+        and action == "revolving_cylinder"
+        and feed_system == "revolving_cylinder"
+        and shot_pattern == "single_projectile"
+        and declaration["fire_control"] == "semi_auto"
+    ):
+        raise FirearmIdentityBridgeError("DECLARATION_REVOLVER_CONFLICT")
+    if layout == "belt_fed_support" and not (
+        feed == "side_feed"
+        and magazine == "belt_box"
+        and stock != "none"
+        and support == "two_hand_shouldered"
+        and upper == "feed_cover"
+        and action == "self_loading"
+        and feed_system == "belt_box"
+        and shot_pattern == "single_projectile"
+        and sustained_climb == "progressive"
+        and declaration["fire_control"] == "select_fire_auto"
+    ):
+        raise FirearmIdentityBridgeError("DECLARATION_BELT_FED_SUPPORT_CONFLICT")
+    if layout in {"bullpup", "conventional_rifle", "pistol"} and not (
+        feed_system == "detachable_box" and shot_pattern == "single_projectile"
+    ):
+        raise FirearmIdentityBridgeError("DECLARATION_MAGAZINE_FED_CONFLICT")
+    if layout in {"bullpup", "conventional_rifle", "pistol"} and action not in {
+        "self_loading", "bolt_action"
+    }:
+        raise FirearmIdentityBridgeError("DECLARATION_ACTION_CONFLICT")
+    if action == "bolt_action" and layout != "conventional_rifle":
+        raise FirearmIdentityBridgeError("DECLARATION_BOLT_ACTION_CONFLICT")
     return dict(declaration)
 
 
@@ -438,7 +510,7 @@ def main(argv: list[str] | None = None) -> int:
             response = validate_response(identity, _read_json(args.offline_fixture.resolve()))
             record = _success_record(
                 response,
-                source="AI_TEST_FIXTURE_FIREARM_IDENTITY_V3",
+                source="AI_TEST_FIXTURE_FIREARM_IDENTITY_V4",
                 provider="offline-fixture",
                 model_id="offline-fixture",
                 usage={"input_tokens": 0, "output_tokens": 0},
@@ -447,7 +519,7 @@ def main(argv: list[str] | None = None) -> int:
             response, model_id, usage = resolve_with_anthropic(identity)
             record = _success_record(
                 response,
-                source="AI_ANTHROPIC_FIREARM_IDENTITY_V3",
+                source="AI_ANTHROPIC_FIREARM_IDENTITY_V4",
                 provider="anthropic",
                 model_id=model_id,
                 usage=usage,

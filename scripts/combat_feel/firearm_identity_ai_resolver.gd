@@ -4,9 +4,9 @@ extends RefCounted
 const FIREARM_CATALOG := preload("res://scripts/combat_feel/firearm_identity_catalog.gd")
 const RANGED_AXES := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
 
-const CACHE_PATH := "user://playlab/firearm_identity_ai/cache_v3.json"
-const CACHE_SCHEMA := "forge-firearm-identity-ai-cache-v3"
-const RESPONSE_SCHEMA := "forge-firearm-identity-ai-response-v3"
+const CACHE_PATH := "user://playlab/firearm_identity_ai/cache_v4.json"
+const CACHE_SCHEMA := "forge-firearm-identity-ai-cache-v4"
+const RESPONSE_SCHEMA := "forge-firearm-identity-ai-response-v4"
 const SUPPORTED_CLASSIFICATION := "handheld_firearm_supported"
 const AUTO_VISUAL_REFERENCE_ID := "auto_wikimedia_v1"
 const CLASSIFICATIONS: PackedStringArray = [
@@ -158,6 +158,9 @@ static func validate_ai_response(player_text: String, payload: Dictionary, sourc
 		var result := axis_validation.duplicate(true)
 		result["player_confirmation_required"] = false
 		return result
+	var family_error := _mechanism_family_error(declaration)
+	if not family_error.is_empty():
+		return _failure(family_error)
 	var profile_id := "ai_%s" % _normalize(player_text).sha256_text().left(16)
 	var profile := {
 		"id": profile_id,
@@ -252,6 +255,8 @@ static func _validate_cached_profile(profile: Dictionary) -> Dictionary:
 	var validation := RANGED_AXES.validate_ai_declaration(declaration, source)
 	if not bool(validation.get("ok", false)):
 		return _failure("AI_FIREARM_CACHE_PROFILE_INVALID")
+	if not _mechanism_family_error(declaration).is_empty():
+		return _failure("AI_FIREARM_CACHE_PROFILE_INVALID")
 	if str(profile.get("canonical_name_zh", "")).strip_edges().is_empty():
 		return _failure("AI_FIREARM_CACHE_PROFILE_INVALID")
 	if not profile.get("visual_identity_card", {}) is Dictionary:
@@ -266,6 +271,48 @@ static func _validate_cached_profile(profile: Dictionary) -> Dictionary:
 	if str(profile.get("visual_reference_id", "")) != AUTO_VISUAL_REFERENCE_ID:
 		return _failure("AI_FIREARM_CACHE_PROFILE_INVALID")
 	return {"ok": true}
+
+
+static func _mechanism_family_error(declaration: Dictionary) -> String:
+	var layout := str(declaration.get("layout", ""))
+	var action := str(declaration.get("action_mechanism", ""))
+	var feed_system := str(declaration.get("feed_system", ""))
+	var shot_pattern := str(declaration.get("shot_pattern", ""))
+	var sustained := str(declaration.get("sustained_climb", ""))
+	var fire_control := str(declaration.get("fire_control", ""))
+	if layout == "conventional_shotgun" and (
+		action != "pump_action"
+		or feed_system != "internal_tube"
+		or shot_pattern != "pellet_cloud"
+		or fire_control != "semi_auto"
+	):
+		return "AI_FIREARM_SHOTGUN_MECHANISM_CONFLICT"
+	if layout == "revolver" and (
+		action != "revolving_cylinder"
+		or feed_system != "revolving_cylinder"
+		or shot_pattern != "single_projectile"
+		or fire_control != "semi_auto"
+	):
+		return "AI_FIREARM_REVOLVER_MECHANISM_CONFLICT"
+	if layout == "belt_fed_support" and (
+		action != "self_loading"
+		or feed_system != "belt_box"
+		or shot_pattern != "single_projectile"
+		or sustained != "progressive"
+		or fire_control != "select_fire_auto"
+	):
+		return "AI_FIREARM_SUPPORT_MECHANISM_CONFLICT"
+	if layout in ["bullpup", "conventional_rifle", "pistol"] and (
+		feed_system != "detachable_box" or shot_pattern != "single_projectile"
+	):
+		return "AI_FIREARM_MAGAZINE_FED_MECHANISM_CONFLICT"
+	if layout in ["bullpup", "conventional_rifle", "pistol"] and action not in ["self_loading", "bolt_action"]:
+		return "AI_FIREARM_ACTION_MECHANISM_CONFLICT"
+	if action == "bolt_action" and layout != "conventional_rifle":
+		return "AI_FIREARM_BOLT_ACTION_MECHANISM_CONFLICT"
+	if layout in ["bullpup", "pistol"] and action != "self_loading":
+		return "AI_FIREARM_SELF_LOADING_MECHANISM_CONFLICT"
+	return ""
 
 
 static func _load_cache(cache_path: String) -> Dictionary:

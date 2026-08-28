@@ -1,5 +1,5 @@
 {
-  "schema": "forge-firearm-identity-ai-response-v3",
+  "schema": "forge-firearm-identity-ai-response-v4",
   "requested_identity": "AK-47",
   "classification": "handheld_firearm_supported",
   "canonical_name": "AK-47",
@@ -32,6 +32,7 @@
   ],
   "declaration": {
     "weapon_domain": "handheld_firearm",
+    "firearm_family": "rifle",
     "layout": "conventional_rifle",
     "stock_structure": "fixed",
     "feed_position": "ahead_of_grip",
@@ -40,6 +41,10 @@
     "upper_profile": "raised_gas_tube",
     "support_mode": "two_hand_shouldered",
     "fire_control": "select_fire_auto",
+    "action_mechanism": "self_loading",
+    "feed_system": "detachable_box",
+    "shot_pattern": "single_projectile",
+    "sustained_climb": "controlled",
     "cadence": "balanced",
     "recoil": "strong",
     "recoil_recovery": "slow",

@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-firearm-identity-ai-response-v4",
+  "title": "Forge firearm identity AI response V4 with firearm mechanism axes V5",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "requested_identity", "classification", "canonical_name", "confidence",
+    "identity_evidence", "visual_description_en", "required_identity_parts_zh",
+    "visual_identity_axes", "required_landmarks_en", "confusable_exclusions_en", "declaration"
+  ],
+  "properties": {
+    "schema": {"type": "string", "const": "forge-firearm-identity-ai-response-v4"},
+    "requested_identity": {"type": "string", "minLength": 1, "maxLength": 160},
+    "classification": {
+      "type": "string",
+      "enum": ["handheld_firearm_supported", "handheld_firearm_unsupported", "vehicle_weapon_platform", "not_firearm", "unknown"]
+    },
+    "canonical_name": {"type": "string", "minLength": 1, "maxLength": 96},
+    "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+    "identity_evidence": {
+      "type": "array", "minItems": 1, "maxItems": 6,
+      "items": {"type": "string", "minLength": 1, "maxLength": 240}
+    },
+    "visual_description_en": {"type": "string", "maxLength": 360},
+    "required_identity_parts_zh": {
+      "type": "array", "minItems": 0, "maxItems": 6,
+      "items": {"type": "string", "minLength": 1, "maxLength": 64}
+    },
+    "visual_identity_axes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stock_profile", "upper_landmark", "magazine_profile", "fore_end_profile", "receiver_profile"],
+      "properties": {
+        "stock_profile": {"type": "string", "minLength": 1, "maxLength": 96},
+        "upper_landmark": {"type": "string", "minLength": 1, "maxLength": 96},
+        "magazine_profile": {"type": "string", "minLength": 1, "maxLength": 96},
+        "fore_end_profile": {"type": "string", "minLength": 1, "maxLength": 96},
+        "receiver_profile": {"type": "string", "minLength": 1, "maxLength": 96}
+      }
+    },
+    "required_landmarks_en": {
+      "type": "array", "minItems": 0, "maxItems": 8,
+      "items": {"type": "string", "minLength": 1, "maxLength": 180}
+    },
+    "confusable_exclusions_en": {
+      "type": "array", "minItems": 0, "maxItems": 8,
+      "items": {"type": "string", "minLength": 1, "maxLength": 220}
+    },
+    "declaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "weapon_domain", "firearm_family", "layout", "stock_structure", "feed_position",
+        "magazine_shape", "barrel_length", "upper_profile", "support_mode", "fire_control",
+        "action_mechanism", "feed_system", "shot_pattern", "sustained_climb", "cadence",
+        "recoil", "recoil_recovery", "muzzle_climb", "accuracy", "impact_force", "penetration",
+        "reload", "effective_range", "handling", "magazine_capacity", "finish_palette"
+      ],
+      "properties": {
+        "weapon_domain": {"type": "string", "enum": ["handheld_firearm", "not_applicable"]},
+        "firearm_family": {"type": "string", "enum": ["semi_auto_pistol", "revolver", "submachine_gun", "rifle", "precision_rifle", "shotgun", "light_machine_gun", "not_applicable"]},
+        "layout": {"type": "string", "enum": ["bullpup", "conventional_rifle", "pistol", "conventional_shotgun", "revolver", "belt_fed_support", "not_applicable"]},
+        "stock_structure": {"type": "string", "enum": ["integrated", "telescoping", "fixed", "none", "not_applicable"]},
+        "feed_position": {"type": "string", "enum": ["behind_grip", "ahead_of_grip", "in_grip", "under_barrel", "cylinder_center", "side_feed", "not_applicable"]},
+        "magazine_shape": {"type": "string", "enum": ["straight", "curved", "in_grip", "tube", "cylinder", "belt_box", "not_applicable"]},
+        "barrel_length": {"type": "string", "enum": ["short", "medium", "long", "not_applicable"]},
+        "upper_profile": {"type": "string", "enum": ["carry_handle", "top_rail", "raised_gas_tube", "slide", "ribbed_barrel", "revolver_frame", "feed_cover", "not_applicable"]},
+        "support_mode": {"type": "string", "enum": ["one_hand", "two_hand_shouldered", "not_applicable"]},
+        "fire_control": {"type": "string", "enum": ["semi_auto", "three_round_burst", "select_fire_auto", "not_applicable"]},
+        "action_mechanism": {"type": "string", "enum": ["self_loading", "bolt_action", "pump_action", "revolving_cylinder", "not_applicable"]},
+        "feed_system": {"type": "string", "enum": ["detachable_box", "internal_tube", "revolving_cylinder", "belt_box", "not_applicable"]},
+        "shot_pattern": {"type": "string", "enum": ["single_projectile", "pellet_cloud", "not_applicable"]},
+        "sustained_climb": {"type": "string", "enum": ["none", "controlled", "progressive", "not_applicable"]},
+        "cadence": {"type": "string", "enum": ["deliberate", "balanced", "rapid", "not_applicable"]},
+        "recoil": {"type": "string", "enum": ["light", "medium", "strong", "not_applicable"]},
+        "recoil_recovery": {"type": "string", "enum": ["quick", "balanced", "slow", "not_applicable"]},
+        "muzzle_climb": {"type": "string", "enum": ["low", "medium", "high", "not_applicable"]},
+        "accuracy": {"type": "string", "enum": ["precise", "controlled", "loose", "not_applicable"]},
+        "impact_force": {"type": "string", "enum": ["light", "medium", "strong", "not_applicable"]},
+        "penetration": {"type": "string", "enum": ["light", "medium", "strong", "not_applicable"]},
+        "reload": {"type": "string", "enum": ["quick", "standard", "slow", "not_applicable"]},
+        "effective_range": {"type": "string", "enum": ["short", "medium", "long", "not_applicable"]},
+        "handling": {"type": "string", "enum": ["agile", "balanced", "heavy", "not_applicable"]},
+        "magazine_capacity": {"type": "string", "enum": ["very_low", "compact", "standard", "extended", "belt", "not_applicable"]},
+        "finish_palette": {"type": "string", "enum": ["gunmetal_black", "olive_black", "wood_steel", "dark_polymer", "not_applicable"]}
+      }
+    }
+  }
+}
