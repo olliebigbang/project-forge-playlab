@@ -7,10 +7,12 @@ const ATTACK_SPRITE := preload("res://scripts/enemy_attack/enemy_attack_sprite_l
 const ARENA := preload("res://scripts/systems/gameplay_arena.gd")
 const PLAYTEST_SCENE := preload("res://scenes/ai_enemy_playtest.tscn")
 const PLAYER_ARMORY := preload("res://scripts/combat_feel/player_weapon_armory.gd")
+const FIREARM_CACHE_POLICY := preload("res://scripts/combat_feel/firearm_visual_cache_policy.gd")
 const RUNTIME_HANDOFF := preload("res://scripts/combat_feel/runtime_mechanism_handoff.gd")
 const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
 const FIXTURE_PATH := "res://tests/fixtures/enemy_ai_mechanical_spider_response.json"
 const FIREARM_SPRITE_FIXTURE := "res://tests/fixtures/firearm_visual_v2/m4a1_gpt_image.png"
+const FIREARM_M16_SPRITE_FIXTURE := "res://tests/fixtures/firearm_visual_v2/m4a1_wrong_fixed_carry_handle.png"
 
 var passed := 0
 var failed := 0
@@ -146,17 +148,7 @@ func _test_player_armory_cache() -> Variant:
 		return "ARMORY_TEST_SPRITE_WRITE_FAILED"
 	sprite.store_buffer(sprite_bytes)
 	sprite.close()
-	_write_json(cache_directory.path_join("cache_record.json"), {
-		"identity": "M4A1",
-		"canonical_name": "M4A1",
-		"processed_sprite_sha256": _sha256(sprite_bytes),
-	})
-	_write_json(cache_directory.path_join("manifest.json"), {
-		"status": "success",
-		"finished_art": true,
-		"presentable_to_player": true,
-		"firearm_visual_gate_passed": true,
-	})
+	_write_legacy_firearm_visual_cache(cache_directory, "M4A1", "M4A1", sprite_bytes)
 	var armory: RefCounted = PLAYER_ARMORY.new()
 	armory.visual_cache_root = root_path.path_join("visual/cache_v1")
 	armory.profile_cache_paths = []
@@ -180,24 +172,16 @@ func _test_m16a2_armory_mechanism() -> Variant:
 	var absolute_directory := ProjectSettings.globalize_path(cache_directory)
 	if DirAccess.make_dir_recursive_absolute(absolute_directory) != OK:
 		return "M16A2_ARMORY_TEST_DIRECTORY_FAILED"
-	var sprite_bytes := FileAccess.get_file_as_bytes(FIREARM_SPRITE_FIXTURE)
+	# This authored carry-handle silhouette is intentionally invalid for M4A1,
+	# but it carries the structural evidence expected by the M16A2 profile.
+	var sprite_bytes := FileAccess.get_file_as_bytes(FIREARM_M16_SPRITE_FIXTURE)
 	var sprite := FileAccess.open(cache_directory.path_join("processed_sprite.png"), FileAccess.WRITE)
 	if sprite == null:
 		_remove_tree(ProjectSettings.globalize_path(root_path))
 		return "M16A2_ARMORY_TEST_SPRITE_WRITE_FAILED"
 	sprite.store_buffer(sprite_bytes)
 	sprite.close()
-	_write_json(cache_directory.path_join("cache_record.json"), {
-		"identity": "M16A2",
-		"canonical_name": "M16A2",
-		"processed_sprite_sha256": _sha256(sprite_bytes),
-	})
-	_write_json(cache_directory.path_join("manifest.json"), {
-		"status": "success",
-		"finished_art": true,
-		"presentable_to_player": true,
-		"firearm_visual_gate_passed": true,
-	})
+	_write_legacy_firearm_visual_cache(cache_directory, "M16A2", "M16A2", sprite_bytes)
 	var armory: RefCounted = PLAYER_ARMORY.new()
 	armory.visual_cache_root = root_path.path_join("visual/cache_v1")
 	armory.profile_cache_paths = []
@@ -229,17 +213,7 @@ func _test_m24a2_armory_handoff() -> Variant:
 		return "M24A2_ARMORY_TEST_SPRITE_WRITE_FAILED"
 	sprite.store_buffer(sprite_bytes)
 	sprite.close()
-	_write_json(cache_directory.path_join("cache_record.json"), {
-		"identity": "M24A2",
-		"canonical_name": "M24A2狙击步枪",
-		"processed_sprite_sha256": _sha256(sprite_bytes),
-	})
-	_write_json(cache_directory.path_join("manifest.json"), {
-		"status": "success",
-		"finished_art": true,
-		"presentable_to_player": true,
-		"firearm_visual_gate_passed": true,
-	})
+	_write_legacy_firearm_visual_cache(cache_directory, "M24A2", "M24A2狙击步枪", sprite_bytes)
 	var armory: RefCounted = PLAYER_ARMORY.new()
 	armory.visual_cache_root = root_path.path_join("visual/cache_v1")
 	armory.profile_cache_paths = []
@@ -396,6 +370,41 @@ func _write_json(path: String, value: Dictionary) -> void:
 	if file != null:
 		file.store_string(JSON.stringify(value))
 		file.close()
+
+
+func _write_legacy_firearm_visual_cache(
+	directory: String,
+	identity: String,
+	canonical_name: String,
+	sprite_bytes: PackedByteArray
+) -> void:
+	var key := "legacy-test-%s" % identity.to_lower().replace(" ", "-")
+	_write_json(directory.path_join("cache_record.json"), {
+		"schema": FIREARM_CACHE_POLICY.CACHE_SCHEMA,
+		"key": key,
+		"pipeline_version": FIREARM_CACHE_POLICY.LEGACY_PIPELINE_VERSIONS[0],
+		"identity": identity,
+		"canonical_name": canonical_name,
+		"processed_sprite_sha256": _sha256(sprite_bytes),
+	})
+	_write_json(directory.path_join("manifest.json"), {
+		"schema": FIREARM_CACHE_POLICY.MANIFEST_SCHEMA,
+		"status": "success",
+		"identity": identity,
+		"canonical_identity": canonical_name,
+		"finished_art": true,
+		"presentable_to_player": true,
+		"firearm_visual_gate_passed": true,
+		"ai_visual_identity_verification": {
+			"schema": FIREARM_CACHE_POLICY.VERIFICATION_SCHEMA,
+			"ok": true,
+			"passed": true,
+		},
+		"firearm_visual_identity_gate": {
+			"schema": "forge-firearm-visual-identity-gate-v1",
+			"anchors": {},
+		},
+	})
 
 
 func _sha256(bytes: PackedByteArray) -> String:

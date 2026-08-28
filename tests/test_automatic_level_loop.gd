@@ -188,13 +188,15 @@ func _test_public_runtime_handoff() -> Variant:
 func _test_cycle_action_weapon_card() -> Variant:
 	var loop := LOOP_SCENE.instantiate() as AutomaticLevelLoop
 	var runtime := (_weapon_entry().get("ranged_runtime_profile", {}) as Dictionary).duplicate(true)
+	runtime["automatic_fire"] = false
+	runtime["burst_size"] = 0
 	runtime["cycle_action_code"] = 1
 	runtime["cycle_required"] = true
 	runtime["cycle_overhead_seconds"] = 0.54
 	runtime["shot_interval_seconds"] = 0.28
 	var mode := loop._fire_mode_label(runtime)
 	var timing := loop._fire_timing_label(runtime)
-	var ok := mode == "每发后自动拉栓" and timing == "总动作 0.82 秒"
+	var ok := mode == "按一下单发" and timing == "每发后拉栓，总锁定 0.82 秒"
 	loop.free()
 	return true if ok else {"mode": mode, "timing": timing}
 
