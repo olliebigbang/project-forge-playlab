@@ -21,7 +21,7 @@ func _run_all() -> void:
 	_check("Encounter sequence is reproducible across independent directors", _test_reproducible_order)
 	_check("Weapon blueprint, visual asset, and final mechanism matrix survive the handoff", _test_weapon_handoff)
 	_check("Public ranged handoff enters the level without rebuilding the weapon", _test_public_runtime_handoff)
-	_check("Level weapon cards preserve manual-cycle mechanism timing", _test_manual_cycle_weapon_card)
+	_check("Level weapon cards preserve bolt-action mechanism timing", _test_cycle_action_weapon_card)
 	_check("A level encounter executes two distinct compiled attack deliveries", _test_two_compiled_deliveries_execute)
 	_check("Three encounter completions produce the playable completed state", _test_completed_state)
 	_check("Exhausted health produces a failed run state", _test_failed_state)
@@ -185,11 +185,12 @@ func _test_public_runtime_handoff() -> Variant:
 	return result
 
 
-func _test_manual_cycle_weapon_card() -> Variant:
+func _test_cycle_action_weapon_card() -> Variant:
 	var loop := LOOP_SCENE.instantiate() as AutomaticLevelLoop
 	var runtime := (_weapon_entry().get("ranged_runtime_profile", {}) as Dictionary).duplicate(true)
-	runtime["manual_cycle_required"] = true
-	runtime["manual_cycle_overhead_seconds"] = 0.54
+	runtime["cycle_action_code"] = 1
+	runtime["cycle_required"] = true
+	runtime["cycle_overhead_seconds"] = 0.54
 	runtime["shot_interval_seconds"] = 0.28
 	var mode := loop._fire_mode_label(runtime)
 	var timing := loop._fire_timing_label(runtime)
@@ -243,10 +244,12 @@ func _weapon_entry() -> Dictionary:
 	blueprint.display_name = "自动关卡测试步枪"
 	blueprint.effect_type = "ballistic_projectile"
 	blueprint.affordance = {
-		"weapon_domain": "handheld_firearm", "layout": "conventional_rifle",
+		"weapon_domain": "handheld_firearm", "firearm_family": "rifle", "layout": "conventional_rifle",
 		"stock_structure": "fixed", "feed_position": "ahead_of_grip",
 		"magazine_shape": "curved", "barrel_length": "medium", "upper_profile": "top_rail",
 		"support_mode": "two_hand_shouldered", "fire_control": "select_fire_auto",
+		"action_mechanism": "self_loading", "feed_system": "detachable_box",
+		"shot_pattern": "single_projectile", "sustained_climb": "progressive",
 		"cadence": "balanced", "recoil": "medium", "recoil_recovery": "balanced",
 		"muzzle_climb": "medium", "accuracy": "controlled", "impact_force": "medium",
 		"penetration": "medium", "reload": "standard", "effective_range": "long",

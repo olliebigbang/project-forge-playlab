@@ -30,7 +30,7 @@ func _run_all() -> void:
 	_check("AI enemy playtest accepts a compiled blueprint without player mechanics", _test_playtest_handoff)
 	_check("Player armory reconstructs a cached firearm without an API call", _test_player_armory_cache)
 	_check("Cached M16A2 uses the current three-round-burst catalog mechanism", _test_m16a2_armory_mechanism)
-	_check("Cached M24A2 preserves manual cycling through the armory handoff", _test_m24a2_armory_handoff)
+	_check("Cached M24A2 preserves bolt action through the armory handoff", _test_m24a2_armory_handoff)
 	_check("Ranged handoff preserves the AI-compiled firearm profile", _test_ranged_handoff)
 	var provider_result: Variant = await _test_offline_provider_handoff()
 	_check("Offline AI bridge hands one strict response back to Godot", func() -> Variant: return provider_result)
@@ -255,9 +255,11 @@ func _test_m24a2_armory_handoff() -> Variant:
 		blueprint == null
 		or asset == null
 		or str(entry.get("display_name", "")) != "M24A2狙击步枪"
-		or str(blueprint.affordance.get("fire_control", "")) != "manual_cycle"
-		or not bool(runtime.get("manual_cycle_required", false))
-		or float(runtime.get("manual_cycle_overhead_seconds", 0.0)) <= 0.0
+		or str(blueprint.affordance.get("fire_control", "")) != "semi_auto"
+		or str(blueprint.affordance.get("action_mechanism", "")) != "bolt_action"
+		or int(runtime.get("cycle_action_code", -1)) != 1
+		or not bool(runtime.get("cycle_required", false))
+		or float(runtime.get("cycle_overhead_seconds", 0.0)) <= 0.0
 		or bool(entry.get("paid_api_call_used_for_selection", true))
 	):
 		return entry
@@ -266,10 +268,11 @@ func _test_m24a2_armory_handoff() -> Variant:
 	var payload: Dictionary = handoff.take_ranged()
 	var stored_runtime := payload.get("ranged_runtime_profile", {}) as Dictionary
 	var ok := error.is_empty() and str(payload.get("kind", "")) == "ranged_firearm"
-	ok = ok and bool(stored_runtime.get("manual_cycle_required", false))
+	ok = ok and int(stored_runtime.get("cycle_action_code", -1)) == 1
+	ok = ok and bool(stored_runtime.get("cycle_required", false))
 	ok = ok and is_equal_approx(
-		float(stored_runtime.get("manual_cycle_overhead_seconds", 0.0)),
-		float(runtime.get("manual_cycle_overhead_seconds", -1.0))
+		float(stored_runtime.get("cycle_overhead_seconds", 0.0)),
+		float(runtime.get("cycle_overhead_seconds", -1.0))
 	)
 	ok = ok and not handoff.has_pending()
 	handoff.free()
@@ -279,6 +282,15 @@ func _test_m24a2_armory_handoff() -> Variant:
 func _test_ranged_handoff() -> Variant:
 	var playtest: Node2D = PLAYTEST_SCENE.instantiate()
 	playtest._build_weapon_fixture()
+	# The production playtest fixture is migrated by the runtime/UI line. Keep
+	# this handoff test focused on a complete V5 declaration in isolation.
+	playtest.weapon_blueprint.affordance.merge({
+		"firearm_family": "rifle",
+		"action_mechanism": "self_loading",
+		"feed_system": "detachable_box",
+		"shot_pattern": "single_projectile",
+		"sustained_climb": "controlled",
+	}, true)
 	var runtime: Dictionary = RANGED_AXIS_RESOLVER.compile(
 		playtest.weapon_blueprint.affordance,
 		playtest.weapon_blueprint.affordance_source

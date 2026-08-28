@@ -16,7 +16,7 @@ const REQUIRED_CASES: Array[Dictionary] = [
 	{"input": "中国95式步枪", "id": "qbz_95", "layout": "bullpup", "feed": "behind_grip", "automatic": true},
 	{"input": "M4A1", "id": "m4a1", "layout": "conventional_rifle", "feed": "ahead_of_grip", "automatic": true},
 	{"input": "M16A2", "id": "m16a2", "layout": "conventional_rifle", "feed": "ahead_of_grip", "automatic": false, "burst": 3},
-	{"input": "M24A2", "id": "m24a2", "layout": "conventional_rifle", "feed": "ahead_of_grip", "automatic": false, "manual_cycle": true},
+	{"input": "M24A2", "id": "m24a2", "layout": "conventional_rifle", "feed": "ahead_of_grip", "automatic": false, "action": "bolt_action"},
 	{"input": "81杠", "id": "type_81", "layout": "conventional_rifle", "feed": "ahead_of_grip", "automatic": true},
 	{"input": "92式手枪", "id": "qsz_92", "layout": "pistol", "feed": "in_grip", "automatic": false},
 ]
@@ -30,7 +30,7 @@ func _initialize() -> void:
 	_run("Six firearm names and common aliases resolve without a player behavior question", _test_alias_resolution)
 	_run("Model-only input receives an AI-owned ranged declaration", _test_model_only_interpretation)
 	_run("All ranged axes validate and compile to distinct runtime matrices", _test_axis_compilation)
-	_run("V4 single-variable finite differences expose every mechanism axis", _test_v4_finite_difference_audit)
+	_run("V5 single-variable finite differences expose every mechanism axis", _test_v5_finite_difference_audit)
 	_run("Six 96px silhouettes remain structurally distinct", _test_distinct_pixel_silhouettes)
 	_run("Independent structural axes own visible pixels", _test_structural_axis_pixel_differences)
 	_run("Scaffold anchors come from the declared firearm structure", _test_scaffold_anchor_contract)
@@ -42,9 +42,9 @@ func _initialize() -> void:
 	_run("Empty pixelizer output falls back to AI identity art and still must pass the firearm gate", _test_fal_pixelizer_fallback)
 	_run("Versioned visual cache normalizes aliases and changes with the identity card", _test_visual_cache_key)
 	_run("Default Forge flow refuses to present a Godot firearm scaffold as finished art", _test_mock_flow_integration)
-	_run("Semi-auto, three-round burst, automatic fire, manual cycling, recoil and reload follow compiled axes", _test_runtime_mechanisms)
-	_run("Manual-cycle cadence changes the real time until the next shot", _test_manual_cycle_cadence_runtime_causality)
-	_run("V4 impact, penetration, recovery and muzzle climb reach runtime", _test_v4_runtime_causality)
+	_run("Semi-auto, three-round burst, automatic fire, action cycling, recoil and reload follow compiled axes", _test_runtime_mechanisms)
+	_run("Bolt-action cadence changes the real time until the next shot", _test_cycle_action_cadence_runtime_causality)
+	_run("V5 impact, penetration, recovery and muzzle climb reach runtime", _test_v5_runtime_causality)
 	_run("Impact, penetration and range axes remain visible in projectile proportions", _test_projectile_visual_causality)
 	_run("Runtime contains no firearm-model name branches", _test_no_model_name_runtime_branches)
 	print("RANGED WEAPON RESULT: %d passed, %d failed" % [passed, failed])
@@ -99,6 +99,8 @@ func _test_model_only_interpretation() -> Variant:
 			return "wrong canonical profile: %s" % input_text
 		if str(blueprint.affordance.get("layout", "")) != str(test_case["layout"]):
 			return "wrong structure layout: %s" % input_text
+		if test_case.has("action") and str(blueprint.affordance.get("action_mechanism", "")) != str(test_case["action"]):
+			return "wrong action mechanism: %s" % input_text
 		if not blueprint.visual_prompt.contains("do not collapse the firearm into one long bar"):
 			return "firearm structure brief missing from prompt: %s" % input_text
 	return true
@@ -117,7 +119,7 @@ func _test_axis_compilation() -> Variant:
 		if not bool(runtime.get("ok", false)):
 			return "axis compile failed: %s" % str(runtime)
 		if str(runtime.get("schema", "")) != AXES.RUNTIME_SCHEMA:
-			return "runtime did not upgrade to V4: %s" % str(runtime.get("schema", ""))
+			return "runtime did not upgrade to V5: %s" % str(runtime.get("schema", ""))
 		var final_parameters := runtime.get("final_parameters", {}) as Dictionary
 		if final_parameters.size() != AXES.AUDITED_PARAMETERS.size():
 			return "final clamped matrix is incomplete: %s" % str(final_parameters)
@@ -128,8 +130,9 @@ func _test_axis_compilation() -> Variant:
 		runtime_matrices[str(profile.get("id", ""))] = [
 			bool(runtime.get("automatic_fire", false)),
 			int(runtime.get("burst_size", 0)),
-			bool(runtime.get("manual_cycle_required", false)),
-			float(runtime.get("manual_cycle_overhead_seconds", 0.0)),
+			int(runtime.get("cycle_action_code", -1)),
+			bool(runtime.get("cycle_required", false)),
+			float(runtime.get("cycle_overhead_seconds", 0.0)),
 			float(runtime.get("shot_interval_seconds", 0.0)),
 			float(runtime.get("recoil_pixels", 0.0)),
 			float(runtime.get("spread_velocity", 0.0)),
@@ -143,18 +146,19 @@ func _test_axis_compilation() -> Variant:
 	if int((runtime_matrices["m16a2"] as Array)[1]) != 3 or bool((runtime_matrices["m16a2"] as Array)[0]):
 		return "three-round burst collapsed into semi-auto or unrestricted automatic fire"
 	if (
-		not bool((runtime_matrices["m24a2"] as Array)[2])
-		or float((runtime_matrices["m24a2"] as Array)[3]) <= 0.0
+		int((runtime_matrices["m24a2"] as Array)[2]) != 1
+		or not bool((runtime_matrices["m24a2"] as Array)[3])
+		or float((runtime_matrices["m24a2"] as Array)[4]) <= 0.0
 		or bool((runtime_matrices["m24a2"] as Array)[0])
 		or int((runtime_matrices["m24a2"] as Array)[1]) != 0
 	):
-		return "manual-cycle fire control collapsed into semi-auto"
-	if float((runtime_matrices["type_81"] as Array)[5]) <= float((runtime_matrices["m4a1"] as Array)[5]):
+		return "bolt action collapsed into trigger fire control"
+	if float((runtime_matrices["type_81"] as Array)[6]) <= float((runtime_matrices["m4a1"] as Array)[6]):
 		return "recoil axis direction collapsed"
 	return true
 
 
-func _test_v4_finite_difference_audit() -> Variant:
+func _test_v5_finite_difference_audit() -> Variant:
 	for profile: Dictionary in CATALOG.all_profiles():
 		var declaration := profile.get("declaration", {}) as Dictionary
 		var audit: Dictionary = AXES.finite_difference_audit(
@@ -167,7 +171,7 @@ func _test_v4_finite_difference_audit() -> Variant:
 				str(audit),
 			]
 		if (audit.get("axis_cases", {}) as Dictionary).size() != AXES.MECHANISM_AXES.size():
-			return "not every V4 mechanism axis was varied: %s" % str(profile.get("id", ""))
+			return "not every V5 mechanism axis was varied: %s" % str(profile.get("id", ""))
 		if (audit.get("baseline_final_parameters", {}) as Dictionary).size() != AXES.AUDITED_PARAMETERS.size():
 			return "audit omitted final clamp parameters: %s" % str(profile.get("id", ""))
 		for issue_key: String in [
@@ -595,30 +599,30 @@ func _test_runtime_mechanisms() -> Variant:
 	burst._update_sustained_attack(false, false, 0.016)
 	if burst.projectiles.size() != 3:
 		return "three-round burst continued into unrestricted automatic fire"
-	var manual_bundle: Dictionary = _runtime_bundle("M24A2")
-	var manual := manual_bundle.get("arena") as GameplayArena
-	if manual == null:
-		return "manual-cycle arena missing"
-	manual._update_sustained_attack(true, true, 0.016)
-	var cycle_duration := AXES.manual_cycle_total_seconds(manual.ranged_runtime_profile)
-	if manual.projectiles.size() != 1 or manual.manual_cycle_timer <= 0.0 or cycle_duration <= 0.0:
-		return "manual-cycle shot did not start its compiled action lock"
-	manual.shot_cooldown = 0.0
+	var cycling_bundle: Dictionary = _runtime_bundle("M24A2")
+	var cycling := cycling_bundle.get("arena") as GameplayArena
+	if cycling == null:
+		return "bolt-action arena missing"
+	cycling._update_sustained_attack(true, true, 0.016)
+	var cycle_duration := AXES.cycle_lock_total_seconds(cycling.ranged_runtime_profile)
+	if cycling.projectiles.size() != 1 or cycling.manual_cycle_timer <= 0.0 or cycle_duration <= 0.0:
+		return "bolt-action shot did not start its compiled action lock"
+	cycling.shot_cooldown = 0.0
 	for ignored_press: int in range(4):
-		manual._update_sustained_attack(true, true, 0.016)
-	if manual.projectiles.size() != 1:
-		return "rapid trigger presses skipped the manual-cycle action lock"
-	manual._update_firearm_timers(cycle_duration * 0.5)
-	manual._update_sustained_attack(true, true, 0.016)
-	if manual.projectiles.size() != 1:
-		return "manual-cycle lock ended before its compiled duration"
-	manual._update_firearm_timers(manual.manual_cycle_timer + 0.01)
-	manual._update_sustained_attack(true, false, 0.016)
-	if manual.projectiles.size() != 1:
-		return "holding attack turned manual cycling into automatic fire"
-	manual._update_sustained_attack(true, true, 0.016)
-	if manual.projectiles.size() != 2 or int(manual.metrics.get("manual_cycle_count", 0)) != 2:
-		return "manual-cycle rifle did not fire after a fresh press following completed cycling"
+		cycling._update_sustained_attack(true, true, 0.016)
+	if cycling.projectiles.size() != 1:
+		return "rapid trigger presses skipped the bolt-action lock"
+	cycling._update_firearm_timers(cycle_duration * 0.5)
+	cycling._update_sustained_attack(true, true, 0.016)
+	if cycling.projectiles.size() != 1:
+		return "bolt-action lock ended before its compiled duration"
+	cycling._update_firearm_timers(cycling.manual_cycle_timer + 0.01)
+	cycling._update_sustained_attack(true, false, 0.016)
+	if cycling.projectiles.size() != 1:
+		return "holding attack turned bolt cycling into automatic fire"
+	cycling._update_sustained_attack(true, true, 0.016)
+	if cycling.projectiles.size() != 2 or int(cycling.metrics.get("manual_cycle_count", 0)) != 2:
+		return "bolt-action rifle did not fire after a fresh press following completed cycling"
 	var m4_recoil := rifle.weapon_recoil_offset
 	var heavy_bundle: Dictionary = _runtime_bundle("81杠")
 	var heavy := heavy_bundle.get("arena") as GameplayArena
@@ -636,12 +640,12 @@ func _test_runtime_mechanisms() -> Variant:
 	pistol.free()
 	rifle.free()
 	burst.free()
-	manual.free()
+	cycling.free()
 	heavy.free()
 	return true
 
 
-func _test_manual_cycle_cadence_runtime_causality() -> Variant:
+func _test_cycle_action_cadence_runtime_causality() -> Variant:
 	var profile: Dictionary = CATALOG.resolve_identity("M24A2")
 	var deliberate_declaration := (profile.get("declaration", {}) as Dictionary).duplicate(true)
 	var source := str(deliberate_declaration.get("source", ""))
@@ -649,14 +653,14 @@ func _test_manual_cycle_cadence_runtime_causality() -> Variant:
 	rapid_declaration["cadence"] = "rapid"
 	var deliberate_runtime: Dictionary = AXES.compile(deliberate_declaration, source)
 	var rapid_runtime: Dictionary = AXES.compile(rapid_declaration, source)
-	var deliberate_wait := AXES.manual_cycle_total_seconds(deliberate_runtime)
-	var rapid_wait := AXES.manual_cycle_total_seconds(rapid_runtime)
+	var deliberate_wait := AXES.cycle_lock_total_seconds(deliberate_runtime)
+	var rapid_wait := AXES.cycle_lock_total_seconds(rapid_runtime)
 	if (
 		not bool(deliberate_runtime.get("ok", false))
 		or not bool(rapid_runtime.get("ok", false))
 		or not is_equal_approx(
-			float(deliberate_runtime.get("manual_cycle_overhead_seconds", 0.0)),
-			float(rapid_runtime.get("manual_cycle_overhead_seconds", -1.0))
+			float(deliberate_runtime.get("cycle_overhead_seconds", 0.0)),
+			float(rapid_runtime.get("cycle_overhead_seconds", -1.0))
 		)
 		or is_equal_approx(
 			float(deliberate_runtime.get("shot_interval_seconds", 0.0)),
@@ -666,13 +670,13 @@ func _test_manual_cycle_cadence_runtime_causality() -> Variant:
 		or not is_equal_approx(rapid_wait, 0.64)
 		or deliberate_wait <= rapid_wait
 	):
-		return "manual-cycle cadence did not change the compiled real wait: deliberate=%s rapid=%s" % [
+		return "bolt-action cadence did not change the compiled real wait: deliberate=%s rapid=%s" % [
 			str(deliberate_runtime), str(rapid_runtime),
 		]
 	var deliberate := (_runtime_bundle("M24A2").get("arena") as GameplayArena)
 	var rapid := (_runtime_bundle("M24A2").get("arena") as GameplayArena)
 	if deliberate == null or rapid == null:
-		return "manual-cycle cadence arenas missing"
+		return "bolt-action cadence arenas missing"
 	deliberate.ranged_runtime_profile = deliberate_runtime.duplicate(true)
 	rapid.ranged_runtime_profile = rapid_runtime.duplicate(true)
 	for arena: GameplayArena in [deliberate, rapid]:
@@ -695,10 +699,10 @@ func _test_manual_cycle_cadence_runtime_causality() -> Variant:
 	var ok := deliberate.projectiles.size() == 2
 	deliberate.free()
 	rapid.free()
-	return true if ok else "deliberate manual cycle never reopened after its longer real wait"
+	return true if ok else "deliberate bolt action never reopened after its longer real wait"
 
 
-func _test_v4_runtime_causality() -> Variant:
+func _test_v5_runtime_causality() -> Variant:
 	var pistol_bundle: Dictionary = _runtime_bundle("92式手枪")
 	var pistol := pistol_bundle.get("arena") as GameplayArena
 	var m4_bundle: Dictionary = _runtime_bundle("M4A1")
@@ -706,14 +710,14 @@ func _test_v4_runtime_causality() -> Variant:
 	var type81_bundle: Dictionary = _runtime_bundle("81杠")
 	var type81 := type81_bundle.get("arena") as GameplayArena
 	if pistol == null or m4 == null or type81 == null:
-		return "V4 runtime arenas are incomplete"
+		return "V5 runtime arenas are incomplete"
 	for arena: GameplayArena in [pistol, m4, type81]:
 		arena._update_sustained_attack(true, true, 0.016)
 		if arena.projectiles.size() != 1 or arena.weapon_muzzle_climb_degrees <= 0.0:
-			return "V4 shot did not create a projectile and muzzle climb"
+			return "V5 shot did not create a projectile and muzzle climb"
 		var projectile := arena.projectiles[0] as Dictionary
 		if not projectile.has("damage") or not projectile.has("armor_damage_multiplier"):
-			return "V4 impact or penetration payload did not reach the projectile"
+			return "V5 impact or penetration payload did not reach the projectile"
 	var m4_kick_before := m4.weapon_recoil_offset
 	var m4_climb_before := m4.weapon_muzzle_climb_degrees
 	m4._update_firearm_timers(0.05)
