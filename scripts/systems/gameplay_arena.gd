@@ -103,6 +103,8 @@ var attack_charge := 0.0
 var shot_cooldown := 0.0
 var burst_shots_remaining := 0
 var manual_cycle_timer := 0.0
+var active_cycle_action_code := 0
+var pending_reload_after_cycle := false
 var overheat := 0.0
 var overheat_lock := 0.0
 var ranged_runtime_profile: Dictionary = {}
@@ -110,7 +112,10 @@ var ammo_in_magazine := 0
 var reload_timer := 0.0
 var weapon_recoil_offset := 0.0
 var weapon_muzzle_climb_degrees := 0.0
+var sustained_muzzle_climb_degrees := 0.0
+var sustained_fire_window_timer := 0.0
 var muzzle_flash_timer := 0.0
+var muzzle_flash_scale := 1.0
 var melee_timer := 0.0
 var melee_connected: Dictionary = {}
 var dodge_timer := 0.0
@@ -141,6 +146,8 @@ func start_stage(
 	shot_cooldown = 0.0
 	burst_shots_remaining = 0
 	manual_cycle_timer = 0.0
+	active_cycle_action_code = 0
+	pending_reload_after_cycle = false
 	overheat = 0.0
 	overheat_lock = 0.0
 	melee_timer = 0.0
@@ -165,8 +172,11 @@ func start_stage(
 	reload_timer = 0.0
 	weapon_recoil_offset = 0.0
 	weapon_muzzle_climb_degrees = 0.0
+	sustained_muzzle_climb_degrees = 0.0
+	sustained_fire_window_timer = 0.0
 	muzzle_flash_timer = 0.0
-	metrics = {"damage_taken": 0.0, "overheat_count": 0, "dodge_count": 0, "defeated": 0, "shots_fired": 0, "reload_count": 0, "manual_cycle_count": 0}
+	muzzle_flash_scale = 1.0
+	metrics = {"damage_taken": 0.0, "overheat_count": 0, "dodge_count": 0, "defeated": 0, "shots_fired": 0, "reload_count": 0, "reload_interrupt_count": 0, "manual_cycle_count": 0}
 	_spawn_stage()
 	active = true
 	set_process(true)
@@ -275,7 +285,14 @@ func _update_sustained_attack(attack_down: bool, just_pressed: bool, delta: floa
 func _update_firearm_attack(attack_down: bool, just_pressed: bool) -> void:
 	attack_charge = 0.0
 	overheat = 0.0
-	if reload_timer > 0.0 or manual_cycle_timer > 0.0:
+	if reload_timer > 0.0:
+		if _can_interrupt_incremental_reload(just_pressed):
+			reload_timer = 0.0
+			metrics["reload_interrupt_count"] = int(metrics.get("reload_interrupt_count", 0)) + 1
+			metrics_changed.emit(metrics)
+		else:
+			return
+	if manual_cycle_timer > 0.0:
 		return
 	var burst_size := int(ranged_runtime_profile.get("burst_size", 0))
 	if burst_size > 1 and just_pressed and burst_shots_remaining <= 0:
@@ -295,8 +312,9 @@ func _update_firearm_attack(attack_down: bool, just_pressed: bool) -> void:
 	if burst_size > 1:
 		burst_shots_remaining = maxi(0, burst_shots_remaining - 1)
 	shot_cooldown = float(ranged_runtime_profile.get("shot_interval_seconds", 0.18))
-	if bool(ranged_runtime_profile.get("manual_cycle_required", false)):
-		manual_cycle_timer = RANGED_AXIS_RESOLVER.manual_cycle_total_seconds(ranged_runtime_profile)
+	if _firearm_cycle_required():
+		active_cycle_action_code = int(ranged_runtime_profile.get("cycle_action_code", 1))
+		manual_cycle_timer = _firearm_cycle_total_seconds()
 		metrics["manual_cycle_count"] = int(metrics.get("manual_cycle_count", 0)) + 1
 	weapon_recoil_offset = float(ranged_runtime_profile.get("recoil_pixels", 6.0))
 	weapon_muzzle_climb_degrees = minf(
@@ -304,17 +322,38 @@ func _update_firearm_attack(attack_down: bool, just_pressed: bool) -> void:
 		weapon_muzzle_climb_degrees
 			+ float(ranged_runtime_profile.get("muzzle_climb_degrees_per_shot", 4.0))
 	)
+	var sustained_climb_per_shot := maxf(
+		0.0,
+		float(ranged_runtime_profile.get("sustained_climb_per_shot_degrees", 0.0))
+	)
+	var sustained_climb_cap := maxf(
+		0.0,
+		float(ranged_runtime_profile.get("sustained_climb_cap_degrees", 0.0))
+	)
+	if sustained_climb_per_shot > 0.0 and sustained_climb_cap > 0.0:
+		sustained_muzzle_climb_degrees = minf(
+			sustained_climb_cap,
+			sustained_muzzle_climb_degrees + sustained_climb_per_shot
+		)
+		sustained_fire_window_timer = maxf(
+			0.0,
+			float(ranged_runtime_profile.get("sustained_window_seconds", 0.0))
+		)
 	muzzle_flash_timer = float(ranged_runtime_profile.get("muzzle_flash_seconds", 0.06))
+	muzzle_flash_scale = maxf(0.1, float(ranged_runtime_profile.get("muzzle_flash_scale", 1.0)))
 	metrics["shots_fired"] = int(metrics.get("shots_fired", 0)) + 1
 	metrics_changed.emit(metrics)
 	if ammo_in_magazine <= 0:
-		_begin_firearm_reload()
+		if manual_cycle_timer > 0.0:
+			pending_reload_after_cycle = true
+		else:
+			_begin_firearm_reload()
 
 func _begin_firearm_reload() -> void:
 	if not _uses_firearm_runtime() or reload_timer > 0.0:
 		return
 	burst_shots_remaining = 0
-	manual_cycle_timer = 0.0
+	pending_reload_after_cycle = false
 	reload_timer = float(ranged_runtime_profile.get("reload_seconds", 1.2))
 	metrics["reload_count"] = int(metrics.get("reload_count", 0)) + 1
 	metrics_changed.emit(metrics)
@@ -324,14 +363,88 @@ func _update_firearm_timers(delta: float) -> void:
 	var climb_recovery := float(ranged_runtime_profile.get("muzzle_climb_recovery_degrees_per_second", 24.0))
 	weapon_recoil_offset = move_toward(weapon_recoil_offset, 0.0, delta * recoil_recovery)
 	weapon_muzzle_climb_degrees = move_toward(weapon_muzzle_climb_degrees, 0.0, delta * climb_recovery)
+	var sustained_window_before := sustained_fire_window_timer
+	sustained_fire_window_timer = maxf(0.0, sustained_fire_window_timer - delta)
+	if sustained_fire_window_timer <= 0.0:
+		var sustained_recovery_multiplier := maxf(
+			0.0,
+			float(ranged_runtime_profile.get("sustained_recovery_multiplier", 1.0))
+		)
+		var sustained_recovery_delta := delta
+		if sustained_window_before > 0.0:
+			sustained_recovery_delta = maxf(0.0, delta - sustained_window_before)
+		sustained_muzzle_climb_degrees = move_toward(
+			sustained_muzzle_climb_degrees,
+			0.0,
+			sustained_recovery_delta * climb_recovery * sustained_recovery_multiplier
+		)
 	muzzle_flash_timer = maxf(0.0, muzzle_flash_timer - delta)
+	var cycle_timer_before := manual_cycle_timer
 	manual_cycle_timer = maxf(0.0, manual_cycle_timer - delta)
+	var reload_delta := delta
+	if cycle_timer_before > 0.0 and manual_cycle_timer <= 0.0:
+		active_cycle_action_code = 0
+		if pending_reload_after_cycle:
+			_begin_firearm_reload()
+			reload_delta = maxf(0.0, delta - cycle_timer_before)
 	if reload_timer <= 0.0:
 		return
-	reload_timer = maxf(0.0, reload_timer - delta)
-	if reload_timer <= 0.0:
-		ammo_in_magazine = int(ranged_runtime_profile.get("magazine_size", 0))
-		metrics_changed.emit(metrics)
+	var remaining_delta := maxf(0.0, reload_delta)
+	var completed_steps := 0
+	while reload_timer > 0.0 and remaining_delta >= reload_timer and completed_steps < 64:
+		remaining_delta -= reload_timer
+		reload_timer = 0.0
+		_complete_firearm_reload_step()
+		completed_steps += 1
+	if reload_timer > 0.0:
+		reload_timer = maxf(0.0, reload_timer - remaining_delta)
+
+
+func _complete_firearm_reload_step() -> void:
+	var magazine_size := maxi(0, int(ranged_runtime_profile.get("magazine_size", 0)))
+	var feed_code := int(ranged_runtime_profile.get("reload_feed_code", 0))
+	if feed_code in [1, 2]:
+		var rounds_per_step := maxi(1, int(ranged_runtime_profile.get("reload_rounds_per_step", 1)))
+		ammo_in_magazine = mini(magazine_size, ammo_in_magazine + rounds_per_step)
+		if ammo_in_magazine < magazine_size:
+			reload_timer = maxf(0.01, float(ranged_runtime_profile.get("reload_seconds", 1.2)))
+	else:
+		# Detachable magazines (0) and belt boxes (3) both exchange the whole
+		# feed package after their declared duration.
+		ammo_in_magazine = magazine_size
+	metrics_changed.emit(metrics)
+
+
+func _can_interrupt_incremental_reload(just_pressed: bool) -> bool:
+	return (
+		just_pressed
+		and ammo_in_magazine > 0
+		and int(ranged_runtime_profile.get("reload_feed_code", 0)) == 1
+	)
+
+
+func _firearm_cycle_required() -> bool:
+	return bool(ranged_runtime_profile.get(
+		"cycle_required",
+		ranged_runtime_profile.get("manual_cycle_required", false)
+	))
+
+
+func _firearm_cycle_total_seconds() -> float:
+	if not _firearm_cycle_required():
+		return 0.0
+	var cadence_seconds := maxf(
+		0.0,
+		float(ranged_runtime_profile.get("shot_interval_seconds", 0.18))
+	)
+	var cycle_overhead := maxf(
+		0.0,
+		float(ranged_runtime_profile.get(
+			"cycle_overhead_seconds",
+			ranged_runtime_profile.get("manual_cycle_overhead_seconds", 0.0)
+		))
+	)
+	return cadence_seconds + cycle_overhead
 
 func _uses_firearm_runtime() -> bool:
 	return bool(ranged_runtime_profile.get("ok", false)) and str(ranged_runtime_profile.get("schema", "")) == RANGED_AXIS_RESOLVER.RUNTIME_SCHEMA
@@ -390,6 +503,10 @@ func _fire_bullet() -> void:
 	var spread_velocity := 12.0
 	var projectile_life := 1.45
 	var projectile_damage := RULES.base_damage("sustained_ranged")
+	var pellet_count := 1
+	var pellet_spread_degrees := 0.0
+	var pellet_damage_multiplier := 1.0
+	var damage_falloff_min_multiplier := 0.55
 	var hit_stagger := 0.12
 	var armor_damage_multiplier := 0.45
 	var pierce_budget := 1 if bool(blueprint.modifiers.get("limited_pierce", false)) else 0
@@ -401,6 +518,14 @@ func _fire_bullet() -> void:
 		spread_velocity = float(ranged_runtime_profile.get("spread_velocity", spread_velocity))
 		projectile_life = float(ranged_runtime_profile.get("projectile_life_seconds", projectile_life))
 		projectile_damage = float(ranged_runtime_profile.get("projectile_damage", projectile_damage))
+		pellet_count = maxi(1, int(ranged_runtime_profile.get("pellet_count", pellet_count)))
+		pellet_spread_degrees = maxf(0.0, float(ranged_runtime_profile.get("pellet_spread_degrees", pellet_spread_degrees)))
+		pellet_damage_multiplier = maxf(0.0, float(ranged_runtime_profile.get("pellet_damage_multiplier", pellet_damage_multiplier)))
+		damage_falloff_min_multiplier = clampf(
+			float(ranged_runtime_profile.get("damage_falloff_min_multiplier", damage_falloff_min_multiplier)),
+			0.0,
+			1.0
+		)
 		hit_stagger = float(ranged_runtime_profile.get("hit_stagger_seconds", hit_stagger))
 		armor_damage_multiplier = float(ranged_runtime_profile.get("armor_damage_multiplier", armor_damage_multiplier))
 		pierce_budget = int(ranged_runtime_profile.get("pierce_budget", pierce_budget))
@@ -413,25 +538,48 @@ func _fire_bullet() -> void:
 		blueprint.affordance,
 		ranged_runtime_profile
 	)
-	projectiles.append({
-		"pos": origin,
-		"origin": origin,
-		"distance_travelled": 0.0,
-		"vel": shot_direction * projectile_speed + Vector2(0.0, randf_range(-spread_velocity, spread_velocity)),
-		"life": projectile_life,
-		"damage": projectile_damage,
-		"hit_stagger_seconds": hit_stagger,
-		"projectile_radius_pixels": float(ranged_runtime_profile.get("projectile_radius_pixels", 4.0)),
-		"armor_damage_multiplier": armor_damage_multiplier,
-		"tracer_width_pixels": float(ranged_runtime_profile.get("tracer_width_pixels", 3.0)),
-		"tracer_length_pixels": float(ranged_runtime_profile.get("tracer_length_pixels", 15.0)),
-		"damage_falloff_start_pixels": falloff_start,
-		"damage_falloff_end_pixels": falloff_end,
-		"pierces": pierce_budget,
-		"hit": {},
-		"axis_signature": axis_signature,
-		"target_interaction_profile": target_interaction_profile,
-	})
+	for pellet_index: int in range(pellet_count):
+		var pellet_angle_degrees := _pellet_angle_degrees(
+			pellet_index,
+			pellet_count,
+			pellet_spread_degrees
+		)
+		var pellet_direction := shot_direction.rotated(deg_to_rad(pellet_angle_degrees) * facing)
+		var legacy_spread := Vector2.ZERO
+		if pellet_count == 1:
+			# The V4 single-projectile path retains its existing slight random
+			# velocity spread. Multi-pellet declarations use exact deterministic
+			# angles so the two edge pellets cover the full declared cone.
+			legacy_spread = Vector2(0.0, randf_range(-spread_velocity, spread_velocity))
+		projectiles.append({
+			"pos": origin,
+			"origin": origin,
+			"distance_travelled": 0.0,
+			"vel": pellet_direction * projectile_speed + legacy_spread,
+			"life": projectile_life,
+			"damage": projectile_damage * pellet_damage_multiplier,
+			"pellet_index": pellet_index,
+			"pellet_count": pellet_count,
+			"pellet_angle_degrees": pellet_angle_degrees,
+			"hit_stagger_seconds": hit_stagger,
+			"projectile_radius_pixels": float(ranged_runtime_profile.get("projectile_radius_pixels", 4.0)),
+			"armor_damage_multiplier": armor_damage_multiplier,
+			"tracer_width_pixels": float(ranged_runtime_profile.get("tracer_width_pixels", 3.0)),
+			"tracer_length_pixels": float(ranged_runtime_profile.get("tracer_length_pixels", 15.0)),
+			"damage_falloff_start_pixels": falloff_start,
+			"damage_falloff_end_pixels": falloff_end,
+			"damage_falloff_min_multiplier": damage_falloff_min_multiplier,
+			"pierces": pierce_budget,
+			"hit": {},
+			"axis_signature": axis_signature,
+			"target_interaction_profile": target_interaction_profile,
+		})
+
+
+func _pellet_angle_degrees(index: int, count: int, spread_degrees: float) -> float:
+	if count <= 1 or spread_degrees <= 0.0:
+		return 0.0
+	return lerpf(-spread_degrees * 0.5, spread_degrees * 0.5, float(index) / float(count - 1))
 
 
 func _projectile_damage_against(projectile: Dictionary, enemy: Dictionary) -> float:
@@ -451,7 +599,12 @@ func _projectile_damage_against(projectile: Dictionary, enemy: Dictionary) -> fl
 	var travelled := float(projectile.get("distance_travelled", 0.0))
 	if travelled > falloff_start:
 		var falloff := clampf(inverse_lerp(falloff_start, falloff_end, travelled), 0.0, 1.0)
-		damage *= lerpf(1.0, 0.55, falloff)
+		var minimum_multiplier := clampf(
+			float(projectile.get("damage_falloff_min_multiplier", 0.55)),
+			0.0,
+			1.0
+		)
+		damage *= lerpf(1.0, minimum_multiplier, falloff)
 	if float(enemy.get("armor_integrity", 0.0)) > 0.0 and _is_front_hit(enemy):
 		damage *= float(projectile.get("armor_damage_multiplier", 0.45))
 	return maxf(1.0, damage)
@@ -837,7 +990,7 @@ func _muzzle_world() -> Vector2:
 func _firearm_recoil_rotation() -> float:
 	if not _uses_firearm_runtime():
 		return 0.0
-	return deg_to_rad(-weapon_muzzle_climb_degrees) * facing
+	return deg_to_rad(-weapon_muzzle_climb_degrees - sustained_muzzle_climb_degrees) * facing
 
 func _draw() -> void:
 	draw_rect(Rect2(0, 0, 1280, 720), Color("09131f"), true)
@@ -886,9 +1039,14 @@ func _melee_weapon_rotation() -> float:
 		var reload_progress := clampf(1.0 - reload_timer / reload_duration, 0.0, 1.0)
 		return sin(reload_progress * PI) * 0.52 * facing
 	if _uses_firearm_runtime() and manual_cycle_timer > 0.0:
-		var cycle_duration := maxf(0.01, RANGED_AXIS_RESOLVER.manual_cycle_total_seconds(ranged_runtime_profile))
+		var cycle_duration := maxf(0.01, _firearm_cycle_total_seconds())
 		var cycle_progress := clampf(1.0 - manual_cycle_timer / cycle_duration, 0.0, 1.0)
-		return _firearm_recoil_rotation() + sin(cycle_progress * PI) * 0.18 * facing
+		var action_rotation := float({
+			1: 0.18, # bolt lift/pull
+			2: 0.10, # pump stroke
+			3: 0.26, # cylinder indexing gesture
+		}.get(active_cycle_action_code, 0.14))
+		return _firearm_recoil_rotation() + sin(cycle_progress * PI) * action_rotation * facing
 	if _uses_firearm_runtime():
 		return _firearm_recoil_rotation()
 	if blueprint == null or blueprint.behavior_family != "heavy_melee" or melee_timer <= 0.0:
@@ -957,11 +1115,12 @@ func _draw_attacks() -> void:
 		draw_circle(muzzle, 6.0 + minf(attack_charge, 0.35) * 15.0, Color(0.15, 0.78, 1.0, 0.7), false, 3.0)
 	if muzzle_flash_timer > 0.0:
 		var flash_muzzle := _muzzle_world()
+		var flash_scale := maxf(0.1, muzzle_flash_scale)
 		draw_colored_polygon(PackedVector2Array([
-			flash_muzzle + Vector2(0, -8),
-			flash_muzzle + Vector2(16.0 * facing, 0),
-			flash_muzzle + Vector2(0, 8),
-			flash_muzzle + Vector2(5.0 * facing, 0),
+			flash_muzzle + Vector2(0, -8 * flash_scale),
+			flash_muzzle + Vector2(16.0 * flash_scale * facing, 0),
+			flash_muzzle + Vector2(0, 8 * flash_scale),
+			flash_muzzle + Vector2(5.0 * flash_scale * facing, 0),
 		]), Color("fde047"))
 
 func _draw_enemies() -> void:
