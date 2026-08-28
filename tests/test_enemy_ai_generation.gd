@@ -6,7 +6,11 @@ const IDENTITY_VISUAL := preload("res://scripts/enemy_attack/enemy_identity_visu
 const ATTACK_SPRITE := preload("res://scripts/enemy_attack/enemy_attack_sprite_language.gd")
 const ARENA := preload("res://scripts/systems/gameplay_arena.gd")
 const PLAYTEST_SCENE := preload("res://scenes/ai_enemy_playtest.tscn")
+const PLAYER_ARMORY := preload("res://scripts/combat_feel/player_weapon_armory.gd")
+const RUNTIME_HANDOFF := preload("res://scripts/combat_feel/runtime_mechanism_handoff.gd")
+const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
 const FIXTURE_PATH := "res://tests/fixtures/enemy_ai_mechanical_spider_response.json"
+const FIREARM_SPRITE_FIXTURE := "res://tests/fixtures/firearm_visual_v2/m4a1_gpt_image.png"
 
 var passed := 0
 var failed := 0
@@ -24,6 +28,8 @@ func _run_all() -> void:
 	_check("Solo AI enemies can execute higher-cost pressure attacks", _test_solo_enemy_coordination_budget)
 	_check("Cached AI enemies preserve integer attack selection fields", _test_cache_round_trip)
 	_check("AI enemy playtest accepts a compiled blueprint without player mechanics", _test_playtest_handoff)
+	_check("Player armory reconstructs a cached firearm without an API call", _test_player_armory_cache)
+	_check("Ranged handoff preserves the AI-compiled firearm profile", _test_ranged_handoff)
 	var provider_result: Variant = await _test_offline_provider_handoff()
 	_check("Offline AI bridge hands one strict response back to Godot", func() -> Variant: return provider_result)
 	_check("AI generation boundary never requests player confirmation", _test_no_player_confirmation)
@@ -115,6 +121,7 @@ func _test_playtest_handoff() -> Variant:
 		return profile
 	var playtest: Node2D = PLAYTEST_SCENE.instantiate()
 	root.add_child(playtest)
+	playtest._build_weapon_fixture()
 	playtest._start_combat(profile)
 	var ok: bool = playtest.state == "combat"
 	ok = ok and playtest.arena.enemies.size() == 1
@@ -122,6 +129,66 @@ func _test_playtest_handoff() -> Variant:
 	var diagnostics := {"state": playtest.state, "enemy_count": playtest.arena.enemies.size()}
 	playtest.queue_free()
 	return true if ok else diagnostics
+
+
+func _test_player_armory_cache() -> Variant:
+	var root_path := "user://playlab/tests/player_armory_%d" % Time.get_ticks_usec()
+	var cache_directory := root_path.path_join("visual/cache_v1/m4a1")
+	var absolute_directory := ProjectSettings.globalize_path(cache_directory)
+	if DirAccess.make_dir_recursive_absolute(absolute_directory) != OK:
+		return "ARMORY_TEST_DIRECTORY_FAILED"
+	var sprite_bytes := FileAccess.get_file_as_bytes(FIREARM_SPRITE_FIXTURE)
+	var sprite := FileAccess.open(cache_directory.path_join("processed_sprite.png"), FileAccess.WRITE)
+	if sprite == null:
+		_remove_tree(ProjectSettings.globalize_path(root_path))
+		return "ARMORY_TEST_SPRITE_WRITE_FAILED"
+	sprite.store_buffer(sprite_bytes)
+	sprite.close()
+	_write_json(cache_directory.path_join("cache_record.json"), {
+		"identity": "M4A1",
+		"canonical_name": "M4A1",
+		"processed_sprite_sha256": _sha256(sprite_bytes),
+	})
+	_write_json(cache_directory.path_join("manifest.json"), {
+		"status": "success",
+		"finished_art": true,
+		"presentable_to_player": true,
+		"firearm_visual_gate_passed": true,
+	})
+	var armory: RefCounted = PLAYER_ARMORY.new()
+	armory.visual_cache_root = root_path.path_join("visual/cache_v1")
+	armory.profile_cache_paths = []
+	var entries: Array[Dictionary] = armory.load_entries()
+	_remove_tree(ProjectSettings.globalize_path(root_path))
+	if entries.size() != 1:
+		return {"entry_count": entries.size()}
+	var entry := entries[0]
+	var blueprint := entry.get("blueprint") as WeaponBlueprint
+	var asset := entry.get("asset") as WeaponVisualAsset
+	var runtime := entry.get("ranged_runtime_profile", {}) as Dictionary
+	var ok := blueprint != null and asset != null and str(entry.get("display_name", "")) == "M4A1"
+	ok = ok and bool(runtime.get("ok", false)) and int(runtime.get("magazine_size", 0)) > 0
+	ok = ok and not bool(entry.get("paid_api_call_used_for_selection", true))
+	return true if ok else entry
+
+
+func _test_ranged_handoff() -> Variant:
+	var playtest: Node2D = PLAYTEST_SCENE.instantiate()
+	playtest._build_weapon_fixture()
+	var runtime: Dictionary = RANGED_AXIS_RESOLVER.compile(
+		playtest.weapon_blueprint.affordance,
+		playtest.weapon_blueprint.affordance_source
+	)
+	var handoff: Node = RUNTIME_HANDOFF.new()
+	var error := str(handoff.store_ranged(playtest.weapon_blueprint, playtest.weapon_asset, runtime))
+	var payload: Dictionary = handoff.take_ranged()
+	var stored_runtime := payload.get("ranged_runtime_profile", {}) as Dictionary
+	var ok := error.is_empty() and str(payload.get("kind", "")) == "ranged_firearm"
+	ok = ok and str(stored_runtime.get("axis_signature", "")) == str(runtime.get("axis_signature", ""))
+	ok = ok and not handoff.has_pending()
+	playtest.free()
+	handoff.free()
+	return true if ok else {"error": error, "payload": payload}
 
 
 func _test_solo_enemy_coordination_budget() -> Variant:
@@ -206,3 +273,34 @@ func _test_no_player_confirmation() -> Variant:
 func _fixture() -> Dictionary:
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(FIXTURE_PATH))
 	return (parsed as Dictionary).duplicate(true) if parsed is Dictionary else {}
+
+
+func _write_json(path: String, value: Dictionary) -> void:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file != null:
+		file.store_string(JSON.stringify(value))
+		file.close()
+
+
+func _sha256(bytes: PackedByteArray) -> String:
+	var context := HashingContext.new()
+	context.start(HashingContext.HASH_SHA256)
+	context.update(bytes)
+	return context.finish().hex_encode()
+
+
+func _remove_tree(absolute_path: String) -> void:
+	var directory := DirAccess.open(absolute_path)
+	if directory == null:
+		return
+	directory.list_dir_begin()
+	var child := directory.get_next()
+	while not child.is_empty():
+		var child_path := absolute_path.path_join(child)
+		if directory.current_is_dir():
+			_remove_tree(child_path)
+		else:
+			DirAccess.remove_absolute(child_path)
+		child = directory.get_next()
+	directory.list_dir_end()
+	DirAccess.remove_absolute(absolute_path)
