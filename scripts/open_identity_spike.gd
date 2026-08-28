@@ -1701,6 +1701,7 @@ func _show_ranged_mechanism_summary() -> void:
 	actions.add_theme_constant_override("separation", 10)
 	outer.add_child(actions)
 	actions.add_child(_button("进入射击训练区", _start_training, true))
+	actions.add_child(_button("带这把枪进三战关卡", _start_automatic_level))
 	actions.add_child(_button("带这把枪打 AI 敌人", _start_enemy_playtest))
 	actions.add_child(_button("返回 Forge", _show_forge))
 
@@ -1745,6 +1746,26 @@ func _start_enemy_playtest() -> void:
 		_show_error("枪械无法进入试玩：%s" % handoff_error)
 		return
 	get_tree().change_scene_to_file("res://scenes/ai_enemy_playtest.tscn")
+
+
+func _start_automatic_level() -> void:
+	if current_blueprint == null or current_asset == null or not _ranged_mechanism_is_ready():
+		_show_error("枪械图片或 AI 自动机制卡尚未就绪。")
+		return
+	var handoff: Node = get_node_or_null("/root/MechanismHandoff")
+	if handoff == null or not handoff.has_method("store_ranged"):
+		_show_error("枪械关卡交接器不存在。")
+		return
+	var handoff_error := str(handoff.call(
+		"store_ranged",
+		current_blueprint,
+		current_asset,
+		current_ranged_mechanism
+	))
+	if not handoff_error.is_empty():
+		_show_error("枪械无法进入关卡：%s" % handoff_error)
+		return
+	get_tree().change_scene_to_file("res://scenes/automatic_level_loop.tscn")
 
 func _behavior_summary(blueprint: WeaponBlueprint) -> String:
 	return "delivery：%s · impact_mode：%s · effect_type：%s · drawback：%s" % [

@@ -1,0 +1,221 @@
+{
+  "schema": "forge-offline-encounter-catalog-v1",
+  "catalog_id": "accepted-enemy-blueprints-2026-08",
+  "blueprints": [
+    {
+      "catalog_id": "mechanical_spider",
+      "response": {
+        "schema": "forge-enemy-ai-blueprint-response-v1",
+        "requested_concept": "机械蜘蛛",
+        "canonical_name_zh": "织网猎蛛",
+        "battle_role_zh": "远处喷网封路，靠近后锁定方向飞扑",
+        "confidence": 0.96,
+        "visual_axes": {
+          "body_plan": "arachnid",
+          "scale": "medium",
+          "material": "metal",
+          "palette": "electric",
+          "signature_feature": "mandibles"
+        },
+        "mechanical_profile": {
+          "mass_class": "medium",
+          "armor_class": "light",
+          "durability": "standard",
+          "mobility": "fast"
+        },
+        "attacks": [
+          {
+            "slot_label_zh": "锁向飞扑",
+            "axes": {
+              "delivery": "rush",
+              "target_lock": "direction_on_commit",
+              "hit_shape": "strip",
+              "depth_path": "cross_depth",
+              "tempo": "committed",
+              "stability": "tell_interruptible",
+              "recovery": "extended"
+            },
+            "selection": {
+              "preferred_range": "mid",
+              "depth_fit": "tolerant",
+              "base_priority": 72,
+              "coordination_cost": 1,
+              "requires_clear_path": true,
+              "selection_rank": 10
+            }
+          },
+          {
+            "slot_label_zh": "电网喷射",
+            "axes": {
+              "delivery": "projectile",
+              "target_lock": "live_until_active",
+              "hit_shape": "capsule",
+              "depth_path": "same_lane",
+              "tempo": "quick",
+              "stability": "fragile",
+              "recovery": "brief"
+            },
+            "selection": {
+              "preferred_range": "far",
+              "depth_fit": "aligned",
+              "base_priority": 66,
+              "coordination_cost": 1,
+              "requires_clear_path": true,
+              "selection_rank": 20
+            }
+          }
+        ]
+      }
+    },
+    {
+      "catalog_id": "ember_priest",
+      "response": {
+        "schema": "forge-enemy-ai-blueprint-response-v1",
+        "requested_concept": "火焰祭司",
+        "canonical_name_zh": "余烬祭司",
+        "battle_role_zh": "近身挥焰逼退玩家，远处预告落点召下火柱",
+        "confidence": 0.94,
+        "visual_axes": {
+          "body_plan": "biped",
+          "scale": "medium",
+          "material": "spectral",
+          "palette": "ember",
+          "signature_feature": "halo"
+        },
+        "mechanical_profile": {
+          "mass_class": "light",
+          "armor_class": "none",
+          "durability": "fragile",
+          "mobility": "steady"
+        },
+        "attacks": [
+          {
+            "slot_label_zh": "焰杖横扫",
+            "axes": {
+              "delivery": "contact",
+              "target_lock": "live_until_active",
+              "hit_shape": "arc",
+              "depth_path": "same_lane",
+              "tempo": "quick",
+              "stability": "fragile",
+              "recovery": "brief"
+            },
+            "selection": {
+              "preferred_range": "close",
+              "depth_fit": "aligned",
+              "base_priority": 75,
+              "coordination_cost": 1,
+              "requires_clear_path": false,
+              "selection_rank": 10
+            }
+          },
+          {
+            "slot_label_zh": "预告火柱",
+            "axes": {
+              "delivery": "marked_impact",
+              "target_lock": "point_on_commit",
+              "hit_shape": "circle",
+              "depth_path": "depth_band",
+              "tempo": "committed",
+              "stability": "tell_interruptible",
+              "recovery": "punishable"
+            },
+            "selection": {
+              "preferred_range": "far",
+              "depth_fit": "any",
+              "base_priority": 68,
+              "coordination_cost": 1,
+              "requires_clear_path": false,
+              "selection_rank": 20
+            }
+          }
+        ]
+      }
+    },
+    {
+      "catalog_id": "frost_siege_beast",
+      "response": {
+        "schema": "forge-enemy-ai-blueprint-response-v1",
+        "requested_concept": "冰霜攻城兽",
+        "canonical_name_zh": "霜甲攻城兽",
+        "battle_role_zh": "以重甲冲撞切开战场，再从背甲射出寒冰弹压制远处",
+        "confidence": 0.95,
+        "visual_axes": {
+          "body_plan": "quadruped",
+          "scale": "large",
+          "material": "stone",
+          "palette": "frost",
+          "signature_feature": "dorsal_spines"
+        },
+        "mechanical_profile": {
+          "mass_class": "heavy",
+          "armor_class": "heavy",
+          "durability": "sturdy",
+          "mobility": "slow"
+        },
+        "attacks": [
+          {
+            "slot_label_zh": "霜甲冲撞",
+            "axes": {
+              "delivery": "rush",
+              "target_lock": "direction_on_commit",
+              "hit_shape": "strip",
+              "depth_path": "cross_depth",
+              "tempo": "committed",
+              "stability": "armored_commit",
+              "recovery": "extended"
+            },
+            "selection": {
+              "preferred_range": "mid",
+              "depth_fit": "tolerant",
+              "base_priority": 78,
+              "coordination_cost": 1,
+              "requires_clear_path": true,
+              "selection_rank": 10
+            }
+          },
+          {
+            "slot_label_zh": "背甲冰弹",
+            "axes": {
+              "delivery": "projectile",
+              "target_lock": "direction_on_commit",
+              "hit_shape": "capsule",
+              "depth_path": "same_lane",
+              "tempo": "standard",
+              "stability": "tell_interruptible",
+              "recovery": "punishable"
+            },
+            "selection": {
+              "preferred_range": "far",
+              "depth_fit": "aligned",
+              "base_priority": 70,
+              "coordination_cost": 1,
+              "requires_clear_path": true,
+              "selection_rank": 20
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "encounters": [
+    {
+      "encounter_id": "warmup_ember",
+      "title_zh": "第一战 · 看懂预告",
+      "brief_zh": "祭司会近身横扫，也会在脚下预告火柱。看到红圈就离开。",
+      "blueprint_ids": ["ember_priest"]
+    },
+    {
+      "encounter_id": "mobile_web",
+      "title_zh": "第二战 · 改变站位",
+      "brief_zh": "猎蛛会飞扑和喷射。横向移动，不要一直站在同一条线上。",
+      "blueprint_ids": ["mechanical_spider"]
+    },
+    {
+      "encounter_id": "siege_finale",
+      "title_zh": "最终战 · 打断重击",
+      "brief_zh": "攻城兽冲撞时有硬保护；等它打完，再利用恢复时间反击。",
+      "blueprint_ids": ["frost_siege_beast"]
+    }
+  ]
+}
