@@ -4,6 +4,7 @@ extends Node2D
 const ARENA := preload("res://scripts/systems/gameplay_arena.gd")
 const ARMORY := preload("res://scripts/combat_feel/player_weapon_armory.gd")
 const DIRECTOR := preload("res://scripts/enemy_attack/automatic_encounter_director.gd")
+const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
 
 var arena: GameplayArena
 var armory: RefCounted = ARMORY.new()
@@ -310,9 +311,9 @@ func _rebuild_weapon_cards() -> void:
 		name_label.add_theme_font_size_override("font_size", 19)
 		card.add_child(name_label)
 		var mechanism := Label.new()
-		mechanism.text = "%s　%.2f 秒/发\n伤害 %.0f　后坐 %.0f　弹匣 %d" % [
+		mechanism.text = "%s　%s\n伤害 %.0f　后坐 %.0f　弹匣 %d" % [
 			_fire_mode_label(runtime),
-			float(runtime.get("shot_interval_seconds", 0.0)),
+			_fire_timing_label(runtime),
 			float(runtime.get("projectile_damage", 0.0)),
 			float(runtime.get("recoil_pixels", 0.0)),
 			int(runtime.get("magazine_size", 0)),
@@ -341,10 +342,18 @@ func _weapon_display_name() -> String:
 
 
 func _fire_mode_label(runtime: Dictionary) -> String:
+	if bool(runtime.get("manual_cycle_required", false)):
+		return "每发后自动拉栓"
 	if bool(runtime.get("automatic_fire", false)):
 		return "按住连射"
 	var burst_size := int(runtime.get("burst_size", 0))
 	return "按一下 %d 连发" % burst_size if burst_size > 1 else "按一下单发"
+
+
+func _fire_timing_label(runtime: Dictionary) -> String:
+	if bool(runtime.get("manual_cycle_required", false)):
+		return "总动作 %.2f 秒" % RANGED_AXIS_RESOLVER.manual_cycle_total_seconds(runtime)
+	return "%.2f 秒/发" % float(runtime.get("shot_interval_seconds", 0.0))
 
 
 func _build_ui() -> void:

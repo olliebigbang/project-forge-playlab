@@ -4,6 +4,7 @@ const CATALOG := preload("res://scripts/enemy_attack/offline_enemy_blueprint_cat
 const DIRECTOR := preload("res://scripts/enemy_attack/automatic_encounter_director.gd")
 const ARENA := preload("res://scripts/systems/gameplay_arena.gd")
 const LOOP_SCENE := preload("res://scenes/automatic_level_loop.tscn")
+const AutomaticLevelLoop := preload("res://scripts/enemy_attack/automatic_level_loop.gd")
 const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
 
 var passed := 0
@@ -20,6 +21,7 @@ func _run_all() -> void:
 	_check("Encounter sequence is reproducible across independent directors", _test_reproducible_order)
 	_check("Weapon blueprint, visual asset, and final mechanism matrix survive the handoff", _test_weapon_handoff)
 	_check("Public ranged handoff enters the level without rebuilding the weapon", _test_public_runtime_handoff)
+	_check("Level weapon cards preserve manual-cycle mechanism timing", _test_manual_cycle_weapon_card)
 	_check("A level encounter executes two distinct compiled attack deliveries", _test_two_compiled_deliveries_execute)
 	_check("Three encounter completions produce the playable completed state", _test_completed_state)
 	_check("Exhausted health produces a failed run state", _test_failed_state)
@@ -181,6 +183,19 @@ func _test_public_runtime_handoff() -> Variant:
 	var result: Variant = true if ok else {"state": loop.state, "handed": handed}
 	loop.queue_free()
 	return result
+
+
+func _test_manual_cycle_weapon_card() -> Variant:
+	var loop := LOOP_SCENE.instantiate() as AutomaticLevelLoop
+	var runtime := (_weapon_entry().get("ranged_runtime_profile", {}) as Dictionary).duplicate(true)
+	runtime["manual_cycle_required"] = true
+	runtime["manual_cycle_overhead_seconds"] = 0.54
+	runtime["shot_interval_seconds"] = 0.28
+	var mode := loop._fire_mode_label(runtime)
+	var timing := loop._fire_timing_label(runtime)
+	var ok := mode == "每发后自动拉栓" and timing == "总动作 0.82 秒"
+	loop.free()
+	return true if ok else {"mode": mode, "timing": timing}
 
 
 func _test_completed_state() -> Variant:
