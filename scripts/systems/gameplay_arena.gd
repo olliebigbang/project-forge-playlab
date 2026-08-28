@@ -6,6 +6,9 @@ signal metrics_changed(metrics: Dictionary)
 
 const RULES := preload("res://scripts/systems/combat_rules.gd")
 const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
+const FIREARM_ACTION_CHOREOGRAPHY := preload(
+	"res://scripts/combat_feel/firearm_action_choreography.gd"
+)
 const TARGET_INTERACTION := preload("res://scripts/combat_feel/weapon_target_interaction_resolver.gd")
 const ENEMY_ATTACK_RUNTIME := preload("res://scripts/enemy_attack/enemy_attack_runtime_driver.gd")
 const ENEMY_ATTACK_VISUAL := preload("res://scripts/enemy_attack/enemy_attack_visual_language.gd")
@@ -978,19 +981,50 @@ func _spawn_enemy_blueprint(profile: Dictionary, position: Vector2) -> void:
 func _muzzle_world() -> Vector2:
 	if asset == null:
 		return player_position
-	var recoil := Vector2(-weapon_recoil_offset * facing, -weapon_recoil_offset * 0.12) if _uses_firearm_runtime() else Vector2.ZERO
-	var hand := Vector2(19.0 * facing, -10.0) + recoil
+	if _uses_firearm_runtime():
+		var action := _firearm_action_sample()
+		return FIREARM_ACTION_CHOREOGRAPHY.world_anchor(
+			_firearm_hand_base(),
+			asset.muzzle,
+			asset.grip_primary,
+			action.get("root_pose", {}) as Dictionary
+		)
+	var hand := player_position + Vector2(19.0 * facing, -10.0)
 	var relative := asset.muzzle - asset.grip_primary
 	var relative_world := Vector2(relative.x * 1.15 * facing, relative.y * 1.15)
-	if _uses_firearm_runtime():
-		relative_world = relative_world.rotated(_firearm_recoil_rotation())
-	return player_position + hand + relative_world
+	return hand + relative_world
 
 
 func _firearm_recoil_rotation() -> float:
 	if not _uses_firearm_runtime():
 		return 0.0
 	return deg_to_rad(-weapon_muzzle_climb_degrees - sustained_muzzle_climb_degrees) * facing
+
+
+func _firearm_hand_base() -> Vector2:
+	return player_position + Vector2(19.0 * facing, -10.0)
+
+
+func _firearm_action_sample() -> Dictionary:
+	if not _uses_firearm_runtime():
+		return {}
+	return FIREARM_ACTION_CHOREOGRAPHY.sample(
+		ranged_runtime_profile,
+		{
+			"recoil_pixels": weapon_recoil_offset,
+			"muzzle_climb_degrees": (
+				weapon_muzzle_climb_degrees + sustained_muzzle_climb_degrees
+			),
+			"cycle_timer": manual_cycle_timer,
+			"reload_timer": reload_timer,
+			"muzzle_flash_timer": muzzle_flash_timer,
+		},
+		{
+			"ammo_in_magazine": ammo_in_magazine,
+			"magazine_size": int(ranged_runtime_profile.get("magazine_size", 1)),
+		},
+		facing
+	)
 
 func _draw() -> void:
 	draw_rect(Rect2(0, 0, 1280, 720), Color("09131f"), true)
@@ -1010,9 +1044,14 @@ func _draw_player_and_weapon() -> void:
 	draw_rect(Rect2(player_position + Vector2(-15, -12), Vector2(30, 42)), body_color, true)
 	draw_line(player_position + Vector2(-8, 30), player_position + Vector2(-13, 49), Color("94a3b8"), 7.0)
 	draw_line(player_position + Vector2(8, 30), player_position + Vector2(13, 49), Color("94a3b8"), 7.0)
-	var firearm_recoil := Vector2(-weapon_recoil_offset * facing, -weapon_recoil_offset * 0.12) if _uses_firearm_runtime() else Vector2.ZERO
-	var hand_primary := player_position + Vector2(19.0 * facing, -10.0) + firearm_recoil
+	var firearm_action := _firearm_action_sample()
+	var root_pose := firearm_action.get("root_pose", {}) as Dictionary
+	var hand_base := _firearm_hand_base()
+	var hand_primary := hand_base
 	var weapon_rotation := _melee_weapon_rotation()
+	if _uses_firearm_runtime():
+		hand_primary += root_pose.get("offset", Vector2.ZERO) as Vector2
+		weapon_rotation = float(root_pose.get("rotation", 0.0))
 	var relative_secondary := (asset.grip_secondary - asset.grip_primary) * 1.15
 	var relative_secondary_world := Vector2(relative_secondary.x * facing, relative_secondary.y).rotated(weapon_rotation)
 	var one_hand_firearm := _uses_firearm_runtime() and str(blueprint.affordance.get("support_mode", "")) == "one_hand"
@@ -1020,35 +1059,28 @@ func _draw_player_and_weapon() -> void:
 	draw_line(player_position + Vector2(0, -5), hand_primary, Color("f0c7a6"), 7.0)
 	draw_line(player_position + Vector2(2, 1), hand_secondary, Color("f0c7a6"), 7.0)
 	draw_set_transform(hand_primary, weapon_rotation, Vector2(facing, 1.0))
-	var local_position := -asset.grip_primary * 1.15
+	var local_position := FIREARM_ACTION_CHOREOGRAPHY.weapon_origin(asset.grip_primary)
 	draw_texture_rect(asset.texture, Rect2(local_position, Vector2(asset.canvas_size) * 1.15), false)
+	if _uses_firearm_runtime():
+		_draw_firearm_action_overlays(firearm_action, hand_primary, weapon_rotation)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	draw_circle(hand_primary, 5.0, Color("f8d8b9"))
 	draw_circle(hand_secondary, 5.0, Color("f8d8b9"))
 	draw_line(player_position + Vector2(0, -30), player_position + Vector2(18.0 * facing, -30), Color("fef08a"), 3.0)
 	if debug_anchors:
-		_draw_world_anchor(hand_primary, asset.grip_primary, asset.grip_primary, "GripPrimary", Color("5eead4"))
-		_draw_world_anchor(hand_primary, asset.grip_secondary, asset.grip_primary, "GripSecondary", Color("facc15"))
-		_draw_world_anchor(hand_primary, asset.muzzle, asset.grip_primary, "Muzzle", Color("38bdf8"))
-		_draw_world_anchor(hand_primary, asset.tip, asset.grip_primary, "Tip", Color("fb7185"))
-		_draw_world_anchor(hand_primary, asset.spin_pivot, asset.grip_primary, "SpinPivot", Color("c084fc"))
+		if _uses_firearm_runtime():
+			_draw_firearm_world_anchor(hand_base, asset.grip_primary, root_pose, "GripPrimary", Color("5eead4"))
+			_draw_firearm_world_anchor(hand_base, asset.grip_secondary, root_pose, "GripSecondary", Color("facc15"))
+			_draw_firearm_world_anchor(hand_base, asset.muzzle, root_pose, "Muzzle", Color("38bdf8"))
+			_draw_firearm_world_anchor(hand_base, asset.tip, root_pose, "Tip", Color("fb7185"))
+		else:
+			_draw_world_anchor(hand_primary, asset.grip_primary, asset.grip_primary, "GripPrimary", Color("5eead4"))
+			_draw_world_anchor(hand_primary, asset.grip_secondary, asset.grip_primary, "GripSecondary", Color("facc15"))
+			_draw_world_anchor(hand_primary, asset.muzzle, asset.grip_primary, "Muzzle", Color("38bdf8"))
+			_draw_world_anchor(hand_primary, asset.tip, asset.grip_primary, "Tip", Color("fb7185"))
+			_draw_world_anchor(hand_primary, asset.spin_pivot, asset.grip_primary, "SpinPivot", Color("c084fc"))
 
 func _melee_weapon_rotation() -> float:
-	if _uses_firearm_runtime() and reload_timer > 0.0:
-		var reload_duration := maxf(0.01, float(ranged_runtime_profile.get("reload_seconds", 1.2)))
-		var reload_progress := clampf(1.0 - reload_timer / reload_duration, 0.0, 1.0)
-		return sin(reload_progress * PI) * 0.52 * facing
-	if _uses_firearm_runtime() and manual_cycle_timer > 0.0:
-		var cycle_duration := maxf(0.01, _firearm_cycle_total_seconds())
-		var cycle_progress := clampf(1.0 - manual_cycle_timer / cycle_duration, 0.0, 1.0)
-		var action_rotation := float({
-			1: 0.18, # bolt lift/pull
-			2: 0.10, # pump stroke
-			3: 0.26, # cylinder indexing gesture
-		}.get(active_cycle_action_code, 0.14))
-		return _firearm_recoil_rotation() + sin(cycle_progress * PI) * action_rotation * facing
-	if _uses_firearm_runtime():
-		return _firearm_recoil_rotation()
 	if blueprint == null or blueprint.behavior_family != "heavy_melee" or melee_timer <= 0.0:
 		return 0.0
 	var startup_multiplier := float(blueprint.modifiers.get("startup_multiplier", 1.0))
@@ -1077,6 +1109,103 @@ func _draw_world_anchor(hand: Vector2, point: Vector2, grip: Vector2, label: Str
 	var world := hand + Vector2(relative.x * facing, relative.y)
 	draw_circle(world, 5.0, color)
 	draw_string(ThemeDB.fallback_font, world + Vector2(6, -5), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
+
+
+func _draw_firearm_world_anchor(
+	hand_base: Vector2,
+	point: Vector2,
+	root_pose: Dictionary,
+	label: String,
+	color: Color
+) -> void:
+	var world := FIREARM_ACTION_CHOREOGRAPHY.world_anchor(
+		hand_base,
+		point,
+		asset.grip_primary,
+		root_pose
+	)
+	draw_circle(world, 5.0, color)
+	draw_string(ThemeDB.fallback_font, world + Vector2(6, -5), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
+
+
+func _draw_firearm_action_overlays(action: Dictionary, hand: Vector2, root_rotation: float) -> void:
+	_draw_cycle_overlay(action.get("cycle_overlay_pose", {}) as Dictionary, hand, root_rotation)
+	_draw_reload_object(action.get("reload_object_pose", {}) as Dictionary, hand, root_rotation)
+	_draw_ejected_case(action.get("ejection_pose", {}) as Dictionary, hand, root_rotation)
+
+
+func _draw_cycle_overlay(pose: Dictionary, hand: Vector2, root_rotation: float) -> void:
+	if not bool(pose.get("visible", false)):
+		return
+	var local_position := Vector2(7.0, -8.0) + (pose.get("local_position", Vector2.ZERO) as Vector2)
+	var position := hand + Vector2(local_position.x * facing, local_position.y).rotated(root_rotation)
+	draw_set_transform(position, root_rotation + float(pose.get("rotation", 0.0)) * facing, Vector2(facing, 1.0))
+	match str(pose.get("kind", "")):
+		"self_loading_bolt":
+			draw_rect(Rect2(-5, -2, 10, 4), Color("d7e1e8"), true)
+		"bolt_handle":
+			draw_line(Vector2(-2, 0), Vector2(6, 6), Color("d7e1e8"), 3.0)
+			draw_circle(Vector2(7, 7), 3.0, Color("7d8b96"))
+		"pump_fore_end":
+			draw_rect(Rect2(16, 8, 22, 9), Color("8b5a36"), true)
+			draw_line(Vector2(18, 11), Vector2(36, 11), Color("c58a54"), 2.0)
+		"cylinder_index":
+			draw_circle(Vector2.ZERO, 8.0, Color("343e47"))
+			for angle: float in [0.0, TAU / 3.0, TAU * 2.0 / 3.0]:
+				draw_circle(Vector2.from_angle(angle) * 4.0, 1.5, Color("9eabb4"))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+func _draw_reload_object(pose: Dictionary, hand: Vector2, root_rotation: float) -> void:
+	if not bool(pose.get("visible", false)):
+		return
+	var local_position := pose.get("local_position", Vector2.ZERO) as Vector2
+	var position := hand + Vector2(local_position.x * facing, local_position.y).rotated(root_rotation)
+	draw_set_transform(position, root_rotation + float(pose.get("rotation", 0.0)) * facing, Vector2(facing, 1.0))
+	match str(pose.get("kind", "")):
+		"magazine":
+			draw_rect(Rect2(-5, -10, 10, 22), Color("252c33"), true)
+			draw_line(Vector2(-3, -7), Vector2(3, 8), Color("77838d"), 2.0)
+		"single_round":
+			draw_rect(Rect2(-6, -2, 10, 4), Color("c7893d"), true)
+			draw_circle(Vector2(5, 0), 2.0, Color("e7c15d"))
+		"speedloader":
+			draw_circle(Vector2.ZERO, 8.0, Color("b5c0c8"), false, 3.0)
+			for angle: float in [0.0, TAU / 3.0, TAU * 2.0 / 3.0]:
+				draw_circle(Vector2.from_angle(angle) * 4.0, 2.0, Color("d49a42"))
+		"belt_box":
+			draw_rect(Rect2(-10, -7, 20, 16), Color("46523d"), true)
+			for index: int in range(4):
+				draw_circle(Vector2(-8 + index * 5, -10), 2.0, Color("d49a42"))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+func _draw_ejected_case(pose: Dictionary, hand: Vector2, root_rotation: float) -> void:
+	if not bool(pose.get("visible", false)):
+		return
+	var local_position := pose.get("local_position", Vector2.ZERO) as Vector2
+	var position := hand + Vector2(local_position.x * facing, local_position.y).rotated(root_rotation)
+	draw_set_transform(position, root_rotation + float(pose.get("rotation", 0.0)) * facing, Vector2(facing, 1.0))
+	var size := Vector2(8, 4) if str(pose.get("kind", "")) == "spent_shell" else Vector2(6, 3)
+	draw_rect(Rect2(-size * 0.5, size), Color("d49a42"), true)
+	if str(pose.get("kind", "")) == "spent_casing_cluster":
+		draw_rect(Rect2(Vector2(-2, 4), size), Color("d49a42"), true)
+		draw_rect(Rect2(Vector2(3, -3), size), Color("d49a42"), true)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+func _draw_firearm_muzzle_flash() -> void:
+	if muzzle_flash_timer <= 0.0:
+		return
+	var flash_muzzle := _muzzle_world()
+	var flash_pose := (_firearm_action_sample().get("flash_pose", {}) as Dictionary)
+	var flash_scale := flash_pose.get("scale", Vector2.ONE) as Vector2
+	draw_colored_polygon(PackedVector2Array([
+		flash_muzzle + Vector2(0, -7.0 * flash_scale.y),
+		flash_muzzle + Vector2(17.0 * facing * flash_scale.x, 0),
+		flash_muzzle + Vector2(0, 7.0 * flash_scale.y),
+		flash_muzzle + Vector2(5.0 * facing * flash_scale.x, 0),
+	]), Color("fde047"))
 
 func _draw_attacks() -> void:
 	for projectile: Dictionary in projectiles:
@@ -1113,15 +1242,7 @@ func _draw_attacks() -> void:
 	if blueprint != null and blueprint.behavior_family == "sustained_ranged" and attack_charge > 0.0:
 		var muzzle := _muzzle_world()
 		draw_circle(muzzle, 6.0 + minf(attack_charge, 0.35) * 15.0, Color(0.15, 0.78, 1.0, 0.7), false, 3.0)
-	if muzzle_flash_timer > 0.0:
-		var flash_muzzle := _muzzle_world()
-		var flash_scale := maxf(0.1, muzzle_flash_scale)
-		draw_colored_polygon(PackedVector2Array([
-			flash_muzzle + Vector2(0, -8 * flash_scale),
-			flash_muzzle + Vector2(16.0 * flash_scale * facing, 0),
-			flash_muzzle + Vector2(0, 8 * flash_scale),
-			flash_muzzle + Vector2(5.0 * flash_scale * facing, 0),
-		]), Color("fde047"))
+	_draw_firearm_muzzle_flash()
 
 func _draw_enemies() -> void:
 	for enemy: Dictionary in enemies:

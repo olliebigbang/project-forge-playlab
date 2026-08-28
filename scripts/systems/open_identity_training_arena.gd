@@ -4,10 +4,6 @@ extends "res://scripts/systems/gameplay_arena.gd"
 # Training-only presentation for open identities. It consumes the behavior
 # contract without introducing object-specific weapon classes or new families.
 
-const FIREARM_ACTION_CHOREOGRAPHY := preload(
-	"res://scripts/combat_feel/firearm_action_choreography.gd"
-)
-
 func _update_returning_attack(just_pressed: bool, delta: float) -> void:
 	if just_pressed and boomerang.is_empty():
 		boomerang = {
@@ -90,7 +86,7 @@ func _draw_player_and_weapon() -> void:
 	draw_line(player_position + Vector2(8, 30), player_position + Vector2(13, 49), Color("94a3b8"), 7.0)
 	var firearm_action := _firearm_action_sample()
 	var root_pose := firearm_action.get("root_pose", {}) as Dictionary
-	var hand_base := player_position + Vector2(19.0 * facing, -10.0)
+	var hand_base := _firearm_hand_base()
 	var hand_primary := hand_base
 	var weapon_rotation := 0.0
 	if _uses_firearm_runtime():
@@ -129,122 +125,6 @@ func _draw_player_and_weapon() -> void:
 			_draw_world_anchor(hand_primary, asset.muzzle, asset.grip_primary, "EffectOrigin", Color("38bdf8"))
 			_draw_world_anchor(hand_primary, asset.tip, asset.grip_primary, "StrikePoint", Color("fb7185"))
 			_draw_world_anchor(hand_primary, asset.spin_pivot, asset.grip_primary, "SpinPivot", Color("c084fc"))
-
-
-func _muzzle_world() -> Vector2:
-	if not _uses_firearm_runtime() or asset == null:
-		return super._muzzle_world()
-	var action := _firearm_action_sample()
-	return FIREARM_ACTION_CHOREOGRAPHY.world_anchor(
-		player_position + Vector2(19.0 * facing, -10.0),
-		asset.muzzle,
-		asset.grip_primary,
-		action.get("root_pose", {}) as Dictionary
-	)
-
-
-func _firearm_action_sample() -> Dictionary:
-	if not _uses_firearm_runtime():
-		return {}
-	return FIREARM_ACTION_CHOREOGRAPHY.sample(
-		ranged_runtime_profile,
-		{
-			"recoil_pixels": weapon_recoil_offset,
-			"muzzle_climb_degrees": weapon_muzzle_climb_degrees,
-			"cycle_timer": manual_cycle_timer,
-			"reload_timer": reload_timer,
-			"muzzle_flash_timer": muzzle_flash_timer,
-		},
-		{
-			"ammo_in_magazine": ammo_in_magazine,
-			"magazine_size": int(ranged_runtime_profile.get("magazine_size", 1)),
-		},
-		facing
-	)
-
-
-func _draw_firearm_world_anchor(
-	hand_base: Vector2,
-	point: Vector2,
-	root_pose: Dictionary,
-	label: String,
-	color: Color
-) -> void:
-	var world := FIREARM_ACTION_CHOREOGRAPHY.world_anchor(
-		hand_base,
-		point,
-		asset.grip_primary,
-		root_pose
-	)
-	draw_circle(world, 5.0, color)
-	draw_string(ThemeDB.fallback_font, world + Vector2(6, -5), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
-
-
-func _draw_firearm_action_overlays(action: Dictionary, hand: Vector2, root_rotation: float) -> void:
-	_draw_cycle_overlay(action.get("cycle_overlay_pose", {}) as Dictionary, hand, root_rotation)
-	_draw_reload_object(action.get("reload_object_pose", {}) as Dictionary, hand, root_rotation)
-	_draw_ejected_case(action.get("ejection_pose", {}) as Dictionary, hand, root_rotation)
-
-
-func _draw_cycle_overlay(pose: Dictionary, hand: Vector2, root_rotation: float) -> void:
-	if not bool(pose.get("visible", false)):
-		return
-	var local_position := Vector2(7.0, -8.0) + (pose.get("local_position", Vector2.ZERO) as Vector2)
-	var position := hand + Vector2(local_position.x * facing, local_position.y).rotated(root_rotation)
-	draw_set_transform(position, root_rotation + float(pose.get("rotation", 0.0)) * facing, Vector2(facing, 1.0))
-	match str(pose.get("kind", "")):
-		"self_loading_bolt":
-			draw_rect(Rect2(-5, -2, 10, 4), Color("d7e1e8"), true)
-		"bolt_handle":
-			draw_line(Vector2(-2, 0), Vector2(6, 6), Color("d7e1e8"), 3.0)
-			draw_circle(Vector2(7, 7), 3.0, Color("7d8b96"))
-		"pump_fore_end":
-			draw_rect(Rect2(16, 8, 22, 9), Color("8b5a36"), true)
-			draw_line(Vector2(18, 11), Vector2(36, 11), Color("c58a54"), 2.0)
-		"cylinder_index":
-			draw_circle(Vector2.ZERO, 8.0, Color("343e47"))
-			for angle: float in [0.0, TAU / 3.0, TAU * 2.0 / 3.0]:
-				draw_circle(Vector2.from_angle(angle) * 4.0, 1.5, Color("9eabb4"))
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-
-
-func _draw_reload_object(pose: Dictionary, hand: Vector2, root_rotation: float) -> void:
-	if not bool(pose.get("visible", false)):
-		return
-	var local_position := pose.get("local_position", Vector2.ZERO) as Vector2
-	var position := hand + Vector2(local_position.x * facing, local_position.y).rotated(root_rotation)
-	draw_set_transform(position, root_rotation + float(pose.get("rotation", 0.0)) * facing, Vector2(facing, 1.0))
-	match str(pose.get("kind", "")):
-		"magazine":
-			draw_rect(Rect2(-5, -10, 10, 22), Color("252c33"), true)
-			draw_line(Vector2(-3, -7), Vector2(3, 8), Color("77838d"), 2.0)
-		"single_round":
-			draw_rect(Rect2(-6, -2, 10, 4), Color("c7893d"), true)
-			draw_circle(Vector2(5, 0), 2.0, Color("e7c15d"))
-		"speedloader":
-			draw_circle(Vector2.ZERO, 8.0, Color("b5c0c8"), false, 3.0)
-			for angle: float in [0.0, TAU / 3.0, TAU * 2.0 / 3.0]:
-				draw_circle(Vector2.from_angle(angle) * 4.0, 2.0, Color("d49a42"))
-		"belt_box":
-			draw_rect(Rect2(-10, -7, 20, 16), Color("46523d"), true)
-			for index: int in range(4):
-				draw_circle(Vector2(-8 + index * 5, -10), 2.0, Color("d49a42"))
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-
-
-func _draw_ejected_case(pose: Dictionary, hand: Vector2, root_rotation: float) -> void:
-	if not bool(pose.get("visible", false)):
-		return
-	var local_position := pose.get("local_position", Vector2.ZERO) as Vector2
-	var position := hand + Vector2(local_position.x * facing, local_position.y).rotated(root_rotation)
-	draw_set_transform(position, root_rotation + float(pose.get("rotation", 0.0)) * facing, Vector2(facing, 1.0))
-	var size := Vector2(8, 4) if str(pose.get("kind", "")) == "spent_shell" else Vector2(6, 3)
-	draw_rect(Rect2(-size * 0.5, size), Color("d49a42"), true)
-	if str(pose.get("kind", "")) == "spent_casing_cluster":
-		draw_rect(Rect2(Vector2(-2, 4), size), Color("d49a42"), true)
-		draw_rect(Rect2(Vector2(3, -3), size), Color("d49a42"), true)
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-
 func _draw_attacks() -> void:
 	for projectile: Dictionary in projectiles:
 		var position: Vector2 = projectile["pos"]
@@ -289,13 +169,4 @@ func _draw_attacks() -> void:
 	if blueprint.delivery == "continuous_emission" and attack_charge > 0.0:
 		var effect_origin := _muzzle_world()
 		draw_arc(effect_origin, 6.0 + minf(attack_charge, 0.35) * 15.0, 0.0, TAU, 16, Color("5eead4"), 3.0)
-	if muzzle_flash_timer > 0.0:
-		var flash_muzzle := _muzzle_world()
-		var flash_pose := (_firearm_action_sample().get("flash_pose", {}) as Dictionary)
-		var flash_scale := flash_pose.get("scale", Vector2.ONE) as Vector2
-		draw_colored_polygon(PackedVector2Array([
-			flash_muzzle + Vector2(0, -7.0 * flash_scale.y),
-			flash_muzzle + Vector2(17.0 * facing * flash_scale.x, 0),
-			flash_muzzle + Vector2(0, 7.0 * flash_scale.y),
-			flash_muzzle + Vector2(5.0 * facing * flash_scale.x, 0),
-		]), Color("fde047"))
+	_draw_firearm_muzzle_flash()

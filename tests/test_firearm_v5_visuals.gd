@@ -8,6 +8,9 @@ const CACHE_POLICY := preload("res://scripts/combat_feel/firearm_visual_cache_po
 const FAL_PROVIDER := preload("res://scripts/services/fal_firearm_visual_provider.gd")
 const PLAYER_ARMORY := preload("res://scripts/combat_feel/player_weapon_armory.gd")
 const INTERPRETER := preload("res://scripts/services/open_identity_interpreter.gd")
+const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
+const GAMEPLAY_ARENA := preload("res://scripts/systems/gameplay_arena.gd")
+const TRAINING_ARENA := preload("res://scripts/systems/open_identity_training_arena.gd")
 
 const SPRITE_FIXTURE := "res://tests/fixtures/firearm_visual_v2/m4a1_gpt_image.png"
 
@@ -25,6 +28,7 @@ func _initialize() -> void:
 	_run("Legacy finished art migrates locally and tampered art is rejected", _test_local_cache_migration)
 	_run("Armory applies the same local V5 migration policy", _test_armory_migration)
 	_run("Training arena consumes the shared choreography", _test_training_uses_shared_choreography)
+	_run("Gameplay and training return the same action and muzzle pose", _test_arena_pose_parity)
 	print("FIREARM V5 VISUAL RESULT: %d passed, %d failed" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -220,12 +224,54 @@ func _test_armory_migration() -> Variant:
 
 
 func _test_training_uses_shared_choreography() -> Variant:
-	var source := FileAccess.get_file_as_string("res://scripts/systems/open_identity_training_arena.gd")
-	if not source.contains("FIREARM_ACTION_CHOREOGRAPHY.sample"):
-		return "shared choreography not consumed"
+	var gameplay_source := FileAccess.get_file_as_string("res://scripts/systems/gameplay_arena.gd")
+	var training_source := FileAccess.get_file_as_string("res://scripts/systems/open_identity_training_arena.gd")
+	if not gameplay_source.contains("FIREARM_ACTION_CHOREOGRAPHY.sample"):
+		return "formal gameplay does not consume shared choreography"
+	for duplicate_method: String in [
+		"func _firearm_action_sample", "func _muzzle_world", "func _draw_firearm_action_overlays",
+		"func _draw_cycle_overlay", "func _draw_reload_object", "func _draw_ejected_case",
+	]:
+		if training_source.contains(duplicate_method):
+			return "training duplicates inherited firearm method: %s" % duplicate_method
 	for duplicate_curve: String in ["sin(reload_progress", "sin(cycle_progress", "manual_cycle_total_seconds(ranged_runtime_profile)"]:
-		if source.contains(duplicate_curve):
+		if training_source.contains(duplicate_curve):
 			return "training still owns curve: %s" % duplicate_curve
+	return true
+
+
+func _test_arena_pose_parity() -> Variant:
+	var gameplay = GAMEPLAY_ARENA.new()
+	var training = TRAINING_ARENA.new()
+	var runtime := _runtime(2, 1, 8)
+	runtime["ok"] = true
+	runtime["schema"] = RANGED_AXIS_RESOLVER.RUNTIME_SCHEMA
+	runtime["magazine_size"] = 8
+	var visual_asset := WeaponVisualAsset.new()
+	visual_asset.grip_primary = Vector2(36, 64)
+	visual_asset.grip_secondary = Vector2(69, 51)
+	visual_asset.muzzle = Vector2(93, 42)
+	for arena: Node in [gameplay, training]:
+		arena.player_position = Vector2(318, 407)
+		arena.facing = -1.0
+		arena.ranged_runtime_profile = runtime.duplicate(true)
+		arena.weapon_recoil_offset = 7.0
+		arena.weapon_muzzle_climb_degrees = 12.5
+		arena.manual_cycle_timer = 0.31
+		arena.reload_timer = 0.0
+		arena.muzzle_flash_timer = 0.025
+		arena.ammo_in_magazine = 3
+		arena.asset = visual_asset
+	var gameplay_action: Dictionary = gameplay._firearm_action_sample()
+	var training_action: Dictionary = training._firearm_action_sample()
+	var gameplay_muzzle: Vector2 = gameplay._muzzle_world()
+	var training_muzzle: Vector2 = training._muzzle_world()
+	gameplay.free()
+	training.free()
+	if gameplay_action != training_action:
+		return {"gameplay": gameplay_action, "training": training_action}
+	if not gameplay_muzzle.is_equal_approx(training_muzzle):
+		return {"gameplay_muzzle": gameplay_muzzle, "training_muzzle": training_muzzle}
 	return true
 
 
