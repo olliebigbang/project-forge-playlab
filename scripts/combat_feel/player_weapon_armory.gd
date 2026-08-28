@@ -15,9 +15,46 @@ const DEFAULT_PROFILE_CACHE_PATHS := [
 
 var visual_cache_root := DEFAULT_VISUAL_CACHE_ROOT
 var profile_cache_paths := DEFAULT_PROFILE_CACHE_PATHS.duplicate()
+var last_load_diagnostics: Dictionary = {}
+
+var _memory_entries: Array[Dictionary] = []
+var _memory_dependency_snapshot: Dictionary = {}
+var _tracked_entry_files: Array[String] = []
+var _memory_cache_ready := false
+var _json_files_read := 0
+var _sprite_hash_reads := 0
+var _images_decoded := 0
+var _visual_directories_compiled := 0
+
+
+func invalidate_cache() -> void:
+	_memory_entries.clear()
+	_memory_dependency_snapshot.clear()
+	_tracked_entry_files.clear()
+	_memory_cache_ready = false
+	last_load_diagnostics = {"source": "invalidated"}
 
 
 func load_entries() -> Array[Dictionary]:
+	var started_usec := Time.get_ticks_usec()
+	if _memory_cache_ready:
+		var current_snapshot := _dependency_snapshot(_tracked_entry_files)
+		if current_snapshot == _memory_dependency_snapshot:
+			last_load_diagnostics = {
+				"source": "process_memory_cache",
+				"entry_count": _memory_entries.size(),
+				"json_files_read": 0,
+				"sprite_hash_reads": 0,
+				"images_decoded": 0,
+				"visual_directories_compiled": 0,
+				"elapsed_usec": Time.get_ticks_usec() - started_usec,
+			}
+			return _copy_entry_array(_memory_entries)
+	_json_files_read = 0
+	_sprite_hash_reads = 0
+	_images_decoded = 0
+	_visual_directories_compiled = 0
+	_tracked_entry_files.clear()
 	var profiles := _load_cached_profiles()
 	var best_by_identity := {}
 	var directory := DirAccess.open(visual_cache_root)
@@ -27,7 +64,11 @@ func load_entries() -> Array[Dictionary]:
 	var child := directory.get_next()
 	while not child.is_empty():
 		if directory.current_is_dir() and not child.begins_with("."):
-			var entry := _load_visual_entry(visual_cache_root.path_join(child), profiles)
+			var child_path := visual_cache_root.path_join(child)
+			_tracked_entry_files.append(child_path.path_join("cache_record.json"))
+			_tracked_entry_files.append(child_path.path_join("manifest.json"))
+			_tracked_entry_files.append(child_path.path_join("processed_sprite.png"))
+			var entry := _load_visual_entry(child_path, profiles)
 			if not entry.is_empty():
 				var normalized := _normalize(str(entry.get("identity", "")))
 				var previous := best_by_identity.get(normalized, {}) as Dictionary
@@ -42,10 +83,23 @@ func load_entries() -> Array[Dictionary]:
 	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return int(a.get("cached_unix_time", 0)) > int(b.get("cached_unix_time", 0))
 	)
+	_memory_entries = _copy_entry_array(result)
+	_memory_dependency_snapshot = _dependency_snapshot(_tracked_entry_files)
+	_memory_cache_ready = true
+	last_load_diagnostics = {
+		"source": "validated_disk_rebuild",
+		"entry_count": result.size(),
+		"json_files_read": _json_files_read,
+		"sprite_hash_reads": _sprite_hash_reads,
+		"images_decoded": _images_decoded,
+		"visual_directories_compiled": _visual_directories_compiled,
+		"elapsed_usec": Time.get_ticks_usec() - started_usec,
+	}
 	return result
 
 
 func _load_visual_entry(directory_path: String, cached_profiles: Dictionary) -> Dictionary:
+	_visual_directories_compiled += 1
 	var record := _read_dictionary(directory_path.path_join("cache_record.json"))
 	var manifest := _read_dictionary(directory_path.path_join("manifest.json"))
 	var sprite_path := directory_path.path_join("processed_sprite.png")
@@ -88,6 +142,7 @@ func _load_visual_entry(directory_path: String, cached_profiles: Dictionary) -> 
 		return {}
 	blueprint.modifiers["ranged_runtime_profile"] = runtime.duplicate(true)
 	var image := Image.load_from_file(ProjectSettings.globalize_path(sprite_path))
+	_images_decoded += 1
 	if image == null or image.is_empty():
 		return {}
 	var asset: WeaponVisualAsset = ANCHOR_RESOLVER.resolve(image, blueprint)
@@ -106,6 +161,7 @@ func _load_visual_entry(directory_path: String, cached_profiles: Dictionary) -> 
 		"cache_directory": directory_path,
 		"cached_unix_time": modified,
 		"source_kind": "fal_firearm_cache",
+		"cache_status": "validated_local_finished_art",
 		"legacy_axis_migration": bool(profile.get("legacy_axis_migration", false)),
 		"paid_api_call_used_for_selection": false,
 	}
@@ -215,11 +271,13 @@ func _vector_from_pair(value: Variant, fallback: Vector2) -> Vector2:
 func _read_dictionary(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):
 		return {}
+	_json_files_read += 1
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
 	return (parsed as Dictionary).duplicate(true) if parsed is Dictionary else {}
 
 
 func _sha256_file(path: String) -> String:
+	_sprite_hash_reads += 1
 	var bytes := FileAccess.get_file_as_bytes(path)
 	if bytes.is_empty():
 		return ""
@@ -234,3 +292,41 @@ func _normalize(value: String) -> String:
 	for separator: String in [" ", "-", "_", "·", ".", "/", "\\", "（", "）", "(", ")"]:
 		normalized = normalized.replace(separator, "")
 	return normalized
+
+
+func _copy_entry_array(source: Array[Dictionary]) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for entry: Dictionary in source:
+		result.append(entry)
+	return result
+
+
+func _dependency_snapshot(tracked_files: Array[String]) -> Dictionary:
+	var child_directories: Array[String] = []
+	var directory := DirAccess.open(visual_cache_root)
+	if directory != null:
+		directory.list_dir_begin()
+		var child := directory.get_next()
+		while not child.is_empty():
+			if directory.current_is_dir() and not child.begins_with("."):
+				child_directories.append(child)
+			child = directory.get_next()
+		directory.list_dir_end()
+	child_directories.sort()
+	var file_stamps := {}
+	var paths: Array[String] = []
+	paths.append_array(profile_cache_paths)
+	paths.append_array(tracked_files)
+	for path: String in paths:
+		var absolute_path := ProjectSettings.globalize_path(path)
+		file_stamps[path] = {
+			"exists": FileAccess.file_exists(absolute_path),
+			"modified": int(FileAccess.get_modified_time(absolute_path)) if FileAccess.file_exists(absolute_path) else -1,
+			"size": int(FileAccess.get_size(absolute_path)) if FileAccess.file_exists(absolute_path) else -1,
+		}
+	return {
+		"visual_cache_root": visual_cache_root,
+		"profile_cache_paths": profile_cache_paths.duplicate(),
+		"child_directories": child_directories,
+		"file_stamps": file_stamps,
+	}

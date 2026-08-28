@@ -1061,7 +1061,9 @@ func _begin_fal_firearm_generation() -> void:
 		"--fal-python=",
 		_argument_value("--firearm-ai-python=", "python")
 	)
-	var configured: Dictionary = fal_provider.configure(python_path)
+	# A validated finished-art cache is usable without Python or remote keys.
+	# Remote configuration is checked only after the provider proves a cache miss.
+	var configured: Dictionary = fal_provider.configure_local_first(python_path)
 	if not bool(configured.get("ok", false)):
 		_show_generation_failure(str(configured.get("error", "FIREARM_VISUAL_FAL_CONFIG_FAILED")))
 		return
@@ -1074,6 +1076,12 @@ func _begin_fal_firearm_generation() -> void:
 		PackedByteArray(),
 		0.0
 	)
+	if fal_provider.request_route() == "remote_generation_unavailable":
+		var immediate_failure: Dictionary = fal_provider.poll()
+		_show_generation_failure(str(immediate_failure.get(
+			"error", "FIREARM_VISUAL_REMOTE_GENERATION_UNAVAILABLE"
+		)))
+		return
 	generation_pending = true
 	generation_started_msec = Time.get_ticks_msec()
 	_show_generating()
@@ -1152,18 +1160,30 @@ func _show_generating() -> void:
 	var card := _center_card(850, 400)
 	root.add_child(card)
 	var content := card.get_child(0) as VBoxContainer
+	var local_firearm_hit: bool = (
+		_requires_ranged_mechanism_profile()
+		and provider != null
+		and provider.has_method("request_route")
+		and str(provider.call("request_route")) == "local_immediate_hit"
+	)
 	content.add_child(_badge(
-		("FAL AI · 枪械成品像素图" if _requires_ranged_mechanism_profile() else "FAL AI · 原物件像素图")
+		("本地成品缓存 · 不调用 AI" if local_firearm_hit else (
+			"FAL AI · 枪械成品像素图" if _requires_ranged_mechanism_profile() else "FAL AI · 原物件像素图"
+		))
 		if provider_mode == MODE_FAL_FIREARM else "LOCAL_COMFYUI · 真实生成",
 		Color("164e63")
 	))
-	var generation_title := "正在保留物件身份并生成视觉"
+	var generation_title := (
+		"本地已有这把枪，正在立即读取" if local_firearm_hit
+		else "首次创建这件物品，正在保留身份并生成视觉"
+	)
 	if mechanism_visual_retry_count > 0:
 		generation_title = "结构不够清楚，AI 正在自动重画（%d/%d）" % [mechanism_visual_retry_count, MAX_MECHANISM_VISUAL_RETRIES]
 	content.add_child(_large_label(generation_title, 32))
 	status_label = Label.new()
 	status_label.text = (
-		("请求已提交；AI 先画准确枪型，再转为有限色像素图。Godot 自动验收，不会把隐藏方块骨架展示给玩家。"
+		("成品图、身份验收和文件哈希均已在本机命中；不会启动 Python、FAL 或图片生成。" if local_firearm_hit else
+		("首次生成需要外部模型；AI 先画准确枪型，再转为有限色像素图。Godot 自动验收，不会把隐藏方块骨架展示给玩家。")
 		if _requires_ranged_mechanism_profile()
 		else "请求已提交；AI 先画原物件，再转为有限色像素图。Godot 自动检查机制结构，玩家只确认它是否仍像原物件。")
 		if provider_mode == MODE_FAL_FIREARM

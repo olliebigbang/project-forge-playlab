@@ -3,6 +3,7 @@ extends "res://scripts/services/forge_visual_provider.gd"
 
 const OPEN_IDENTITY_PROMPT := preload("res://scripts/services/open_identity_visual_prompt.gd")
 const FIREARM_SCAFFOLD_PIPELINE := preload("res://scripts/combat_feel/firearm_visual_scaffold_pipeline.gd")
+const ANCHOR_RESOLVER := preload("res://scripts/systems/anchor_resolver.gd")
 const BRIDGE_SCRIPT := "res://tools/visual/fal_firearm_pixel_bridge.py"
 const REQUEST_SCHEMA := "forge-fal-firearm-visual-request-v2"
 const MANIFEST_SCHEMA := "forge-fal-firearm-visual-manifest-v1"
@@ -28,32 +29,71 @@ var failure_reason := ""
 var active_request_payload: Dictionary = {}
 var active_cache_key := ""
 var active_cache_hit := false
+var active_request_route := "idle"
+var cache_root := CACHE_ROOT
+var output_root := OUTPUT_ROOT
+var bridge_script_path := BRIDGE_SCRIPT
+var validated_cache_manifest: Dictionary = {}
+var validated_cache_sprite_bytes := PackedByteArray()
 
 
 func configure(next_python_executable: String = "python") -> Dictionary:
+	_configure_python(next_python_executable)
+	var remote_error := _remote_configuration_error()
+	if not remote_error.is_empty():
+		return _failure(remote_error, false)
+	return {
+		"ok": true,
+		"provider": MODE_FAL_FIREARM,
+		"bridge_path": ProjectSettings.globalize_path(bridge_script_path),
+		"local_cache_ready": true,
+		"remote_generation_ready": true,
+	}
+
+
+func configure_local_first(next_python_executable: String = "python") -> Dictionary:
+	_configure_python(next_python_executable)
+	var remote_error := _remote_configuration_error()
+	return {
+		"ok": true,
+		"provider": MODE_FAL_FIREARM,
+		"local_cache_ready": true,
+		"remote_generation_ready": remote_error.is_empty(),
+		"remote_generation_error": remote_error,
+	}
+
+
+func _configure_python(next_python_executable: String) -> void:
 	python_executable = next_python_executable.strip_edges()
 	if python_executable.is_empty():
 		python_executable = "python"
-	var bridge_path := ProjectSettings.globalize_path(BRIDGE_SCRIPT)
+
+
+func _remote_configuration_error() -> String:
+	var bridge_path := ProjectSettings.globalize_path(bridge_script_path)
 	if not FileAccess.file_exists(bridge_path):
-		return _failure("FIREARM_VISUAL_FAL_BRIDGE_MISSING", false)
+		return "FIREARM_VISUAL_FAL_BRIDGE_MISSING"
 	if (
 		not OS.has_environment("FAL_KEY")
 		and not OS.has_environment("FAL_API_KEY")
 	):
-		return _failure("FIREARM_VISUAL_FAL_KEY_MISSING", false)
+		return "FIREARM_VISUAL_FAL_KEY_MISSING"
 	if not OS.has_environment("ANTHROPIC_API_KEY"):
-		return _failure("FIREARM_VISUAL_VERIFIER_KEY_MISSING", false)
+		return "FIREARM_VISUAL_VERIFIER_KEY_MISSING"
 	if (
 		not OS.has_environment("FORGE_VISUAL_VERIFIER_MODEL")
 		and not OS.has_environment("FORGE_SEMANTIC_MODEL")
 	):
-		return _failure("FIREARM_VISUAL_VERIFIER_MODEL_MISSING", false)
-	return {"ok": true, "provider": MODE_FAL_FIREARM, "bridge_path": bridge_path}
+		return "FIREARM_VISUAL_VERIFIER_MODEL_MISSING"
+	return ""
 
 
 func health_check() -> Dictionary:
 	return configure(python_executable)
+
+
+func request_route() -> String:
+	return active_request_route
 
 
 func request_visual(
@@ -72,7 +112,10 @@ func request_visual(
 	process_exited_msec = 0
 	active_cache_hit = false
 	active_cache_key = ""
+	active_request_route = "preparing"
 	active_request_payload.clear()
+	validated_cache_manifest.clear()
+	validated_cache_sprite_bytes.clear()
 	if not _is_supported_blueprint(blueprint):
 		failure_reason = "FIREARM_VISUAL_FAL_REQUIRES_HANDHELD_FIREARM"
 		return active_revision
@@ -86,14 +129,20 @@ func request_visual(
 	blueprint.visual_structure_brief_source = str(blueprint.visual_structure_brief.get("source", ""))
 	active_request_payload = _build_request_payload(blueprint, active_preparation)
 	active_cache_key = _cache_key(active_request_payload)
-	var cache_directory := _absolute_path(CACHE_ROOT.path_join(active_cache_key))
+	var cache_directory := _absolute_path(cache_root.path_join(active_cache_key))
 	if _cache_entry_valid(cache_directory, active_cache_key):
 		active_output_directory = cache_directory
 		active_cache_hit = true
+		active_request_route = "local_immediate_hit"
 		process_id = -1
 		return active_revision
+	var remote_error := _remote_configuration_error()
+	if not remote_error.is_empty():
+		active_request_route = "remote_generation_unavailable"
+		failure_reason = remote_error
+		return active_revision
 	var run_id := "request_%d_r%d" % [roundi(Time.get_unix_time_from_system() * 1000.0), active_revision]
-	active_output_directory = ProjectSettings.globalize_path(OUTPUT_ROOT.path_join(run_id))
+	active_output_directory = ProjectSettings.globalize_path(output_root.path_join(run_id))
 	if DirAccess.make_dir_recursive_absolute(active_output_directory) != OK:
 		failure_reason = "FIREARM_VISUAL_FAL_OUTPUT_DIRECTORY_FAILED"
 		return active_revision
@@ -111,13 +160,16 @@ func request_visual(
 		return active_revision
 	var arguments: Array[String] = [
 		"-E", "-S", "-B",
-		ProjectSettings.globalize_path(BRIDGE_SCRIPT),
+		ProjectSettings.globalize_path(bridge_script_path),
 		"--request", request_path,
 		"--output-dir", active_output_directory,
 	]
 	process_id = OS.create_process(python_executable, arguments)
 	if process_id <= 0:
+		active_request_route = "remote_generation_start_failed"
 		failure_reason = "FIREARM_VISUAL_FAL_PROCESS_START_FAILED"
+	else:
+		active_request_route = "external_generation"
 	return active_revision
 
 
@@ -132,6 +184,11 @@ func poll() -> Dictionary:
 			OS.kill(process_id)
 		delivered = true
 		return _failure("FIREARM_VISUAL_FAL_TIMEOUT", true)
+	if active_cache_hit and not validated_cache_manifest.is_empty():
+		return _load_accepted_cache_result(
+			validated_cache_manifest,
+			validated_cache_sprite_bytes
+		)
 	var manifest_path := active_output_directory.path_join("manifest.json")
 	if FileAccess.file_exists(manifest_path):
 		return _load_completed_result(manifest_path)
@@ -174,6 +231,9 @@ func cancel_current() -> void:
 	active_request_payload.clear()
 	active_cache_key = ""
 	active_cache_hit = false
+	active_request_route = "idle"
+	validated_cache_manifest.clear()
+	validated_cache_sprite_bytes.clear()
 
 
 func _load_completed_result(manifest_path: String) -> Dictionary:
@@ -192,6 +252,8 @@ func _load_completed_result(manifest_path: String) -> Dictionary:
 		delivered = true
 		var bridge_error := str(manifest.get("failure_reason", "FIREARM_VISUAL_FAL_GENERATION_FAILED"))
 		return _failure(bridge_error, _fal_error_is_retryable(bridge_error))
+	if active_cache_hit:
+		return _load_accepted_cache_result(manifest, validated_cache_sprite_bytes)
 	var visual_verification := manifest.get("ai_visual_identity_verification", {}) as Dictionary
 	if (
 		str(visual_verification.get("schema", "")) != VISUAL_VERIFICATION_SCHEMA
@@ -298,6 +360,52 @@ func _load_completed_result(manifest_path: String) -> Dictionary:
 		"ai_visual_rig": {},
 		"ai_visual_rig_source": "",
 		"firearm_visual_identity_gate": gate,
+		"cache_status": "generated_then_cached",
+		"external_process_started": true,
+	}
+
+
+func _load_accepted_cache_result(manifest: Dictionary, sprite_bytes: PackedByteArray) -> Dictionary:
+	var image := Image.new()
+	if sprite_bytes.is_empty() or image.load_png_from_buffer(sprite_bytes) != OK or image.is_empty():
+		delivered = true
+		return _failure("FIREARM_VISUAL_CACHE_SPRITE_DECODE_FAILED", false)
+	var asset: WeaponVisualAsset = ANCHOR_RESOLVER.resolve(image, active_blueprint)
+	if asset == null:
+		delivered = true
+		return _failure("FIREARM_VISUAL_CACHE_ALPHA_INVALID", false)
+	var gate := manifest.get("firearm_visual_identity_gate", {}) as Dictionary
+	var anchors := gate.get("anchors", {}) as Dictionary
+	asset.grip_primary = _vector_from_pair(anchors.get("GripPrimary", []), asset.grip_primary)
+	asset.grip_secondary = _vector_from_pair(anchors.get("GripSecondary", []), asset.grip_secondary)
+	asset.muzzle = _vector_from_pair(anchors.get("Muzzle", []), asset.muzzle)
+	asset.tip = _vector_from_pair(anchors.get("Tip", anchors.get("Muzzle", [])), asset.tip)
+	asset.tether_origin = asset.muzzle
+	asset.rear_contact = _vector_from_pair(anchors.get("RearContact", []), asset.rear_contact)
+	asset.anchor_confidence = 0.92
+	asset.anchor_source = "cached_firearm_finished_art_gate_v1"
+	var final_manifest := manifest.duplicate(true)
+	final_manifest["cache"] = {
+		"schema": CACHE_SCHEMA,
+		"hit": true,
+		"key": active_cache_key,
+		"pipeline_version": VISUAL_PIPELINE_VERSION,
+	}
+	delivered = true
+	return {
+		"status": "success",
+		"revision": active_revision,
+		"provider": MODE_FAL_FIREARM,
+		"asset": asset,
+		"manifest": final_manifest,
+		"output_directory": active_output_directory,
+		"ai_affordance": active_blueprint.affordance.duplicate(true),
+		"ai_affordance_source": active_blueprint.affordance_source,
+		"ai_visual_rig": {},
+		"ai_visual_rig_source": "",
+		"firearm_visual_identity_gate": gate.duplicate(true),
+		"cache_status": "local_immediate_hit",
+		"external_process_started": false,
 	}
 
 
@@ -374,6 +482,7 @@ func _cache_entry_valid(directory: String, key: String) -> bool:
 		not FileAccess.file_exists(record_path)
 		or not FileAccess.file_exists(manifest_path)
 		or not FileAccess.file_exists(directory.path_join("raw_pixel_art.png"))
+		or not FileAccess.file_exists(directory.path_join("processed_sprite.png"))
 	):
 		return false
 	var record_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(record_path))
@@ -383,16 +492,28 @@ func _cache_entry_valid(directory: String, key: String) -> bool:
 	var record := record_value as Dictionary
 	var manifest := manifest_value as Dictionary
 	var verification := manifest.get("ai_visual_identity_verification", {}) as Dictionary
-	return (
+	var expected_sprite_hash := str(record.get("processed_sprite_sha256", ""))
+	var sprite_bytes := FileAccess.get_file_as_bytes(directory.path_join("processed_sprite.png"))
+	var valid := (
 		str(record.get("schema", "")) == CACHE_SCHEMA
 		and str(record.get("key", "")) == key
 		and str(record.get("pipeline_version", "")) == VISUAL_PIPELINE_VERSION
 		and str(manifest.get("schema", "")) == MANIFEST_SCHEMA
 		and str(manifest.get("status", "")) == "success"
+		and bool(manifest.get("finished_art", false))
+		and bool(manifest.get("presentable_to_player", false))
 		and bool(manifest.get("firearm_visual_gate_passed", false))
 		and str(verification.get("schema", "")) == VISUAL_VERIFICATION_SCHEMA
+		and bool(verification.get("ok", false))
 		and bool(verification.get("passed", false))
+		and not expected_sprite_hash.is_empty()
+		and not sprite_bytes.is_empty()
+		and _bytes_sha256(sprite_bytes) == expected_sprite_hash
 	)
+	if valid:
+		validated_cache_manifest = manifest.duplicate(true)
+		validated_cache_sprite_bytes = sprite_bytes.duplicate()
+	return valid
 
 
 func _persist_cache(source_directory: String, manifest: Dictionary) -> Dictionary:
@@ -401,7 +522,7 @@ func _persist_cache(source_directory: String, manifest: Dictionary) -> Dictionar
 	var source_sprite := source_directory.path_join("processed_sprite.png")
 	if not FileAccess.file_exists(source_sprite):
 		return {"ok": false, "error": "FIREARM_VISUAL_CACHE_SPRITE_MISSING"}
-	var cache_directory := _absolute_path(CACHE_ROOT.path_join(active_cache_key))
+	var cache_directory := _absolute_path(cache_root.path_join(active_cache_key))
 	if DirAccess.make_dir_recursive_absolute(cache_directory) != OK:
 		return {"ok": false, "error": "FIREARM_VISUAL_CACHE_DIRECTORY_FAILED"}
 	var sprite_bytes := FileAccess.get_file_as_bytes(source_sprite)
@@ -664,6 +785,12 @@ func _absolute_path(path: String) -> String:
 	if path.begins_with("res://") or path.begins_with("user://"):
 		return ProjectSettings.globalize_path(path)
 	return path.simplify_path()
+
+
+func _vector_from_pair(value: Variant, fallback: Vector2) -> Vector2:
+	if value is Array and (value as Array).size() >= 2:
+		return Vector2(float(value[0]), float(value[1]))
+	return fallback
 
 
 func _failure(error: String, retry_required: bool, retry_prompt: String = "") -> Dictionary:

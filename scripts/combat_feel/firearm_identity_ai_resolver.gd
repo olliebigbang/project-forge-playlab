@@ -44,7 +44,8 @@ static func resolve_identity(player_text: String, cache_path: String = CACHE_PAT
 		if not raw_entry is Dictionary:
 			continue
 		var entry := raw_entry as Dictionary
-		if str(entry.get("normalized_identity", "")) != normalized:
+		var matched_alias := _matching_cached_alias(entry, normalized)
+		if matched_alias.is_empty():
 			continue
 		var profile := entry.get("profile", {}) as Dictionary
 		var profile_validation := _validate_cached_profile(profile)
@@ -52,7 +53,7 @@ static func resolve_identity(player_text: String, cache_path: String = CACHE_PAT
 			return profile_validation
 		var result := profile.duplicate(true)
 		result["ok"] = true
-		result["matched_alias"] = player_text.strip_edges()
+		result["matched_alias"] = matched_alias
 		result["match_score"] = 3.0
 		result["catalog_schema"] = CACHE_SCHEMA
 		result["catalog_source"] = str((profile.get("declaration", {}) as Dictionary).get("source", ""))
@@ -60,6 +61,23 @@ static func resolve_identity(player_text: String, cache_path: String = CACHE_PAT
 		result["player_confirmation_required"] = false
 		return result
 	return _failure("AI_FIREARM_IDENTITY_NOT_CACHED")
+
+
+static func _matching_cached_alias(entry: Dictionary, normalized_input: String) -> String:
+	var profile := entry.get("profile", {}) as Dictionary
+	var candidates: Array[String] = [
+		str(entry.get("player_identity_text", "")),
+		str(profile.get("canonical_name_zh", "")),
+	]
+	for raw_alias: Variant in profile.get("aliases", []):
+		candidates.append(str(raw_alias))
+	for candidate: String in candidates:
+		if not candidate.strip_edges().is_empty() and _normalize(candidate) == normalized_input:
+			return candidate.strip_edges()
+	# Older cache rows may not have preserved their original spelling.
+	if str(entry.get("normalized_identity", "")) == normalized_input:
+		return str(entry.get("player_identity_text", normalized_input)).strip_edges()
+	return ""
 
 
 static func accept_ai_response(
