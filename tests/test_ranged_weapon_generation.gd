@@ -43,6 +43,7 @@ func _initialize() -> void:
 	_run("Default Forge flow refuses to present a Godot firearm scaffold as finished art", _test_mock_flow_integration)
 	_run("Semi-auto, three-round burst, automatic fire, recoil and reload follow compiled axes", _test_runtime_mechanisms)
 	_run("V3 impact, penetration, recovery and muzzle climb reach runtime", _test_v3_runtime_causality)
+	_run("Impact, penetration and range axes remain visible in projectile proportions", _test_projectile_visual_causality)
 	_run("Runtime contains no firearm-model name branches", _test_no_model_name_runtime_branches)
 	print("RANGED WEAPON RESULT: %d passed, %d failed" % [passed, failed])
 	quit(0 if failed == 0 else 1)
@@ -647,6 +648,35 @@ func _test_v3_runtime_causality() -> Variant:
 	pistol.free()
 	m4.free()
 	type81.free()
+	return true
+
+
+func _test_projectile_visual_causality() -> Variant:
+	var pistol := (_runtime_bundle("92式手枪").get("arena") as GameplayArena)
+	var rifle := (_runtime_bundle("81杠").get("arena") as GameplayArena)
+	if pistol == null or rifle == null:
+		return "projectile-visual arenas are incomplete"
+	pistol._update_sustained_attack(true, true, 0.016)
+	rifle._update_sustained_attack(true, true, 0.016)
+	if pistol.projectiles.is_empty() or rifle.projectiles.is_empty():
+		return "projectile-visual samples are missing"
+	var pistol_shot := pistol.projectiles[0] as Dictionary
+	var rifle_shot := rifle.projectiles[0] as Dictionary
+	if float(rifle_shot.get("projectile_radius_pixels", 0.0)) <= float(pistol_shot.get("projectile_radius_pixels", 0.0)):
+		return "impact force did not enlarge the visible projectile core"
+	if float(rifle_shot.get("tracer_width_pixels", 0.0)) <= float(pistol_shot.get("tracer_width_pixels", 0.0)):
+		return "penetration did not strengthen the visible tracer width"
+	if float(rifle_shot.get("tracer_length_pixels", 0.0)) <= float(pistol_shot.get("tracer_length_pixels", 0.0)):
+		return "effective range did not lengthen the visible tracer"
+	var arena_source := FileAccess.get_file_as_string("res://scripts/systems/gameplay_arena.gd")
+	var training_source := FileAccess.get_file_as_string("res://scripts/systems/open_identity_training_arena.gd")
+	for parameter: String in ["projectile_radius_pixels", "tracer_width_pixels", "tracer_length_pixels"]:
+		if not arena_source.contains("projectile.get(\"%s\"" % parameter):
+			return "enemy playtest does not draw compiled %s" % parameter
+		if not training_source.contains("projectile.get(\"%s\"" % parameter):
+			return "training arena does not draw compiled %s" % parameter
+	pistol.free()
+	rifle.free()
 	return true
 
 

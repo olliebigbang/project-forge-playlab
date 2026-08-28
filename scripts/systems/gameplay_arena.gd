@@ -410,7 +410,10 @@ func _fire_bullet() -> void:
 		"life": projectile_life,
 		"damage": projectile_damage,
 		"hit_stagger_seconds": hit_stagger,
+		"projectile_radius_pixels": float(ranged_runtime_profile.get("projectile_radius_pixels", 4.0)),
 		"armor_damage_multiplier": armor_damage_multiplier,
+		"tracer_width_pixels": float(ranged_runtime_profile.get("tracer_width_pixels", 3.0)),
+		"tracer_length_pixels": float(ranged_runtime_profile.get("tracer_length_pixels", 15.0)),
 		"damage_falloff_start_pixels": falloff_start,
 		"damage_falloff_end_pixels": falloff_end,
 		"pierces": pierce_budget,
@@ -905,9 +908,14 @@ func _draw_world_anchor(hand: Vector2, point: Vector2, grip: Vector2, label: Str
 func _draw_attacks() -> void:
 	for projectile: Dictionary in projectiles:
 		var position: Vector2 = projectile["pos"]
-		draw_circle(position, 8.0, Color(0.1, 0.6, 1.0, 0.25))
-		draw_circle(position, 4.0, Color("67e8f9"))
-		draw_line(position - Vector2(facing * 15.0, 0), position, Color("2563eb"), 3.0)
+		var velocity: Vector2 = projectile.get("vel", Vector2(facing, 0.0))
+		var direction := velocity.normalized() if velocity.length() > 0.001 else Vector2(facing, 0.0)
+		var radius := float(projectile.get("projectile_radius_pixels", 4.0))
+		var tracer_width := float(projectile.get("tracer_width_pixels", 3.0))
+		var tracer_length := float(projectile.get("tracer_length_pixels", 15.0))
+		draw_circle(position, radius * 2.0, Color(0.1, 0.6, 1.0, 0.22))
+		draw_line(position - direction * tracer_length, position, Color("2563eb"), tracer_width)
+		draw_circle(position, radius, Color("67e8f9"))
 	if not boomerang.is_empty():
 		var position: Vector2 = boomerang["pos"]
 		draw_arc(position, 20.0, 0.0, TAU, 16, Color("5eead4"), 5.0)

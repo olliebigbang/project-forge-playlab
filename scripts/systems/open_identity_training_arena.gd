@@ -122,8 +122,13 @@ func _draw_attacks() -> void:
 		var position: Vector2 = projectile["pos"]
 		match blueprint.effect_type:
 			"ballistic_projectile":
-				draw_line(position - Vector2(10.0 * facing, 0), position + Vector2(4.0 * facing, 0), Color("f8fafc"), 3.0)
-				draw_circle(position + Vector2(4.0 * facing, 0), 2.0, Color("fde047"))
+				var velocity: Vector2 = projectile.get("vel", Vector2(facing, 0.0))
+				var direction := velocity.normalized() if velocity.length() > 0.001 else Vector2(facing, 0.0)
+				var radius := float(projectile.get("projectile_radius_pixels", 3.0))
+				var tracer_width := float(projectile.get("tracer_width_pixels", 3.0))
+				var tracer_length := float(projectile.get("tracer_length_pixels", 14.0))
+				draw_line(position - direction * tracer_length, position + direction * radius, Color("f8fafc"), tracer_width)
+				draw_circle(position + direction * radius, radius, Color("fde047"))
 			"forge_fastener":
 				draw_line(position - Vector2(8.0 * facing, 0), position + Vector2(7.0 * facing, 0), Color("cbd5e1"), 4.0)
 				draw_circle(position - Vector2(7.0 * facing, 0), 4.0, Color("64748b"))
