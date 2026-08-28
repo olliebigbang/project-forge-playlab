@@ -29,6 +29,7 @@ func _run_all() -> void:
 	_check("Cached AI enemies preserve integer attack selection fields", _test_cache_round_trip)
 	_check("AI enemy playtest accepts a compiled blueprint without player mechanics", _test_playtest_handoff)
 	_check("Player armory reconstructs a cached firearm without an API call", _test_player_armory_cache)
+	_check("Cached M16A2 uses the current three-round-burst catalog mechanism", _test_m16a2_armory_mechanism)
 	_check("Ranged handoff preserves the AI-compiled firearm profile", _test_ranged_handoff)
 	var provider_result: Variant = await _test_offline_provider_handoff()
 	_check("Offline AI bridge hands one strict response back to Godot", func() -> Variant: return provider_result)
@@ -168,6 +169,48 @@ func _test_player_armory_cache() -> Variant:
 	var runtime := entry.get("ranged_runtime_profile", {}) as Dictionary
 	var ok := blueprint != null and asset != null and str(entry.get("display_name", "")) == "M4A1"
 	ok = ok and bool(runtime.get("ok", false)) and int(runtime.get("magazine_size", 0)) > 0
+	ok = ok and not bool(entry.get("paid_api_call_used_for_selection", true))
+	return true if ok else entry
+
+
+func _test_m16a2_armory_mechanism() -> Variant:
+	var root_path := "user://playlab/tests/player_armory_m16a2_%d" % Time.get_ticks_usec()
+	var cache_directory := root_path.path_join("visual/cache_v1/m16a2")
+	var absolute_directory := ProjectSettings.globalize_path(cache_directory)
+	if DirAccess.make_dir_recursive_absolute(absolute_directory) != OK:
+		return "M16A2_ARMORY_TEST_DIRECTORY_FAILED"
+	var sprite_bytes := FileAccess.get_file_as_bytes(FIREARM_SPRITE_FIXTURE)
+	var sprite := FileAccess.open(cache_directory.path_join("processed_sprite.png"), FileAccess.WRITE)
+	if sprite == null:
+		_remove_tree(ProjectSettings.globalize_path(root_path))
+		return "M16A2_ARMORY_TEST_SPRITE_WRITE_FAILED"
+	sprite.store_buffer(sprite_bytes)
+	sprite.close()
+	_write_json(cache_directory.path_join("cache_record.json"), {
+		"identity": "M16A2",
+		"canonical_name": "M16A2",
+		"processed_sprite_sha256": _sha256(sprite_bytes),
+	})
+	_write_json(cache_directory.path_join("manifest.json"), {
+		"status": "success",
+		"finished_art": true,
+		"presentable_to_player": true,
+		"firearm_visual_gate_passed": true,
+	})
+	var armory: RefCounted = PLAYER_ARMORY.new()
+	armory.visual_cache_root = root_path.path_join("visual/cache_v1")
+	armory.profile_cache_paths = []
+	var entries: Array[Dictionary] = armory.load_entries()
+	_remove_tree(ProjectSettings.globalize_path(root_path))
+	if entries.size() != 1:
+		return {"entry_count": entries.size()}
+	var entry := entries[0]
+	var blueprint := entry.get("blueprint") as WeaponBlueprint
+	var runtime := entry.get("ranged_runtime_profile", {}) as Dictionary
+	var ok := blueprint != null and str(entry.get("display_name", "")) == "M16A2"
+	ok = ok and str(blueprint.affordance.get("fire_control", "")) == "three_round_burst"
+	ok = ok and not bool(runtime.get("automatic_fire", true)) and int(runtime.get("burst_size", 0)) == 3
+	ok = ok and not bool(entry.get("legacy_axis_migration", true))
 	ok = ok and not bool(entry.get("paid_api_call_used_for_selection", true))
 	return true if ok else entry
 
