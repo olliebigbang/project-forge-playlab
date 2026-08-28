@@ -1468,7 +1468,7 @@ func _ranged_mechanism_is_ready() -> bool:
 
 func _ranged_fire_mode_text(runtime: Dictionary) -> String:
 	if bool(runtime.get("manual_cycle_required", false)):
-		return "每次按下只打一发；随后自动拉栓 %.2f 秒，完成前锁住击发" % float(runtime.get("manual_cycle_lock_seconds", 0.0))
+		return "每次按下只打一发；基础间隔加机械动作共 %.2f 秒，完成前锁住击发" % RANGED_AXIS_RESOLVER.manual_cycle_total_seconds(runtime)
 	if bool(runtime.get("automatic_fire", false)):
 		return "按住连续射击"
 	var burst_size := int(runtime.get("burst_size", 0))

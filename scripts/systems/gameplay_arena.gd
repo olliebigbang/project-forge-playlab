@@ -296,7 +296,7 @@ func _update_firearm_attack(attack_down: bool, just_pressed: bool) -> void:
 		burst_shots_remaining = maxi(0, burst_shots_remaining - 1)
 	shot_cooldown = float(ranged_runtime_profile.get("shot_interval_seconds", 0.18))
 	if bool(ranged_runtime_profile.get("manual_cycle_required", false)):
-		manual_cycle_timer = float(ranged_runtime_profile.get("manual_cycle_lock_seconds", 0.0))
+		manual_cycle_timer = RANGED_AXIS_RESOLVER.manual_cycle_total_seconds(ranged_runtime_profile)
 		metrics["manual_cycle_count"] = int(metrics.get("manual_cycle_count", 0)) + 1
 	weapon_recoil_offset = float(ranged_runtime_profile.get("recoil_pixels", 6.0))
 	weapon_muzzle_climb_degrees = minf(
@@ -886,7 +886,7 @@ func _melee_weapon_rotation() -> float:
 		var reload_progress := clampf(1.0 - reload_timer / reload_duration, 0.0, 1.0)
 		return sin(reload_progress * PI) * 0.52 * facing
 	if _uses_firearm_runtime() and manual_cycle_timer > 0.0:
-		var cycle_duration := maxf(0.01, float(ranged_runtime_profile.get("manual_cycle_lock_seconds", 0.01)))
+		var cycle_duration := maxf(0.01, RANGED_AXIS_RESOLVER.manual_cycle_total_seconds(ranged_runtime_profile))
 		var cycle_progress := clampf(1.0 - manual_cycle_timer / cycle_duration, 0.0, 1.0)
 		return _firearm_recoil_rotation() + sin(cycle_progress * PI) * 0.18 * facing
 	if _uses_firearm_runtime():

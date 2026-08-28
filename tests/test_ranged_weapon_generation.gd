@@ -43,6 +43,7 @@ func _initialize() -> void:
 	_run("Versioned visual cache normalizes aliases and changes with the identity card", _test_visual_cache_key)
 	_run("Default Forge flow refuses to present a Godot firearm scaffold as finished art", _test_mock_flow_integration)
 	_run("Semi-auto, three-round burst, automatic fire, manual cycling, recoil and reload follow compiled axes", _test_runtime_mechanisms)
+	_run("Manual-cycle cadence changes the real time until the next shot", _test_manual_cycle_cadence_runtime_causality)
 	_run("V4 impact, penetration, recovery and muzzle climb reach runtime", _test_v4_runtime_causality)
 	_run("Impact, penetration and range axes remain visible in projectile proportions", _test_projectile_visual_causality)
 	_run("Runtime contains no firearm-model name branches", _test_no_model_name_runtime_branches)
@@ -128,7 +129,7 @@ func _test_axis_compilation() -> Variant:
 			bool(runtime.get("automatic_fire", false)),
 			int(runtime.get("burst_size", 0)),
 			bool(runtime.get("manual_cycle_required", false)),
-			float(runtime.get("manual_cycle_lock_seconds", 0.0)),
+			float(runtime.get("manual_cycle_overhead_seconds", 0.0)),
 			float(runtime.get("shot_interval_seconds", 0.0)),
 			float(runtime.get("recoil_pixels", 0.0)),
 			float(runtime.get("spread_velocity", 0.0)),
@@ -599,7 +600,7 @@ func _test_runtime_mechanisms() -> Variant:
 	if manual == null:
 		return "manual-cycle arena missing"
 	manual._update_sustained_attack(true, true, 0.016)
-	var cycle_duration := float(manual.ranged_runtime_profile.get("manual_cycle_lock_seconds", 0.0))
+	var cycle_duration := AXES.manual_cycle_total_seconds(manual.ranged_runtime_profile)
 	if manual.projectiles.size() != 1 or manual.manual_cycle_timer <= 0.0 or cycle_duration <= 0.0:
 		return "manual-cycle shot did not start its compiled action lock"
 	manual.shot_cooldown = 0.0
@@ -638,6 +639,63 @@ func _test_runtime_mechanisms() -> Variant:
 	manual.free()
 	heavy.free()
 	return true
+
+
+func _test_manual_cycle_cadence_runtime_causality() -> Variant:
+	var profile: Dictionary = CATALOG.resolve_identity("M24A2")
+	var deliberate_declaration := (profile.get("declaration", {}) as Dictionary).duplicate(true)
+	var source := str(deliberate_declaration.get("source", ""))
+	var rapid_declaration := deliberate_declaration.duplicate(true)
+	rapid_declaration["cadence"] = "rapid"
+	var deliberate_runtime: Dictionary = AXES.compile(deliberate_declaration, source)
+	var rapid_runtime: Dictionary = AXES.compile(rapid_declaration, source)
+	var deliberate_wait := AXES.manual_cycle_total_seconds(deliberate_runtime)
+	var rapid_wait := AXES.manual_cycle_total_seconds(rapid_runtime)
+	if (
+		not bool(deliberate_runtime.get("ok", false))
+		or not bool(rapid_runtime.get("ok", false))
+		or not is_equal_approx(
+			float(deliberate_runtime.get("manual_cycle_overhead_seconds", 0.0)),
+			float(rapid_runtime.get("manual_cycle_overhead_seconds", -1.0))
+		)
+		or is_equal_approx(
+			float(deliberate_runtime.get("shot_interval_seconds", 0.0)),
+			float(rapid_runtime.get("shot_interval_seconds", 0.0))
+		)
+		or not is_equal_approx(deliberate_wait, 0.82)
+		or not is_equal_approx(rapid_wait, 0.64)
+		or deliberate_wait <= rapid_wait
+	):
+		return "manual-cycle cadence did not change the compiled real wait: deliberate=%s rapid=%s" % [
+			str(deliberate_runtime), str(rapid_runtime),
+		]
+	var deliberate := (_runtime_bundle("M24A2").get("arena") as GameplayArena)
+	var rapid := (_runtime_bundle("M24A2").get("arena") as GameplayArena)
+	if deliberate == null or rapid == null:
+		return "manual-cycle cadence arenas missing"
+	deliberate.ranged_runtime_profile = deliberate_runtime.duplicate(true)
+	rapid.ranged_runtime_profile = rapid_runtime.duplicate(true)
+	for arena: GameplayArena in [deliberate, rapid]:
+		arena.ammo_in_magazine = int(arena.ranged_runtime_profile.get("magazine_size", 0))
+		arena._update_sustained_attack(true, true, 0.016)
+	_advance_firearm_clock(deliberate, rapid_wait + 0.01)
+	_advance_firearm_clock(rapid, rapid_wait + 0.01)
+	deliberate._update_sustained_attack(true, true, 0.016)
+	rapid._update_sustained_attack(true, true, 0.016)
+	if deliberate.projectiles.size() != 1 or rapid.projectiles.size() != 2:
+		var deliberate_count := deliberate.projectiles.size()
+		var rapid_count := rapid.projectiles.size()
+		deliberate.free()
+		rapid.free()
+		return "real firing gate ignored cadence: deliberate=%d rapid=%d" % [
+			deliberate_count, rapid_count,
+		]
+	_advance_firearm_clock(deliberate, deliberate.manual_cycle_timer + 0.01)
+	deliberate._update_sustained_attack(true, true, 0.016)
+	var ok := deliberate.projectiles.size() == 2
+	deliberate.free()
+	rapid.free()
+	return true if ok else "deliberate manual cycle never reopened after its longer real wait"
 
 
 func _test_v4_runtime_causality() -> Variant:
@@ -740,6 +798,11 @@ func _runtime_bundle(identity: String) -> Dictionary:
 	var arena: GameplayArena = ARENA.new()
 	arena.start_stage("training", blueprint, asset)
 	return {"arena": arena, "blueprint": blueprint, "asset": asset}
+
+
+func _advance_firearm_clock(arena: GameplayArena, delta: float) -> void:
+	arena.shot_cooldown = maxf(0.0, arena.shot_cooldown - delta)
+	arena._update_firearm_timers(delta)
 
 
 func _alpha_difference(left: Image, right: Image) -> int:

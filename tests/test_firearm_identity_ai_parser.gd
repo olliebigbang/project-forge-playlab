@@ -83,7 +83,7 @@ func _test_manual_cycle_rifle_compiles() -> Variant:
 	if (
 		not bool(runtime.get("ok", false))
 		or not bool(runtime.get("manual_cycle_required", false))
-		or float(runtime.get("manual_cycle_lock_seconds", 0.0)) <= 0.0
+		or float(runtime.get("manual_cycle_overhead_seconds", 0.0)) <= 0.0
 		or bool(runtime.get("automatic_fire", true))
 		or int(runtime.get("burst_size", -1)) != 0
 	):

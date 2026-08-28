@@ -257,7 +257,7 @@ func _test_m24a2_armory_handoff() -> Variant:
 		or str(entry.get("display_name", "")) != "M24A2狙击步枪"
 		or str(blueprint.affordance.get("fire_control", "")) != "manual_cycle"
 		or not bool(runtime.get("manual_cycle_required", false))
-		or float(runtime.get("manual_cycle_lock_seconds", 0.0)) <= 0.0
+		or float(runtime.get("manual_cycle_overhead_seconds", 0.0)) <= 0.0
 		or bool(entry.get("paid_api_call_used_for_selection", true))
 	):
 		return entry
@@ -268,8 +268,8 @@ func _test_m24a2_armory_handoff() -> Variant:
 	var ok := error.is_empty() and str(payload.get("kind", "")) == "ranged_firearm"
 	ok = ok and bool(stored_runtime.get("manual_cycle_required", false))
 	ok = ok and is_equal_approx(
-		float(stored_runtime.get("manual_cycle_lock_seconds", 0.0)),
-		float(runtime.get("manual_cycle_lock_seconds", -1.0))
+		float(stored_runtime.get("manual_cycle_overhead_seconds", 0.0)),
+		float(runtime.get("manual_cycle_overhead_seconds", -1.0))
 	)
 	ok = ok and not handoff.has_pending()
 	handoff.free()

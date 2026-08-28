@@ -92,7 +92,7 @@ func _draw_player_and_weapon() -> void:
 		var reload_progress := clampf(1.0 - reload_timer / reload_duration, 0.0, 1.0)
 		weapon_rotation = sin(reload_progress * PI) * 0.52 * facing
 	elif _uses_firearm_runtime() and manual_cycle_timer > 0.0:
-		var cycle_duration := maxf(0.01, float(ranged_runtime_profile.get("manual_cycle_lock_seconds", 0.01)))
+		var cycle_duration := maxf(0.01, RANGED_AXIS_RESOLVER.manual_cycle_total_seconds(ranged_runtime_profile))
 		var cycle_progress := clampf(1.0 - manual_cycle_timer / cycle_duration, 0.0, 1.0)
 		weapon_rotation += sin(cycle_progress * PI) * 0.18 * facing
 	elif blueprint.delivery == "whole_object_strike" and melee_timer > 0.0:

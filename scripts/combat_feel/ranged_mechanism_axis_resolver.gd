@@ -101,7 +101,7 @@ const PARAMETER_OWNERS := {
 	"automatic_fire": "fire_control",
 	"burst_size": "fire_control",
 	"manual_cycle_required": "fire_control",
-	"manual_cycle_lock_seconds": "fire_control",
+	"manual_cycle_overhead_seconds": "fire_control",
 	"shot_interval_seconds": "cadence",
 	"recoil_pixels": "recoil",
 	"recoil_recovery_pixels_per_second": "recoil_recovery",
@@ -125,7 +125,7 @@ const PARAMETER_OWNERS := {
 	"magazine_size": "magazine_capacity",
 }
 const AUDITED_PARAMETERS: PackedStringArray = [
-	"automatic_fire", "burst_size", "manual_cycle_required", "manual_cycle_lock_seconds",
+	"automatic_fire", "burst_size", "manual_cycle_required", "manual_cycle_overhead_seconds",
 	"shot_interval_seconds", "recoil_pixels",
 	"recoil_recovery_pixels_per_second", "muzzle_climb_recovery_degrees_per_second",
 	"muzzle_climb_degrees_per_shot", "spread_velocity", "projectile_damage",
@@ -138,7 +138,7 @@ const AUDITED_PARAMETERS: PackedStringArray = [
 const PARAMETER_BOUNDS := {
 	"shot_interval_seconds": [0.08, 0.36],
 	"burst_size": [0, 3],
-	"manual_cycle_lock_seconds": [0.0, 1.20],
+	"manual_cycle_overhead_seconds": [0.0, 0.90],
 	"recoil_pixels": [2.0, 14.0],
 	"recoil_recovery_pixels_per_second": [30.0, 130.0],
 	"muzzle_climb_recovery_degrees_per_second": [10.0, 45.0],
@@ -230,6 +230,15 @@ static func compile(payload: Dictionary, source: String) -> Dictionary:
 	for parameter: String in final_parameters:
 		result[parameter] = final_parameters[parameter]
 	return result
+
+
+static func manual_cycle_total_seconds(runtime_profile: Dictionary) -> float:
+	if not bool(runtime_profile.get("manual_cycle_required", false)):
+		return 0.0
+	return (
+		maxf(0.0, float(runtime_profile.get("shot_interval_seconds", 0.0)))
+		+ maxf(0.0, float(runtime_profile.get("manual_cycle_overhead_seconds", 0.0)))
+	)
 
 
 static func finite_difference_audit(payload: Dictionary, source: String) -> Dictionary:
@@ -379,7 +388,7 @@ static func _raw_parameter_matrix(payload: Dictionary) -> Dictionary:
 		"automatic_fire": str(payload.get("fire_control", "semi_auto")) == "select_fire_auto",
 		"burst_size": 3 if str(payload.get("fire_control", "semi_auto")) == "three_round_burst" else 0,
 		"manual_cycle_required": str(payload.get("fire_control", "semi_auto")) == "manual_cycle",
-		"manual_cycle_lock_seconds": 0.82 if str(payload.get("fire_control", "semi_auto")) == "manual_cycle" else 0.0,
+		"manual_cycle_overhead_seconds": 0.54 if str(payload.get("fire_control", "semi_auto")) == "manual_cycle" else 0.0,
 		"shot_interval_seconds": float({"deliberate": 0.28, "balanced": 0.17, "rapid": 0.10}[cadence]),
 		"recoil_pixels": float({"light": 3.0, "medium": 7.0, "strong": 12.0}[recoil]),
 		"recoil_recovery_pixels_per_second": float({"quick": 112.0, "balanced": 70.0, "slow": 42.0}[recoil_recovery]),

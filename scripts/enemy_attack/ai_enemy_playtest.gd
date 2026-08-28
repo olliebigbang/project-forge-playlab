@@ -354,7 +354,7 @@ func _ranged_fire_mode_label(runtime: Dictionary) -> String:
 
 func _ranged_timing_label(runtime: Dictionary) -> String:
 	if bool(runtime.get("manual_cycle_required", false)):
-		return "拉栓锁定 %.2f 秒" % float(runtime.get("manual_cycle_lock_seconds", 0.0))
+		return "总动作 %.2f 秒" % RANGED_AXIS_RESOLVER.manual_cycle_total_seconds(runtime)
 	return "%.2f 秒/发" % float(runtime.get("shot_interval_seconds", 0.0))
 
 
