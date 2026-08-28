@@ -160,6 +160,16 @@ func _test_armory_memory_cache() -> Variant:
 	armory.profile_cache_paths = []
 	var first: Array[Dictionary] = armory.load_entries()
 	var first_diagnostics: Dictionary = armory.last_load_diagnostics.duplicate(true)
+	if first.size() != 1:
+		_remove_tree(ProjectSettings.globalize_path(root))
+		return {"first": first.size(), "diagnostics": first_diagnostics}
+	# Simulate a picker consumer changing ordinary and nested entry data. Resource
+	# objects are a documented shared boundary, so this test deliberately mutates
+	# only Variant containers that must be isolated from the process cache.
+	first[0]["display_name"] = "CALLER_TAMPERED_NAME"
+	first[0]["cache_status"] = "caller_tampered_status"
+	var first_runtime := first[0].get("ranged_runtime_profile", {}) as Dictionary
+	first_runtime["magazine_size"] = -999
 	var second: Array[Dictionary] = armory.load_entries()
 	var second_diagnostics: Dictionary = armory.last_load_diagnostics.duplicate(true)
 	valid_manifest["presentable_to_player"] = false
@@ -167,12 +177,19 @@ func _test_armory_memory_cache() -> Variant:
 	var third: Array[Dictionary] = armory.load_entries()
 	var third_diagnostics: Dictionary = armory.last_load_diagnostics.duplicate(true)
 	_remove_tree(ProjectSettings.globalize_path(root))
-	if first.size() != 1 or str(first_diagnostics.get("source", "")) != "validated_disk_rebuild":
-		return {"first": first.size(), "diagnostics": first_diagnostics}
+	if str(first_diagnostics.get("source", "")) != "validated_disk_rebuild":
+		return first_diagnostics
 	if int(first_diagnostics.get("images_decoded", 0)) != 1:
 		return first_diagnostics
 	if second.size() != 1 or str(second_diagnostics.get("source", "")) != "process_memory_cache":
 		return {"second": second.size(), "diagnostics": second_diagnostics}
+	var second_runtime := second[0].get("ranged_runtime_profile", {}) as Dictionary
+	if (
+		str(second[0].get("display_name", "")) != "M4A1"
+		or str(second[0].get("cache_status", "")) != "validated_local_finished_art"
+		or int(second_runtime.get("magazine_size", 0)) <= 0
+	):
+		return {"second_entry_after_caller_mutation": second[0]}
 	if int(second_diagnostics.get("json_files_read", -1)) != 0 or int(second_diagnostics.get("images_decoded", -1)) != 0:
 		return second_diagnostics
 	if not third.is_empty() or str(third_diagnostics.get("source", "")) != "validated_disk_rebuild":

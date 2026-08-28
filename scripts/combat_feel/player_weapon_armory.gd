@@ -297,7 +297,11 @@ func _normalize(value: String) -> String:
 func _copy_entry_array(source: Array[Dictionary]) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for entry: Dictionary in source:
-		result.append(entry)
+		# Deep-copy Variant containers so callers cannot mutate the process cache
+		# through an entry or its nested runtime profile. Godot Resource/Object
+		# values (blueprint, asset, texture) intentionally remain shared references;
+		# duplicating GPU-backed textures on every picker open would defeat this cache.
+		result.append(entry.duplicate(true))
 	return result
 
 
