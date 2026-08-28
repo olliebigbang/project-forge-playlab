@@ -5,6 +5,7 @@ const DIRECTOR := preload("res://scripts/enemy_attack/automatic_encounter_direct
 const ARENA := preload("res://scripts/systems/gameplay_arena.gd")
 const LOOP_SCENE := preload("res://scenes/automatic_level_loop.tscn")
 const AutomaticLevelLoop := preload("res://scripts/enemy_attack/automatic_level_loop.gd")
+const AUTOMATIC_ARMORY := preload("res://scripts/combat_feel/automatic_armory_director.gd")
 const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
 
 var passed := 0
@@ -22,8 +23,10 @@ func _run_all() -> void:
 	_check("Weapon blueprint, visual asset, and final mechanism matrix survive the handoff", _test_weapon_handoff)
 	_check("Public ranged handoff enters the level without rebuilding the weapon", _test_public_runtime_handoff)
 	_check("Level weapon cards preserve bolt-action mechanism timing", _test_cycle_action_weapon_card)
+	_check("Mechanism coverage chooses one missing firearm role without player input", _test_automatic_armory_gap_plan)
 	_check("A level encounter executes two distinct compiled attack deliveries", _test_two_compiled_deliveries_execute)
 	_check("Three encounter completions produce the playable completed state", _test_completed_state)
+	_check("A generated firearm is offered as an optional post-run reward", _test_generated_armory_reward)
 	_check("Exhausted health produces a failed run state", _test_failed_state)
 	print("AUTOMATIC_LEVEL_LOOP_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
@@ -68,6 +71,7 @@ func _test_no_enemy_input() -> Variant:
 	var paths: Array[String] = [
 		"res://scripts/enemy_attack/automatic_encounter_director.gd",
 		"res://scripts/enemy_attack/automatic_level_loop.gd",
+		"res://scripts/combat_feel/automatic_armory_director.gd",
 	]
 	for path: String in paths:
 		var source := FileAccess.get_file_as_string(path).to_lower()
@@ -81,6 +85,8 @@ func _test_no_enemy_input() -> Variant:
 	var loop_source := FileAccess.get_file_as_string("res://scripts/enemy_attack/automatic_level_loop.gd")
 	if not loop_source.contains("armory.load_entries()"):
 		return "automatic level did not use the public armory interface"
+	if not loop_source.contains("automatic_armory.start(armory_entries"):
+		return "automatic level did not start the mechanism-gap armory director"
 	for private_cache_detail: String in ["visual_cache_root", "profile_cache_paths", "cache_v1"]:
 		if loop_source.contains(private_cache_detail):
 			return "automatic level leaked armory cache detail: %s" % private_cache_detail
@@ -201,6 +207,31 @@ func _test_cycle_action_weapon_card() -> Variant:
 	return true if ok else {"mode": mode, "timing": timing}
 
 
+func _test_automatic_armory_gap_plan() -> Variant:
+	var automatic_armory: RefCounted = AUTOMATIC_ARMORY.new()
+	var service_only: Array[Dictionary] = [_weapon_entry()]
+	var missing_close_quarters: Dictionary = automatic_armory.plan(service_only)
+	if (
+		not bool(missing_close_quarters.get("needs_generation", false))
+		or str(missing_close_quarters.get("target_role", "")) != "close_quarters"
+		or bool(missing_close_quarters.get("player_confirmation_required", true))
+	):
+		return missing_close_quarters
+	var covered: Array[Dictionary] = [
+		_role_entry("submachine_gun", "self_loading", "close"),
+		_role_entry("precision_rifle", "bolt_action", "precision"),
+		_role_entry("semi_auto_pistol", "self_loading", "sidearm"),
+		_role_entry("shotgun", "pump_action", "scatter"),
+		_role_entry("light_machine_gun", "self_loading", "support"),
+		_role_entry("rifle", "self_loading", "service"),
+	]
+	var complete: Dictionary = automatic_armory.plan(covered)
+	return true if (
+		not bool(complete.get("needs_generation", true))
+		and (complete.get("occupied_roles", {}) as Dictionary).size() == 6
+	) else complete
+
+
 func _test_completed_state() -> Variant:
 	var loop := LOOP_SCENE.instantiate() as AutomaticLevelLoop
 	root.add_child(loop)
@@ -219,6 +250,49 @@ func _test_completed_state() -> Variant:
 	var ok := loop.state == "completed" and str(final_state.get("state", "")) == "completed"
 	ok = ok and int(final_state.get("completed_count", 0)) == 3
 	var result: Variant = true if ok else {"loop_state": loop.state, "director": final_state}
+	loop.queue_free()
+	return result
+
+
+func _test_generated_armory_reward() -> Variant:
+	var loop := LOOP_SCENE.instantiate() as AutomaticLevelLoop
+	root.add_child(loop)
+	var reward := _weapon_entry()
+	var reward_blueprint := reward.get("blueprint") as WeaponBlueprint
+	reward_blueprint.display_name = "AI 自动奖励冲锋枪"
+	reward["display_name"] = reward_blueprint.display_name
+	loop.pending_armory_reward = reward
+	loop._begin_run(_weapon_entry())
+	for index: int in range(3):
+		loop._process(2.0)
+		loop._on_stage_completed(
+			str(loop.current_encounter.get("stage_name", "")),
+			{"defeated": 1, "elapsed_seconds": 1.0, "damage_taken": 0.0, "shots_fired": 2}
+		)
+	var offered := (
+		loop.state == "completed"
+		and loop.primary_button.text == "装备新枪再战"
+		and loop.message_body.text.contains("AI 自动奖励冲锋枪")
+	)
+	if not offered:
+		var diagnostics := {
+			"state": loop.state,
+			"button": loop.primary_button.text,
+			"message": loop.message_body.text,
+		}
+		loop.queue_free()
+		return diagnostics
+	loop._on_primary_result_pressed()
+	var claimed := (
+		loop.state == "between_encounters"
+		and loop.pending_armory_reward.is_empty()
+		and loop._weapon_display_name() == "AI 自动奖励冲锋枪"
+	)
+	var result: Variant = true if claimed else {
+		"state": loop.state,
+		"pending": loop.pending_armory_reward,
+		"equipped": loop._weapon_display_name(),
+	}
 	loop.queue_free()
 	return result
 
@@ -276,3 +350,12 @@ func _weapon_entry() -> Dictionary:
 		"ranged_runtime_profile": runtime,
 		"display_name": blueprint.display_name,
 	}
+
+
+func _role_entry(family: String, action: String, identity: String) -> Dictionary:
+	var entry := _weapon_entry()
+	var blueprint := entry.get("blueprint") as WeaponBlueprint
+	blueprint.affordance["firearm_family"] = family
+	blueprint.affordance["action_mechanism"] = action
+	entry["identity"] = identity
+	return entry

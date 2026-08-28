@@ -60,6 +60,18 @@ For arbitrary name parsing and FAL object pixels, run:
 
 See [General Object AI Parser V1](docs/GENERAL_OBJECT_AI_PARSER_V1.md).
 
+## Run the automatic armory level
+
+The automatic level can now detect a missing firearm-mechanism role, ask AI for one real model name, generate and audit its pixel sprite in the background, then offer an accepted weapon as an optional post-run reward. The player never types a firearm name or confirms its combat mechanics.
+
+With the developer keys saved in the user-profile `.env`, run:
+
+```powershell
+.\scripts\run_open_identity_firearm_ai.ps1 -StartMode AutomaticLevel
+```
+
+See [Automatic Armory V1](docs/AUTOMATIC_ARMORY_V1.md).
+
 ## Run Spike 2
 
 Start local-loopback ComfyUI, then launch the active scene:

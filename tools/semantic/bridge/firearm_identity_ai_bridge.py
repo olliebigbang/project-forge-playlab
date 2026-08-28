@@ -123,9 +123,10 @@ _UNSUPPORTED_TRANSPORT_SCHEMA_KEYS = frozenset(
 
 
 class FirearmIdentityBridgeError(RuntimeError):
-    def __init__(self, code: str) -> None:
+    def __init__(self, code: str, diagnostics: Mapping[str, Any] | None = None) -> None:
         super().__init__(code)
         self.code = code
+        self.diagnostics = dict(diagnostics or {})
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -376,7 +377,17 @@ def validate_response(identity: str, value: Mapping[str, Any]) -> dict[str, Any]
         "declaration",
     }
     if set(value) != expected_keys or value.get("schema") != RESPONSE_SCHEMA:
-        raise FirearmIdentityBridgeError("RESPONSE_SCHEMA_INVALID")
+        # Keep only field names and the public schema tag.  This makes live
+        # contract drift diagnosable without persisting model prose or secrets.
+        raise FirearmIdentityBridgeError(
+            "RESPONSE_SCHEMA_INVALID",
+            {
+                "actual_keys": sorted(str(key) for key in value),
+                "missing_keys": sorted(expected_keys - set(value)),
+                "extra_keys": sorted(set(value) - expected_keys),
+                "actual_schema": str(value.get("schema", ""))[:96],
+            },
+        )
     if value.get("requested_identity") != identity:
         raise FirearmIdentityBridgeError("IDENTITY_ECHO_MISMATCH")
     classification = value.get("classification")
@@ -502,13 +513,16 @@ def _success_record(
     }
 
 
-def _failure_record(code: str) -> dict[str, Any]:
-    return {
+def _failure_record(code: str, diagnostics: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    record = {
         "schema": RESULT_SCHEMA,
         "status": "failed",
         "failure_reason": f"AI_FIREARM_BRIDGE_{code}",
         "player_confirmation_required": False,
     }
+    if diagnostics:
+        record["safe_diagnostics"] = dict(diagnostics)
+    return record
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -541,7 +555,7 @@ def main(argv: list[str] | None = None) -> int:
             )
         exit_code = 0
     except FirearmIdentityBridgeError as exc:
-        record = _failure_record(exc.code)
+        record = _failure_record(exc.code, exc.diagnostics)
     except SemanticCompilerError as exc:
         record = _failure_record(exc.code)
     except Exception:

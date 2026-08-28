@@ -3,17 +3,22 @@ extends Node2D
 
 const ARENA := preload("res://scripts/systems/gameplay_arena.gd")
 const ARMORY := preload("res://scripts/combat_feel/player_weapon_armory.gd")
+const AUTOMATIC_ARMORY := preload("res://scripts/combat_feel/automatic_armory_director.gd")
 const DIRECTOR := preload("res://scripts/enemy_attack/automatic_encounter_director.gd")
 const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
 
 var arena: GameplayArena
 var armory: RefCounted = ARMORY.new()
+var automatic_armory: RefCounted = AUTOMATIC_ARMORY.new()
 var director: RefCounted = DIRECTOR.new()
 var armory_entries: Array[Dictionary] = []
 var equipped_entry: Dictionary = {}
 var current_encounter: Dictionary = {}
 var state := "boot"
 var intermission_seconds := 0.0
+var automatic_armory_attempted := false
+var automatic_armory_message := ""
+var pending_armory_reward: Dictionary = {}
 var run_health := 100.0
 var encounter_start_health := 100.0
 var run_metrics := {
@@ -46,6 +51,8 @@ func _ready() -> void:
 	if not bool(configured.get("ok", false)):
 		_show_fatal_error("离线敌人蓝图没有通过机制检查：%s" % str(configured.get("error", "未知错误")))
 		return
+	armory_entries = armory.load_entries()
+	_start_automatic_armory_expansion()
 	if _take_ranged_handoff():
 		_begin_run(equipped_entry)
 		return
@@ -53,6 +60,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	_poll_automatic_armory()
 	if state == "between_encounters":
 		intermission_seconds = maxf(0.0, intermission_seconds - delta)
 		if intermission_seconds <= 0.0:
@@ -102,11 +110,59 @@ func _show_weapon_picker() -> void:
 	message_panel.visible = false
 	armory_entries = armory.load_entries()
 	_rebuild_weapon_cards()
-	if armory_entries.is_empty():
-		armory_message.text = "本地武器库里还没有通过图片和机制检查的枪。请先在 Forge 生成一把枪，再回来开战。"
-	else:
-		armory_message.text = "只选你的武器。敌人、出现顺序和攻击方式全部由系统用离线验收蓝图安排。"
+	_refresh_armory_message()
 	status_label.text = "三战短关卡 · 选择武器\n不会要求你输入敌人，也不会在线等待 AI。"
+
+
+func _start_automatic_armory_expansion() -> void:
+	if automatic_armory_attempted:
+		return
+	automatic_armory_attempted = true
+	var python_path := _argument_value(
+		"--firearm-ai-python=", _argument_value("--fal-python=", "python")
+	)
+	var started: Dictionary = automatic_armory.start(armory_entries, python_path)
+	if bool(started.get("ok", false)) and str(started.get("status", "")) == "running":
+		automatic_armory_message = "AI 正在后台补充“%s”；战斗和选枪不会等它。" % str(
+			started.get("target_role_label_zh", "新机制武器")
+		)
+	elif bool(started.get("ok", false)):
+		automatic_armory_message = "当前军械库已经覆盖六种主要枪械机制，本次不调用 AI 造枪。"
+	else:
+		automatic_armory_message = "后台造枪本次未启动；现有武器和关卡仍可正常使用。"
+
+
+func _poll_automatic_armory() -> void:
+	if not automatic_armory_attempted:
+		return
+	var result: Dictionary = automatic_armory.poll()
+	var result_status := str(result.get("status", ""))
+	if result_status in ["idle", "running"]:
+		return
+	if result_status == "success" and result.get("entry", {}) is Dictionary:
+		pending_armory_reward = (result.get("entry", {}) as Dictionary).duplicate(true)
+		automatic_armory_message = "AI 新枪“%s”已经通过图片和机制审核，完成三战即可领取。" % str(
+			result.get("candidate_identity", "新武器")
+		)
+		armory.invalidate_cache()
+		if state == "completed":
+			_show_completion_reward()
+	elif result_status == "failed":
+		automatic_armory_message = "后台新枪没有通过自动审核，已安全放弃；不会影响当前关卡。"
+	_refresh_armory_message()
+
+
+func _refresh_armory_message() -> void:
+	if armory_message == null:
+		return
+	var base := ""
+	if armory_entries.is_empty():
+		base = "本地武器库里还没有通过图片和机制检查的枪。请先在 Forge 生成一把枪，再回来开战。"
+	else:
+		base = "只选你的武器。敌人、出现顺序和攻击方式全部由系统用离线验收蓝图安排。"
+	armory_message.text = base
+	if not automatic_armory_message.is_empty():
+		armory_message.text += "\n" + automatic_armory_message
 
 
 func _begin_run(entry: Dictionary) -> void:
@@ -196,11 +252,24 @@ func _finish_success() -> void:
 		int(run_metrics.get("defeated", 0)),
 		roundi(run_health),
 	]
+	if not pending_armory_reward.is_empty():
+		_show_completion_reward()
 	_configure_result_buttons()
 	status_label.text = "关卡完成　总受伤 %.0f　总射击 %d\nR 再来一次　B 换武器　Esc 返回 Forge" % [
 		float(run_metrics.get("damage_taken", 0.0)),
 		int(run_metrics.get("shots_fired", 0)),
 	]
+
+
+func _show_completion_reward() -> void:
+	if pending_armory_reward.is_empty() or state != "completed":
+		return
+	var reward_blueprint := pending_armory_reward.get("blueprint") as WeaponBlueprint
+	var reward_name := reward_blueprint.display_name if reward_blueprint != null else str(
+		pending_armory_reward.get("display_name", "AI 新枪")
+	)
+	message_body.text = "三战奖励已经解锁：%s。\n它经过 AI 识别、双重图片审核和 Godot 机制检查；你可以选择装备，不会强制替换当前武器。" % reward_name
+	_configure_result_buttons()
 
 
 func _finish_failure(reason: String) -> void:
@@ -242,9 +311,20 @@ func _show_fatal_error(message: String) -> void:
 
 func _configure_result_buttons() -> void:
 	primary_button.visible = true
-	primary_button.text = "再来一次"
+	primary_button.text = "装备新枪再战" if not pending_armory_reward.is_empty() else "再来一次"
 	secondary_button.visible = true
-	secondary_button.text = "更换武器"
+	secondary_button.text = "查看全部武器" if not pending_armory_reward.is_empty() else "更换武器"
+
+
+func _on_primary_result_pressed() -> void:
+	if state not in ["completed", "failed"]:
+		return
+	if state == "completed" and not pending_armory_reward.is_empty():
+		var reward := pending_armory_reward.duplicate(true)
+		pending_armory_reward.clear()
+		_begin_run(reward)
+		return
+	_begin_run(equipped_entry)
 
 
 func _accumulate_metrics(metrics: Dictionary) -> void:
@@ -494,7 +574,7 @@ func _build_ui() -> void:
 	primary_button.size = Vector2(240, 54)
 	primary_button.add_theme_font_override("font", font)
 	primary_button.add_theme_font_size_override("font_size", 18)
-	primary_button.pressed.connect(func() -> void: _begin_run(equipped_entry))
+	primary_button.pressed.connect(_on_primary_result_pressed)
 	message_panel.add_child(primary_button)
 	secondary_button = Button.new()
 	secondary_button.position = Vector2(658, 442)
@@ -509,3 +589,10 @@ func _build_ui() -> void:
 	)
 	message_panel.add_child(secondary_button)
 	message_panel.visible = false
+
+
+func _argument_value(prefix: String, fallback: String) -> String:
+	for argument: String in OS.get_cmdline_user_args():
+		if argument.begins_with(prefix):
+			return argument.trim_prefix(prefix)
+	return fallback

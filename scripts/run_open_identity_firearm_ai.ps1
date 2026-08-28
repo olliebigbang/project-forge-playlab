@@ -3,7 +3,9 @@ param(
     [string]$Model = "claude-sonnet-5",
     [ValidateSet("MOCK", "LOCAL_COMFYUI", "FAL_FIREARM")]
     [string]$VisualProvider = "FAL_FIREARM",
-    [string]$EnvFile = ""
+    [string]$EnvFile = "",
+    [ValidateSet("Forge", "AutomaticLevel")]
+    [string]$StartMode = "Forge"
 )
 
 Set-StrictMode -Version Latest
@@ -25,6 +27,12 @@ $FalKeyText = $null
 $ExitCode = 1
 
 try {
+    if ([string]::IsNullOrWhiteSpace($EnvFile)) {
+        $DefaultEnvFile = Join-Path $env:USERPROFILE ".env"
+        if (Test-Path -LiteralPath $DefaultEnvFile) {
+            $EnvFile = $DefaultEnvFile
+        }
+    }
     if (-not [string]::IsNullOrWhiteSpace($EnvFile)) {
         $ResolvedEnvFile = (Resolve-Path -LiteralPath $EnvFile -ErrorAction Stop).Path
         foreach ($Line in Get-Content -LiteralPath $ResolvedEnvFile) {
@@ -76,9 +84,15 @@ try {
     if ($VisualProvider -eq "FAL_FIREARM") {
         Write-Host "FAL renders firearms or general objects as transparent identity art and converts them to bounded-palette pixel art; this mode uses paid API calls."
     }
+    $StartScene = if ($StartMode -eq "AutomaticLevel") {
+        "res://scenes/automatic_level_loop.tscn"
+    }
+    else {
+        "res://scenes/open_identity_spike.tscn"
+    }
     $Arguments = @(
         "--path", $PlaylabRoot,
-        "res://scenes/open_identity_spike.tscn",
+        $StartScene,
         "--",
         "--firearm-ai=anthropic",
         "--firearm-ai-python=$Python",
