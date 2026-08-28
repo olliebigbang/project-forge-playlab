@@ -320,7 +320,7 @@ func _rebuild_weapon_cards() -> void:
 		card.add_child(name_label)
 		var mechanism := Label.new()
 		mechanism.text = "%s　%.2f 秒/发\n后坐 %.1f　伤害 %.1f　弹匣 %d%s" % [
-			"连射" if bool(runtime.get("automatic_fire", false)) else "单发",
+			_ranged_fire_mode_label(runtime),
 			float(runtime.get("shot_interval_seconds", 0.0)),
 			float(runtime.get("recoil_pixels", 0.0)),
 			float(runtime.get("projectile_damage", 0.0)),
@@ -339,6 +339,15 @@ func _rebuild_weapon_cards() -> void:
 		var selected_index := index
 		equip.pressed.connect(func() -> void: _select_armory_weapon(selected_index))
 		card.add_child(equip)
+
+
+func _ranged_fire_mode_label(runtime: Dictionary) -> String:
+	if bool(runtime.get("automatic_fire", false)):
+		return "按住连射"
+	var burst_size := int(runtime.get("burst_size", 0))
+	if burst_size > 1:
+		return "按一下 %d 连发" % burst_size
+	return "按一下单发"
 
 
 func _build_weapon_fixture() -> void:

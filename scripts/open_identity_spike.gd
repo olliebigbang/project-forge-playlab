@@ -1466,6 +1466,21 @@ func _ranged_mechanism_is_ready() -> bool:
 		and not str(current_ranged_mechanism.get("axis_signature", "")).is_empty()
 	)
 
+func _ranged_fire_mode_text(runtime: Dictionary) -> String:
+	if bool(runtime.get("automatic_fire", false)):
+		return "按住连续射击"
+	var burst_size := int(runtime.get("burst_size", 0))
+	if burst_size > 1:
+		return "每次按下自动打出 %d 发短点射" % burst_size
+	return "每次按下只发射一发"
+
+func _ranged_attack_input_text(runtime: Dictionary) -> String:
+	if bool(runtime.get("automatic_fire", false)):
+		return "按住连射"
+	if int(runtime.get("burst_size", 0)) > 1:
+		return "点按三连发"
+	return "点按射击"
+
 func _mechanism_error_zh(code: String) -> String:
 	if code in ["AI_AFFORDANCE_MISSING", "AI_AFFORDANCE_SOURCE_MISSING"] or code.begins_with("AI_AFFORDANCE_MISSING_"):
 		return "AI 没有返回完整的机制轴。"
@@ -1621,7 +1636,7 @@ func _show_ranged_mechanism_summary() -> void:
 	var outer := VBoxContainer.new()
 	outer.add_theme_constant_override("separation", 12)
 	root.add_child(outer)
-	outer.add_child(_header("AI 射击卡 V2 已生成", "型号提供身份事实；射速、后坐冲量、回正、上跳、命中冲击、穿透和供弹全部由机制轴编译。"))
+	outer.add_child(_header("AI 射击卡 V3 已生成", "型号提供身份事实；单发、三连发或连射，以及射速、后坐、命中冲击和供弹，全部由机制轴编译。"))
 	var columns := HBoxContainer.new()
 	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	columns.add_theme_constant_override("separation", 22)
@@ -1636,7 +1651,7 @@ func _show_ranged_mechanism_summary() -> void:
 	details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	details.add_theme_constant_override("separation", 6)
 	columns.add_child(details)
-	details.add_child(_badge("AI 型号声明 · V2 机制轴完整 · 因果参数已编译", Color("166534")))
+	details.add_child(_badge("AI 型号声明 · V3 机制轴完整 · 因果参数已编译", Color("166534")))
 	var source := Label.new()
 	source.text = "机制来源：%s · AI 置信度：%.2f\n玩家机制输入：未使用 · 玩家只确认外形身份" % [
 		current_blueprint.affordance_source,
@@ -1663,7 +1678,7 @@ func _show_ranged_mechanism_summary() -> void:
 		details.add_child(line)
 	var result_label := Label.new()
 	result_label.text = "编译后的游戏表现\n• %s\n• 每 %.2f 秒一发；后坐 %.1f 像素，以 %.1f 像素/秒回正；单发上跳 %.1f°\n• 单发伤害 %.1f；正面护甲保留 %.0f%%；可继续穿过 %d 个目标\n• 散布 %.1f；弹匣 %d 发；换弹 %.2f 秒" % [
-		"按住连续射击" if bool(current_ranged_mechanism.get("automatic_fire", false)) else "每次按下只发射一发",
+		_ranged_fire_mode_text(current_ranged_mechanism),
 		float(current_ranged_mechanism.get("shot_interval_seconds", 0.0)),
 		float(current_ranged_mechanism.get("recoil_pixels", 0.0)),
 		float(current_ranged_mechanism.get("recoil_recovery_pixels_per_second", 0.0)),
@@ -1784,7 +1799,7 @@ func _start_training() -> void:
 	var help := Label.new()
 	var attack_help := "Space / J 攻击"
 	if _requires_ranged_mechanism_profile():
-		attack_help = "Space / J 按住连射" if bool(current_ranged_mechanism.get("automatic_fire", false)) else "Space / J 点按射击"
+		attack_help = "Space / J %s" % _ranged_attack_input_text(current_ranged_mechanism)
 	help.text = "WASD / 方向键移动 · %s · Shift / K 闪避 · F3 锚点调试" % attack_help
 	help.position = Vector2(34, 91)
 	help.mouse_filter = Control.MOUSE_FILTER_IGNORE

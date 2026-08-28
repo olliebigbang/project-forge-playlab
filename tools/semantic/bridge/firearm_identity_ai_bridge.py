@@ -83,7 +83,9 @@ LEGAL_VALUES = {
     "barrel_length": frozenset({"short", "medium", "long"}),
     "upper_profile": frozenset({"carry_handle", "top_rail", "raised_gas_tube", "slide"}),
     "support_mode": frozenset({"one_hand", "two_hand_shouldered"}),
-    "fire_control": frozenset({"semi_auto", "select_fire_auto"}),
+    "fire_control": frozenset(
+        {"semi_auto", "three_round_burst", "select_fire_auto"}
+    ),
     "cadence": frozenset({"deliberate", "balanced", "rapid"}),
     "recoil": frozenset({"light", "medium", "strong"}),
     "recoil_recovery": frozenset({"quick", "balanced", "slow"}),

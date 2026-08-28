@@ -101,6 +101,7 @@ var touch_dodge_requested := false
 var attack_was_down := false
 var attack_charge := 0.0
 var shot_cooldown := 0.0
+var burst_shots_remaining := 0
 var overheat := 0.0
 var overheat_lock := 0.0
 var ranged_runtime_profile: Dictionary = {}
@@ -137,6 +138,7 @@ func start_stage(
 	boomerang.clear()
 	attack_charge = 0.0
 	shot_cooldown = 0.0
+	burst_shots_remaining = 0
 	overheat = 0.0
 	overheat_lock = 0.0
 	melee_timer = 0.0
@@ -269,7 +271,14 @@ func _update_firearm_attack(attack_down: bool, just_pressed: bool) -> void:
 	overheat = 0.0
 	if reload_timer > 0.0:
 		return
-	var wants_shot := attack_down if bool(ranged_runtime_profile.get("automatic_fire", false)) else just_pressed
+	var burst_size := int(ranged_runtime_profile.get("burst_size", 0))
+	if burst_size > 1 and just_pressed and burst_shots_remaining <= 0:
+		burst_shots_remaining = burst_size
+	var wants_shot := just_pressed
+	if bool(ranged_runtime_profile.get("automatic_fire", false)):
+		wants_shot = attack_down
+	elif burst_size > 1:
+		wants_shot = burst_shots_remaining > 0
 	if not wants_shot or shot_cooldown > 0.0:
 		return
 	if ammo_in_magazine <= 0:
@@ -277,6 +286,8 @@ func _update_firearm_attack(attack_down: bool, just_pressed: bool) -> void:
 		return
 	_fire_bullet()
 	ammo_in_magazine -= 1
+	if burst_size > 1:
+		burst_shots_remaining = maxi(0, burst_shots_remaining - 1)
 	shot_cooldown = float(ranged_runtime_profile.get("shot_interval_seconds", 0.18))
 	weapon_recoil_offset = float(ranged_runtime_profile.get("recoil_pixels", 6.0))
 	weapon_muzzle_climb_degrees = minf(
@@ -293,6 +304,7 @@ func _update_firearm_attack(attack_down: bool, just_pressed: bool) -> void:
 func _begin_firearm_reload() -> void:
 	if not _uses_firearm_runtime() or reload_timer > 0.0:
 		return
+	burst_shots_remaining = 0
 	reload_timer = float(ranged_runtime_profile.get("reload_seconds", 1.2))
 	metrics["reload_count"] = int(metrics.get("reload_count", 0)) + 1
 	metrics_changed.emit(metrics)

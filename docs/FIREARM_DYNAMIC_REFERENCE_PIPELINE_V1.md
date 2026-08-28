@@ -17,7 +17,7 @@
 ## 自动流程
 
 1. 先查四个内置型号和已验证的本地身份缓存。
-2. 陌生名字由 Anthropic 返回严格的 `forge-firearm-identity-ai-response-v3`；Python 与 Godot 各验证一次。V3 同时包含枪械机制轴 V2。
+2. 陌生名字由 Anthropic 返回严格的 `forge-firearm-identity-ai-response-v3`；Python 与 Godot 各验证一次。V3 同时包含枪械机制轴 V3，包括固定三连发。
 3. 只有受当前轴系统支持的弹匣供弹步枪、卡宾枪、带枪托冲锋枪和半自动手枪会继续。坦克、左轮、管式霰弹枪、弹链武器和发射器继续在类别边界处拒绝。
 4. 动态身份自动声明 `auto_wikimedia_v1`，玩家不能提供 URL。
 5. Wikimedia Action API 只搜索 File 命名空间，并只接受 Commons 来源页、`upload.wikimedia.org` 图片、JPEG/PNG 和许可白名单：Public Domain、CC0、CC BY、CC BY-SA。

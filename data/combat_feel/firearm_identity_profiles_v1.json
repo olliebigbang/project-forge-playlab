@@ -163,6 +163,59 @@
       }
     },
     {
+      "id": "m16a2",
+      "canonical_name_zh": "M16A2",
+      "aliases": ["M16A2", "M16-A2", "M16A2步枪", "M16A2 rifle"],
+      "visual_description_en": "recognizable M16A2 style full-length conventional service rifle, fixed solid rear stock, straight magazine ahead of the primary grip, permanent raised carry handle and long ribbed fore-end",
+      "required_identity_parts_zh": ["固定式全尺寸枪托", "永久提把轮廓", "握把前方直弹匣", "长护木与长枪管"],
+      "visual_identity_card": {
+        "schema": "forge-firearm-visual-identity-card-v1",
+        "visual_axes": {
+          "stock_profile": "full fixed triangular polymer shoulder stock",
+          "upper_landmark": "permanent raised carry handle with an open gap beneath it",
+          "magazine_profile": "straight box magazine ahead of the primary grip",
+          "fore_end_profile": "full-length ribbed rifle handguard and long barrel",
+          "receiver_profile": "long AR-pattern upper and lower receiver with fixed carry handle"
+        },
+        "required_landmarks_en": [
+          "full fixed triangular shoulder stock rather than a collapsible carbine stock",
+          "permanent raised carry-handle loop with a visible open gap",
+          "straight box magazine visibly ahead of the primary grip",
+          "long ribbed fore-end and full-length exposed barrel"
+        ],
+        "confusable_exclusions_en": [
+          "not an M4A1 with a telescoping stock, short handguard, or low flat top rail",
+          "not an AK-pattern rifle with a curved magazine and raised gas tube",
+          "not a bullpup layout"
+        ]
+      },
+      "declaration": {
+        "source": "CURATED_AI_FIREARM_IDENTITY_V3",
+        "confidence": 0.97,
+        "weapon_domain": "handheld_firearm",
+        "layout": "conventional_rifle",
+        "stock_structure": "fixed",
+        "feed_position": "ahead_of_grip",
+        "magazine_shape": "straight",
+        "barrel_length": "long",
+        "upper_profile": "carry_handle",
+        "support_mode": "two_hand_shouldered",
+        "fire_control": "three_round_burst",
+        "cadence": "balanced",
+        "recoil": "light",
+        "recoil_recovery": "quick",
+        "muzzle_climb": "low",
+        "accuracy": "precise",
+        "impact_force": "medium",
+        "penetration": "strong",
+        "reload": "standard",
+        "effective_range": "long",
+        "handling": "balanced",
+        "magazine_capacity": "standard",
+        "finish_palette": "gunmetal_black"
+      }
+    },
+    {
       "id": "qsz_92",
       "canonical_name_zh": "92式手枪",
       "aliases": ["92式手枪", "中国92式手枪", "QSZ-92", "QSZ92", "Type 92 pistol"],

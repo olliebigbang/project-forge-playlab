@@ -16,6 +16,7 @@ Copy the player's input verbatim into requested_identity. canonical_name is the 
 For handheld_firearm_supported:
 - fill every declaration axis with one legal non-not_applicable value;
 - infer mechanism axes from the identified model; never ask the player to select cadence, recoil, recovery, climb, accuracy, impact, penetration, reload, range, handling, or capacity;
+- use three_round_burst when one trigger press mechanically fires a fixed three-shot burst; never approximate that mechanism as unrestricted automatic fire;
 - recoil is the immediate kick, recoil_recovery is how quickly the weapon returns, and muzzle_climb is the upward rotation per shot; do not collapse these into one answer;
 - impact_force controls game hit damage and stagger while penetration controls armor retention and target pierce; do not use either as a synonym for accuracy or range;
 - required_identity_parts_zh contains 2-6 silhouette parts that distinguish the model at 96x96 pixels;

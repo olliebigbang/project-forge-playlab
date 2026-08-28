@@ -273,7 +273,11 @@ func player_explanation(blueprint: WeaponBlueprint) -> String:
 	var identity := blueprint.player_identity_text
 	if blueprint.behavior_family == "sustained_ranged" and str(blueprint.affordance.get("weapon_domain", "")) == "handheld_firearm":
 		var fire_control := str(blueprint.affordance.get("fire_control", "semi_auto"))
-		var firing_text := "按住连续射击" if fire_control == "select_fire_auto" else "每按一次发射一发"
+		var firing_text := "每按一次发射一发"
+		if fire_control == "select_fire_auto":
+			firing_text = "按住连续射击"
+		elif fire_control == "three_round_burst":
+			firing_text = "每按一次自动完成三连发"
 		return "AI 已把“%s”识别为具体枪械；外形按枪托、握把、弹匣和枪口位置绘制，%s，后坐、散布、弹匣和换弹全部由远程机制轴决定。" % [identity, firing_text]
 	match blueprint.behavior_family:
 		"returning_thrown":

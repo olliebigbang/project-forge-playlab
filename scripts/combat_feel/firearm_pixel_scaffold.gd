@@ -132,6 +132,12 @@ static func _draw_magazine(image: Image, root: Vector2, shape: String, color: Co
 
 static func _draw_upper_profile(image: Image, profile: String, body: Color, highlight: Color) -> void:
 	match profile:
+		"carry_handle":
+			_segment(image, Vector2(31, 33), Vector2(35, 26), 6, 3, body)
+			_segment(image, Vector2(35, 26), Vector2(55, 26), 6, 3, body)
+			_segment(image, Vector2(55, 26), Vector2(60, 34), 6, 3, body)
+			_segment(image, Vector2(37, 30), Vector2(54, 30), 3, 2, Color.TRANSPARENT)
+			_fill_rect(image, Rect2i(43, 22, 5, 5), highlight)
 		"top_rail":
 			_segment(image, Vector2(30, 32), Vector2(59, 32), 5, 2, highlight)
 			for x: int in range(32, 59, 6):
