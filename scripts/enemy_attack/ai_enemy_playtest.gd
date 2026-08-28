@@ -319,9 +319,11 @@ func _rebuild_weapon_cards() -> void:
 		name_label.add_theme_font_size_override("font_size", 19)
 		card.add_child(name_label)
 		var mechanism := Label.new()
-		mechanism.text = "%s　%s\n后坐 %.1f　伤害 %.1f　弹匣 %d%s" % [
+		mechanism.text = "%s　%s\n%s　%s\n后坐 %.1f　伤害 %.1f　容量 %d%s" % [
 			_ranged_fire_mode_label(runtime),
 			_ranged_timing_label(runtime),
+			_ranged_shot_pattern_label(runtime),
+			_ranged_reload_feed_label(runtime),
 			float(runtime.get("recoil_pixels", 0.0)),
 			float(runtime.get("projectile_damage", 0.0)),
 			int(runtime.get("magazine_size", 0)),
@@ -342,8 +344,6 @@ func _rebuild_weapon_cards() -> void:
 
 
 func _ranged_fire_mode_label(runtime: Dictionary) -> String:
-	if bool(runtime.get("manual_cycle_required", false)):
-		return "按一下单发，随后自动拉栓"
 	if bool(runtime.get("automatic_fire", false)):
 		return "按住连射"
 	var burst_size := int(runtime.get("burst_size", 0))
@@ -353,9 +353,37 @@ func _ranged_fire_mode_label(runtime: Dictionary) -> String:
 
 
 func _ranged_timing_label(runtime: Dictionary) -> String:
-	if bool(runtime.get("manual_cycle_required", false)):
-		return "总动作 %.2f 秒" % RANGED_AXIS_RESOLVER.manual_cycle_total_seconds(runtime)
+	if bool(runtime.get("cycle_required", false)):
+		return "%s，总锁定 %.2f 秒" % [
+			_ranged_cycle_action_label(int(runtime.get("cycle_action_code", 0))),
+			RANGED_AXIS_RESOLVER.cycle_lock_total_seconds(runtime),
+		]
 	return "%.2f 秒/发" % float(runtime.get("shot_interval_seconds", 0.0))
+
+
+func _ranged_cycle_action_label(action_code: int) -> String:
+	return str({1: "每发后拉栓", 2: "每发后泵动", 3: "扳机带动转轮"}.get(action_code, "自动完成循环"))
+
+
+func _ranged_shot_pattern_label(runtime: Dictionary) -> String:
+	var pellet_count := maxi(1, int(runtime.get("pellet_count", 1)))
+	if pellet_count > 1:
+		return "每枪 %d 颗霰弹，覆盖 %.0f°" % [pellet_count, float(runtime.get("pellet_spread_degrees", 0.0))]
+	return "每枪 1 颗弹丸"
+
+
+func _ranged_reload_feed_label(runtime: Dictionary) -> String:
+	var step_seconds := float(runtime.get("reload_seconds", 0.0))
+	var rounds_per_step := maxi(1, int(runtime.get("reload_rounds_per_step", 1)))
+	match int(runtime.get("reload_feed_code", 0)):
+		1:
+			return "逐发装填 %.2f 秒/次，可开枪打断" % step_seconds
+		2:
+			return "转轮每次装 %d 发，%.2f 秒/次" % [rounds_per_step, step_seconds]
+		3:
+			return "整箱更换弹链 %.2f 秒" % step_seconds
+		_:
+			return "整匣更换 %.2f 秒" % step_seconds
 
 
 func _build_weapon_fixture() -> void:
@@ -514,10 +542,13 @@ func _friendly_error(code: String) -> String:
 
 func _playtest_firearm_axes() -> Dictionary:
 	return {
-		"weapon_domain": "handheld_firearm", "layout": "conventional_rifle",
+		"weapon_domain": "handheld_firearm", "firearm_family": "rifle",
+		"layout": "conventional_rifle",
 		"stock_structure": "fixed", "feed_position": "ahead_of_grip",
 		"magazine_shape": "curved", "barrel_length": "medium", "upper_profile": "top_rail",
 		"support_mode": "two_hand_shouldered", "fire_control": "select_fire_auto",
+		"action_mechanism": "self_loading", "feed_system": "detachable_box",
+		"shot_pattern": "single_projectile", "sustained_climb": "progressive",
 		"cadence": "balanced", "recoil": "medium", "recoil_recovery": "balanced",
 		"muzzle_climb": "medium", "accuracy": "controlled", "impact_force": "medium",
 		"penetration": "medium", "reload": "standard", "effective_range": "long",

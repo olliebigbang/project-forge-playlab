@@ -311,9 +311,11 @@ func _rebuild_weapon_cards() -> void:
 		name_label.add_theme_font_size_override("font_size", 19)
 		card.add_child(name_label)
 		var mechanism := Label.new()
-		mechanism.text = "%s　%s\n伤害 %.0f　后坐 %.0f　弹匣 %d" % [
+		mechanism.text = "%s　%s\n%s　%s\n伤害 %.0f　后坐 %.0f　容量 %d" % [
 			_fire_mode_label(runtime),
 			_fire_timing_label(runtime),
+			_shot_pattern_label(runtime),
+			_reload_feed_label(runtime),
 			float(runtime.get("projectile_damage", 0.0)),
 			float(runtime.get("recoil_pixels", 0.0)),
 			int(runtime.get("magazine_size", 0)),
@@ -342,8 +344,6 @@ func _weapon_display_name() -> String:
 
 
 func _fire_mode_label(runtime: Dictionary) -> String:
-	if bool(runtime.get("manual_cycle_required", false)):
-		return "每发后自动拉栓"
 	if bool(runtime.get("automatic_fire", false)):
 		return "按住连射"
 	var burst_size := int(runtime.get("burst_size", 0))
@@ -351,9 +351,40 @@ func _fire_mode_label(runtime: Dictionary) -> String:
 
 
 func _fire_timing_label(runtime: Dictionary) -> String:
-	if bool(runtime.get("manual_cycle_required", false)):
-		return "总动作 %.2f 秒" % RANGED_AXIS_RESOLVER.manual_cycle_total_seconds(runtime)
+	if bool(runtime.get("cycle_required", false)):
+		return "%s，总锁定 %.2f 秒" % [
+			_cycle_action_label(int(runtime.get("cycle_action_code", 0))),
+			RANGED_AXIS_RESOLVER.cycle_lock_total_seconds(runtime),
+		]
 	return "%.2f 秒/发" % float(runtime.get("shot_interval_seconds", 0.0))
+
+
+func _cycle_action_label(action_code: int) -> String:
+	return str({1: "每发后拉栓", 2: "每发后泵动", 3: "扳机带动转轮"}.get(action_code, "自动完成循环"))
+
+
+func _shot_pattern_label(runtime: Dictionary) -> String:
+	var pellet_count := maxi(1, int(runtime.get("pellet_count", 1)))
+	if pellet_count > 1:
+		return "每枪 %d 颗霰弹，覆盖 %.0f°" % [
+			pellet_count,
+			float(runtime.get("pellet_spread_degrees", 0.0)),
+		]
+	return "每枪 1 颗弹丸"
+
+
+func _reload_feed_label(runtime: Dictionary) -> String:
+	var step_seconds := float(runtime.get("reload_seconds", 0.0))
+	var rounds_per_step := maxi(1, int(runtime.get("reload_rounds_per_step", 1)))
+	match int(runtime.get("reload_feed_code", 0)):
+		1:
+			return "逐发装填 %.2f 秒/次，可开枪打断" % step_seconds
+		2:
+			return "转轮每次装 %d 发，%.2f 秒/次" % [rounds_per_step, step_seconds]
+		3:
+			return "整箱更换弹链 %.2f 秒" % step_seconds
+		_:
+			return "整匣更换 %.2f 秒" % step_seconds
 
 
 func _build_ui() -> void:

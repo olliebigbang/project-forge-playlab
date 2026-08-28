@@ -1487,23 +1487,67 @@ func _ranged_mechanism_is_ready() -> bool:
 	)
 
 func _ranged_fire_mode_text(runtime: Dictionary) -> String:
-	if bool(runtime.get("manual_cycle_required", false)):
-		return "每次按下只打一发；基础间隔加机械动作共 %.2f 秒，完成前锁住击发" % RANGED_AXIS_RESOLVER.manual_cycle_total_seconds(runtime)
+	var trigger_text := "每次按下只发射一发"
 	if bool(runtime.get("automatic_fire", false)):
-		return "按住连续射击"
-	var burst_size := int(runtime.get("burst_size", 0))
-	if burst_size > 1:
-		return "每次按下自动打出 %d 发短点射" % burst_size
-	return "每次按下只发射一发"
+		trigger_text = "按住连续射击"
+	else:
+		var burst_size := int(runtime.get("burst_size", 0))
+		if burst_size > 1:
+			trigger_text = "每次按下自动打出 %d 发短点射" % burst_size
+	if bool(runtime.get("cycle_required", false)):
+		return "%s；%s，总锁定 %.2f 秒，动作结束前不能再击发" % [
+			trigger_text,
+			_ranged_cycle_action_label(int(runtime.get("cycle_action_code", 0))),
+			RANGED_AXIS_RESOLVER.cycle_lock_total_seconds(runtime),
+		]
+	return trigger_text
 
 func _ranged_attack_input_text(runtime: Dictionary) -> String:
-	if bool(runtime.get("manual_cycle_required", false)):
-		return "点按射击（每发后自动拉栓）"
+	var input_text := "点按射击"
 	if bool(runtime.get("automatic_fire", false)):
-		return "按住连射"
-	if int(runtime.get("burst_size", 0)) > 1:
-		return "点按三连发"
-	return "点按射击"
+		input_text = "按住连射"
+	elif int(runtime.get("burst_size", 0)) > 1:
+		input_text = "点按三连发"
+	if bool(runtime.get("cycle_required", false)):
+		input_text += "（%s）" % _ranged_cycle_action_label(int(runtime.get("cycle_action_code", 0)))
+	return input_text
+
+
+func _ranged_cycle_action_label(action_code: int) -> String:
+	return str({1: "每发后拉栓", 2: "每发后泵动", 3: "扳机带动转轮"}.get(action_code, "自动完成循环"))
+
+
+func _ranged_shot_pattern_text(runtime: Dictionary) -> String:
+	var pellet_count := maxi(1, int(runtime.get("pellet_count", 1)))
+	if pellet_count > 1:
+		return "扣 1 发弹药，同时打出 %d 颗霰弹，均匀覆盖 %.0f°；每颗伤害 %.1f" % [
+			pellet_count,
+			float(runtime.get("pellet_spread_degrees", 0.0)),
+			float(runtime.get("projectile_damage", 0.0)) * float(runtime.get("pellet_damage_multiplier", 1.0)),
+		]
+	return "扣 1 发弹药，打出 1 颗弹丸；伤害 %.1f" % float(runtime.get("projectile_damage", 0.0))
+
+
+func _ranged_reload_feed_text(runtime: Dictionary) -> String:
+	var step_seconds := float(runtime.get("reload_seconds", 0.0))
+	var rounds_per_step := maxi(1, int(runtime.get("reload_rounds_per_step", 1)))
+	match int(runtime.get("reload_feed_code", 0)):
+		1:
+			return "逐发装填，每次 %.2f 秒；已有一发时可开枪打断" % step_seconds
+		2:
+			return "打开转轮，每次装 %d 发、耗时 %.2f 秒；整批完成前不能射击" % [rounds_per_step, step_seconds]
+		3:
+			return "整箱更换弹链，耗时 %.2f 秒" % step_seconds
+		_:
+			return "整匣更换，耗时 %.2f 秒" % step_seconds
+
+
+func _ranged_sustained_climb_text(runtime: Dictionary) -> String:
+	var per_shot := float(runtime.get("sustained_climb_per_shot_degrees", 0.0))
+	var cap := float(runtime.get("sustained_climb_cap_degrees", 0.0))
+	if per_shot <= 0.0 or cap <= 0.0:
+		return "连续射击不会额外累积上跳"
+	return "连续射击每发再上跳 %.2f°，最多额外 %.1f°；停火后自动回正" % [per_shot, cap]
 
 func _mechanism_error_zh(code: String) -> String:
 	if code in ["AI_AFFORDANCE_MISSING", "AI_AFFORDANCE_SOURCE_MISSING"] or code.begins_with("AI_AFFORDANCE_MISSING_"):
@@ -1660,7 +1704,7 @@ func _show_ranged_mechanism_summary() -> void:
 	var outer := VBoxContainer.new()
 	outer.add_theme_constant_override("separation", 12)
 	root.add_child(outer)
-	outer.add_child(_header("AI 射击卡 V3 已生成", "型号提供身份事实；单发、三连发或连射，以及射速、后坐、命中冲击和供弹，全部由机制轴编译。"))
+	outer.add_child(_header("AI 射击卡 V5 已生成", "型号只提供身份事实；击发、拉栓或泵动、弹丸数量、持续上跳和装填方式，全部由机制轴编译。"))
 	var columns := HBoxContainer.new()
 	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	columns.add_theme_constant_override("separation", 22)
@@ -1675,7 +1719,7 @@ func _show_ranged_mechanism_summary() -> void:
 	details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	details.add_theme_constant_override("separation", 6)
 	columns.add_child(details)
-	details.add_child(_badge("AI 型号声明 · V3 机制轴完整 · 因果参数已编译", Color("166534")))
+	details.add_child(_badge("AI 型号声明 · V5 机制轴完整 · 因果参数已编译", Color("166534")))
 	var source := Label.new()
 	source.text = "机制来源：%s · AI 置信度：%.2f\n玩家机制输入：未使用 · 玩家只确认外形身份" % [
 		current_blueprint.affordance_source,
@@ -1701,18 +1745,20 @@ func _show_ranged_mechanism_summary() -> void:
 		]
 		details.add_child(line)
 	var result_label := Label.new()
-	result_label.text = "编译后的游戏表现\n• %s\n• 基础击发间隔 %.2f 秒；后坐 %.1f 像素，以 %.1f 像素/秒回正；单发上跳 %.1f°\n• 单发伤害 %.1f；正面护甲保留 %.0f%%；可继续穿过 %d 个目标\n• 散布 %.1f；弹匣 %d 发；换弹 %.2f 秒" % [
+	result_label.text = "编译后的游戏表现\n• %s\n• %s\n• %s\n• %s\n• 基础击发间隔 %.2f 秒；后坐 %.1f 像素，以 %.1f 像素/秒回正；单发基础上跳 %.1f°\n• 正面护甲保留 %.0f%%；可继续穿过 %d 个目标；远距最低保留 %.0f%% 伤害\n• 基础散布 %.1f；容量 %d 发" % [
 		_ranged_fire_mode_text(current_ranged_mechanism),
+		_ranged_shot_pattern_text(current_ranged_mechanism),
+		_ranged_reload_feed_text(current_ranged_mechanism),
+		_ranged_sustained_climb_text(current_ranged_mechanism),
 		float(current_ranged_mechanism.get("shot_interval_seconds", 0.0)),
 		float(current_ranged_mechanism.get("recoil_pixels", 0.0)),
 		float(current_ranged_mechanism.get("recoil_recovery_pixels_per_second", 0.0)),
 		float(current_ranged_mechanism.get("muzzle_climb_degrees_per_shot", 0.0)),
-		float(current_ranged_mechanism.get("projectile_damage", 0.0)),
 		float(current_ranged_mechanism.get("armor_damage_multiplier", 0.0)) * 100.0,
 		int(current_ranged_mechanism.get("pierce_budget", 0)),
+		float(current_ranged_mechanism.get("damage_falloff_min_multiplier", 0.55)) * 100.0,
 		float(current_ranged_mechanism.get("spread_velocity", 0.0)),
 		int(current_ranged_mechanism.get("magazine_size", 0)),
-		float(current_ranged_mechanism.get("reload_seconds", 0.0)),
 	]
 	result_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	result_label.modulate = Color("bae6fd")
@@ -1882,13 +1928,20 @@ func _update_hud(data: Dictionary) -> void:
 		return
 	if arena._uses_firearm_runtime():
 		var magazine_size := int(arena.ranged_runtime_profile.get("magazine_size", 0))
-		var reload_text := " · 换弹 %.1fs" % arena.reload_timer if arena.reload_timer > 0.0 else ""
-		hud_stats.text = "%s · 生命 %d · 弹匣 %d/%d%s · 已射 %d" % [
+		var action_text := ""
+		if arena.manual_cycle_timer > 0.0:
+			action_text = " · %s %.1fs" % [
+				_ranged_cycle_action_label(int(arena.ranged_runtime_profile.get("cycle_action_code", 0))),
+				arena.manual_cycle_timer,
+			]
+		elif arena.reload_timer > 0.0:
+			action_text = " · 装填中 %.1fs" % arena.reload_timer
+		hud_stats.text = "%s · 生命 %d · 弹药 %d/%d%s · 已射 %d" % [
 			current_blueprint.display_name.left(18),
 			roundi(arena.player_health),
 			arena.ammo_in_magazine,
 			magazine_size,
-			reload_text,
+			action_text,
 			int(data.get("shots_fired", 0)),
 		]
 		return

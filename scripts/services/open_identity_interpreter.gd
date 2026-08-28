@@ -278,9 +278,26 @@ func player_explanation(blueprint: WeaponBlueprint) -> String:
 			firing_text = "按住连续射击"
 		elif fire_control == "three_round_burst":
 			firing_text = "每按一次自动完成三连发"
-		elif fire_control == "manual_cycle":
-			firing_text = "每按一次发射一发，随后自动完成拉栓，上膛结束前无法再次开火"
-		return "AI 已把“%s”识别为具体枪械；外形按枪托、握把、弹匣和枪口位置绘制，%s，后坐、散布、弹匣和换弹全部由远程机制轴决定。" % [identity, firing_text]
+		var runtime := RANGED_AXIS_RESOLVER.compile(blueprint.affordance, blueprint.affordance_source)
+		var cycle_text := "自动完成机械循环"
+		if bool(runtime.get("cycle_required", false)):
+			cycle_text = "%s，总共锁住击发 %.2f 秒" % [
+				str({1: "每发后拉栓", 2: "每发后泵动", 3: "扳机带动转轮"}.get(int(runtime.get("cycle_action_code", 0)), "完成机械循环")),
+				RANGED_AXIS_RESOLVER.cycle_lock_total_seconds(runtime),
+			]
+		var pellet_count := maxi(1, int(runtime.get("pellet_count", 1)))
+		var shot_text := "每枪 1 颗弹丸"
+		if pellet_count > 1:
+			shot_text = "每枪同时打出 %d 颗霰弹，只扣 1 发弹药" % pellet_count
+		var reload_text := str({
+			0: "整匣更换",
+			1: "逐发装填，已有一发时可开枪打断",
+			2: "分批装入转轮",
+			3: "整箱更换弹链",
+		}.get(int(runtime.get("reload_feed_code", 0)), "整匣更换"))
+		return "AI 已把“%s”识别为具体枪械；外形按枪托、握把、供弹结构和枪口位置绘制。%s；%s；%s；%s。后坐和持续上跳也全部由机制轴决定。" % [
+			identity, firing_text, cycle_text, shot_text, reload_text,
+		]
 	match blueprint.behavior_family:
 		"returning_thrown":
 			return "保留“%s”的原本外形；整个物件飞出、命中并返回，代价是返回前不能再次投出。" % identity

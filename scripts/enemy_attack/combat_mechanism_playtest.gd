@@ -45,10 +45,34 @@ func _process(_delta: float) -> void:
 		"敌人攻击 × 武器反应 试玩\n"
 		+ "WASD/方向键移动　空格或 J 射击　Shift 或 K 闪避　R 重开　Esc 退出\n"
 		+ "生命 %.0f　敌方弹体/地面危险区 %d\n" % [float(arena.player_health), arena.enemy_attack_hazards.size()]
+		+ "玩家枪械：%s\n" % _firearm_mechanism_text(arena.ranged_runtime_profile as Dictionary)
 		+ "看本体：炮管＝弹体　撞角＝冲撞　聚焦核心＝落点　挥击肢体＝近战\n"
 		+ "看范围：断续射线＝弹道　连续箭头＝冲撞通道　同心准星＝落点\n"
 		+ "敌人状态：" + "　|　".join(enemy_lines)
 	)
+
+
+func _firearm_mechanism_text(runtime: Dictionary) -> String:
+	var trigger_text := "按一下单发"
+	if bool(runtime.get("automatic_fire", false)):
+		trigger_text = "按住连射"
+	elif int(runtime.get("burst_size", 0)) > 1:
+		trigger_text = "按一下 %d 连发" % int(runtime.get("burst_size", 0))
+	var cycle_text := str({
+		1: "每发后拉栓",
+		2: "每发后泵动",
+		3: "扳机带动转轮",
+	}.get(int(runtime.get("cycle_action_code", 0)), "自动循环"))
+	var shot_text := "单弹丸"
+	if int(runtime.get("pellet_count", 1)) > 1:
+		shot_text = "%d 颗霰弹/枪" % int(runtime.get("pellet_count", 1))
+	var reload_text := str({
+		0: "整匣更换",
+		1: "逐发装填（可射击打断）",
+		2: "转轮分批装填",
+		3: "整箱更换弹链",
+	}.get(int(runtime.get("reload_feed_code", 0)), "整匣更换"))
+	return "%s · %s · %s · %s" % [trigger_text, cycle_text, shot_text, reload_text]
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -71,12 +95,12 @@ func _build_overlay() -> void:
 	add_child(layer)
 	var panel := ColorRect.new()
 	panel.position = Vector2(18, 14)
-	panel.size = Vector2(1244, 112)
+	panel.size = Vector2(1244, 142)
 	panel.color = Color(0.02, 0.05, 0.09, 0.88)
 	layer.add_child(panel)
 	status_label = Label.new()
 	status_label.position = Vector2(30, 22)
-	status_label.size = Vector2(1220, 104)
+	status_label.size = Vector2(1220, 134)
 	status_label.add_theme_font_override("font", load("res://assets/fonts/NotoSansCJKsc-Regular.otf") as Font)
 	status_label.add_theme_font_size_override("font_size", 15)
 	status_label.add_theme_color_override("font_color", Color("e2e8f0"))
@@ -86,6 +110,7 @@ func _build_overlay() -> void:
 func _playtest_firearm_axes() -> Dictionary:
 	return {
 		"weapon_domain": "handheld_firearm",
+		"firearm_family": "rifle",
 		"layout": "conventional_rifle",
 		"stock_structure": "fixed",
 		"feed_position": "ahead_of_grip",
@@ -94,6 +119,10 @@ func _playtest_firearm_axes() -> Dictionary:
 		"upper_profile": "top_rail",
 		"support_mode": "two_hand_shouldered",
 		"fire_control": "select_fire_auto",
+		"action_mechanism": "self_loading",
+		"feed_system": "detachable_box",
+		"shot_pattern": "single_projectile",
+		"sustained_climb": "progressive",
 		"cadence": "balanced",
 		"recoil": "medium",
 		"recoil_recovery": "balanced",
