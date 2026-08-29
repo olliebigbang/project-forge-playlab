@@ -51,11 +51,16 @@ func _capture_review_set() -> void:
 	root.add_child(sidearm_loop)
 	await process_frame
 	var sidearm_entry: Dictionary = {}
+	var sidearm_hint := _argument_value("--sidearm-hint=", "").to_lower()
 	for entry: Dictionary in sidearm_loop.armory.load_entries():
 		var blueprint := entry.get("blueprint") as WeaponBlueprint
 		if blueprint != null and str(blueprint.affordance.get("support_mode", "")) == "one_hand":
-			sidearm_entry = entry
-			break
+			if sidearm_entry.is_empty():
+				sidearm_entry = entry
+			var searchable := "%s %s" % [str(entry.get("identity", "")), blueprint.display_name]
+			if not sidearm_hint.is_empty() and searchable.to_lower().contains(sidearm_hint):
+				sidearm_entry = entry
+				break
 	if sidearm_entry.is_empty():
 		printerr("PIXEL_ART_CAPTURE_NO_SIDEARM")
 		quit(1)
@@ -65,7 +70,8 @@ func _capture_review_set() -> void:
 	await create_timer(0.72).timeout
 	await process_frame
 	await process_frame
-	var sidearm_path := absolute_output.path_join("sidearm_proportion.png")
+	var sidearm_filename := _argument_value("--sidearm-output=", "sidearm_proportion.png")
+	var sidearm_path := absolute_output.path_join(sidearm_filename.get_file())
 	var sidearm_error := _save_viewport(sidearm_path)
 	if sidearm_error != OK:
 		printerr("PIXEL_ART_CAPTURE_SAVE_FAILED:%s:%d" % [sidearm_path, sidearm_error])
@@ -85,3 +91,10 @@ func _save_viewport(path: String) -> Error:
 	if capture == null or capture.is_empty():
 		return ERR_FILE_CORRUPT
 	return capture.save_png(path)
+
+
+func _argument_value(prefix: String, fallback: String) -> String:
+	for argument: String in OS.get_cmdline_user_args():
+		if argument.begins_with(prefix):
+			return argument.trim_prefix(prefix)
+	return fallback

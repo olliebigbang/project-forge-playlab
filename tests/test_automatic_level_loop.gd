@@ -400,20 +400,24 @@ func _test_player_firearm_render_proportions() -> Variant:
 	arena.blueprint = entry.get("blueprint") as WeaponBlueprint
 	arena.asset = entry.get("asset") as WeaponVisualAsset
 	arena.ranged_runtime_profile = (entry.get("ranged_runtime_profile", {}) as Dictionary).duplicate(true)
-	arena.asset.opaque_bounds = Rect2i(0, 0, 64, 28)
 	arena.blueprint.affordance["support_mode"] = "one_hand"
-	var sidearm_scale := arena._firearm_draw_scale()
-	var sidearm_span := float(arena.asset.opaque_bounds.size.x) * sidearm_scale
+	var sidearm_matrix: Array[Dictionary] = []
+	var sidearms_ok := true
+	for source_width: int in [40, 64, 80, 96]:
+		arena.asset.opaque_bounds = Rect2i(0, 0, source_width, 28)
+		var scale := arena._firearm_draw_scale()
+		var span := float(source_width) * scale
+		sidearm_matrix.append({"source_width": source_width, "scale": scale, "span": span})
+		sidearms_ok = sidearms_ok and span <= 34.5
 	arena.asset.opaque_bounds = Rect2i(0, 0, 88, 32)
 	arena.blueprint.affordance["support_mode"] = "two_hand_shouldered"
 	var shouldered_scale := arena._firearm_draw_scale()
 	var shouldered_span := float(arena.asset.opaque_bounds.size.x) * shouldered_scale
-	var ok := sidearm_span <= 44.5 and shouldered_span <= 70.5
-	ok = ok and sidearm_scale < shouldered_scale
+	var ok := sidearms_ok and shouldered_span <= 70.5
+	ok = ok and float((sidearm_matrix[1] as Dictionary)["scale"]) < shouldered_scale
 	ok = ok and arena._firearm_hand_base().distance_to(arena.player_position) < 22.0
 	var result: Variant = true if ok else {
-		"sidearm_scale": sidearm_scale,
-		"sidearm_span": sidearm_span,
+		"sidearm_matrix": sidearm_matrix,
 		"shouldered_scale": shouldered_scale,
 		"shouldered_span": shouldered_span,
 		"hand_offset": arena._firearm_hand_base() - arena.player_position,

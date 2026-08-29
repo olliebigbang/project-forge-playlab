@@ -1088,8 +1088,9 @@ func _firearm_draw_scale() -> float:
 	# Normalize authored and generated sprites to the player instead of trusting
 	# their source-canvas size. A sidearm remains compact; a shouldered weapon may
 	# be longer but cannot become wider than the character's full stance.
-	var target_span := 44.0 if one_hand else 70.0
-	return clampf(target_span / visual_span, 0.62, 0.92)
+	var target_span := 34.0 if one_hand else 70.0
+	var minimum_scale := 0.34 if one_hand else 0.58
+	return clampf(target_span / visual_span, minimum_scale, 0.88)
 
 
 func _firearm_action_sample() -> Dictionary:
