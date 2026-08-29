@@ -185,6 +185,12 @@ def _validate_inert_declaration(value: Any) -> dict[str, Any]:
     return dict(value)
 
 
+def _canonical_inert_declaration() -> dict[str, Any]:
+    declaration = {key: "not_applicable" for key in STRING_AXIS_KEYS}
+    declaration.update({key: False for key in FLAG_KEYS})
+    return declaration
+
+
 def validate_response(identity: str, value: Mapping[str, Any]) -> dict[str, Any]:
     expected_keys = {
         "schema", "requested_identity", "classification", "canonical_name", "confidence",
@@ -221,14 +227,14 @@ def validate_response(identity: str, value: Mapping[str, Any]) -> dict[str, Any]
         behavior_family = "heavy_melee"
         scale_treatment = str(value.get("scale_treatment"))
     else:
-        if value.get("behavior_family") != "not_applicable" or value.get("scale_treatment") != "not_applicable":
-            raise GeneralObjectBridgeError("UNSUPPORTED_PROFILE_MUST_BE_INERT")
-        if value.get("visual_description_en") != "" or value.get("required_identity_parts_zh") != [] or value.get("confusable_exclusions_en") != []:
-            raise GeneralObjectBridgeError("UNSUPPORTED_VISUAL_FIELDS_MUST_BE_EMPTY")
+        # Only the routing classification is consumed for firearms, actors, and
+        # vehicles. Models sometimes fill the irrelevant visual/mechanism fields
+        # despite the prompt. Discard those fields instead of blocking the safe
+        # handoff to the dedicated compiler.
         visual_description = ""
         visible_parts = []
         exclusions = []
-        declaration = _validate_inert_declaration(value.get("declaration"))
+        declaration = _canonical_inert_declaration()
         behavior_family = "not_applicable"
         scale_treatment = "not_applicable"
     return {

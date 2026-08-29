@@ -1715,8 +1715,8 @@ func _show_mechanism_summary() -> void:
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 10)
 	outer.add_child(actions)
-	actions.add_child(_button("进入机制训练区", _start_mechanism_training, true))
-	actions.add_child(_button("带这个物件进三战关卡", _start_automatic_level))
+	actions.add_child(_button("进入三战正式关卡", _start_automatic_level, true))
+	actions.add_child(_button("仅测试物件动作（训练靶）", _start_mechanism_training))
 	actions.add_child(_button("返回 Forge", _show_forge))
 
 func _motion_labels_zh(sequence: PackedStringArray) -> PackedStringArray:
@@ -1800,9 +1800,9 @@ func _show_ranged_mechanism_summary() -> void:
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 10)
 	outer.add_child(actions)
-	actions.add_child(_button("进入射击训练区", _start_training, true))
-	actions.add_child(_button("带这把枪进三战关卡", _start_automatic_level))
-	actions.add_child(_button("带这把枪打 AI 敌人", _start_enemy_playtest))
+	actions.add_child(_button("进入三战正式关卡", _start_automatic_level, true))
+	actions.add_child(_button("仅测试射击手感（训练靶）", _start_training))
+	actions.add_child(_button("单个 AI 敌人机制测试", _start_enemy_playtest))
 	actions.add_child(_button("返回 Forge", _show_forge))
 
 func _mechanism_profile_is_ready() -> bool:
@@ -1921,15 +1921,16 @@ func _start_training() -> void:
 	top.mouse_filter = Control.MOUSE_FILTER_PASS
 	overlay.add_child(top)
 	var title := Label.new()
-	title.text = "开放身份训练区 · 不接入战斗房间"
-	title.add_theme_font_size_override("font_size", 26)
+	title.text = "武器训练靶场 · 画面中是测试靶，不是敌人"
+	title.add_theme_font_size_override("font_size", 20)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(title)
 	hud_stats = Label.new()
 	hud_stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	hud_stats.custom_minimum_size = Vector2(420, 0)
 	top.add_child(hud_stats)
-	top.add_child(_button("返回 Forge", _show_forge, true))
+	top.add_child(_button("进入正式三战", _start_automatic_level, true))
+	top.add_child(_button("返回 Forge", _show_forge))
 	var help := Label.new()
 	var attack_help := "Space / J 攻击"
 	if _requires_ranged_mechanism_profile():

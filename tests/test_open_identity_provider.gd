@@ -12,6 +12,7 @@ func _initialize() -> void:
 	_run("Strict loopback URL accepts only an exact local endpoint", _test_strict_loopback_url)
 	_run("Atomic result loading leaves delivered anchors untouched", _test_atomic_result_is_read_only)
 	_run("Forge home layout stays inside the 1280 viewport", _test_forge_layout_width)
+	_run("Formal encounters are the primary play path", _test_formal_encounter_primary_path)
 	print("OPEN IDENTITY PROVIDER RESULT: %d passed, %d failed" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -85,6 +86,16 @@ func _test_forge_layout_width() -> Variant:
 	forge.free()
 	if minimum_width > viewport_width:
 		return "Forge needs %.1f px but viewport is only %.1f px" % [minimum_width, viewport_width]
+	return true
+
+func _test_formal_encounter_primary_path() -> Variant:
+	var source := FileAccess.get_file_as_string("res://scripts/open_identity_spike.gd")
+	if source.count("进入三战正式关卡") < 2:
+		return "melee and ranged summaries do not both lead with the formal level"
+	if not source.contains("画面中是测试靶，不是敌人"):
+		return "training targets are not identified clearly"
+	if not source.contains("_button(\"进入正式三战\", _start_automatic_level, true)"):
+		return "target training has no direct route into the formal level"
 	return true
 
 func _write_json(path: String, value: Dictionary) -> void:
