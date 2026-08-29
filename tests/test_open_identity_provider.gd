@@ -20,6 +20,7 @@ func _initialize() -> void:
 	_run("Atomic result loading leaves delivered anchors untouched", _test_atomic_result_is_read_only)
 	_run("Forge home layout stays inside the 1280 viewport", _test_forge_layout_width)
 	_run("Formal encounters are the primary play path", _test_formal_encounter_primary_path)
+	_run("Generated weapon review keeps its actions inside the viewport", _test_generated_review_layout)
 	_run("Melee mechanism card keeps its actions inside the viewport", _test_melee_summary_layout)
 	_run("Ranged mechanism card keeps its actions inside the viewport", _test_ranged_summary_layout)
 	print("OPEN IDENTITY PROVIDER RESULT: %d passed, %d failed" % [passed, failed])
@@ -106,6 +107,33 @@ func _test_formal_encounter_primary_path() -> Variant:
 	if not source.contains("_button(\"进入正式三战\", _start_automatic_level, true)"):
 		return "target training has no direct route into the formal level"
 	return true
+
+func _test_generated_review_layout() -> Variant:
+	var interpretation: Dictionary = OPEN_INTERPRETER.new().interpret(
+		"M4A1", PackedByteArray(), {}
+	)
+	var blueprint := interpretation.get("blueprint") as WeaponBlueprint
+	var scaffold: Dictionary = FIREARM_SCAFFOLD.fallback(blueprint)
+	var asset := scaffold.get("asset") as WeaponVisualAsset
+	if blueprint == null or asset == null:
+		return "could not assemble the generated review fixture"
+	var forge = OPEN_IDENTITY_SCENE.instantiate()
+	root.add_child(forge)
+	forge._ready()
+	forge.current_blueprint = blueprint
+	forge.current_asset = asset
+	forge.current_explanation = "Long generated identity explanation used for layout coverage."
+	forge.current_interpretation_source = "CURATED_AI_FIREARM_IDENTITY_V5"
+	forge.current_visual_source = "FAL_FIREARM"
+	forge.current_output_directory = "C:/very/long/generated/output/path/that/must/wrap/without/pushing/actions/outside/the/window"
+	forge.current_manifest = {
+		"firearm_visual_gate_passed": true,
+		"firearm_visual_identity_gate": {"ok": true},
+	}
+	forge._show_review()
+	var result: Variant = _summary_page_result(forge.page as Control)
+	forge.free()
+	return result
 
 func _test_melee_summary_layout() -> Variant:
 	var payload_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(

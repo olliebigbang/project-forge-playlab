@@ -1305,10 +1305,21 @@ func _show_review() -> void:
 	preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	preview.configure(current_asset, false, false, current_blueprint.display_name)
 	columns.add_child(preview)
+	var details_column := VBoxContainer.new()
+	details_column.custom_minimum_size = Vector2(580, 0)
+	details_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	details_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	details_column.add_theme_constant_override("separation", 8)
+	columns.add_child(details_column)
+	var details_scroll := ScrollContainer.new()
+	details_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	details_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	details_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	details_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	details_column.add_child(details_scroll)
 	var details := VBoxContainer.new()
-	details.custom_minimum_size = Vector2(580, 0)
 	details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	columns.add_child(details)
+	details_scroll.add_child(details)
 	var is_sample := bool(current_blueprint.modifiers.get("local_sample_only", false))
 	var visual_mode := str(current_manifest.get("visual_mode", ""))
 	var is_mechanism_fallback := visual_mode in ["mechanism_scaffold_fallback", "firearm_scaffold_fallback"]
@@ -1378,7 +1389,7 @@ func _show_review() -> void:
 	details.add_child(evidence)
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 10)
-	details.add_child(actions)
+	details_column.add_child(actions)
 	if is_sample:
 		actions.add_child(_button("进入训练区（LOCAL SAMPLE）", _start_training, true))
 		actions.add_child(_button("返回 Forge", _show_forge))
