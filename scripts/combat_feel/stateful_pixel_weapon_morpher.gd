@@ -12,7 +12,8 @@ static func deform_local(
 	grip: Vector2,
 	strike: Vector2,
 	topology: String,
-	power_value: float
+	power_value: float,
+	state_context: Dictionary = {}
 ) -> Dictionary:
 	if image == null or image.is_empty():
 		return {"pixels": [], "metrics": {}, "errors": ["STATEFUL_PIXEL_IMAGE_MISSING"]}
@@ -29,7 +30,7 @@ static func deform_local(
 	var generated_fill_pixels := 0
 	var retained_source_pixels := 0
 	if topology == "radial_expand" and power > 0.01:
-		var radial := _radial_expand(image, grip, axis, normal, length, power)
+		var radial := _radial_expand(image, grip, axis, normal, length, power, state_context)
 		pixels = radial.get("pixels", []) as Array[Dictionary]
 		generated_fill_pixels = int(radial.get("generated_fill_pixels", 0))
 		retained_source_pixels = int(radial.get("retained_source_pixels", 0))
@@ -50,6 +51,10 @@ static func deform_local(
 	metrics["retained_source_pixels"] = retained_source_pixels
 	metrics["uses_source_palette"] = true
 	metrics["closed_sprite_replaced"] = topology != "fixed" and power > 0.01
+	if topology == "radial_expand" and power > 0.01:
+		var long_distal_deployment := _uses_long_distal_radial_deployment(state_context)
+		metrics["radial_hub_ratio"] = 0.90 if long_distal_deployment else 0.64
+		metrics["radial_canopy_direction"] = "toward_grip" if long_distal_deployment else "away_from_grip"
 	return {"pixels": pixels, "metrics": metrics, "errors": []}
 
 
@@ -99,7 +104,8 @@ static func _radial_expand(
 	axis: Vector2,
 	normal: Vector2,
 	length: float,
-	power: float
+	power: float,
+	state_context: Dictionary
 ) -> Dictionary:
 	var pixels: Array[Dictionary] = []
 	var palette := _source_palette(image, grip, axis, length)
@@ -107,10 +113,13 @@ static func _radial_expand(
 	var secondary := Color(palette.get("secondary", base.lightened(0.10)))
 	var outline := Color(palette.get("outline", base.darkened(0.30)))
 	var accent := Color(palette.get("accent", secondary.lightened(0.28)))
-	var hub_distance := length * 0.64
+	var long_distal_deployment := _uses_long_distal_radial_deployment(state_context)
+	var hub_distance := length * (0.90 if long_distal_deployment else 0.64)
 	var hub := grip + axis * hub_distance
-	var radius := maxf(14.0, length * lerpf(0.38, 0.58, power))
+	var radius_scale := lerpf(0.34, 0.46, power) if long_distal_deployment else lerpf(0.38, 0.58, power)
+	var radius := maxf(14.0, length * radius_scale)
 	var spread := lerpf(0.14, 1.22, power)
+	var canopy_direction := -1.0 if long_distal_deployment else 1.0
 	var generated_fill_pixels := 0
 	var maximum := ceili(radius) + 2
 	var ribs: Array[float] = [-1.0, -0.50, 0.0, 0.50, 1.0]
@@ -135,7 +144,7 @@ static func _radial_expand(
 				color = outline
 			elif rib:
 				color = accent
-			var target := hub + axis * float(axial_offset) + normal * float(lateral_offset)
+			var target := hub + axis * float(axial_offset) * canopy_direction + normal * float(lateral_offset)
 			pixels.append(_pixel(target - grip, color, true, target))
 			generated_fill_pixels += 1
 
@@ -171,6 +180,13 @@ static func _radial_expand(
 		"generated_fill_pixels": generated_fill_pixels,
 		"retained_source_pixels": retained_source_pixels,
 	}
+
+
+static func _uses_long_distal_radial_deployment(state_context: Dictionary) -> bool:
+	return (
+		str(state_context.get("handle_length", "")) == "long"
+		and str(state_context.get("body_length", "")) == "long"
+	)
 
 
 static func _source_palette(image: Image, grip: Vector2, axis: Vector2, length: float) -> Dictionary:

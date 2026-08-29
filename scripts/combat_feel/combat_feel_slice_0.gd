@@ -1432,7 +1432,8 @@ func _draw_stateful_pixel_weapon_local(primitive: Variant, power: float) -> void
 		asset.grip_primary,
 		asset.tip,
 		str(primitive.state_topology),
-		power
+		power,
+		motion_profile.mechanism_axes
 	)
 	for pixel: Dictionary in deformation.get("pixels", []):
 		var position := Vector2(pixel.get("position", Vector2.ZERO))

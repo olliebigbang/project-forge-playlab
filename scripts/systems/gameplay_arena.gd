@@ -1188,7 +1188,8 @@ func _draw_stateful_pixel_weapon_local(power: float) -> void:
 		asset.grip_primary,
 		asset.tip,
 		str(blueprint.affordance.get("state_topology", "fixed")),
-		power
+		power,
+		blueprint.affordance
 	)
 	for pixel: Dictionary in deformation.get("pixels", []):
 		var position := Vector2(pixel.get("position", Vector2.ZERO))

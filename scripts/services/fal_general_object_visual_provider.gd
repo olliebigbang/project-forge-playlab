@@ -456,6 +456,10 @@ func _apply_mechanism_anchor_intent(asset: WeaponVisualAsset, blueprint: WeaponB
 	if asset == null or blueprint == null:
 		return
 	var grip_topology := str(blueprint.affordance.get("grip_topology", ""))
+	if grip_topology == "one_hand_handle":
+		if _apply_one_hand_endpoint_roles(asset, blueprint):
+			_normalize_asset_forward(asset)
+		return
 	if grip_topology not in ["body_grip", "clamp_grip"]:
 		return
 	var target_ratio: float = float({
@@ -473,6 +477,146 @@ func _apply_mechanism_anchor_intent(asset: WeaponVisualAsset, blueprint: WeaponB
 	)
 	asset.anchor_source = "alpha+ai_grip_topology+mass_distribution"
 	asset.anchor_confidence = minf(asset.anchor_confidence, 0.82)
+
+
+func _apply_one_hand_endpoint_roles(asset: WeaponVisualAsset, blueprint: WeaponBlueprint) -> bool:
+	var terminals := _principal_terminal_analysis(asset.source_image, asset.opaque_bounds)
+	if not bool(terminals.get("ok", false)):
+		return false
+	var contact_surface := str(blueprint.affordance.get("contact_surface", ""))
+	if contact_surface not in ["point", "broad", "whole_body"]:
+		return false
+	var low_count := int(terminals.get("low_count", 0))
+	var high_count := int(terminals.get("high_count", 0))
+	var smaller := maxi(1, mini(low_count, high_count))
+	var larger := maxi(low_count, high_count)
+	if float(larger) / float(smaller) < 1.18:
+		return false
+	var strike_uses_low := low_count < high_count if contact_surface == "point" else low_count > high_count
+	var strike_terminal := Vector2(terminals.get("low", Vector2.ZERO) if strike_uses_low else terminals.get("high", Vector2.ZERO))
+	var grip_terminal := Vector2(terminals.get("high", Vector2.ZERO) if strike_uses_low else terminals.get("low", Vector2.ZERO))
+	var centroid := Vector2(terminals.get("centroid", asset.spin_pivot))
+	var span := float(terminals.get("span", 0.0))
+	var grip_target := grip_terminal.lerp(centroid, 0.14)
+	var resolved_grip := _nearest_opaque(asset.source_image, grip_target, clampi(roundi(span * 0.12), 6, 16))
+	var resolved_strike := _nearest_opaque(asset.source_image, strike_terminal, 5)
+	if resolved_grip.distance_to(resolved_strike) < maxf(12.0, span * 0.48):
+		return false
+	asset.grip_primary = resolved_grip
+	asset.grip_secondary = _nearest_opaque(asset.source_image, resolved_grip.lerp(centroid, 0.26), 9)
+	asset.tip = resolved_strike
+	asset.muzzle = resolved_strike
+	asset.rear_contact = resolved_grip
+	asset.anchor_source = "alpha_principal_terminals+ai_contact_surface"
+	asset.anchor_confidence = minf(asset.anchor_confidence, 0.82)
+	return true
+
+
+func _principal_terminal_analysis(image: Image, bounds: Rect2i) -> Dictionary:
+	if image == null or image.is_empty() or bounds.size == Vector2i.ZERO:
+		return {"ok": false}
+	var centroid := ANCHOR_RESOLVER.alpha_centroid(image, bounds)
+	var covariance_xx := 0.0
+	var covariance_xy := 0.0
+	var covariance_yy := 0.0
+	var opaque_count := 0
+	for y: int in range(bounds.position.y, bounds.end.y):
+		for x: int in range(bounds.position.x, bounds.end.x):
+			if image.get_pixel(x, y).a <= 0.10:
+				continue
+			var delta := Vector2(float(x), float(y)) - centroid
+			covariance_xx += delta.x * delta.x
+			covariance_xy += delta.x * delta.y
+			covariance_yy += delta.y * delta.y
+			opaque_count += 1
+	if opaque_count < 12:
+		return {"ok": false}
+	var angle := 0.5 * atan2(2.0 * covariance_xy, covariance_xx - covariance_yy)
+	var axis := Vector2(cos(angle), sin(angle)).normalized()
+	var minimum_projection := INF
+	var maximum_projection := -INF
+	for y: int in range(bounds.position.y, bounds.end.y):
+		for x: int in range(bounds.position.x, bounds.end.x):
+			if image.get_pixel(x, y).a <= 0.10:
+				continue
+			var projection := (Vector2(float(x), float(y)) - centroid).dot(axis)
+			minimum_projection = minf(minimum_projection, projection)
+			maximum_projection = maxf(maximum_projection, projection)
+	var span := maximum_projection - minimum_projection
+	if span < 18.0:
+		return {"ok": false}
+	var terminal_band := maxf(2.5, span * 0.045)
+	var low_total := Vector2.ZERO
+	var high_total := Vector2.ZERO
+	var low_samples := 0
+	var high_samples := 0
+	for y: int in range(bounds.position.y, bounds.end.y):
+		for x: int in range(bounds.position.x, bounds.end.x):
+			if image.get_pixel(x, y).a <= 0.10:
+				continue
+			var point := Vector2(float(x), float(y))
+			var projection := (point - centroid).dot(axis)
+			if projection <= minimum_projection + terminal_band:
+				low_total += point
+				low_samples += 1
+			if projection >= maximum_projection - terminal_band:
+				high_total += point
+				high_samples += 1
+	if low_samples == 0 or high_samples == 0:
+		return {"ok": false}
+	var low := low_total / float(low_samples)
+	var high := high_total / float(high_samples)
+	var radius := clampi(roundi(span * 0.16), 7, 18)
+	return {
+		"ok": true,
+		"centroid": centroid,
+		"axis": axis,
+		"span": span,
+		"low": low,
+		"high": high,
+		"low_count": _opaque_neighborhood_count(image, low, radius),
+		"high_count": _opaque_neighborhood_count(image, high, radius),
+	}
+
+
+func _opaque_neighborhood_count(image: Image, center: Vector2, radius: int) -> int:
+	var count := 0
+	var center_pixel := Vector2i(roundi(center.x), roundi(center.y))
+	for y: int in range(maxi(0, center_pixel.y - radius), mini(image.get_height(), center_pixel.y + radius + 1)):
+		for x: int in range(maxi(0, center_pixel.x - radius), mini(image.get_width(), center_pixel.x + radius + 1)):
+			if Vector2i(x, y).distance_squared_to(center_pixel) <= radius * radius and image.get_pixel(x, y).a > 0.10:
+				count += 1
+	return count
+
+
+func _normalize_asset_forward(asset: WeaponVisualAsset) -> void:
+	asset.orientation_source = "GripPrimary->StrikePoint:alpha+ai_axes"
+	if asset.tip.x >= asset.grip_primary.x:
+		return
+	var width := asset.source_image.get_width()
+	var image_copy := Image.new()
+	image_copy.copy_from(asset.source_image)
+	image_copy.flip_x()
+	asset.source_image = image_copy
+	asset.texture = ImageTexture.create_from_image(image_copy)
+	asset.opaque_bounds = Rect2i(
+		width - asset.opaque_bounds.end.x,
+		asset.opaque_bounds.position.y,
+		asset.opaque_bounds.size.x,
+		asset.opaque_bounds.size.y
+	)
+	asset.grip_primary = _flip_point_x(asset.grip_primary, width)
+	asset.grip_secondary = _flip_point_x(asset.grip_secondary, width)
+	asset.tip = _flip_point_x(asset.tip, width)
+	asset.muzzle = _flip_point_x(asset.muzzle, width)
+	asset.tether_origin = _flip_point_x(asset.tether_origin, width)
+	asset.spin_pivot = _flip_point_x(asset.spin_pivot, width)
+	asset.rear_contact = _flip_point_x(asset.rear_contact, width)
+	asset.orientation_flipped = true
+
+
+func _flip_point_x(point: Vector2, width: int) -> Vector2:
+	return Vector2(float(width - 1) - point.x, point.y)
 
 
 func _nearest_opaque(image: Image, desired: Vector2, radius: int) -> Vector2:

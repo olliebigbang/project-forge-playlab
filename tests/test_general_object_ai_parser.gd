@@ -4,6 +4,7 @@ const AI_RESOLVER := preload("res://scripts/combat_feel/general_object_ai_resolv
 const INTERPRETER := preload("res://scripts/services/open_identity_interpreter.gd")
 const AI_PROVIDER := preload("res://scripts/services/general_object_ai_provider.gd")
 const FAL_VISUAL_PROVIDER := preload("res://scripts/services/fal_general_object_visual_provider.gd")
+const ANCHOR_RESOLVER := preload("res://scripts/systems/anchor_resolver.gd")
 const OPEN_FLOW := preload("res://scripts/open_identity_spike.gd")
 const SCAFFOLD_PIPELINE := preload("res://scripts/combat_feel/mechanism_visual_scaffold_pipeline.gd")
 const AXIS_RESOLVER := preload("res://scripts/combat_feel/mechanism_axis_resolver.gd")
@@ -28,6 +29,7 @@ func _initialize() -> void:
 	_run("Identity echo blocks prompt substitution", _test_identity_echo_guard)
 	_run("Godot provider receives one atomic offline bridge result", _test_provider_offline_bridge)
 	_run("FAL general-object candidate becomes a real 96px Alpha asset", _test_fal_visual_provider_handoff)
+	_run("One-hand point-contact silhouettes resolve handle and strike endpoints before facing normalization", _test_one_hand_endpoint_role_orientation)
 	_run("Validated object identities round-trip through the local cache", _test_cache_round_trip)
 	_run("Old cache entries missing state axes are rejected for live regeneration", _test_stale_cache_requires_regeneration)
 	print("GENERAL OBJECT AI PARSER RESULT: %d passed, %d failed" % [passed, failed])
@@ -394,6 +396,40 @@ func _test_fal_visual_provider_handoff() -> Variant:
 		or (visual_request.get("axes", {}) as Dictionary).size() != AXIS_RESOLVER.REQUIRED_AXES.size() + AXIS_RESOLVER.REQUIRED_FLAGS.size():
 		return "strict FAL visual request lost identity or mechanism fields"
 	return true
+
+
+func _test_one_hand_endpoint_role_orientation() -> Variant:
+	var blueprint := WeaponBlueprint.new()
+	blueprint.behavior_family = "heavy_melee"
+	blueprint.grip_profile = "rear_grip"
+	blueprint.affordance = {
+		"handle_length": "long",
+		"body_length": "long",
+		"grip_topology": "one_hand_handle",
+		"mass_distribution": "balanced",
+		"contact_surface": "point",
+	}
+	var image := Image.create(96, 96, false, Image.FORMAT_RGBA8)
+	image.fill(Color.TRANSPARENT)
+	# The narrow point is on the left; the visibly larger crook/handle terminal is
+	# on the right.  This deliberately contradicts the legacy left-grip guess.
+	image.fill_rect(Rect2i(8, 47, 7, 3), Color("cbd5e1"))
+	image.fill_rect(Rect2i(14, 45, 65, 7), Color("334155"))
+	image.fill_rect(Rect2i(73, 35, 12, 22), Color("8b5a35"))
+	image.fill_rect(Rect2i(65, 33, 20, 8), Color("8b5a35"))
+	var asset := ANCHOR_RESOLVER.resolve(image, blueprint)
+	if asset == null:
+		return "synthetic one-hand silhouette did not resolve"
+	var visual_provider := FAL_VISUAL_PROVIDER.new()
+	visual_provider._apply_mechanism_anchor_intent(asset, blueprint)
+	var ok := (
+		asset.orientation_flipped
+		and asset.tip.x > asset.grip_primary.x
+		and asset.grip_primary.distance_to(asset.tip) >= 48.0
+		and asset.anchor_source == "alpha_principal_terminals+ai_contact_surface"
+		and asset.orientation_source == "GripPrimary->StrikePoint:alpha+ai_axes"
+	)
+	return true if ok else asset.anchors_dict()
 
 
 func _test_cache_round_trip() -> Variant:

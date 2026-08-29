@@ -25,6 +25,7 @@ func _run() -> void:
 	_test_every_structural_axis_changes_the_drawing_contract()
 	_test_every_structural_axis_changes_the_pixel_scaffold()
 	_test_stateful_pixels_replace_the_closed_sprite_with_a_filled_active_silhouette()
+	_test_long_radial_deployment_opens_back_from_the_distal_hub()
 	_test_prompt_carries_mechanism_structure_before_generation()
 	_test_four_existing_structures_pass_the_readability_gate()
 	_test_four_axis_scaffolds_are_distinct_and_machine_readable()
@@ -203,6 +204,40 @@ func _test_stateful_pixels_replace_the_closed_sprite_with_a_filled_active_silhou
 	_check(ok, "02b active state replaces the closed sprite with a filled source-palette pixel silhouette rather than guide lines", {
 		"closed": closed_metrics,
 		"opened": opened_metrics,
+	})
+
+
+func _test_long_radial_deployment_opens_back_from_the_distal_hub() -> void:
+	var image := Image.create(96, 96, false, Image.FORMAT_RGBA8)
+	image.fill(Color.TRANSPARENT)
+	image.fill_rect(Rect2i(8, 44, 24, 9), Color("8b5a35"))
+	image.fill_rect(Rect2i(26, 46, 58, 5), Color("26384f"))
+	var grip := Vector2(18.0, 48.0)
+	var strike := Vector2(84.0, 48.0)
+	var opened := STATEFUL_PIXEL_MORPHER.deform_local(image, grip, strike, "radial_expand", 1.0, {
+		"handle_length": "long",
+		"body_length": "long",
+	})
+	var metrics := opened.get("metrics", {}) as Dictionary
+	var maximum_generated_axial := -INF
+	var minimum_generated_axial := INF
+	for pixel: Dictionary in opened.get("pixels", []):
+		if not bool(pixel.get("generated", false)):
+			continue
+		var position := Vector2(pixel.get("position", Vector2.ZERO))
+		maximum_generated_axial = maxf(maximum_generated_axial, position.x)
+		minimum_generated_axial = minf(minimum_generated_axial, position.x)
+	var length := grip.distance_to(strike)
+	var ok := (
+		str(metrics.get("radial_canopy_direction", "")) == "toward_grip"
+		and is_equal_approx(float(metrics.get("radial_hub_ratio", 0.0)), 0.90)
+		and maximum_generated_axial <= length + 1.0
+		and minimum_generated_axial < length * 0.62
+	)
+	_check(ok, "02c a long radial object keeps its handle at the hand and opens its solid canopy back from the distal hub", {
+		"metrics": metrics,
+		"generated_axial_range": [minimum_generated_axial, maximum_generated_axial],
+		"grip_to_strike": length,
 	})
 
 
