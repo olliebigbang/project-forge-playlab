@@ -44,6 +44,10 @@ static func deform_local(
 				var target := _transform_source_pixel(source, grip, axis, normal, length, topology, power)
 				pixels.append(_pixel(target - grip, color, false, source))
 				retained_source_pixels += 1
+		if topology == "telescoping" and power > 0.01:
+			var telescope_fill := _fill_transformed_neighbor_gaps(pixels)
+			pixels.append_array(telescope_fill)
+			generated_fill_pixels += telescope_fill.size()
 	var metrics := _metrics(pixels, axis, normal)
 	metrics["topology"] = topology
 	metrics["power"] = power
@@ -79,12 +83,16 @@ static func _transform_source_pixel(
 		"folding":
 			var first_distance := length * 0.34
 			var second_distance := length * 0.67
+			var first_angle := 0.68 * power
 			if axial > second_distance:
+				var first := grip + axis * first_distance
 				var second := grip + axis * second_distance
-				return second + (point - second).rotated(-0.82 * power)
+				var moved_second := first + (second - first).rotated(first_angle)
+				var moved_point := first + (point - first).rotated(first_angle)
+				return moved_second + (moved_point - moved_second).rotated(-0.82 * power)
 			if axial > first_distance:
 				var first := grip + axis * first_distance
-				return first + (point - first).rotated(0.68 * power)
+				return first + (point - first).rotated(first_angle)
 		"telescoping":
 			var root_distance := length * 0.25
 			if axial > root_distance:
@@ -96,6 +104,32 @@ static func _transform_source_pixel(
 				var pivot := grip + axis * pivot_distance
 				return pivot + (point - pivot).rotated(1.72 * power)
 	return point
+
+
+static func _fill_transformed_neighbor_gaps(pixels: Array[Dictionary]) -> Array[Dictionary]:
+	var by_source: Dictionary = {}
+	for pixel: Dictionary in pixels:
+		var source := Vector2(pixel.get("source_position", Vector2.ZERO))
+		by_source["%d:%d" % [roundi(source.x), roundi(source.y)]] = pixel
+	var fill: Array[Dictionary] = []
+	for pixel: Dictionary in pixels:
+		var source := Vector2(pixel.get("source_position", Vector2.ZERO))
+		var start := Vector2(pixel.get("position", Vector2.ZERO))
+		for offset: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN]:
+			var neighbor_key := "%d:%d" % [roundi(source.x) + offset.x, roundi(source.y) + offset.y]
+			if not by_source.has(neighbor_key):
+				continue
+			var neighbor := by_source[neighbor_key] as Dictionary
+			var finish := Vector2(neighbor.get("position", start))
+			var steps := ceili(start.distance_to(finish))
+			if steps <= 1:
+				continue
+			var start_color := Color(pixel.get("color", Color.WHITE))
+			var finish_color := Color(neighbor.get("color", start_color))
+			for step: int in range(1, steps):
+				var ratio := float(step) / float(steps)
+				fill.append(_pixel(start.lerp(finish, ratio), start_color.lerp(finish_color, ratio), true, source.lerp(Vector2(roundi(source.x) + offset.x, roundi(source.y) + offset.y), ratio)))
+	return fill
 
 
 static func _radial_expand(

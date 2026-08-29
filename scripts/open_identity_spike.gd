@@ -398,12 +398,20 @@ func _general_object_ai_enabled() -> bool:
 func _should_request_general_object_ai(result: Dictionary, identity: String) -> bool:
 	if not _general_object_ai_enabled() or identity.strip_edges().is_empty():
 		return false
+	return _result_requires_general_object_ai(result)
+
+
+func _result_requires_general_object_ai(result: Dictionary) -> bool:
 	if bool(result.get("ok", false)):
 		var blueprint := result.get("blueprint") as WeaponBlueprint
-		return blueprint != null and blueprint.behavior_family == "heavy_melee" and blueprint.affordance.is_empty()
+		if blueprint == null:
+			return false
+		# Action words in an object description are not authoritative mechanics.
+		# Only a completed firearm card may bypass the general physical-object AI.
+		return blueprint.affordance.is_empty()
 	return (
 		str(result.get("error", "")) == "AI_BEHAVIOR_REANALYSIS_REQUIRED"
-		and str(result.get("reason", "")) == "behavior_action_unclear"
+		and str(result.get("reason", "")).begins_with("behavior_action_")
 	)
 
 

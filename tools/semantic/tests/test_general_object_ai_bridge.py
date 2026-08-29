@@ -280,6 +280,7 @@ class GeneralObjectAIBridgeTests(unittest.TestCase):
         self.assertIn("untrusted identity data", prompt)
         self.assertIn("Do not ask the player how the object attacks", prompt)
         self.assertIn("bicycle", prompt)
+        self.assertIn("rigid sections joined into a freely articulated chain", prompt)
         self.assertFalse(schema["additionalProperties"])
         self.assertFalse(schema["properties"]["declaration"]["additionalProperties"])
 
@@ -324,7 +325,13 @@ class GeneralObjectAIBridgeTests(unittest.TestCase):
         self.assertEqual(usage, {"input_tokens": 20, "output_tokens": 10})
         self.assertEqual(len(FakeCompiler.prompts), 2)
         self.assertIn("DECLARATION_FLEX_RIGIDITY_CONFLICT", FakeCompiler.prompts[1])
+        self.assertIn("any non-none flex_topology requires rigidity flexible", FakeCompiler.prompts[1])
         self.assertIn("do not change the identity", FakeCompiler.prompts[1])
+
+    def test_repair_prompt_explains_handle_grip_consistency_without_naming_an_object(self) -> None:
+        prompt = bridge._repair_system_prompt("base", "DECLARATION_HANDLE_GRIP_CONFLICT")
+        self.assertIn("handle_length none requires body_grip or clamp_grip", prompt)
+        self.assertNotIn("ladder", prompt.lower())
 
     def test_identity_substitution_never_enters_the_repair_loop(self) -> None:
         class FakeCompiler:

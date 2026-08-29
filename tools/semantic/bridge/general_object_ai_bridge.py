@@ -279,12 +279,28 @@ def _clarification_schema() -> dict[str, Any]:
 
 
 def _repair_system_prompt(base_prompt: str, error_code: str) -> str:
+    repair_hints = {
+        "DECLARATION_FLEX_RIGIDITY_CONFLICT": (
+            "For this exact error: flex_topology none requires rigidity rigid or semi_rigid; "
+            "any non-none flex_topology requires rigidity flexible. Judge the assembled path."
+        ),
+        "DECLARATION_HANDLE_GRIP_CONFLICT": (
+            "For this exact error: handle_length none requires body_grip or clamp_grip. "
+            "Use one_hand_handle or two_hand_handle only when a distinct handle exists and give it a non-none length."
+        ),
+        "DECLARATION_BODY_GRIP_CONFLICT": (
+            "For this exact error: body_grip requires handle_length none. If a distinct handle exists, "
+            "keep its non-none length and choose one_hand_handle or two_hand_handle instead."
+        ),
+    }
+    repair_hint = repair_hints.get(error_code, "Recheck every cross-field rule in the base prompt.")
     return (
         f"{base_prompt}\n\n"
         "Automatic local validation rejected the previous object card with "
         f"error code {error_code}. Rebuild the complete card for the exact same "
         "requested_identity. Correct the schema or physical-axis consistency; "
-        "do not change the identity, ask the player a question, or invent a named template."
+        "do not change the identity, ask the player a question, or invent a named template. "
+        f"{repair_hint}"
     )
 
 

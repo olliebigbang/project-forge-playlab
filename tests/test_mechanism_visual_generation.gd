@@ -26,6 +26,8 @@ func _run() -> void:
 	_test_every_structural_axis_changes_the_pixel_scaffold()
 	_test_stateful_pixels_replace_the_closed_sprite_with_a_filled_active_silhouette()
 	_test_long_radial_deployment_opens_back_from_the_distal_hub()
+	_test_folding_segments_preserve_joint_continuity()
+	_test_telescoping_pixels_remain_continuous_after_extension()
 	_test_prompt_carries_mechanism_structure_before_generation()
 	_test_four_existing_structures_pass_the_readability_gate()
 	_test_four_axis_scaffolds_are_distinct_and_machine_readable()
@@ -238,6 +240,59 @@ func _test_long_radial_deployment_opens_back_from_the_distal_hub() -> void:
 		"metrics": metrics,
 		"generated_axial_range": [minimum_generated_axial, maximum_generated_axial],
 		"grip_to_strike": length,
+	})
+
+
+func _test_folding_segments_preserve_joint_continuity() -> void:
+	var image := Image.create(96, 96, false, Image.FORMAT_RGBA8)
+	image.fill(Color.TRANSPARENT)
+	image.fill_rect(Rect2i(10, 47, 71, 3), Color("cbd5e1"))
+	var grip := Vector2(10.0, 48.0)
+	var strike := Vector2(80.0, 48.0)
+	var folded := STATEFUL_PIXEL_MORPHER.deform_local(image, grip, strike, "folding", 1.0)
+	var before_joint := Vector2(INF, INF)
+	var after_joint := Vector2(-INF, -INF)
+	for pixel: Dictionary in folded.get("pixels", []):
+		var source := Vector2(pixel.get("source_position", Vector2.ZERO))
+		if is_equal_approx(source.y, 48.0) and is_equal_approx(source.x, 56.0):
+			before_joint = Vector2(pixel.get("position", Vector2.ZERO))
+		if is_equal_approx(source.y, 48.0) and is_equal_approx(source.x, 57.0):
+			after_joint = Vector2(pixel.get("position", Vector2.ZERO))
+	var gap := before_joint.distance_to(after_joint)
+	var ok := before_joint.x < INF and after_joint.x > -INF and gap <= 2.0
+	_check(ok, "02d chained folding transforms keep the distal section attached to the moved second joint", {
+		"before_joint": before_joint,
+		"after_joint": after_joint,
+		"gap": gap,
+	})
+
+
+func _test_telescoping_pixels_remain_continuous_after_extension() -> void:
+	var image := Image.create(96, 96, false, Image.FORMAT_RGBA8)
+	image.fill(Color.TRANSPARENT)
+	image.fill_rect(Rect2i(10, 47, 71, 3), Color("cbd5e1"))
+	var extended := STATEFUL_PIXEL_MORPHER.deform_local(
+		image, Vector2(10.0, 48.0), Vector2(80.0, 48.0), "telescoping", 1.0
+	)
+	var occupied_x: Array[int] = []
+	for pixel: Dictionary in extended.get("pixels", []):
+		var position := Vector2(pixel.get("position", Vector2.ZERO))
+		if is_equal_approx(position.y, 0.0):
+			occupied_x.append(roundi(position.x))
+	occupied_x.sort()
+	var maximum_gap := 0
+	var previous := -99999
+	for x: int in occupied_x:
+		if x == previous:
+			continue
+		if previous > -99999:
+			maximum_gap = maxi(maximum_gap, x - previous)
+		previous = x
+	var metrics := extended.get("metrics", {}) as Dictionary
+	var ok := maximum_gap <= 1 and int(metrics.get("generated_fill_pixels", 0)) > 0
+	_check(ok, "02e telescoping source pixels stay visually continuous instead of becoming a dotted line", {
+		"maximum_gap": maximum_gap,
+		"generated_fill_pixels": metrics.get("generated_fill_pixels", 0),
 	})
 
 

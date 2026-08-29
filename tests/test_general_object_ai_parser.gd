@@ -23,6 +23,7 @@ func _initialize() -> void:
 	_run("Whip and fishing rod retain different soft and tether attacks", _test_soft_object_matrix)
 	_run("Seeded anonymous physical-axis distribution compiles without identity branches", _test_seeded_anonymous_distribution)
 	_run("AI object profile reaches a complete blueprint without a mechanism question", _test_interpreter_and_flow_boundary)
+	_run("Object action words cannot bypass the general-object AI mechanism decision", _test_action_words_do_not_bypass_general_object_ai)
 	_run("Invalid AI axes fail closed before drawing", _test_invalid_axes_rejected)
 	_run("Selected contact axes repair only their redundant capability flags", _test_contact_flag_canonicalization)
 	_run("Firearms vehicles and living actors route to separate compilers", _test_classification_boundaries)
@@ -277,6 +278,19 @@ func _test_interpreter_and_flow_boundary() -> Variant:
 	)
 	flow.free()
 	return true if flow_ok else flow_result
+
+
+func _test_action_words_do_not_bypass_general_object_ai() -> Variant:
+	var identity := "一个按住开关后前端三片叶片持续绕轴旋转的手持搅拌器"
+	var interpreter: WeaponInterpreter = INTERPRETER.new()
+	var interpretation: Dictionary = interpreter.interpret(identity, PackedByteArray(), {})
+	var blueprint := interpretation.get("blueprint") as WeaponBlueprint
+	if blueprint == null or blueprint.behavior_family != "sustained_ranged" or not blueprint.affordance.is_empty():
+		return "fixture did not reproduce the old action-word bypass"
+	var flow := OPEN_FLOW.new()
+	var reroutes := flow._result_requires_general_object_ai(interpretation)
+	flow.free()
+	return reroutes
 
 
 func _test_invalid_axes_rejected() -> Variant:

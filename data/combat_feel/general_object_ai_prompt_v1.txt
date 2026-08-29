@@ -18,7 +18,7 @@ For improvised_object_supported:
 - handle_length describes a distinct region used as a handle. Use none when the body itself is held;
 - body_length describes the weaponized object's attack span after game-scale normalization, not real-world metres;
 - grip_topology describes how the player holds it. handle_length none requires body_grip or clamp_grip; body_grip requires handle_length none;
-- rigidity is rigid, semi_rigid, or flexible. Flexible objects require a non-none flex_topology; non-flexible objects require flex_topology none;
+- rigidity is rigid, semi_rigid, or flexible. Flexible objects require a non-none flex_topology; non-flexible objects require flex_topology none. Judge rigidity for the assembled attack-bearing path, not each component in isolation: rigid sections joined into a freely articulated chain use rigidity flexible with flex_topology linked_segments; rigid sections that only change between discrete stored/deployed shapes use flex_topology none and the matching hinged or folding state_topology;
 - mass_distribution describes where the moving mass sits relative to the grip;
 - contact_surface is the dominant mechanical contact: point, edge, broad, or whole_body. secondary_contact_surface is a genuinely different secondary contact or none;
 - broad means a continuous visibly wide contact face. A wheel rim, loop, open bicycle frame, cage, or cluster of thin rods is not a broad face. When an assembled open frame collides as one object, use whole_body and keep has_broad_face false;
