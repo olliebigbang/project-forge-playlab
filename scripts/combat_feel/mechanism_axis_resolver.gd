@@ -16,6 +16,9 @@ const REQUIRED_AXES: PackedStringArray = [
 	"terminal_load",
 	"tether_mode",
 	"tether_deployment",
+	"state_topology",
+	"activation_mode",
+	"functional_output",
 ]
 const SOFT_AXES: PackedStringArray = ["flex_topology", "tether_topology", "terminal_load", "tether_mode", "tether_deployment"]
 const DECLARATION_VALUES := {
@@ -31,6 +34,9 @@ const DECLARATION_VALUES := {
 	"terminal_load": ["none", "light", "heavy"],
 	"tether_mode": ["none", "wrap", "hook"],
 	"tether_deployment": ["none", "fixed_length", "cast_retract", "launch_tension"],
+	"state_topology": ["fixed", "hinged", "folding", "telescoping", "radial_expand", "rotary"],
+	"activation_mode": ["passive", "momentary", "toggle", "charge_release", "continuous_hold"],
+	"functional_output": ["contact_only", "directed_stream", "radial_field", "pull_field"],
 }
 const REQUIRED_FLAGS: PackedStringArray = [
 	"has_point",
@@ -52,6 +58,9 @@ const AXIS_LABELS_ZH := {
 	"terminal_load": "末端负载",
 	"tether_mode": "缠钩方式",
 	"tether_deployment": "软线展开方式",
+	"state_topology": "状态变化结构",
+	"activation_mode": "启动方式",
+	"functional_output": "启动后的作用",
 }
 const OPTION_LABELS_ZH := {
 	"handle_length": {"none": "没有独立握柄", "short": "短柄", "medium": "中等握柄", "long": "长柄"},
@@ -84,6 +93,27 @@ const OPTION_LABELS_ZH := {
 		"fixed_length": "固定长度跟随",
 		"cast_retract": "甩出后收回",
 		"launch_tension": "发射后绷紧",
+	},
+	"state_topology": {
+		"fixed": "结构固定不变",
+		"hinged": "围绕铰链开合",
+		"folding": "多段折叠展开",
+		"telescoping": "套筒伸缩",
+		"radial_expand": "向四周撑开",
+		"rotary": "工作部分持续旋转",
+	},
+	"activation_mode": {
+		"passive": "不用启动，直接接触",
+		"momentary": "按一下短暂动作",
+		"toggle": "切换开启或关闭",
+		"charge_release": "蓄力后释放",
+		"continuous_hold": "按住时持续工作",
+	},
+	"functional_output": {
+		"contact_only": "只靠物体本身接触",
+		"directed_stream": "向前持续喷出",
+		"radial_field": "向四周形成作用范围",
+		"pull_field": "把前方目标向自己拉",
 	},
 }
 
@@ -132,6 +162,9 @@ static func draft(asset: WeaponVisualAsset, declarations: Dictionary = {}) -> Di
 		"terminal_load": _unobservable_axis("terminal_load", "alpha area does not establish the relative moving mass concentrated at the flexible endpoint"),
 		"tether_mode": _unobservable_axis("tether_mode", "hooking or wrapping is a functional action and cannot be inferred from one contact ray alone"),
 		"tether_deployment": _unobservable_axis("tether_deployment", "a still silhouette cannot establish whether an attached line stays extended, pays out and retracts, or launches and remains tensioned"),
+		"state_topology": _unobservable_axis("state_topology", "one still silhouette cannot establish how the object's large parts change state during use"),
+		"activation_mode": _unobservable_axis("activation_mode", "a still silhouette does not establish how a real mechanism is started or sustained"),
+		"functional_output": _unobservable_axis("functional_output", "alpha shape alone cannot establish whether activation produces contact, a directed stream, a radial field, or pulling force"),
 	}
 	for axis: String in REQUIRED_AXES:
 		if normalized_declarations.has(axis):
@@ -231,7 +264,11 @@ static func validate_ai_declaration(ai_affordance: Dictionary, source: String) -
 	var source_error := _ai_source_error(source)
 	if not source_error.is_empty():
 		return _ai_failure(source_error, source)
-	var affordance_error := _ai_affordance_error(_with_soft_defaults(ai_affordance))
+	# Live AI declarations are a versioned contract.  Do not silently turn an
+	# older cached declaration into fixed/passive/contact-only here: that would
+	# discard the stateful mechanism axes before the visual request is built.
+	# Legacy internal fixtures still receive defaults through resolve_ai().
+	var affordance_error := _ai_affordance_error(_with_conditional_soft_defaults(ai_affordance))
 	if not affordance_error.is_empty():
 		return _ai_failure(affordance_error, source)
 	return {
@@ -391,6 +428,24 @@ static func _normalize_declaration(raw: Variant) -> Dictionary:
 
 
 static func _with_soft_defaults(raw: Dictionary) -> Dictionary:
+	var normalized := raw.duplicate(true)
+	if not normalized.has("state_topology"):
+		normalized["state_topology"] = "fixed"
+	if not normalized.has("activation_mode"):
+		normalized["activation_mode"] = "passive"
+	if not normalized.has("functional_output"):
+		normalized["functional_output"] = "contact_only"
+	var rigidity_value := ""
+	if normalized.has("rigidity"):
+		rigidity_value = str(_normalize_declaration(normalized["rigidity"])["value"])
+	if not rigidity_value.is_empty() and rigidity_value != "flexible":
+		for axis: String in SOFT_AXES:
+			if not normalized.has(axis):
+				normalized[axis] = "none"
+	return normalized
+
+
+static func _with_conditional_soft_defaults(raw: Dictionary) -> Dictionary:
 	var normalized := raw.duplicate(true)
 	var rigidity_value := ""
 	if normalized.has("rigidity"):

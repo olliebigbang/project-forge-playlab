@@ -13,6 +13,9 @@ const TETHER_TOPOLOGIES: PackedStringArray = ["none", "flexible_line", "linked_s
 const TERMINAL_LOADS: PackedStringArray = ["none", "light", "heavy"]
 const TETHER_MODES: PackedStringArray = ["none", "wrap", "hook"]
 const TETHER_DEPLOYMENTS: PackedStringArray = ["none", "fixed_length", "cast_retract", "launch_tension"]
+const STATE_TOPOLOGIES: PackedStringArray = ["fixed", "hinged", "folding", "telescoping", "radial_expand", "rotary"]
+const ACTIVATION_MODES: PackedStringArray = ["passive", "momentary", "toggle", "charge_release", "continuous_hold"]
+const FUNCTIONAL_OUTPUTS: PackedStringArray = ["contact_only", "directed_stream", "radial_field", "pull_field"]
 
 @export_enum("none", "short", "medium", "long") var handle_length := "medium"
 @export_enum("short", "medium", "long") var body_length := "medium"
@@ -26,6 +29,9 @@ const TETHER_DEPLOYMENTS: PackedStringArray = ["none", "fixed_length", "cast_ret
 @export_enum("none", "light", "heavy") var terminal_load := "none"
 @export_enum("none", "wrap", "hook") var tether_mode := "none"
 @export_enum("none", "fixed_length", "cast_retract", "launch_tension") var tether_deployment := "none"
+@export_enum("fixed", "hinged", "folding", "telescoping", "radial_expand", "rotary") var state_topology := "fixed"
+@export_enum("passive", "momentary", "toggle", "charge_release", "continuous_hold") var activation_mode := "passive"
+@export_enum("contact_only", "directed_stream", "radial_field", "pull_field") var functional_output := "contact_only"
 @export var has_point := false
 @export var has_edge := false
 @export var has_broad_face := false
@@ -55,6 +61,12 @@ func validation_errors() -> Array[String]:
 		errors.append("INVALID_TETHER_MODE")
 	if tether_deployment not in TETHER_DEPLOYMENTS:
 		errors.append("INVALID_TETHER_DEPLOYMENT")
+	if state_topology not in STATE_TOPOLOGIES:
+		errors.append("INVALID_STATE_TOPOLOGY")
+	if activation_mode not in ACTIVATION_MODES:
+		errors.append("INVALID_ACTIVATION_MODE")
+	if functional_output not in FUNCTIONAL_OUTPUTS:
+		errors.append("INVALID_FUNCTIONAL_OUTPUT")
 	if mass_distribution not in MASS_DISTRIBUTIONS:
 		errors.append("INVALID_MASS_DISTRIBUTION")
 	if contact_surface not in CONTACT_SURFACES:
@@ -82,6 +94,8 @@ func validation_errors() -> Array[String]:
 		errors.append("TETHER_DEPLOYMENT_REQUIRES_ATTACHED_TETHER")
 	if tether_topology != "none" and tether_deployment == "none":
 		errors.append("ATTACHED_TETHER_REQUIRES_DEPLOYMENT")
+	if activation_mode == "passive" and (state_topology != "fixed" or functional_output != "contact_only"):
+		errors.append("ACTIVE_STATE_OR_OUTPUT_REQUIRES_ACTIVATION")
 	if not is_finite(confidence) or confidence < 0.65 or confidence > 1.0:
 		errors.append("INVALID_AFFORDANCE_CONFIDENCE")
 	if evidence_parts.is_empty():
@@ -100,6 +114,9 @@ func to_dict() -> Dictionary:
 		"terminal_load": terminal_load,
 		"tether_mode": tether_mode,
 		"tether_deployment": tether_deployment,
+		"state_topology": state_topology,
+		"activation_mode": activation_mode,
+		"functional_output": functional_output,
 		"mass_distribution": mass_distribution,
 		"contact_surface": contact_surface,
 		"secondary_contact_surface": secondary_contact_surface,

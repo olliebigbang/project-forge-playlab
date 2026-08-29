@@ -238,12 +238,18 @@ func _build_request_payload(blueprint: WeaponBlueprint, brief: Dictionary) -> Di
 		for raw_exclusion: Variant in raw_exclusions:
 			exclusions.append(str(raw_exclusion).left(220))
 	var axes := {}
+	var legacy_axis_defaults := {
+		"state_topology": "fixed",
+		"activation_mode": "passive",
+		"functional_output": "contact_only",
+	}
 	for axis: String in [
 		"handle_length", "body_length", "grip_topology", "rigidity", "mass_distribution",
 		"contact_surface", "secondary_contact_surface", "flex_topology", "tether_topology",
 		"terminal_load", "tether_mode", "tether_deployment",
+		"state_topology", "activation_mode", "functional_output",
 	]:
-		axes[axis] = str(blueprint.affordance.get(axis, ""))
+		axes[axis] = str(blueprint.affordance.get(axis, legacy_axis_defaults.get(axis, "")))
 	for flag: String in ["has_point", "has_edge", "has_broad_face", "has_barrel", "has_stock"]:
 		axes[flag] = bool(blueprint.affordance.get(flag, false))
 	return {

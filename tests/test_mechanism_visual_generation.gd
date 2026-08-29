@@ -81,6 +81,9 @@ func _test_every_structural_axis_changes_the_drawing_contract() -> void:
 		"terminal_load": "none",
 		"tether_mode": "none",
 		"tether_deployment": "none",
+		"state_topology": "fixed",
+		"activation_mode": "passive",
+		"functional_output": "contact_only",
 	}
 	var alternatives := {
 		"handle_length": "long",
@@ -95,6 +98,9 @@ func _test_every_structural_axis_changes_the_drawing_contract() -> void:
 		"terminal_load": "heavy",
 		"tether_mode": "hook",
 		"tether_deployment": "cast_retract",
+		"state_topology": "radial_expand",
+		"activation_mode": "continuous_hold",
+		"functional_output": "directed_stream",
 	}
 	var baseline_contract := str(VISUAL_BRIEF.compile(baseline, "ai_test_axes").get("prompt_clause", ""))
 	var unchanged: Array[String] = []
@@ -104,10 +110,10 @@ func _test_every_structural_axis_changes_the_drawing_contract() -> void:
 		if str(VISUAL_BRIEF.compile(varied, "ai_test_axes").get("prompt_clause", "")) == baseline_contract:
 			unchanged.append(axis)
 	var maximum_contract := str(VISUAL_BRIEF.compile(alternatives, "ai_test_axes").get("prompt_clause", ""))
-	var complete_markers := ["Held geometry:", "Contacts:", "Primary body:", "Attached path:", "End:", "Hook cue:", "Deployment:", "At 96px"]
+	var complete_markers := ["Held geometry:", "Contacts:", "Primary body:", "Attached path:", "End:", "Hook cue:", "Deployment:", "State:", "Activation:", "Output:", "At 96px"]
 	var ok := Array(VISUAL_BRIEF.STRUCTURAL_AXES) == Array(AXIS_RESOLVER.REQUIRED_AXES)
 	ok = ok and alternatives.size() == AXIS_RESOLVER.REQUIRED_AXES.size()
-	ok = ok and unchanged.is_empty() and maximum_contract.length() <= 680
+	ok = ok and unchanged.is_empty() and maximum_contract.length() <= 920
 	for marker: String in complete_markers:
 		ok = ok and maximum_contract.contains(marker)
 	_check(ok, "02 every declared structural mechanism axis changes one complete bounded pixel drawing contract", {
@@ -131,6 +137,9 @@ func _test_every_structural_axis_changes_the_pixel_scaffold() -> void:
 		"terminal_load": "none",
 		"tether_mode": "none",
 		"tether_deployment": "none",
+		"state_topology": "fixed",
+		"activation_mode": "passive",
+		"functional_output": "contact_only",
 	}
 	var alternatives := {
 		"handle_length": "long",
@@ -145,6 +154,9 @@ func _test_every_structural_axis_changes_the_pixel_scaffold() -> void:
 		"terminal_load": "heavy",
 		"tether_mode": "hook",
 		"tether_deployment": "cast_retract",
+		"state_topology": "radial_expand",
+		"activation_mode": "continuous_hold",
+		"functional_output": "directed_stream",
 	}
 	var baseline_build := PIXEL_SCAFFOLD.build(baseline)
 	var baseline_image := baseline_build.get("image") as Image
@@ -616,6 +628,9 @@ func _matrix_affordances() -> Array[Dictionary]:
 
 func _with_affordance_metadata(case_id: String, axes: Dictionary) -> Dictionary:
 	var result := axes.duplicate(true)
+	result["state_topology"] = str(result.get("state_topology", "fixed"))
+	result["activation_mode"] = str(result.get("activation_mode", "passive"))
+	result["functional_output"] = str(result.get("functional_output", "contact_only"))
 	result["case_id"] = case_id
 	result["confidence"] = 0.95
 	result["evidence_parts"] = ["anonymous deterministic mechanism scaffold"]

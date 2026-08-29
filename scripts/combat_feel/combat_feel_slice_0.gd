@@ -444,6 +444,16 @@ func _hit_reaction(target_position: Vector2, feedback: Resource, primitive: Vari
 			"wrap":
 				knockback *= 0.18
 				stagger *= 1.35
+		if float(primitive.state_extent_ratio) > 0.0:
+			match str(primitive.functional_output):
+				"pull_field":
+					knockback = -away * maxf(150.0, knockback.length())
+					stagger *= 1.28
+				"radial_field":
+					knockback = away * maxf(180.0, knockback.length())
+					stagger *= 1.18
+				"directed_stream":
+					knockback = away * maxf(135.0, knockback.length())
 	return {"knockback": knockback, "stagger": stagger}
 
 func _attack_contains(target: Vector2) -> bool:
@@ -465,6 +475,9 @@ func _attack_contains(target: Vector2) -> bool:
 	var deadzone := _soft_contact_deadzone(primitive, contact_vector, reach, float(primitive.inner_deadzone_pixels))
 	if to_target.length() < deadzone:
 		return false
+	var stateful_result := _stateful_attack_contains(target, primitive, hand, contact_world, reach, hitbox_thickness, deadzone)
+	if bool(stateful_result.get("handled", false)):
+		return bool(stateful_result.get("contains", false))
 	if _uses_pixel_visual_deformation(primitive):
 		return _soft_visual_attack_contains(target, primitive, hitbox_thickness, deadzone)
 	match surface:
@@ -486,6 +499,40 @@ func _attack_contains(target: Vector2) -> bool:
 				return to_target.length() >= deadzone and to_target.length() <= _spin_contact_reach(primitive, contact_vector, reach)
 			return _contact_band_contains(to_target, contact_vector, reach, hitbox_thickness, primitive, deadzone)
 	return false
+
+
+func _stateful_attack_contains(
+	target: Vector2,
+	primitive: Variant,
+	hand: Vector2,
+	contact: Vector2,
+	reach: float,
+	thickness: float,
+	deadzone: float
+) -> Dictionary:
+	if primitive == null or float(primitive.state_extent_ratio) <= 0.0:
+		return {"handled": false, "contains": false}
+	var output := str(primitive.functional_output)
+	var state := str(primitive.state_topology)
+	var direction := (contact - hand).normalized()
+	if direction.length_squared() < 0.5:
+		direction = Vector2(player_facing, 0.0)
+	var relative := target - hand
+	if output in ["directed_stream", "pull_field"]:
+		var projected := relative.dot(direction)
+		var perpendicular := absf(relative.cross(direction))
+		var cone_width := lerpf(thickness * 0.28, thickness * 1.18, clampf(projected / maxf(1.0, reach), 0.0, 1.0))
+		return {"handled": true, "contains": projected >= deadzone and projected <= reach and perpendicular <= cone_width}
+	if output == "radial_field":
+		return {"handled": true, "contains": relative.length() >= deadzone and relative.length() <= reach * 0.82}
+	if state == "radial_expand":
+		return {"handled": true, "contains": target.distance_to(contact) <= thickness * 0.92 + 22.0}
+	if state == "rotary":
+		return {"handled": true, "contains": target.distance_to(contact) <= thickness * 0.72 + 16.0}
+	if state == "telescoping":
+		var projected := relative.dot(direction)
+		return {"handled": true, "contains": projected >= deadzone and projected <= reach and absf(relative.cross(direction)) <= thickness * 0.42}
+	return {"handled": false, "contains": false}
 
 
 func _point_lane_contains(to_target: Vector2, contact_vector: Vector2, reach: float, thickness: float, primitive: Variant) -> bool:
@@ -1348,7 +1395,66 @@ func _draw_player() -> void:
 		draw_set_transform(weapon_origin, float(pose["angle"]), Vector2(player_facing * motion_profile.render_scale, motion_profile.render_scale))
 		draw_texture_rect(asset.texture, Rect2(-asset.grip_primary, Vector2(asset.canvas_size)), false)
 		draw_set_transform(Vector2.ZERO)
+	_draw_stateful_mechanism(primitive, hand)
 	draw_circle(weapon_origin, 4.0, Color("f6d1ac"))
+
+
+func _draw_stateful_mechanism(primitive: Variant, hand: Vector2) -> void:
+	if primitive == null or float(primitive.state_extent_ratio) <= 0.0 or controller.phase == "idle":
+		return
+	var phase_power := 1.0
+	if controller.phase == "startup":
+		phase_power = smoothstep(0.0, 1.0, controller.phase_ratio())
+	elif controller.phase == "recovery" and str(primitive.activation_mode) != "toggle":
+		phase_power = 1.0 - smoothstep(0.0, 1.0, controller.phase_ratio())
+	var power := clampf(float(primitive.state_extent_ratio) * phase_power, 0.0, 1.0)
+	if power <= 0.02:
+		return
+	var contact := _primitive_contact_world(primitive, hand)
+	var direction := (contact - hand).normalized()
+	if direction.length_squared() < 0.5:
+		direction = Vector2(player_facing, 0.0)
+	var normal := Vector2(-direction.y, direction.x)
+	var cyan := Color(0.22, 0.90, 1.0, 0.34 + power * 0.34)
+	var gold := Color(1.0, 0.70, 0.18, 0.34 + power * 0.38)
+	match str(primitive.state_topology):
+		"hinged":
+			draw_line(contact, contact + direction.rotated(0.86) * 34.0 * power, gold, 5.0)
+			draw_circle(contact, 6.0, cyan)
+		"folding":
+			var p1 := contact + direction.rotated(0.52) * 22.0 * power
+			var p2 := p1 + direction.rotated(-0.48) * 25.0 * power
+			draw_polyline(PackedVector2Array([contact, p1, p2]), gold, 5.0, false)
+			draw_circle(p1, 5.0, cyan)
+		"telescoping":
+			for offset: float in [10.0, 22.0, 34.0]:
+				var center := contact + direction * offset * power
+				draw_line(center - normal * 7.0, center + normal * 7.0, gold, 3.0)
+		"radial_expand":
+			var radius := 12.0 + 27.0 * power
+			for angle: float in [-1.2, -0.6, 0.0, 0.6, 1.2]:
+				draw_line(contact, contact + direction.rotated(angle) * radius, gold, 3.0)
+			draw_arc(contact, radius, direction.angle() - 1.25, direction.angle() + 1.25, 22, cyan, 4.0)
+		"rotary":
+			var radius := 16.0 + 12.0 * power
+			draw_arc(contact, radius, 0.0, TAU, 28, cyan, 4.0)
+			for angle: float in [0.0, PI * 0.5, PI, PI * 1.5]:
+				var spun := angle + elapsed_seconds * 12.0
+				draw_line(contact + Vector2.from_angle(spun) * 5.0, contact + Vector2.from_angle(spun) * radius, gold, 3.0)
+	match str(primitive.functional_output):
+		"directed_stream":
+			var finish: Vector2 = hand + direction * float(motion_profile.reach_pixels) * float(primitive.reach_multiplier)
+			draw_colored_polygon(PackedVector2Array([contact, finish + normal * 24.0 * power, finish - normal * 24.0 * power]), Color(cyan, 0.18 + power * 0.18))
+			for offset: float in [-0.55, 0.0, 0.55]:
+				draw_line(contact, finish + normal * 22.0 * offset, cyan, 2.0)
+		"radial_field":
+			var radius: float = float(motion_profile.reach_pixels) * float(primitive.reach_multiplier) * 0.64 * power
+			draw_arc(hand, radius, 0.0, TAU, 40, cyan, 5.0)
+		"pull_field":
+			var finish: Vector2 = hand + direction * float(motion_profile.reach_pixels) * float(primitive.reach_multiplier)
+			for ratio: float in [0.45, 0.70, 0.94]:
+				var center: Vector2 = hand.lerp(finish, ratio)
+				draw_polyline(PackedVector2Array([center + direction * 10.0 + normal * 10.0, center, center + direction * 10.0 - normal * 10.0]), cyan, 3.0, false)
 
 
 func _draw_deformed_pixel_weapon(soft_geometry: Dictionary) -> void:
@@ -1707,6 +1813,8 @@ func _draw_active_hitbox() -> void:
 	contact_vector = _categorical_contact_vector(primitive, contact_vector, reach)
 	var surface := str(primitive.contact_surface)
 	var deadzone := _soft_contact_deadzone(primitive, contact_vector, reach, float(primitive.inner_deadzone_pixels))
+	if _draw_stateful_hitbox(primitive, hand, contact_world, reach, hitbox_thickness, deadzone, color):
+		return
 	if _uses_pixel_visual_deformation(primitive):
 		_draw_soft_visual_hitbox(primitive, hitbox_thickness, deadzone, color)
 		if deadzone > 0.0:
@@ -1729,6 +1837,35 @@ func _draw_active_hitbox() -> void:
 			_draw_contact_band(hand, contact_vector, reach, hitbox_thickness, primitive, deadzone, color)
 	if deadzone > 0.0:
 		draw_arc(hand, deadzone, 0.0, TAU, 24, Color(0.2, 0.9, 1.0, 0.65), 2.0)
+
+
+func _draw_stateful_hitbox(primitive: Variant, hand: Vector2, contact: Vector2, reach: float, thickness: float, deadzone: float, color: Color) -> bool:
+	if primitive == null or float(primitive.state_extent_ratio) <= 0.0:
+		return false
+	var direction := (contact - hand).normalized()
+	if direction.length_squared() < 0.5:
+		direction = Vector2(player_facing, 0.0)
+	var normal := Vector2(-direction.y, direction.x)
+	var output := str(primitive.functional_output)
+	var state := str(primitive.state_topology)
+	if output in ["directed_stream", "pull_field"]:
+		var start := hand + direction * deadzone
+		var finish := hand + direction * reach
+		draw_colored_polygon(PackedVector2Array([start - normal * thickness * 0.14, finish - normal * thickness * 1.18, finish + normal * thickness * 1.18, start + normal * thickness * 0.14]), color)
+		return true
+	if output == "radial_field":
+		draw_circle(hand, reach * 0.82, color)
+		return true
+	if state == "radial_expand":
+		draw_circle(contact, thickness * 0.92 + 22.0, color)
+		return true
+	if state == "rotary":
+		draw_circle(contact, thickness * 0.72 + 16.0, color)
+		return true
+	if state == "telescoping":
+		draw_colored_polygon(_point_lane_polygon(hand, contact - hand, reach, thickness * 0.84, primitive), color)
+		return true
+	return false
 
 
 func _draw_contact_band(hand: Vector2, contact_vector: Vector2, reach: float, thickness: float, primitive: Variant, deadzone: float, color: Color) -> void:
@@ -1933,7 +2070,7 @@ func _return_to_forge() -> void:
 		get_tree().quit(0 if blind_run_completed else 2)
 		return
 	if launched_from_open_playtest:
-		get_tree().quit()
+		get_tree().change_scene_to_file("res://scenes/open_identity_spike.tscn")
 		return
 	get_tree().change_scene_to_file("res://scenes/open_identity_spike.tscn")
 

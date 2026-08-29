@@ -503,15 +503,71 @@ func _update_melee_attack(just_pressed: bool, delta: float) -> void:
 	var active_window := melee_timer < 0.34 and melee_timer > 0.08
 	if not active_window:
 		return
-	var range := 105.0 * float(blueprint.modifiers.get("area_multiplier", 1.0))
+	var range := _melee_axis_reach() * float(blueprint.modifiers.get("area_multiplier", 1.0))
 	for enemy: Dictionary in enemies:
 		var enemy_id := int(enemy["id"])
 		var direction_to_enemy: Vector2 = enemy["pos"] - player_position
-		if not melee_connected.has(enemy_id) and direction_to_enemy.length() <= range and signf(direction_to_enemy.x) == facing:
+		if not melee_connected.has(enemy_id) and _melee_axis_contains(direction_to_enemy, range):
 			melee_connected[enemy_id] = true
 			var damage := RULES.damage_against(blueprint.behavior_family, enemy["type"], _is_front_hit(enemy), blueprint.modifiers)
+			damage *= _melee_axis_damage_multiplier()
 			_damage_enemy(enemy, damage)
+			_apply_melee_axis_force(enemy, direction_to_enemy)
 			player_health = minf(100.0, player_health + damage * 0.10)
+
+
+func _melee_axis_reach() -> float:
+	if blueprint == null:
+		return 105.0
+	var state := str(blueprint.affordance.get("state_topology", "fixed"))
+	var output := str(blueprint.affordance.get("functional_output", "contact_only"))
+	var scale := float({
+		"fixed": 1.00, "hinged": 1.06, "folding": 1.16,
+		"telescoping": 1.48, "radial_expand": 1.12, "rotary": 1.08,
+	}.get(state, 1.00))
+	scale *= float({
+		"contact_only": 1.00, "directed_stream": 1.56,
+		"radial_field": 1.12, "pull_field": 1.42,
+	}.get(output, 1.00))
+	return 105.0 * scale
+
+
+func _melee_axis_contains(relative: Vector2, reach: float) -> bool:
+	if blueprint == null:
+		return relative.length() <= reach and signf(relative.x) == facing
+	var state := str(blueprint.affordance.get("state_topology", "fixed"))
+	var output := str(blueprint.affordance.get("functional_output", "contact_only"))
+	if output == "radial_field" or state in ["radial_expand", "rotary"]:
+		return relative.length() <= reach
+	if output in ["directed_stream", "pull_field"] or state == "telescoping":
+		var forward := relative.x * facing
+		var width_ratio := 0.48 if output == "directed_stream" else 0.62
+		return forward >= 0.0 and forward <= reach and absf(relative.y) <= 24.0 + forward * width_ratio
+	var forward := relative.x * facing
+	var half_angle := 0.96 if state in ["hinged", "folding"] else 0.72
+	return relative.length() <= reach and forward >= 0.0 and absf(relative.angle_to(Vector2(facing, 0.0))) <= half_angle
+
+
+func _melee_axis_damage_multiplier() -> float:
+	if blueprint == null:
+		return 1.0
+	return float({
+		"contact_only": 1.0,
+		"directed_stream": 0.74,
+		"radial_field": 0.68,
+		"pull_field": 0.62,
+	}.get(str(blueprint.affordance.get("functional_output", "contact_only")), 1.0))
+
+
+func _apply_melee_axis_force(enemy: Dictionary, relative: Vector2) -> void:
+	if blueprint == null or relative.length_squared() < 1.0:
+		return
+	var output := str(blueprint.affordance.get("functional_output", "contact_only"))
+	var direction := relative.normalized()
+	if output == "pull_field":
+		enemy["pos"] = Vector2(enemy["pos"]) - direction * 46.0
+	elif output == "radial_field":
+		enemy["pos"] = Vector2(enemy["pos"]) + direction * 38.0
 
 func _fire_bullet() -> void:
 	var projectile_speed := 610.0
@@ -1084,6 +1140,7 @@ func _draw_player_and_weapon() -> void:
 		if _uses_firearm_runtime():
 			_draw_firearm_action_overlays(firearm_action, hand_primary, weapon_rotation)
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	_draw_melee_state_effect(hand_primary)
 	draw_circle(hand_primary, 5.0, Color("f8d8b9"))
 	draw_circle(hand_secondary, 5.0, Color("f8d8b9"))
 	draw_line(player_position + Vector2(0, -30), player_position + Vector2(18.0 * facing, -30), Color("fef08a"), 3.0)
@@ -1099,6 +1156,51 @@ func _draw_player_and_weapon() -> void:
 			_draw_world_anchor(hand_primary, asset.muzzle, asset.grip_primary, "Muzzle", Color("38bdf8"))
 			_draw_world_anchor(hand_primary, asset.tip, asset.grip_primary, "Tip", Color("fb7185"))
 			_draw_world_anchor(hand_primary, asset.spin_pivot, asset.grip_primary, "SpinPivot", Color("c084fc"))
+
+
+func _draw_melee_state_effect(hand: Vector2) -> void:
+	if blueprint == null or blueprint.behavior_family != "heavy_melee" or melee_timer <= 0.08 or melee_timer >= 0.34:
+		return
+	var activation := str(blueprint.affordance.get("activation_mode", "passive"))
+	if activation == "passive":
+		return
+	var state := str(blueprint.affordance.get("state_topology", "fixed"))
+	var output := str(blueprint.affordance.get("functional_output", "contact_only"))
+	var direction := Vector2(facing, 0.0)
+	var normal := Vector2(0.0, 1.0)
+	var contact := hand + direction * 74.0
+	var cyan := Color(0.18, 0.86, 1.0, 0.64)
+	var gold := Color(1.0, 0.68, 0.18, 0.72)
+	match state:
+		"hinged":
+			draw_line(contact, contact + direction.rotated(-0.86 * facing) * 38.0, gold, 5.0)
+			draw_circle(contact, 6.0, cyan)
+		"folding":
+			var joint := contact + direction.rotated(-0.48 * facing) * 24.0
+			draw_polyline(PackedVector2Array([contact, joint, joint + direction * 28.0]), gold, 5.0, false)
+		"telescoping":
+			for offset: float in [12.0, 28.0, 44.0]:
+				draw_line(contact + direction * offset - normal * 7.0, contact + direction * offset + normal * 7.0, gold, 3.0)
+		"radial_expand":
+			for angle: float in [-1.15, -0.58, 0.0, 0.58, 1.15]:
+				draw_line(contact, contact + direction.rotated(angle) * 42.0, gold, 3.0)
+			draw_arc(contact, 42.0, -1.2, 1.2, 22, cyan, 4.0)
+		"rotary":
+			draw_arc(contact, 30.0, 0.0, TAU, 28, cyan, 4.0)
+			for angle: float in [0.0, PI * 0.5, PI, PI * 1.5]:
+				var spun: float = angle + float(Time.get_ticks_msec()) * 0.012
+				draw_line(contact + Vector2.from_angle(spun) * 5.0, contact + Vector2.from_angle(spun) * 28.0, gold, 3.0)
+	match output:
+		"directed_stream":
+			var finish := hand + direction * _melee_axis_reach()
+			draw_colored_polygon(PackedVector2Array([contact, finish - normal * 34.0, finish + normal * 34.0]), Color(cyan, 0.22))
+		"radial_field":
+			draw_arc(player_position, _melee_axis_reach(), 0.0, TAU, 40, cyan, 5.0)
+		"pull_field":
+			var finish := hand + direction * _melee_axis_reach()
+			for ratio: float in [0.42, 0.68, 0.92]:
+				var center := hand.lerp(finish, ratio)
+				draw_polyline(PackedVector2Array([center + direction * 11.0 + normal * 10.0, center, center + direction * 11.0 - normal * 10.0]), cyan, 3.0, false)
 
 func _melee_weapon_rotation() -> float:
 	if blueprint == null or blueprint.behavior_family != "heavy_melee" or melee_timer <= 0.0:
@@ -1422,7 +1524,9 @@ func _draw_attacks() -> void:
 			draw_arc(hazard_position, radius, 0.0, TAU, 32, Color("fb7185"), 5.0)
 			draw_arc(hazard_position, radius * life_ratio, 0.0, TAU, 28, Color("fde047"), 3.0)
 	if blueprint != null and blueprint.behavior_family == "heavy_melee" and melee_timer > 0.08 and melee_timer < 0.34:
-		draw_arc(player_position, 104.0, -0.8 if facing > 0 else PI - 0.8, 0.8 if facing > 0 else PI + 0.8, 24, Color("fb7185"), 8.0)
+		var stateful := str(blueprint.affordance.get("activation_mode", "passive")) != "passive"
+		if not stateful:
+			draw_arc(player_position, 104.0, -0.8 if facing > 0 else PI - 0.8, 0.8 if facing > 0 else PI + 0.8, 24, Color("fb7185"), 8.0)
 	if blueprint != null and blueprint.behavior_family == "sustained_ranged" and attack_charge > 0.0:
 		var muzzle := _muzzle_world()
 		draw_circle(muzzle, 6.0 + minf(attack_charge, 0.35) * 15.0, Color(0.15, 0.78, 1.0, 0.7), false, 3.0)

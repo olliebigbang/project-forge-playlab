@@ -8,6 +8,9 @@ const FLEX_TOPOLOGIES: PackedStringArray = ["none", "bending_shaft", "flexible_l
 const TETHER_TOPOLOGIES: PackedStringArray = ["none", "flexible_line", "linked_segments"]
 const TETHER_MODES: PackedStringArray = ["none", "wrap", "hook"]
 const TETHER_DEPLOYMENTS: PackedStringArray = ["none", "fixed_length", "cast_retract", "launch_tension"]
+const STATE_TOPOLOGIES: PackedStringArray = ["fixed", "hinged", "folding", "telescoping", "radial_expand", "rotary"]
+const ACTIVATION_MODES: PackedStringArray = ["passive", "momentary", "toggle", "charge_release", "continuous_hold"]
+const FUNCTIONAL_OUTPUTS: PackedStringArray = ["contact_only", "directed_stream", "radial_field", "pull_field"]
 
 @export_enum("bash", "sweep", "thrust", "slam", "spin") var motion_family := "sweep"
 @export var start_angle := -1.18
@@ -30,6 +33,10 @@ const TETHER_DEPLOYMENTS: PackedStringArray = ["none", "fixed_length", "cast_ret
 @export_enum("none", "wrap", "hook") var tether_mode := "none"
 @export var tether_strength := 0.0
 @export_enum("none", "fixed_length", "cast_retract", "launch_tension") var tether_deployment := "none"
+@export_enum("fixed", "hinged", "folding", "telescoping", "radial_expand", "rotary") var state_topology := "fixed"
+@export_enum("passive", "momentary", "toggle", "charge_release", "continuous_hold") var activation_mode := "passive"
+@export_enum("contact_only", "directed_stream", "radial_field", "pull_field") var functional_output := "contact_only"
+@export_range(0.0, 1.0) var state_extent_ratio := 0.0
 @export var inner_deadzone_pixels := 0.0
 @export_range(1.0, 360.0) var contact_arc_degrees := 110.0
 @export var damage_multiplier := 1.0
@@ -64,11 +71,18 @@ func validation_errors() -> Array[String]:
 		errors.append("INVALID_TETHER_MODE")
 	if tether_deployment not in TETHER_DEPLOYMENTS:
 		errors.append("INVALID_TETHER_DEPLOYMENT")
+	if state_topology not in STATE_TOPOLOGIES:
+		errors.append("INVALID_STATE_TOPOLOGY")
+	if activation_mode not in ACTIVATION_MODES:
+		errors.append("INVALID_ACTIVATION_MODE")
+	if functional_output not in FUNCTIONAL_OUTPUTS:
+		errors.append("INVALID_FUNCTIONAL_OUTPUT")
 	var numeric_values: Array[float] = [
 		start_angle, end_angle, extension_pixels,
 		local_start_offset.x, local_start_offset.y, local_end_offset.x, local_end_offset.y,
 		root_motion_distance, inertia_ratio, trajectory_lag_ratio, follow_through_radians,
 		tether_origin_ratio, terminal_load_ratio, soft_contact_start_ratio, tether_strength,
+		state_extent_ratio,
 		inner_deadzone_pixels, contact_arc_degrees, damage_multiplier,
 		startup_multiplier, active_multiplier, recovery_multiplier,
 		reach_multiplier, movement_multiplier, hitbox_multiplier,
@@ -91,6 +105,10 @@ func validation_errors() -> Array[String]:
 		or soft_contact_start_ratio < 0.0 or soft_contact_start_ratio > 0.95 \
 		or tether_strength < 0.0:
 		errors.append("INVALID_SOFT_BODY_PARAMETER")
+	if state_extent_ratio < 0.0 or state_extent_ratio > 1.0:
+		errors.append("INVALID_STATE_EXTENT")
+	if state_extent_ratio > 0.0 and activation_mode == "passive":
+		errors.append("STATE_EXTENT_REQUIRES_ACTIVATION")
 	var has_soft_path := flex_topology != "none" or tether_topology != "none"
 	if not has_soft_path and (terminal_load_ratio > 0.0 or soft_contact_start_ratio > 0.0 or tether_mode != "none"):
 		errors.append("SOFT_BODY_PARAMETER_WITHOUT_SOFT_PATH")
@@ -141,6 +159,10 @@ func to_dict() -> Dictionary:
 		"tether_mode": tether_mode,
 		"tether_strength": tether_strength,
 		"tether_deployment": tether_deployment,
+		"state_topology": state_topology,
+		"activation_mode": activation_mode,
+		"functional_output": functional_output,
+		"state_extent_ratio": state_extent_ratio,
 		"inner_deadzone_pixels": inner_deadzone_pixels,
 		"contact_arc_degrees": contact_arc_degrees,
 		"damage_multiplier": damage_multiplier,

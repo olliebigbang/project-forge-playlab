@@ -125,6 +125,10 @@ static func build(affordance: Dictionary) -> Dictionary:
 		)
 		roles.append("terminal")
 
+	_draw_state_fixture(image, body_start, body_finish, str(affordance.get("state_topology", "fixed")))
+	_draw_activation_fixture(image, grip, (body_finish - body_start).normalized(), str(affordance.get("activation_mode", "passive")))
+	_draw_output_fixture(image, strike, contact_direction, str(affordance.get("functional_output", "contact_only")))
+
 	_draw_mass_distribution_cue(image, mass, grip, strike)
 
 	return {
@@ -289,6 +293,75 @@ static func _draw_tether_deployment_fixture(
 			_stroke(image, center, center + body_axis * 11.0, 3, BRASS_LIGHT)
 
 
+static func _draw_state_fixture(image: Image, body_start: Vector2, body_finish: Vector2, state: String) -> void:
+	var axis := (body_finish - body_start).normalized()
+	var normal := Vector2(-axis.y, axis.x)
+	match state:
+		"hinged":
+			var center := body_start.lerp(body_finish, 0.52)
+			_fill_circle(image, Vector2i(center.round()), 7, OUTLINE)
+			_fill_circle(image, Vector2i(center.round()), 4, BRASS_LIGHT)
+			_stroke(image, center, center + normal * 12.0, 5, BRASS_MID)
+		"folding":
+			for ratio: float in [0.32, 0.58, 0.82]:
+				var center := body_start.lerp(body_finish, ratio)
+				_fill_circle(image, Vector2i(center.round()), 5, OUTLINE)
+				_fill_circle(image, Vector2i(center.round()), 3, BRASS_LIGHT)
+		"telescoping":
+			for ratio: float in [0.38, 0.62, 0.84]:
+				var center := body_start.lerp(body_finish, ratio)
+				_fill_oriented_box(image, center, normal, 7.0, 3.0, OUTLINE)
+				_fill_oriented_box(image, center, normal, 5.0, 1.0, BRASS_LIGHT)
+		"radial_expand":
+			var hub := body_start.lerp(body_finish, 0.70)
+			_fill_circle(image, Vector2i(hub.round()), 6, OUTLINE)
+			_fill_circle(image, Vector2i(hub.round()), 3, BRASS_MID)
+			for angle: float in [-1.15, -0.58, 0.58, 1.15]:
+				_stroke(image, hub, _clamp_point(hub + axis.rotated(angle) * 15.0), 4, BRASS_LIGHT)
+		"rotary":
+			var hub := body_start.lerp(body_finish, 0.76)
+			_fill_circle(image, Vector2i(hub.round()), 12, OUTLINE)
+			_fill_circle(image, Vector2i(hub.round()), 9, BRASS_MID)
+			_fill_circle(image, Vector2i(hub.round()), 3, WOOD_DARK)
+			for angle: float in [0.0, PI * 0.5, PI, PI * 1.5]:
+				_stroke(image, hub + Vector2.from_angle(angle) * 3.0, hub + Vector2.from_angle(angle) * 9.0, 2, BRASS_LIGHT)
+
+
+static func _draw_activation_fixture(image: Image, grip: Vector2, axis: Vector2, activation: String) -> void:
+	var normal := Vector2(-axis.y, axis.x)
+	var center := _clamp_point(grip + normal * 8.0)
+	match activation:
+		"momentary":
+			_fill_circle(image, Vector2i(center.round()), 5, OUTLINE)
+			_fill_circle(image, Vector2i(center.round()), 3, BRASS_LIGHT)
+		"toggle":
+			_fill_circle(image, Vector2i(center.round()), 5, OUTLINE)
+			_stroke(image, center, _clamp_point(center + normal * 9.0), 4, BRASS_LIGHT)
+		"charge_release":
+			for offset: float in [-6.0, 0.0, 6.0]:
+				_fill_circle(image, Vector2i(_clamp_point(center + axis * offset).round()), 4, BRASS_MID)
+		"continuous_hold":
+			_fill_oriented_box(image, center, axis, 8.0, 6.0, OUTLINE)
+			_fill_oriented_box(image, center, axis, 6.0, 3.0, BRASS_LIGHT)
+
+
+static func _draw_output_fixture(image: Image, strike: Vector2, direction: Vector2, output: String) -> void:
+	var normal := Vector2(-direction.y, direction.x)
+	var center := _clamp_point(strike - direction * 7.0)
+	match output:
+		"directed_stream":
+			_fill_oriented_box(image, center, direction, 8.0, 8.0, OUTLINE)
+			_fill_oriented_box(image, center, direction, 6.0, 5.0, BRASS_MID)
+		"radial_field":
+			_fill_circle(image, Vector2i(center.round()), 12, OUTLINE)
+			_fill_circle(image, Vector2i(center.round()), 8, BRASS_DARK)
+			for angle: float in [0.0, PI * 0.5, PI, PI * 1.5]:
+				_stroke(image, center + Vector2.from_angle(angle) * 5.0, center + Vector2.from_angle(angle) * 10.0, 3, BRASS_LIGHT)
+		"pull_field":
+			_stroke(image, center - normal * 10.0, center + normal * 10.0, 6, OUTLINE)
+			_stroke(image, center - normal * 7.0, center + normal * 7.0, 3, BRASS_LIGHT)
+
+
 static func _draw_secondary_contact(
 	image: Image,
 	body_start: Vector2,
@@ -449,6 +522,7 @@ static func _structural_axes(affordance: Dictionary) -> Dictionary:
 		"handle_length", "body_length", "grip_topology", "rigidity", "mass_distribution",
 		"contact_surface", "secondary_contact_surface", "flex_topology", "tether_topology",
 		"terminal_load", "tether_mode", "tether_deployment",
+		"state_topology", "activation_mode", "functional_output",
 	]:
 		result[axis] = str(affordance.get(axis, ""))
 	return result
@@ -467,6 +541,7 @@ static func _validation_error(affordance: Dictionary) -> String:
 		"handle_length", "body_length", "grip_topology", "rigidity", "mass_distribution",
 		"contact_surface", "secondary_contact_surface", "flex_topology", "tether_topology",
 		"terminal_load", "tether_mode", "tether_deployment",
+		"state_topology", "activation_mode", "functional_output",
 	]:
 		if not affordance.has(axis) or str(affordance.get(axis, "")).is_empty():
 			return "MECHANISM_PIXEL_SCAFFOLD_AXIS_MISSING:%s" % axis

@@ -25,6 +25,10 @@ For improvised_object_supported:
 - flex_topology describes the primary body's deformation. tether_topology describes a separate attached line or linked section;
 - terminal_load, tether_mode, and tether_deployment may be non-none only when a flexible or tether path physically supports them;
 - hook requires a point contact. A separate tether requires a non-none deployment; no tether requires deployment none;
+- state_topology describes a large, combat-readable change in the object's structure: fixed, hinged, folding, telescoping, radial_expand, or rotary. It is not a decorative joint or a tiny control;
+- activation_mode describes how the real object starts that structural change or functional output: passive, momentary, toggle, charge_release, or continuous_hold. Use passive only when state_topology is fixed and functional_output is contact_only;
+- functional_output describes the large physical effect produced after activation: contact_only, directed_stream, radial_field, or pull_field. A non-contact output requires a non-passive activation. Do not invent heat, electricity, suction, liquid, air, or magic that the real object does not produce;
+- choose state and output from physical function, not from the object name as an attack preset. Examples of structural evidence include a visible hinge, nested sliding sections, an opening radial frame, or a powered rotating working section;
 - has_point, has_edge, has_broad_face, has_barrel, and has_stock are literal large-scale structural facts, not guesses from desired attacks;
 - whenever point, edge, or broad is selected as either contact surface, its matching has_point, has_edge, or has_broad_face flag must be true; these flags are redundant consistency checks, not independent attack choices;
 - confidence must reflect identity and affordance certainty. identity_evidence must cite short visible or structural facts;

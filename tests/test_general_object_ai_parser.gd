@@ -29,6 +29,7 @@ func _initialize() -> void:
 	_run("Godot provider receives one atomic offline bridge result", _test_provider_offline_bridge)
 	_run("FAL general-object candidate becomes a real 96px Alpha asset", _test_fal_visual_provider_handoff)
 	_run("Validated object identities round-trip through the local cache", _test_cache_round_trip)
+	_run("Old cache entries missing state axes are rejected for live regeneration", _test_stale_cache_requires_regeneration)
 	print("GENERAL OBJECT AI PARSER RESULT: %d passed, %d failed" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -157,6 +158,9 @@ func _test_seeded_anonymous_distribution() -> Variant:
 			motion.terminal_load,
 			motion.tether_mode,
 			motion.tether_deployment,
+			motion.state_topology,
+			motion.activation_mode,
+			motion.functional_output,
 			motion.tempo,
 			motion.charge_style,
 			motion.reach_pixels,
@@ -211,6 +215,11 @@ func _seeded_valid_declaration(random: RandomNumberGenerator, index: int) -> Dic
 		handle = "none"
 		grip = "body_grip" if random.randi_range(0, 1) == 0 else "clamp_grip"
 	var surfaces := [primary, secondary]
+	var state_topology: String = str(["fixed", "hinged", "folding", "telescoping", "radial_expand", "rotary"][index % 6])
+	var functional_output: String = str(["contact_only", "directed_stream", "radial_field", "pull_field"][index % 4])
+	var activation_mode := "passive"
+	if state_topology != "fixed" or functional_output != "contact_only":
+		activation_mode = str(["momentary", "toggle", "charge_release", "continuous_hold"][index % 4])
 	return {
 		"handle_length": handle,
 		"body_length": ["short", "medium", "long"][random.randi_range(0, 2)],
@@ -224,6 +233,9 @@ func _seeded_valid_declaration(random: RandomNumberGenerator, index: int) -> Dic
 		"terminal_load": terminal,
 		"tether_mode": tether_mode,
 		"tether_deployment": deployment,
+		"state_topology": state_topology,
+		"activation_mode": activation_mode,
+		"functional_output": functional_output,
 		"has_point": "point" in surfaces,
 		"has_edge": "edge" in surfaces,
 		"has_broad_face": "broad" in surfaces,
@@ -379,7 +391,7 @@ func _test_fal_visual_provider_handoff() -> Variant:
 	var visual_request := visual_provider.active_request_payload
 	if visual_request.get("required_identity_parts", []).size() < 2 \
 		or visual_request.get("confusable_exclusions", []).is_empty() \
-		or (visual_request.get("axes", {}) as Dictionary).size() != 17:
+		or (visual_request.get("axes", {}) as Dictionary).size() != AXIS_RESOLVER.REQUIRED_AXES.size() + AXIS_RESOLVER.REQUIRED_FLAGS.size():
 		return "strict FAL visual request lost identity or mechanism fields"
 	return true
 
@@ -401,6 +413,42 @@ func _test_cache_round_trip() -> Variant:
 	if FileAccess.file_exists(absolute_cache):
 		DirAccess.remove_absolute(absolute_cache)
 	return true if ok else "accepted=%s cached=%s" % [str(accepted), str(cached)]
+
+
+func _test_stale_cache_requires_regeneration() -> Variant:
+	var absolute_cache := ProjectSettings.globalize_path(TEST_CACHE)
+	if FileAccess.file_exists(absolute_cache):
+		DirAccess.remove_absolute(absolute_cache)
+	var stale_payload := _fixture_payload()
+	var stale_profile := {
+		"id": "stale-object",
+		"canonical_name": "旧缓存物件",
+		"behavior_family": "heavy_melee",
+		"scale_treatment": "handheld",
+		"declaration": (stale_payload.get("declaration", {}) as Dictionary).duplicate(true),
+	}
+	var stale_declaration := stale_profile.get("declaration", {}) as Dictionary
+	stale_declaration.erase("state_topology")
+	stale_declaration.erase("activation_mode")
+	stale_declaration.erase("functional_output")
+	stale_declaration["source"] = TEST_SOURCE
+	DirAccess.make_dir_recursive_absolute(absolute_cache.get_base_dir())
+	var cache_file := FileAccess.open(absolute_cache, FileAccess.WRITE)
+	if cache_file == null:
+		return "could not create stale cache fixture"
+	cache_file.store_string(JSON.stringify({
+		"schema": AI_RESOLVER.CACHE_SCHEMA,
+		"entries": [{
+			"normalized_identity": "旧缓存物件",
+			"player_identity_text": "旧缓存物件",
+			"profile": stale_profile,
+		}],
+	}, "  "))
+	cache_file.close()
+	var cached := AI_RESOLVER.resolve_identity("旧缓存物件", TEST_CACHE)
+	if FileAccess.file_exists(absolute_cache):
+		DirAccess.remove_absolute(absolute_cache)
+	return true if not bool(cached.get("ok", false)) else cached
 
 
 func _compile_payload(identity: String, payload: Dictionary) -> Dictionary:
@@ -446,7 +494,11 @@ func _payload(identity: String, declaration: Dictionary, scale_treatment: String
 	payload["required_identity_parts_zh"] = ["主体轮廓", "主要结构件"]
 	payload["confusable_exclusions_en"] = ["not a generic featureless bar"]
 	payload["scale_treatment"] = scale_treatment
-	payload["declaration"] = declaration.duplicate(true)
+	var complete_declaration := declaration.duplicate(true)
+	complete_declaration["state_topology"] = str(complete_declaration.get("state_topology", "fixed"))
+	complete_declaration["activation_mode"] = str(complete_declaration.get("activation_mode", "passive"))
+	complete_declaration["functional_output"] = str(complete_declaration.get("functional_output", "contact_only"))
+	payload["declaration"] = complete_declaration
 	return payload
 
 

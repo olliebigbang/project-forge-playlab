@@ -26,6 +26,9 @@ const TETHER_TOPOLOGIES: PackedStringArray = ["none", "flexible_line", "linked_s
 const TERMINAL_LOADS: PackedStringArray = ["none", "light", "heavy"]
 const TETHER_MODES: PackedStringArray = ["none", "wrap", "hook"]
 const TETHER_DEPLOYMENTS: PackedStringArray = ["none", "fixed_length", "cast_retract", "launch_tension"]
+const STATE_TOPOLOGIES: PackedStringArray = ["fixed", "hinged", "folding", "telescoping", "radial_expand", "rotary"]
+const ACTIVATION_MODES: PackedStringArray = ["passive", "momentary", "toggle", "charge_release", "continuous_hold"]
+const FUNCTIONAL_OUTPUTS: PackedStringArray = ["contact_only", "directed_stream", "radial_field", "pull_field"]
 const PRIMITIVE_ORDER: PackedStringArray = ["bash", "sweep", "thrust", "slam", "spin"]
 const RIGIDITY_RUNTIME := {
 	"rigid": {
@@ -107,6 +110,27 @@ const CONTACT_DAMAGE := {
 	"broad": 1.00,
 	"whole_body": 0.86,
 }
+const ACTIVATION_RUNTIME := {
+	"passive": {"startup": 1.00, "active": 1.00, "recovery": 1.00, "reach": 1.00, "width": 1.00},
+	"momentary": {"startup": 0.92, "active": 1.12, "recovery": 0.96, "reach": 1.05, "width": 1.06},
+	"toggle": {"startup": 1.04, "active": 1.28, "recovery": 1.04, "reach": 1.08, "width": 1.18},
+	"charge_release": {"startup": 1.18, "active": 1.16, "recovery": 1.18, "reach": 1.24, "width": 1.12},
+	"continuous_hold": {"startup": 1.02, "active": 1.72, "recovery": 1.10, "reach": 1.18, "width": 1.20},
+}
+const STATE_RUNTIME := {
+	"fixed": {"reach": 1.00, "width": 1.00, "damage": 1.00},
+	"hinged": {"reach": 1.02, "width": 1.34, "damage": 1.04},
+	"folding": {"reach": 1.18, "width": 1.16, "damage": 1.02},
+	"telescoping": {"reach": 1.42, "width": 0.86, "damage": 1.08},
+	"radial_expand": {"reach": 1.08, "width": 1.82, "damage": 0.94},
+	"rotary": {"reach": 1.04, "width": 1.52, "damage": 1.10},
+}
+const OUTPUT_RUNTIME := {
+	"contact_only": {"reach": 1.00, "width": 1.00, "active": 1.00, "damage": 1.00, "knockback": 1.00},
+	"directed_stream": {"reach": 1.52, "width": 1.24, "active": 1.48, "damage": 0.72, "knockback": 0.92},
+	"radial_field": {"reach": 1.12, "width": 1.68, "active": 1.42, "damage": 0.68, "knockback": 1.18},
+	"pull_field": {"reach": 1.38, "width": 1.38, "active": 1.46, "damage": 0.62, "knockback": 0.88},
+}
 
 
 func compile(source: Variant, detail: Variant, alpha_bounds: Rect2i = Rect2i()) -> Variant:
@@ -181,7 +205,9 @@ func _compose_orthogonal_profile(
 	var selected := {}
 	for stage: String in ["hit_1", "hit_2", "hit_3", "charge", "dodge"]:
 		var family: String
-		if stage == "hit_1" or stage in ["charge", "dodge"]:
+		if stage in ["hit_3", "charge"] and affordance_profile.activation_mode != "passive":
+			family = _stateful_family(affordance_profile, _family_for_contact(affordance_profile.contact_surface, stage))
+		elif stage == "hit_1" or stage in ["charge", "dodge"]:
 			family = _family_for_contact(affordance_profile.contact_surface, stage)
 		elif stage == "hit_3" and effective_secondary != "none":
 			family = _family_for_contact(effective_secondary, stage)
@@ -191,7 +217,7 @@ func _compose_orthogonal_profile(
 		if stage.begins_with("hit_"):
 			used.append(family)
 	var recipe: Variant = RECIPE.new()
-	recipe.compile_reason = "orthogonal affordance composition v4: %s" % JSON.stringify(_mechanism_axes(affordance_profile))
+	recipe.compile_reason = "orthogonal affordance composition v5: %s" % JSON.stringify(_mechanism_axes(affordance_profile))
 	recipe.mechanism_axes = _mechanism_axes(affordance_profile)
 	recipe.primitive_scores = base_scores.duplicate(true)
 	var tether_origin_ratio := _tether_origin_ratio(anchor_data, affordance_profile.tether_topology)
@@ -227,6 +253,9 @@ func _compose_orthogonal_profile(
 	profile.terminal_load = affordance_profile.terminal_load
 	profile.tether_mode = affordance_profile.tether_mode
 	profile.tether_deployment = affordance_profile.tether_deployment
+	profile.state_topology = affordance_profile.state_topology
+	profile.activation_mode = affordance_profile.activation_mode
+	profile.functional_output = affordance_profile.functional_output
 	profile.handle_leverage_ratio = _handle_axis(affordance_profile)
 	profile.body_coverage_ratio = _body_axis(affordance_profile)
 	profile.mass_inertia_ratio = _mass_axis(affordance_profile)
@@ -236,7 +265,7 @@ func _compose_orthogonal_profile(
 	profile.mechanism_axes = recipe.mechanism_axes.duplicate(true)
 	profile.primitive_scores = recipe.primitive_scores.duplicate(true)
 	profile.compile_trace = {
-		"composer": "orthogonal_affordance_v4",
+		"composer": "orthogonal_affordance_v5",
 		"selected": selected.duplicate(true),
 		"effective_secondary_contact": effective_secondary,
 		"axis_roles": {
@@ -252,6 +281,9 @@ func _compose_orthogonal_profile(
 			"terminal_load": "endpoint_radius_damage_and_follow_through",
 			"tether_mode": "reserved_hit_3_pull_or_hold_reaction",
 			"tether_deployment": "attached_line_payout_endpoint_flight_and_recovery",
+			"state_topology": "reserved_hit_3_and_charge_shape_change",
+			"activation_mode": "state_timing_and_sustain",
+			"functional_output": "stateful_collision_volume_and_force_direction",
 		},
 		"identity_inputs_used": false,
 		"silhouette_mechanics": (anchor_data.get("silhouette_mechanics", {}) as Dictionary).duplicate(true),
@@ -315,6 +347,17 @@ func _family_for_contact(surface: String, stage: String) -> String:
 	return "bash"
 
 
+func _stateful_family(affordance_profile: Resource, fallback: String) -> String:
+	match str(affordance_profile.functional_output):
+		"directed_stream", "pull_field": return "thrust"
+		"radial_field": return "spin"
+	match str(affordance_profile.state_topology):
+		"telescoping": return "thrust"
+		"hinged", "folding": return "sweep"
+		"radial_expand", "rotary": return "spin"
+	return fallback
+
+
 func _effective_secondary_surface(affordance_profile: Resource) -> String:
 	if affordance_profile.secondary_contact_surface != "none":
 		return affordance_profile.secondary_contact_surface
@@ -370,7 +413,8 @@ func _synthesize_primitive(
 		"slam": [-1.82, 1.04], "spin": [-2.85, 3.25],
 	}[family]
 	var effective_secondary := _effective_secondary_surface(affordance_profile)
-	var uses_secondary := stage == "hit_3" and effective_secondary != "none"
+	var active_state: bool = stage in ["hit_3", "charge"] and affordance_profile.activation_mode != "passive"
+	var uses_secondary: bool = stage == "hit_3" and effective_secondary != "none" and not active_state
 	var active_surface: String = effective_secondary if uses_secondary else affordance_profile.contact_surface
 	if stage == "hit_2" and family in ["bash", "sweep"]:
 		angle_data = [float(angle_data[1]), -float(angle_data[0])]
@@ -379,6 +423,12 @@ func _synthesize_primitive(
 	var flex_runtime: Dictionary = FLEX_RUNTIME[affordance_profile.flex_topology]
 	var tether_runtime: Dictionary = TETHER_RUNTIME[affordance_profile.tether_topology]
 	var terminal_runtime: Dictionary = TERMINAL_LOAD_RUNTIME[affordance_profile.terminal_load]
+	var activation_runtime: Dictionary = ACTIVATION_RUNTIME[affordance_profile.activation_mode] if active_state else ACTIVATION_RUNTIME["passive"]
+	var state_runtime: Dictionary = STATE_RUNTIME[affordance_profile.state_topology] if active_state else STATE_RUNTIME["fixed"]
+	var output_runtime: Dictionary = OUTPUT_RUNTIME[affordance_profile.functional_output] if active_state else OUTPUT_RUNTIME["contact_only"]
+	var state_extent := 0.0
+	if active_state:
+		state_extent = 1.0 if stage == "charge" else (0.58 if affordance_profile.activation_mode == "charge_release" else 0.82)
 	var delivery_stage := stage in ["hit_3", "charge"]
 	var active_deployment := str(affordance_profile.tether_deployment) if delivery_stage else (
 		"fixed_length" if str(affordance_profile.tether_topology) != "none" else "none"
@@ -399,12 +449,14 @@ func _synthesize_primitive(
 	var lever_commitment := 1.0 if family == "thrust" else 0.94 + 0.14 * handle_axis
 	var startup: float = (0.88 + mass_axis * 0.16) \
 		* float({"hit_1": 0.88, "hit_2": 0.96, "hit_3": 1.18, "charge": 1.30, "dodge": 0.72}[stage]) \
-		* float(rigidity_runtime["startup"]) * float(grip_runtime["startup"]) * lever_commitment
+		* float(rigidity_runtime["startup"]) * float(grip_runtime["startup"]) * lever_commitment \
+		* float(activation_runtime["startup"])
 	var recovery: float = (0.86 + mass_axis * 0.20) \
 		* float({"hit_1": 0.88, "hit_2": 0.98, "hit_3": 1.24, "charge": 1.32, "dodge": 0.78}[stage]) \
 		* float(rigidity_runtime["recovery"]) * float(flex_runtime["recovery"]) \
 		* float(tether_runtime["recovery"]) * float(terminal_runtime["recovery"]) \
 		* float(deployment_runtime["recovery"]) \
+		* float(activation_runtime["recovery"]) \
 		* (0.96 + 0.08 * handle_axis if family != "thrust" else 1.0)
 	var contact_width: float = {"point": 0.66, "edge": 0.88, "broad": 1.18, "whole_body": 1.28}[active_surface]
 	var root_distance: float = (4.0 + handle_axis * 10.0 + body_axis * 8.0 + (7.0 if affordance_profile.has_barrel else 0.0)) \
@@ -433,7 +485,9 @@ func _synthesize_primitive(
 	var active_tether: String = str(affordance_profile.tether_mode) if stage == "hit_3" else "none"
 	var tether_stagger: float = 1.45 if active_tether == "wrap" else 1.0
 	var finisher := 1.0 if stage not in ["hit_3", "charge"] else 1.22
-	return _primitive(family, float(angle_data[0]), float(angle_data[1]), extension, startup, (1.0 + 0.08 * mass_axis) * float(rigidity_runtime["active"]) * float(flex_runtime["active"]) * float(tether_runtime["active"]) * float(deployment_runtime["active"]), recovery, (0.88 + 0.08 * handle_axis + 0.14 * body_axis) * float(deployment_runtime["reach"]), 0.82 + 0.18 * handle_axis, 0.88 + 0.18 * contact_width, {
+	var state_reach: float = float(activation_runtime["reach"]) * float(state_runtime["reach"]) * float(output_runtime["reach"])
+	var state_width: float = float(activation_runtime["width"]) * float(state_runtime["width"]) * float(output_runtime["width"])
+	return _primitive(family, float(angle_data[0]), float(angle_data[1]), extension, startup, (1.0 + 0.08 * mass_axis) * float(rigidity_runtime["active"]) * float(flex_runtime["active"]) * float(tether_runtime["active"]) * float(deployment_runtime["active"]) * float(activation_runtime["active"]) * float(output_runtime["active"]), recovery, (0.88 + 0.08 * handle_axis + 0.14 * body_axis) * float(deployment_runtime["reach"]) * state_reach, 0.82 + 0.18 * handle_axis, 0.88 + 0.18 * contact_width, {
 		"contact_anchor": contact_anchor,
 		"contact_surface": active_surface,
 		"uses_secondary_contact": uses_secondary,
@@ -449,12 +503,16 @@ func _synthesize_primitive(
 		"tether_mode": active_tether,
 		"tether_strength": float(TETHER_STRENGTH[active_tether]),
 		"tether_deployment": active_deployment,
+		"state_topology": affordance_profile.state_topology,
+		"activation_mode": affordance_profile.activation_mode,
+		"functional_output": affordance_profile.functional_output,
+		"state_extent_ratio": state_extent,
 		"inner_deadzone_pixels": deadzone,
 		"contact_arc_degrees": _contact_arc_degrees(active_surface, handle_axis, body_axis, affordance_profile),
-		"damage_multiplier": float(CONTACT_DAMAGE[active_surface]) * float(terminal_runtime["damage"]),
-		"hitbox_width_multiplier": contact_width,
+		"damage_multiplier": float(CONTACT_DAMAGE[active_surface]) * float(terminal_runtime["damage"]) * float(state_runtime["damage"]) * float(output_runtime["damage"]),
+		"hitbox_width_multiplier": contact_width * state_width,
 		"hitbox_length_multiplier": 0.82 + 0.10 * handle_axis + 0.28 * body_axis,
-		"knockback_multiplier": (0.82 + 0.28 * mass_axis) * finisher * float(rigidity_runtime["knockback"]) * float(grip_runtime["control"]) * float(terminal_runtime["impact"]),
+		"knockback_multiplier": (0.82 + 0.28 * mass_axis) * finisher * float(rigidity_runtime["knockback"]) * float(grip_runtime["control"]) * float(terminal_runtime["impact"]) * float(output_runtime["knockback"]),
 		"stagger_multiplier": (0.84 + 0.26 * mass_axis) * finisher * float(rigidity_runtime["stagger"]) * float(grip_runtime["control"]) * float(terminal_runtime["impact"]) * tether_stagger,
 		"hitstop_multiplier": (0.82 + 0.22 * mass_axis) * finisher * float(rigidity_runtime["hitstop"]),
 		"camera_kick_multiplier": (0.84 + 0.20 * mass_axis) * finisher * float(rigidity_runtime["camera"]),
@@ -660,6 +718,12 @@ func _inputs_are_valid(affordance_profile: Resource, anchor_data: Dictionary, al
 	if affordance_profile.tether_mode not in TETHER_MODES:
 		return false
 	if affordance_profile.tether_deployment not in TETHER_DEPLOYMENTS:
+		return false
+	if affordance_profile.state_topology not in STATE_TOPOLOGIES:
+		return false
+	if affordance_profile.activation_mode not in ACTIVATION_MODES:
+		return false
+	if affordance_profile.functional_output not in FUNCTIONAL_OUTPUTS:
 		return false
 	return _anchor_point(anchor_data, ["GripPrimary", "grip_primary"]) != Vector2.INF \
 		and _anchor_point(anchor_data, ["StrikePoint", "strike_point", "tip"]) != Vector2.INF

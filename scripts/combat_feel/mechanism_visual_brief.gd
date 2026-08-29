@@ -16,6 +16,9 @@ const STRUCTURAL_AXES: PackedStringArray = [
 	"terminal_load",
 	"tether_mode",
 	"tether_deployment",
+	"state_topology",
+	"activation_mode",
+	"functional_output",
 ]
 
 
@@ -55,6 +58,9 @@ static func compile(ai_affordance: Dictionary, affordance_source: String = "") -
 		requirements.append(_tether_mode_requirement(tether_mode))
 	if deployment != "none":
 		requirements.append(_tether_deployment_requirement(deployment))
+	requirements.append(_state_requirement(str(ai_affordance.get("state_topology", "fixed"))))
+	requirements.append(_activation_requirement(str(ai_affordance.get("activation_mode", "passive"))))
+	requirements.append(_output_requirement(str(ai_affordance.get("functional_output", "contact_only"))))
 	requirements.append("All required structures must survive at 96 by 96 pixels as chunky silhouette regions; do not replace them with motion trails or micro-detail.")
 
 	var axes: Dictionary = {}
@@ -102,6 +108,9 @@ static func _compact_prompt_requirements(ai_affordance: Dictionary) -> Array[Str
 		result.append(_compact_tether_mode(tether_mode))
 	if deployment != "none":
 		result.append(_compact_tether_deployment(deployment))
+	result.append(_compact_state(str(ai_affordance.get("state_topology", "fixed"))))
+	result.append(_compact_activation(str(ai_affordance.get("activation_mode", "passive"))))
+	result.append(_compact_output(str(ai_affordance.get("functional_output", "contact_only"))))
 	result.append("At 96px use chunky connected regions; no trails or microdetail.")
 	return result
 
@@ -177,6 +186,36 @@ static func _compact_tether_deployment(value: String) -> String:
 		"cast_retract": return "Deployment: chunky reel or line reserve for payout and return."
 		"launch_tension": return "Deployment: visible launch guide and tether reserve for a tensioned line."
 		_: return "Deployment: attached path stays at one fixed visible length."
+
+
+static func _compact_state(value: String) -> String:
+	return str({
+		"fixed": "State: one fixed connected structure.",
+		"hinged": "State: one large visible hinge joining two working parts.",
+		"folding": "State: 2-4 folding sections with large readable joints.",
+		"telescoping": "State: nested sliding sections with stepped widths.",
+		"radial_expand": "State: central runner plus several folded radial ribs.",
+		"rotary": "State: a large circular working section on a visible axle.",
+	}.get(value, "State: one fixed connected structure."))
+
+
+static func _compact_activation(value: String) -> String:
+	return str({
+		"passive": "Activation: no trigger fixture needed.",
+		"momentary": "Activation: one large press control by the grip.",
+		"toggle": "Activation: one large switch or latch by the grip.",
+		"charge_release": "Activation: visible tension, pump, or energy-storage fixture.",
+		"continuous_hold": "Activation: large held trigger or squeeze control.",
+	}.get(value, "Activation: no trigger fixture needed."))
+
+
+static func _compact_output(value: String) -> String:
+	return str({
+		"contact_only": "Output: no emitted-effect trail; physical contact only.",
+		"directed_stream": "Output: large forward nozzle or outlet; no painted stream in the resting sprite.",
+		"radial_field": "Output: large radial emitter cage or vents; no aura painted in the resting sprite.",
+		"pull_field": "Output: large forward intake or funnel; no target or motion trail.",
+	}.get(value, "Output: no emitted-effect trail; physical contact only."))
 
 
 static func validation_errors(brief: Dictionary) -> Array[String]:
@@ -272,6 +311,18 @@ static func _tether_deployment_requirement(value: String) -> String:
 			return "Show one readable launch guide plus a compact tether reserve so the terminal can depart and leave a tensioned connection."
 		_:
 			return "Keep the attached path visibly connected at one fixed resting length without a payout fixture."
+
+
+static func _state_requirement(value: String) -> String:
+	return _compact_state(value)
+
+
+static func _activation_requirement(value: String) -> String:
+	return _compact_activation(value)
+
+
+static func _output_requirement(value: String) -> String:
+	return _compact_output(value)
 
 
 static func _gate_rules(body_length: String, flex: String, tether: String, terminal: String) -> Dictionary:

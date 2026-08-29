@@ -15,6 +15,9 @@ const TETHER_TOPOLOGIES: PackedStringArray = ["none", "flexible_line", "linked_s
 const TERMINAL_LOADS: PackedStringArray = ["none", "light", "heavy"]
 const TETHER_MODES: PackedStringArray = ["none", "wrap", "hook"]
 const TETHER_DEPLOYMENTS: PackedStringArray = ["none", "fixed_length", "cast_retract", "launch_tension"]
+const STATE_TOPOLOGIES: PackedStringArray = ["fixed", "hinged", "folding", "telescoping", "radial_expand", "rotary"]
+const ACTIVATION_MODES: PackedStringArray = ["passive", "momentary", "toggle", "charge_release", "continuous_hold"]
+const FUNCTIONAL_OUTPUTS: PackedStringArray = ["contact_only", "directed_stream", "radial_field", "pull_field"]
 
 @export_enum("sweep", "slam", "thrust") var motion_family := "sweep"
 @export_enum("light", "medium", "heavy") var weight_class := "medium"
@@ -64,6 +67,9 @@ const TETHER_DEPLOYMENTS: PackedStringArray = ["none", "fixed_length", "cast_ret
 @export_enum("none", "light", "heavy") var terminal_load := "none"
 @export_enum("none", "wrap", "hook") var tether_mode := "none"
 @export_enum("none", "fixed_length", "cast_retract", "launch_tension") var tether_deployment := "none"
+@export_enum("fixed", "hinged", "folding", "telescoping", "radial_expand", "rotary") var state_topology := "fixed"
+@export_enum("passive", "momentary", "toggle", "charge_release", "continuous_hold") var activation_mode := "passive"
+@export_enum("contact_only", "directed_stream", "radial_field", "pull_field") var functional_output := "contact_only"
 @export_range(0.0, 1.0) var handle_leverage_ratio := 0.5
 @export_range(0.0, 1.0) var body_coverage_ratio := 0.5
 @export_range(0.0, 1.0) var mass_inertia_ratio := 0.5
@@ -140,6 +146,11 @@ func validation_errors() -> Array[String]:
 	if terminal_load not in TERMINAL_LOADS: errors.append("INVALID_TERMINAL_LOAD")
 	if tether_mode not in TETHER_MODES: errors.append("INVALID_TETHER_MODE")
 	if tether_deployment not in TETHER_DEPLOYMENTS: errors.append("INVALID_TETHER_DEPLOYMENT")
+	if state_topology not in STATE_TOPOLOGIES: errors.append("INVALID_STATE_TOPOLOGY")
+	if activation_mode not in ACTIVATION_MODES: errors.append("INVALID_ACTIVATION_MODE")
+	if functional_output not in FUNCTIONAL_OUTPUTS: errors.append("INVALID_FUNCTIONAL_OUTPUT")
+	if activation_mode == "passive" and (state_topology != "fixed" or functional_output != "contact_only"):
+		errors.append("ACTIVE_STATE_OR_OUTPUT_REQUIRES_ACTIVATION")
 	if rigidity_mode == "flexible" and flex_topology == "none": errors.append("FLEXIBLE_PROFILE_REQUIRES_FLEX_TOPOLOGY")
 	if rigidity_mode != "flexible" and flex_topology != "none": errors.append("FLEX_TOPOLOGY_REQUIRES_FLEXIBLE_PROFILE")
 	var has_soft_path := flex_topology != "none" or tether_topology != "none"
@@ -201,6 +212,9 @@ func to_dict() -> Dictionary:
 		"terminal_load": terminal_load,
 		"tether_mode": tether_mode,
 		"tether_deployment": tether_deployment,
+		"state_topology": state_topology,
+		"activation_mode": activation_mode,
+		"functional_output": functional_output,
 		"handle_leverage_ratio": handle_leverage_ratio,
 		"body_coverage_ratio": body_coverage_ratio,
 		"mass_inertia_ratio": mass_inertia_ratio,

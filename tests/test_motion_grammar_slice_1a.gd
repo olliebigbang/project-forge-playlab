@@ -67,6 +67,7 @@ func _run() -> void:
 	_test_v4_tether_topology_is_an_independent_soft_path()
 	_test_v4_fishing_rod_asset_compiles_from_ai_axes_without_name_rules()
 	_test_v7_tether_deployment_owns_endpoint_timeline()
+	_test_v8_state_activation_and_output_axes_reach_runtime()
 	_test_v5_ai_visual_rig_binds_every_visible_source_pixel()
 	_test_v5_original_pixels_follow_body_tether_and_terminal_paths()
 	_test_v5_topology_axes_produce_distinct_pixel_geometry()
@@ -115,7 +116,7 @@ func _test_three_structure_rules() -> void:
 		ok = ok and pan.combo_recipe.signature() != broom.combo_recipe.signature()
 		ok = ok and pan.combo_recipe.signature() != shotgun.combo_recipe.signature()
 		ok = ok and broom.combo_recipe.signature() != shotgun.combo_recipe.signature()
-		ok = ok and pan.compile_trace.get("composer") == "orthogonal_affordance_v4"
+		ok = ok and pan.compile_trace.get("composer") == "orthogonal_affordance_v5"
 		ok = ok and not bool(pan.compile_trace.get("identity_inputs_used", true))
 	_check(ok, "03 distinct affordance axes produce valid distinct recipes with an identity-free trace")
 
@@ -1227,6 +1228,47 @@ func _test_v7_tether_deployment_owns_endpoint_timeline() -> void:
 	_check(ok, "43a line deployment independently loads casts reaches retracts or stays tensioned while fixed-length lines keep the old endpoint")
 
 
+func _test_v8_state_activation_and_output_axes_reach_runtime() -> void:
+	var definitions: Array[Dictionary] = [
+		{"state": "fixed", "activation": "passive", "output": "contact_only"},
+		{"state": "hinged", "activation": "momentary", "output": "contact_only"},
+		{"state": "folding", "activation": "toggle", "output": "contact_only"},
+		{"state": "telescoping", "activation": "charge_release", "output": "contact_only"},
+		{"state": "radial_expand", "activation": "toggle", "output": "radial_field"},
+		{"state": "rotary", "activation": "continuous_hold", "output": "directed_stream"},
+		{"state": "fixed", "activation": "continuous_hold", "output": "pull_field"},
+	]
+	var signatures := {}
+	var profiles: Array[Resource] = []
+	var ok := true
+	for definition: Dictionary in definitions:
+		var affordance: Resource = _anonymous_profile()
+		affordance.state_topology = definition["state"]
+		affordance.activation_mode = definition["activation"]
+		affordance.functional_output = definition["output"]
+		var compiled: Resource = _compile_anonymous(affordance)
+		ok = ok and compiled != null and compiled.validation_errors().is_empty()
+		if compiled == null:
+			continue
+		profiles.append(compiled)
+		signatures[compiled.combo_recipe.signature()] = true
+		var finisher: Variant = compiled.combo_recipe.hit_3
+		ok = ok and finisher.state_topology == definition["state"]
+		ok = ok and finisher.activation_mode == definition["activation"]
+		ok = ok and finisher.functional_output == definition["output"]
+		ok = ok and (is_zero_approx(finisher.state_extent_ratio) == (definition["activation"] == "passive"))
+	if profiles.size() == definitions.size():
+		ok = ok and profiles[3].combo_recipe.hit_3.motion_family == "thrust"
+		ok = ok and profiles[4].combo_recipe.hit_3.motion_family == "spin"
+		ok = ok and profiles[5].combo_recipe.hit_3.active_multiplier > profiles[1].combo_recipe.hit_3.active_multiplier
+		ok = ok and profiles[6].combo_recipe.hit_3.functional_output == "pull_field"
+	var runtime_source := FileAccess.get_file_as_string(SLICE_PATH)
+	ok = ok and runtime_source.contains("_stateful_attack_contains")
+	ok = ok and runtime_source.contains("primitive.functional_output")
+	ok = ok and signatures.size() == definitions.size()
+	_check(ok, "43b state change activation and functional output axes compile into distinct real hit geometry timing and force without identity branches")
+
+
 func _test_v5_ai_visual_rig_binds_every_visible_source_pixel() -> void:
 	var loader: Variant = LOADER.new()
 	var loaded: Dictionary = loader.load_soft_weapon_asset("fishing_rod_builtin")
@@ -1600,7 +1642,7 @@ func _copy_affordance(source: Resource) -> Resource:
 	var copied: Variant = AFFORDANCE.new()
 	for property: String in [
 		"handle_length", "body_length", "grip_topology", "rigidity", "mass_distribution",
-		"contact_surface", "secondary_contact_surface", "flex_topology", "tether_topology", "terminal_load", "tether_mode", "tether_deployment", "has_point", "has_edge",
+		"contact_surface", "secondary_contact_surface", "flex_topology", "tether_topology", "terminal_load", "tether_mode", "tether_deployment", "state_topology", "activation_mode", "functional_output", "has_point", "has_edge",
 		"has_broad_face", "has_barrel", "has_stock", "confidence", "evidence_parts",
 	]:
 		copied.set(property, source.get(property))

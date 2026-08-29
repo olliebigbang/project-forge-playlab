@@ -30,6 +30,9 @@ def supported_payload(identity: str = "冰箱", *, declaration: dict | None = No
         "terminal_load": "none",
         "tether_mode": "none",
         "tether_deployment": "none",
+        "state_topology": "fixed",
+        "activation_mode": "passive",
+        "functional_output": "contact_only",
         "has_point": False,
         "has_edge": False,
         "has_broad_face": True,
@@ -165,6 +168,22 @@ class GeneralObjectAIBridgeTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(bridge.GeneralObjectBridgeError, "HANDLE_GRIP_CONFLICT"):
             bridge.validate_response("坏握法", handleless_hand_grip)
+
+    def test_active_state_and_output_require_activation(self) -> None:
+        inactive_state = supported_payload(
+            "匿名开合结构", declaration={"state_topology": "hinged"}
+        )
+        with self.assertRaisesRegex(bridge.GeneralObjectBridgeError, "ACTIVE_MECHANISM_REQUIRES_ACTIVATION"):
+            bridge.validate_response("匿名开合结构", inactive_state)
+        active_output = supported_payload(
+            "匿名喷流结构",
+            declaration={
+                "activation_mode": "continuous_hold",
+                "functional_output": "directed_stream",
+            },
+        )
+        result = bridge.validate_response("匿名喷流结构", active_output)
+        self.assertEqual(result["declaration"]["functional_output"], "directed_stream")
 
     def test_selected_contact_surfaces_repair_their_redundant_capability_flags(self) -> None:
         value = supported_payload("平板电视")

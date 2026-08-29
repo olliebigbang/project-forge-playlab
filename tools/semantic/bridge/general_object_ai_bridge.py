@@ -48,6 +48,9 @@ STRING_AXIS_KEYS = (
     "terminal_load",
     "tether_mode",
     "tether_deployment",
+    "state_topology",
+    "activation_mode",
+    "functional_output",
 )
 FLAG_KEYS = ("has_point", "has_edge", "has_broad_face", "has_barrel", "has_stock")
 DECLARATION_KEYS = STRING_AXIS_KEYS + FLAG_KEYS
@@ -64,6 +67,9 @@ LEGAL_VALUES = {
     "terminal_load": frozenset({"none", "light", "heavy"}),
     "tether_mode": frozenset({"none", "wrap", "hook"}),
     "tether_deployment": frozenset({"none", "fixed_length", "cast_retract", "launch_tension"}),
+    "state_topology": frozenset({"fixed", "hinged", "folding", "telescoping", "radial_expand", "rotary"}),
+    "activation_mode": frozenset({"passive", "momentary", "toggle", "charge_release", "continuous_hold"}),
+    "functional_output": frozenset({"contact_only", "directed_stream", "radial_field", "pull_field"}),
 }
 _UNSUPPORTED_TRANSPORT_SCHEMA_KEYS = frozenset(
     {"$schema", "$id", "title", "minimum", "maximum", "minLength", "maxLength", "minItems", "maxItems"}
@@ -152,6 +158,9 @@ def _validate_supported_declaration(value: Any) -> dict[str, Any]:
     terminal = declaration["terminal_load"]
     mode = declaration["tether_mode"]
     deployment = declaration["tether_deployment"]
+    state = declaration["state_topology"]
+    activation = declaration["activation_mode"]
+    output = declaration["functional_output"]
     if handle == "none" and grip not in {"body_grip", "clamp_grip"}:
         raise GeneralObjectBridgeError("DECLARATION_HANDLE_GRIP_CONFLICT")
     if handle != "none" and grip == "body_grip":
@@ -167,6 +176,8 @@ def _validate_supported_declaration(value: Any) -> dict[str, Any]:
         raise GeneralObjectBridgeError("DECLARATION_HOOK_POINT_CONFLICT")
     if (tether == "none") != (deployment == "none"):
         raise GeneralObjectBridgeError("DECLARATION_TETHER_DEPLOYMENT_CONFLICT")
+    if activation == "passive" and (state != "fixed" or output != "contact_only"):
+        raise GeneralObjectBridgeError("DECLARATION_ACTIVE_MECHANISM_REQUIRES_ACTIVATION")
     surfaces = {declaration["contact_surface"], declaration["secondary_contact_surface"]}
     for surface, flag in (("point", "has_point"), ("edge", "has_edge"), ("broad", "has_broad_face")):
         # The selected contact surfaces are the authoritative mechanical axes.
