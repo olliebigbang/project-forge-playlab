@@ -1661,11 +1661,17 @@ func _show_mechanism_summary() -> void:
 	preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	preview.configure(current_asset, false, false, current_blueprint.display_name)
 	columns.add_child(preview)
+	var details_scroll := ScrollContainer.new()
+	details_scroll.custom_minimum_size = Vector2(650, 0)
+	details_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	details_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	details_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	details_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	columns.add_child(details_scroll)
 	var details := VBoxContainer.new()
-	details.custom_minimum_size = Vector2(650, 0)
 	details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	details.add_theme_constant_override("separation", 8)
-	columns.add_child(details)
+	details_scroll.add_child(details)
 	details.add_child(_badge("AI 完整声明 · 轮廓校验通过 · 已编译", Color("166534")))
 	var measured_axis_labels := PackedStringArray()
 	var geometry_axes: Dictionary = ((current_mechanism_resolution.get("geometry_validation", {}) as Dictionary).get("axes", {}) as Dictionary)
@@ -1748,11 +1754,17 @@ func _show_ranged_mechanism_summary() -> void:
 	preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	preview.configure(current_asset, false, false, current_blueprint.display_name)
 	columns.add_child(preview)
+	var details_scroll := ScrollContainer.new()
+	details_scroll.custom_minimum_size = Vector2(660, 0)
+	details_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	details_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	details_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	details_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	columns.add_child(details_scroll)
 	var details := VBoxContainer.new()
-	details.custom_minimum_size = Vector2(660, 0)
 	details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	details.add_theme_constant_override("separation", 6)
-	columns.add_child(details)
+	details_scroll.add_child(details)
 	details.add_child(_badge("AI 型号声明 · V5 机制轴完整 · 因果参数已编译", Color("166534")))
 	var source := Label.new()
 	source.text = "机制来源：%s · AI 置信度：%.2f\n玩家机制输入：未使用 · 玩家只确认外形身份" % [
