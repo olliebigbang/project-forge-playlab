@@ -2,6 +2,7 @@ extends SceneTree
 
 const PROVIDER_SCRIPT := preload("res://scripts/services/local_comfy_forge_visual_provider.gd")
 const BLUEPRINT_SCRIPT := preload("res://scripts/data/weapon_blueprint.gd")
+const OPEN_IDENTITY_SCENE := preload("res://scenes/open_identity_spike.tscn")
 
 var passed := 0
 var failed := 0
@@ -10,12 +11,13 @@ func _initialize() -> void:
 	print("Forge Open Identity local provider boundary tests")
 	_run("Strict loopback URL accepts only an exact local endpoint", _test_strict_loopback_url)
 	_run("Atomic result loading leaves delivered anchors untouched", _test_atomic_result_is_read_only)
+	_run("Forge home layout stays inside the 1280 viewport", _test_forge_layout_width)
 	print("OPEN IDENTITY PROVIDER RESULT: %d passed, %d failed" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
 func _run(test_name: String, callable: Callable) -> void:
 	var result: Variant = callable.call()
-	if result == true:
+	if result is bool and bool(result):
 		passed += 1
 		print("PASS | %s" % test_name)
 	else:
@@ -69,6 +71,21 @@ func _test_atomic_result_is_read_only() -> Variant:
 	if str(loaded.get("status", "")) != "success":
 		return "valid atomic result was rejected: %s" % str(loaded)
 	return FileAccess.get_file_as_string(directory.path_join("anchors.json")) == sentinel
+
+func _test_forge_layout_width() -> Variant:
+	var forge = OPEN_IDENTITY_SCENE.instantiate()
+	root.add_child(forge)
+	forge._ready()
+	var forge_page := forge.page as Control
+	if forge_page == null:
+		forge.free()
+		return "Forge page was not created"
+	var minimum_width := forge_page.get_combined_minimum_size().x
+	var viewport_width := forge_page.size.x
+	forge.free()
+	if minimum_width > viewport_width:
+		return "Forge needs %.1f px but viewport is only %.1f px" % [minimum_width, viewport_width]
+	return true
 
 func _write_json(path: String, value: Dictionary) -> void:
 	var file := FileAccess.open(path, FileAccess.WRITE)

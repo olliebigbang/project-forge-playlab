@@ -223,17 +223,50 @@ func _show_forge() -> void:
 	root.add_child(outer)
 	outer.add_child(_header(
 		"FORGE PLAYLAB V1 · OPEN IDENTITY SPIKE 2",
-		"玩家描述或画出物件；AI 语义与机制轴自动决定怎么握、哪里打和动作特点。本 Spike 仅进入 Forge 与训练区。"
+		"玩家描述或画出物件；AI 语义与机制轴自动决定怎么握、哪里打和动作特点。可进入训练区或三战关卡。"
 	))
 	var top_controls := HBoxContainer.new()
 	top_controls.add_theme_constant_override("separation", 8)
 	outer.add_child(top_controls)
-	for pair: Array in [["只输入文字", "description"], ["文字 + 草图", "description_sketch"], ["只输入草图", "sketch"]]:
-		top_controls.add_child(_button(str(pair[0]), func() -> void: _set_input_mode(str(pair[1]))))
+	var input_label := Label.new()
+	input_label.text = "输入方式"
+	input_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	top_controls.add_child(input_label)
+	var input_selector := OptionButton.new()
+	var input_modes: Array[Array] = [
+		["只输入文字", "description"],
+		["文字 + 草图", "description_sketch"],
+		["只输入草图", "sketch"],
+	]
+	for index: int in range(input_modes.size()):
+		input_selector.add_item(str(input_modes[index][0]))
+		if str(input_modes[index][1]) == input_mode:
+			input_selector.select(index)
+	input_selector.custom_minimum_size = Vector2(190, 44)
+	input_selector.item_selected.connect(func(index: int) -> void:
+		_set_input_mode(str(input_modes[index][1]))
+	)
+	top_controls.add_child(input_selector)
 	top_controls.add_spacer(false)
-	top_controls.add_child(_button("FAL AI（枪械成品图）", func() -> void: _set_provider_mode(MODE_FAL_FIREARM)))
-	top_controls.add_child(_button("LOCAL_COMFYUI（真实视觉）", func() -> void: _set_provider_mode(MODE_LOCAL_COMFYUI)))
-	top_controls.add_child(_button("MOCK（仅固定样例）", func() -> void: _set_provider_mode(MODE_MOCK)))
+	var provider_label := Label.new()
+	provider_label.text = "图片来源"
+	provider_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	top_controls.add_child(provider_label)
+	var provider_selector := OptionButton.new()
+	var provider_modes: Array[Array] = [
+		["FAL AI（云端成品图）", MODE_FAL_FIREARM],
+		["LOCAL COMFYUI（本地生成）", MODE_LOCAL_COMFYUI],
+		["MOCK（固定样例）", MODE_MOCK],
+	]
+	for index: int in range(provider_modes.size()):
+		provider_selector.add_item(str(provider_modes[index][0]))
+		if str(provider_modes[index][1]) == provider_mode:
+			provider_selector.select(index)
+	provider_selector.custom_minimum_size = Vector2(290, 44)
+	provider_selector.item_selected.connect(func(index: int) -> void:
+		_set_provider_mode(str(provider_modes[index][1]))
+	)
+	top_controls.add_child(provider_selector)
 	var columns := HBoxContainer.new()
 	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	columns.add_theme_constant_override("separation", 20)
@@ -2025,6 +2058,8 @@ func _badge(text: String, color: Color) -> PanelContainer:
 	var label := Label.new()
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.add_child(label)
 	return panel
 
