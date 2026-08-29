@@ -22,3 +22,7 @@ The reviewer inspected the three rendered gameplay captures in `screenshots/pixe
 - Fire, mechanical, and frost materials remain distinct while sharing dark bodies, strong accent highlights, and the same value organization.
 
 No visual issue was found that blocks delivery of this playable art version. The reviewer made no file or code changes.
+
+## Sidearm proportion follow-up
+
+After the player reported an oversized revolver and an awkward arm position, the independent reviewer compared the original player capture with `screenshots/pixel_art_v1/sidearm_proportion.png`. The follow-up result was **PASS**: the one-hand firearm reads at the intended compact scale, the aiming arm has a visible shoulder-elbow-wrist bend, the other arm rests separately at the player's side, the smaller hand pixels fit the figure, and the barrel remains aligned with the shot direction.
