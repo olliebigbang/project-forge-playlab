@@ -26,7 +26,7 @@ var failed := 0
 
 func _initialize() -> void:
 	print("Forge firearm V5 contract tests")
-	_run("Six curated firearms declare complete V5 axes", _test_curated_profiles)
+	_run("Seven curated firearms declare complete V5 axes", _test_curated_profiles)
 	_run("Shotgun, revolver, and belt-fed fixtures parse and compile", _test_family_fixtures)
 	_run("Feed systems reject impossible capacity classes", _test_feed_capacity_invariants)
 	_run("Every frozen V5 output is clamped, owned, and finite-difference covered", _test_frozen_parameter_audit)
@@ -49,8 +49,8 @@ func _run(test_name: String, callable: Callable) -> void:
 
 func _test_curated_profiles() -> Variant:
 	var profiles := CATALOG.all_profiles()
-	if profiles.size() != 6:
-		return "expected six curated profiles, got %d" % profiles.size()
+	if profiles.size() != 7:
+		return "expected seven curated profiles, got %d" % profiles.size()
 	for profile: Dictionary in profiles:
 		var declaration := profile.get("declaration", {}) as Dictionary
 		for axis: String in ["firearm_family", "action_mechanism", "feed_system", "shot_pattern", "sustained_climb"]:

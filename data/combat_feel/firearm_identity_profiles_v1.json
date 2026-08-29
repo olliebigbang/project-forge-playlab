@@ -119,6 +119,64 @@
       }
     },
     {
+      "id": "akm",
+      "canonical_name_zh": "AKM突击步枪",
+      "aliases": ["AKM", "AKM突击步枪", "AKM rifle", "Kalashnikov AKM"],
+      "visual_description_en": "recognizable AKM conventional rifle with angled fixed wood stock, strongly curved magazine, stamped receiver, short wood fore-end, raised gas tube and exposed muzzle section",
+      "required_identity_parts_zh": ["斜置固定木枪托", "握把前方强弯弹匣", "短木护木与抬高导气管", "冲压机匣与前伸枪管"],
+      "visual_identity_card": {
+        "schema": "forge-firearm-visual-identity-card-v1",
+        "visual_axes": {
+          "stock_profile": "angled slender fixed wood stock",
+          "upper_landmark": "raised gas tube with front sight block",
+          "magazine_profile": "strongly curved magazine tight ahead of grip",
+          "fore_end_profile": "short two-piece wood fore-end",
+          "receiver_profile": "compact stamped receiver with stepped top cover"
+        },
+        "required_landmarks_en": [
+          "angled slender fixed stock behind a compact stamped receiver",
+          "strongly curved magazine immediately ahead of the pistol grip",
+          "short wood fore-end beneath a clearly raised gas tube",
+          "front sight block followed by an exposed muzzle section"
+        ],
+        "confusable_exclusions_en": [
+          "not an AR-pattern rifle with a straight magazine or buffer-tube stock",
+          "not a Type 81 with a longer fore-end and a visible gap before the curved magazine",
+          "not a generic featureless block rifle"
+        ]
+      },
+      "declaration": {
+        "source": "CURATED_AI_FIREARM_IDENTITY_V5",
+        "confidence": 0.98,
+        "weapon_domain": "handheld_firearm",
+        "firearm_family": "rifle",
+        "layout": "conventional_rifle",
+        "stock_structure": "fixed",
+        "feed_position": "ahead_of_grip",
+        "magazine_shape": "curved",
+        "barrel_length": "medium",
+        "upper_profile": "raised_gas_tube",
+        "support_mode": "two_hand_shouldered",
+        "fire_control": "select_fire_auto",
+        "action_mechanism": "self_loading",
+        "feed_system": "detachable_box",
+        "shot_pattern": "single_projectile",
+        "sustained_climb": "progressive",
+        "cadence": "balanced",
+        "recoil": "strong",
+        "recoil_recovery": "slow",
+        "muzzle_climb": "high",
+        "accuracy": "controlled",
+        "impact_force": "strong",
+        "penetration": "strong",
+        "reload": "standard",
+        "effective_range": "medium",
+        "handling": "balanced",
+        "magazine_capacity": "standard",
+        "finish_palette": "wood_steel"
+      }
+    },
+    {
       "id": "type_81",
       "canonical_name_zh": "81杠",
       "aliases": ["81杠", "81式自动步枪", "81式步枪", "Type 81 rifle", "QBZ-81", "QBZ81"],
