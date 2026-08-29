@@ -27,6 +27,7 @@ func _run_all() -> void:
 	_check("A general soft object enters the same level with its AI mechanism profile intact", _test_general_mechanism_handoff)
 	_check("Every accepted enemy blueprint resolves a formal sprite and the arena background", _test_formal_enemy_visual_assets)
 	_check("Formal combat art obeys the hard-alpha and pixel-density contract", _test_pixel_art_render_contract)
+	_check("Firearm render scale stays proportional to the formal player sprite", _test_player_firearm_render_proportions)
 	_check("Level weapon cards preserve bolt-action mechanism timing", _test_cycle_action_weapon_card)
 	_check("Mechanism coverage chooses one missing firearm role without player input", _test_automatic_armory_gap_plan)
 	_check("A level encounter executes two distinct compiled attack deliveries", _test_two_compiled_deliveries_execute)
@@ -391,6 +392,34 @@ func _test_pixel_art_render_contract() -> Variant:
 						if image.get_pixel(x + offset.x, y + offset.y) != reference:
 							return {"path": path, "non_integer_cluster": Vector2i(x, y)}
 	return true
+
+
+func _test_player_firearm_render_proportions() -> Variant:
+	var entry := _weapon_entry()
+	var arena := ARENA.new() as GameplayArena
+	arena.blueprint = entry.get("blueprint") as WeaponBlueprint
+	arena.asset = entry.get("asset") as WeaponVisualAsset
+	arena.ranged_runtime_profile = (entry.get("ranged_runtime_profile", {}) as Dictionary).duplicate(true)
+	arena.asset.opaque_bounds = Rect2i(0, 0, 64, 28)
+	arena.blueprint.affordance["support_mode"] = "one_hand"
+	var sidearm_scale := arena._firearm_draw_scale()
+	var sidearm_span := float(arena.asset.opaque_bounds.size.x) * sidearm_scale
+	arena.asset.opaque_bounds = Rect2i(0, 0, 88, 32)
+	arena.blueprint.affordance["support_mode"] = "two_hand_shouldered"
+	var shouldered_scale := arena._firearm_draw_scale()
+	var shouldered_span := float(arena.asset.opaque_bounds.size.x) * shouldered_scale
+	var ok := sidearm_span <= 44.5 and shouldered_span <= 70.5
+	ok = ok and sidearm_scale < shouldered_scale
+	ok = ok and arena._firearm_hand_base().distance_to(arena.player_position) < 22.0
+	var result: Variant = true if ok else {
+		"sidearm_scale": sidearm_scale,
+		"sidearm_span": sidearm_span,
+		"shouldered_scale": shouldered_scale,
+		"shouldered_span": shouldered_span,
+		"hand_offset": arena._firearm_hand_base() - arena.player_position,
+	}
+	arena.free()
+	return result
 
 
 func _test_generated_armory_reward() -> Variant:

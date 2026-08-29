@@ -1059,7 +1059,8 @@ func _muzzle_world() -> Vector2:
 			_firearm_hand_base(),
 			asset.muzzle,
 			asset.grip_primary,
-			action.get("root_pose", {}) as Dictionary
+			action.get("root_pose", {}) as Dictionary,
+			_firearm_draw_scale()
 		)
 	var hand := player_position + Vector2(19.0 * facing, -10.0)
 	var relative := asset.muzzle - asset.grip_primary
@@ -1074,9 +1075,21 @@ func _firearm_recoil_rotation() -> float:
 
 
 func _firearm_hand_base() -> Vector2:
-	# Long receivers should cross the shoulder line, not erase the face of the
-	# formal player sprite.
-	return player_position + Vector2(22.0 * facing, -3.0)
+	var one_hand := str(blueprint.affordance.get("support_mode", "")) == "one_hand"
+	var local := Vector2(18.0, -10.0) if one_hand else Vector2(18.0, -7.0)
+	return player_position + Vector2(local.x * facing, local.y)
+
+
+func _firearm_draw_scale() -> float:
+	if not _uses_firearm_runtime() or asset == null:
+		return FIREARM_ACTION_CHOREOGRAPHY.DRAW_SCALE
+	var visual_span := maxf(1.0, float(asset.opaque_bounds.size.x))
+	var one_hand := str(blueprint.affordance.get("support_mode", "")) == "one_hand"
+	# Normalize authored and generated sprites to the player instead of trusting
+	# their source-canvas size. A sidearm remains compact; a shouldered weapon may
+	# be longer but cannot become wider than the character's full stance.
+	var target_span := 44.0 if one_hand else 70.0
+	return clampf(target_span / visual_span, 0.62, 0.92)
 
 
 func _firearm_action_sample() -> Dictionary:
@@ -1136,23 +1149,34 @@ func _draw_player_and_weapon() -> void:
 	var root_pose := firearm_action.get("root_pose", {}) as Dictionary
 	var hand_base := _firearm_hand_base()
 	var hand_primary := hand_base
+	var draw_scale := _firearm_draw_scale() if _uses_firearm_runtime() else 1.15
 	var weapon_rotation := _melee_weapon_rotation()
 	if _uses_firearm_runtime():
 		hand_primary += root_pose.get("offset", Vector2.ZERO) as Vector2
 		weapon_rotation = float(root_pose.get("rotation", 0.0))
-	var relative_secondary := (asset.grip_secondary - asset.grip_primary) * 1.15
+	var relative_secondary := (asset.grip_secondary - asset.grip_primary) * draw_scale
 	var relative_secondary_world := Vector2(relative_secondary.x * facing, relative_secondary.y).rotated(weapon_rotation)
 	var one_hand_firearm := _uses_firearm_runtime() and str(blueprint.affordance.get("support_mode", "")) == "one_hand"
-	var hand_secondary := player_position + Vector2(-9.0 * facing, 12.0) if one_hand_firearm else hand_primary + relative_secondary_world
+	var hand_secondary := player_position + Vector2(-12.0 * facing, 15.0) if one_hand_firearm else hand_primary + relative_secondary_world
+	var support_shoulder := pixel_position + Vector2(-7.0 * facing, -14.0)
+	var primary_shoulder := pixel_position + Vector2(7.0 * facing, -16.0)
+	var support_elbow := (
+		pixel_position + Vector2(-16.0 * facing, 0.0)
+		if one_hand_firearm
+		else support_shoulder.lerp(hand_secondary, 0.48) + Vector2(-5.0 * facing, 6.0)
+	)
+	var primary_elbow := primary_shoulder.lerp(hand_primary, 0.48) + Vector2(-2.0 * facing, 5.0)
 	_draw_player_pixel_arm(
-		pixel_position + Vector2(-8.0 * facing, -17.0),
+		support_shoulder,
+		support_elbow,
 		hand_secondary,
-		Color("d8a77f")
+		Color("294b57")
 	)
 	_draw_player_pixel_arm(
-		pixel_position + Vector2(9.0 * facing, -20.0),
+		primary_shoulder,
+		primary_elbow,
 		hand_primary,
-		Color("efc39e")
+		Color("3a6872")
 	)
 	var state_power := _melee_state_power()
 	if _uses_stateful_pixel_morph() and state_power > 0.01:
@@ -1162,9 +1186,9 @@ func _draw_player_and_weapon() -> void:
 	elif _uses_soft_mechanism_visual():
 		_draw_soft_mechanism_weapon(_soft_weapon_geometry(hand_primary, weapon_rotation))
 	else:
-		draw_set_transform(hand_primary, weapon_rotation, Vector2(facing, 1.0))
-		var local_position := FIREARM_ACTION_CHOREOGRAPHY.weapon_origin(asset.grip_primary)
-		draw_texture_rect(asset.texture, Rect2(local_position, Vector2(asset.canvas_size) * 1.15), false)
+		draw_set_transform(hand_primary, weapon_rotation, Vector2(facing * draw_scale, draw_scale))
+		var local_position := -asset.grip_primary
+		draw_texture_rect(asset.texture, Rect2(local_position, Vector2(asset.canvas_size)), false)
 		if _uses_firearm_runtime():
 			_draw_firearm_action_overlays(firearm_action, hand_primary, weapon_rotation)
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
@@ -1193,17 +1217,22 @@ func _draw_player_pixel_shadow(position: Vector2) -> void:
 	draw_rect(Rect2(position + Vector2(-18.0, 48.0), Vector2(36.0, 2.0)), rim, true)
 
 
-func _draw_player_pixel_arm(start: Vector2, finish: Vector2, skin: Color) -> void:
+func _draw_player_pixel_arm(start: Vector2, elbow: Vector2, finish: Vector2, sleeve: Color) -> void:
 	var snapped_start := Vector2(roundf(start.x), roundf(start.y))
+	var snapped_elbow := Vector2(roundf(elbow.x), roundf(elbow.y))
 	var snapped_finish := Vector2(roundf(finish.x), roundf(finish.y))
-	draw_line(snapped_start, snapped_finish, Color("111827"), 9.0, false)
-	draw_line(snapped_start, snapped_finish, skin, 5.0, false)
+	draw_line(snapped_start, snapped_elbow, Color("111827"), 8.0, false)
+	draw_line(snapped_elbow, snapped_finish, Color("111827"), 8.0, false)
+	draw_line(snapped_start, snapped_elbow, sleeve, 4.0, false)
+	draw_line(snapped_elbow, snapped_finish, sleeve.lightened(0.10), 4.0, false)
+	draw_rect(Rect2(snapped_elbow - Vector2(3.0, 3.0), Vector2(6.0, 6.0)), Color("111827"), true)
+	draw_rect(Rect2(snapped_elbow - Vector2(2.0, 2.0), Vector2(4.0, 4.0)), sleeve, true)
 
 
 func _draw_player_pixel_hand(position: Vector2, skin: Color) -> void:
 	var snapped := Vector2(roundf(position.x), roundf(position.y))
-	draw_rect(Rect2(snapped - Vector2(5.0, 5.0), Vector2(10.0, 10.0)), Color("111827"), true)
-	draw_rect(Rect2(snapped - Vector2(3.0, 3.0), Vector2(6.0, 6.0)), skin, true)
+	draw_rect(Rect2(snapped - Vector2(4.0, 4.0), Vector2(8.0, 8.0)), Color("111827"), true)
+	draw_rect(Rect2(snapped - Vector2(2.0, 2.0), Vector2(4.0, 4.0)), skin, true)
 
 
 func _uses_stateful_pixel_morph() -> bool:
@@ -1493,7 +1522,8 @@ func _draw_firearm_world_anchor(
 		hand_base,
 		point,
 		asset.grip_primary,
-		root_pose
+		root_pose,
+		_firearm_draw_scale()
 	)
 	draw_circle(world, 5.0, color)
 	draw_string(ThemeDB.fallback_font, world + Vector2(6, -5), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
