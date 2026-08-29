@@ -7,6 +7,8 @@ const LOOP_SCENE := preload("res://scenes/automatic_level_loop.tscn")
 const AutomaticLevelLoop := preload("res://scripts/enemy_attack/automatic_level_loop.gd")
 const AUTOMATIC_ARMORY := preload("res://scripts/combat_feel/automatic_armory_director.gd")
 const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
+const ASSET_LOADER := preload("res://scripts/combat_feel/combat_feel_asset_loader.gd")
+const ENEMY_VISUAL_ASSETS := preload("res://scripts/enemy_attack/enemy_visual_asset_library.gd")
 
 var passed := 0
 var failed := 0
@@ -22,6 +24,8 @@ func _run_all() -> void:
 	_check("Encounter sequence is reproducible across independent directors", _test_reproducible_order)
 	_check("Weapon blueprint, visual asset, and final mechanism matrix survive the handoff", _test_weapon_handoff)
 	_check("Public ranged handoff enters the level without rebuilding the weapon", _test_public_runtime_handoff)
+	_check("A general soft object enters the same level with its AI mechanism profile intact", _test_general_mechanism_handoff)
+	_check("Every accepted enemy blueprint resolves a formal sprite and the arena background", _test_formal_enemy_visual_assets)
 	_check("Level weapon cards preserve bolt-action mechanism timing", _test_cycle_action_weapon_card)
 	_check("Mechanism coverage chooses one missing firearm role without player input", _test_automatic_armory_gap_plan)
 	_check("A level encounter executes two distinct compiled attack deliveries", _test_two_compiled_deliveries_execute)
@@ -254,6 +258,90 @@ func _test_completed_state() -> Variant:
 	return result
 
 
+func _test_general_mechanism_handoff() -> Variant:
+	var entry := _mechanism_weapon_entry()
+	if not bool(entry.get("ok", false)):
+		return entry
+	var handoff: Node = root.get_node_or_null("MechanismHandoff")
+	if handoff == null:
+		return "MECHANISM_HANDOFF_AUTOLOAD_MISSING"
+	handoff.clear()
+	var error := str(handoff.store(
+		entry.get("blueprint") as WeaponBlueprint,
+		entry.get("asset") as WeaponVisualAsset,
+		entry.get("affordance_profile") as Resource
+	))
+	if not error.is_empty():
+		return error
+	var loop := LOOP_SCENE.instantiate() as AutomaticLevelLoop
+	root.add_child(loop)
+	var handed: Dictionary = loop.director.weapon_handoff()
+	var source_profile := entry.get("affordance_profile") as Resource
+	var handed_profile := handed.get("affordance_profile") as Resource
+	var ok := loop.state == "between_encounters"
+	ok = ok and str(handed.get("kind", "")) == "mechanism_weapon"
+	ok = ok and handed.get("blueprint") == entry.get("blueprint")
+	ok = ok and handed.get("asset") == entry.get("asset")
+	ok = ok and handed_profile != null and handed_profile.to_dict() == source_profile.to_dict()
+	ok = ok and (handed.get("ranged_runtime_profile", {}) as Dictionary).is_empty()
+	ok = ok and not loop.automatic_armory_attempted
+	ok = ok and loop.attack_button.text == "攻击"
+	var arena: GameplayArena = ARENA.new() as GameplayArena
+	arena.blueprint = entry.get("blueprint") as WeaponBlueprint
+	arena.asset = entry.get("asset") as WeaponVisualAsset
+	arena.facing = 1.0
+	arena.melee_timer = 0.0
+	var idle_geometry := arena._soft_weapon_geometry(Vector2(250, 410), 0.0)
+	arena.melee_timer = 0.31
+	var cast_geometry := arena._soft_weapon_geometry(Vector2(250, 410), 0.0)
+	var idle_contact := Vector2(idle_geometry.get("contact", Vector2.ZERO))
+	var cast_contact := Vector2(cast_geometry.get("contact", Vector2.ZERO))
+	ok = ok and (cast_geometry.get("tether", PackedVector2Array()) as PackedVector2Array).size() >= 2
+	ok = ok and cast_contact.distance_to(Vector2(250, 410)) > idle_contact.distance_to(Vector2(250, 410)) + 70.0
+	arena.free()
+	var result: Variant = true if ok else {
+		"state": loop.state,
+		"handed": handed,
+		"automatic_armory_attempted": loop.automatic_armory_attempted,
+		"attack_button": loop.attack_button.text,
+		"idle_contact": idle_contact,
+		"cast_contact": cast_contact,
+	}
+	loop.queue_free()
+	return result
+
+
+func _test_formal_enemy_visual_assets() -> Variant:
+	var library: RefCounted = ENEMY_VISUAL_ASSETS.new()
+	var loaded: Dictionary = library.load_validated()
+	if not bool(loaded.get("ok", false)):
+		return loaded
+	var catalog: Dictionary = CATALOG.load_validated()
+	if not bool(catalog.get("ok", false)):
+		return catalog
+	if library.background_texture == null:
+		return "ARENA_BACKGROUND_TEXTURE_MISSING"
+	var arena: GameplayArena = ARENA.new() as GameplayArena
+	for raw_profile: Variant in (catalog.get("profiles_by_id", {}) as Dictionary).values():
+		var profile := raw_profile as Dictionary
+		var visual: Dictionary = library.visual_for(str(profile.get("catalog_id", profile.get("id", ""))))
+		if visual.get("texture") == null:
+			arena.free()
+			return {"missing_visual": profile.get("id", "")}
+		arena._spawn_enemy_blueprint(profile, Vector2(900, 350))
+		var enemy := arena.enemies[-1]
+		if (enemy.get("visual_asset", {}) as Dictionary).get("texture") == null:
+			arena.free()
+			return {"spawn_dropped_visual": profile.get("id", "")}
+		if not bool(enemy.get("compiled_attacks_ready", false)):
+			arena.free()
+			return {"attack_axes_lost": profile.get("id", "")}
+	var ok := int(loaded.get("enemy_count", 0)) == 3 and arena.enemies.size() == 3
+	var result: Variant = true if ok else {"loaded": loaded, "enemy_count": arena.enemies.size()}
+	arena.free()
+	return result
+
+
 func _test_generated_armory_reward() -> Variant:
 	var loop := LOOP_SCENE.instantiate() as AutomaticLevelLoop
 	root.add_child(loop)
@@ -349,6 +437,19 @@ func _weapon_entry() -> Dictionary:
 		"asset": asset,
 		"ranged_runtime_profile": runtime,
 		"display_name": blueprint.display_name,
+	}
+
+
+func _mechanism_weapon_entry() -> Dictionary:
+	var loaded: Dictionary = ASSET_LOADER.new().load_soft_weapon_asset("fishing_rod_builtin")
+	if not bool(loaded.get("ok", false)):
+		return loaded
+	return {
+		"ok": true,
+		"blueprint": loaded.get("blueprint"),
+		"asset": loaded.get("asset"),
+		"affordance_profile": loaded.get("affordance_profile"),
+		"display_name": (loaded.get("blueprint") as WeaponBlueprint).display_name,
 	}
 
 

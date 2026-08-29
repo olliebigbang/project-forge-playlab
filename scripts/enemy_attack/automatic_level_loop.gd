@@ -39,6 +39,8 @@ var message_title: Label
 var message_body: Label
 var primary_button: Button
 var secondary_button: Button
+var control_help_label: Label
+var attack_button: Button
 
 
 func _ready() -> void:
@@ -52,8 +54,7 @@ func _ready() -> void:
 		_show_fatal_error("离线敌人蓝图没有通过机制检查：%s" % str(configured.get("error", "未知错误")))
 		return
 	armory_entries = armory.load_entries()
-	_start_automatic_armory_expansion()
-	if _take_ranged_handoff():
+	if _take_mechanism_handoff():
 		_begin_run(equipped_entry)
 		return
 	_show_weapon_picker()
@@ -83,18 +84,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		_show_weapon_picker()
 
 
-func _take_ranged_handoff() -> bool:
+func _take_mechanism_handoff() -> bool:
 	var handoff: Node = get_node_or_null("/root/MechanismHandoff")
-	if handoff == null or not handoff.has_method("take_ranged"):
+	if handoff == null or not handoff.has_method("take"):
 		return false
-	var payload: Dictionary = handoff.call("take_ranged") as Dictionary
+	var payload: Dictionary = handoff.call("take") as Dictionary
 	if payload.is_empty():
 		return false
 	var blueprint := payload.get("blueprint") as WeaponBlueprint
 	equipped_entry = {
+		"kind": str(payload.get("kind", "")),
 		"blueprint": blueprint,
 		"asset": payload.get("asset"),
 		"ranged_runtime_profile": (payload.get("ranged_runtime_profile", {}) as Dictionary).duplicate(true),
+		"affordance_profile": payload.get("affordance_profile"),
 		"display_name": blueprint.display_name if blueprint != null else "",
 		"source_kind": "runtime_mechanism_handoff",
 	}
@@ -104,6 +107,7 @@ func _take_ranged_handoff() -> bool:
 func _show_weapon_picker() -> void:
 	arena.stop()
 	arena.visible = false
+	_start_automatic_armory_expansion()
 	state = "weapon_select"
 	weapon_panel.visible = true
 	combat_controls.visible = false
@@ -168,7 +172,7 @@ func _refresh_armory_message() -> void:
 func _begin_run(entry: Dictionary) -> void:
 	var started: Dictionary = director.begin_run(entry)
 	if not bool(started.get("ok", false)):
-		_show_fatal_error("这把枪的机制交接不完整：%s" % str(started.get("error", "未知错误")))
+		_show_fatal_error("这件武器的机制交接不完整：%s" % str(started.get("error", "未知错误")))
 		return
 	equipped_entry = entry.duplicate(true)
 	run_health = 100.0
@@ -176,11 +180,13 @@ func _begin_run(entry: Dictionary) -> void:
 		"damage_taken": 0.0,
 		"defeated": 0,
 		"shots_fired": 0,
+		"attacks_used": 0,
 		"reload_count": 0,
 		"elapsed_seconds": 0.0,
 	}
 	weapon_panel.visible = false
 	combat_controls.visible = false
+	_refresh_control_labels()
 	_schedule_next_encounter(0.85)
 
 
@@ -212,7 +218,8 @@ func _start_next_encounter() -> void:
 	var blueprint := weapon.get("blueprint") as WeaponBlueprint
 	var asset := weapon.get("asset") as WeaponVisualAsset
 	var runtime := weapon.get("ranged_runtime_profile", {}) as Dictionary
-	blueprint.modifiers["ranged_runtime_profile"] = runtime.duplicate(true)
+	if bool(runtime.get("ok", false)):
+		blueprint.modifiers["ranged_runtime_profile"] = runtime.duplicate(true)
 	var profiles: Array[Dictionary] = []
 	for raw_profile: Variant in encounter.get("profiles", []):
 		profiles.append((raw_profile as Dictionary).duplicate(true))
@@ -255,9 +262,10 @@ func _finish_success() -> void:
 	if not pending_armory_reward.is_empty():
 		_show_completion_reward()
 	_configure_result_buttons()
-	status_label.text = "关卡完成　总受伤 %.0f　总射击 %d\nR 再来一次　B 换武器　Esc 返回 Forge" % [
-		float(run_metrics.get("damage_taken", 0.0)),
-		int(run_metrics.get("shots_fired", 0)),
+	var action_total := int(run_metrics.get("shots_fired", 0)) if _is_firearm_equipped() else int(run_metrics.get("attacks_used", 0))
+	var action_label := "总射击" if _is_firearm_equipped() else "总攻击"
+	status_label.text = "关卡完成　总受伤 %.0f　%s %d\nR 再来一次　B 换武器　Esc 返回 Forge" % [
+		float(run_metrics.get("damage_taken", 0.0)), action_label, action_total,
 	]
 
 
@@ -330,7 +338,7 @@ func _on_primary_result_pressed() -> void:
 func _accumulate_metrics(metrics: Dictionary) -> void:
 	for key: String in ["damage_taken", "elapsed_seconds"]:
 		run_metrics[key] = float(run_metrics.get(key, 0.0)) + float(metrics.get(key, 0.0))
-	for key: String in ["defeated", "shots_fired", "reload_count"]:
+	for key: String in ["defeated", "shots_fired", "attacks_used", "reload_count"]:
 		run_metrics[key] = int(run_metrics.get(key, 0)) + int(metrics.get(key, 0))
 
 
@@ -347,16 +355,15 @@ func _update_combat_status() -> void:
 		var runtime: Variant = enemy.get("attack_runtime", null)
 		if runtime != null and runtime.is_running():
 			runtime_states.append("%s/%s" % [str(runtime.phase), runtime.current_delivery()])
-	var magazine_size := int(arena.ranged_runtime_profile.get("magazine_size", 0))
+	var weapon_state := _weapon_runtime_status()
 	status_label.text = (
-		"%s　%d / %d　|　%s　|　生命 %d　弹匣 %d/%d\n" % [
+		"%s　%d / %d　|　%s　|　生命 %d　%s\n" % [
 			str(current_encounter.get("title_zh", "战斗")),
 			int(current_encounter.get("encounter_number", 1)),
 			int(current_encounter.get("encounter_total", 1)),
 			"、".join(enemy_names),
 			roundi(arena.player_health),
-			arena.ammo_in_magazine,
-			magazine_size,
+			weapon_state,
 		]
 		+ "%s\n" % str(current_encounter.get("brief_zh", ""))
 		+ "敌人招式：%s　状态：%s" % ["、".join(attack_names), "　".join(runtime_states)]
@@ -421,6 +428,33 @@ func _select_armory_weapon(index: int) -> void:
 func _weapon_display_name() -> String:
 	var blueprint := equipped_entry.get("blueprint") as WeaponBlueprint
 	return blueprint.display_name if blueprint != null else str(equipped_entry.get("display_name", "武器"))
+
+
+func _is_firearm_equipped() -> bool:
+	var blueprint := equipped_entry.get("blueprint") as WeaponBlueprint
+	return blueprint != null and str(blueprint.affordance.get("weapon_domain", "")) == "handheld_firearm"
+
+
+func _weapon_runtime_status() -> String:
+	if _is_firearm_equipped():
+		return "弹匣 %d/%d" % [
+			arena.ammo_in_magazine,
+			int(arena.ranged_runtime_profile.get("magazine_size", 0)),
+		]
+	var profile: Variant = equipped_entry.get("affordance_profile")
+	if profile == null:
+		return "机制轴已接管"
+	var soft := str(profile.get("flex_topology")) != "none" or str(profile.get("tether_topology")) != "none"
+	return "柔性攻击" if soft else "实体打击"
+
+
+func _refresh_control_labels() -> void:
+	if control_help_label != null:
+		control_help_label.text = "WASD 移动　空格/J %s　Shift/K 闪避　Esc 返回 Forge" % (
+			"射击" if _is_firearm_equipped() else "攻击"
+		)
+	if attack_button != null:
+		attack_button.text = "射击" if _is_firearm_equipped() else "攻击"
 
 
 func _fire_mode_label(runtime: Dictionary) -> String:
@@ -523,21 +557,21 @@ func _build_ui() -> void:
 
 	combat_controls = Control.new()
 	layer.add_child(combat_controls)
-	var help := Label.new()
-	help.text = "WASD 移动　空格/J 射击　Shift/K 闪避　Esc 返回 Forge"
-	help.position = Vector2(38, 680)
-	help.size = Vector2(760, 30)
-	help.add_theme_font_override("font", font)
-	help.add_theme_font_size_override("font_size", 15)
-	combat_controls.add_child(help)
-	var attack := Button.new()
-	attack.text = "射击"
-	attack.position = Vector2(1090, 638)
-	attack.size = Vector2(126, 62)
-	attack.add_theme_font_override("font", font)
-	attack.button_down.connect(func() -> void: arena.set_touch_attack(true))
-	attack.button_up.connect(func() -> void: arena.set_touch_attack(false))
-	combat_controls.add_child(attack)
+	control_help_label = Label.new()
+	control_help_label.text = "WASD 移动　空格/J 攻击　Shift/K 闪避　Esc 返回 Forge"
+	control_help_label.position = Vector2(38, 680)
+	control_help_label.size = Vector2(760, 30)
+	control_help_label.add_theme_font_override("font", font)
+	control_help_label.add_theme_font_size_override("font_size", 15)
+	combat_controls.add_child(control_help_label)
+	attack_button = Button.new()
+	attack_button.text = "攻击"
+	attack_button.position = Vector2(1090, 638)
+	attack_button.size = Vector2(126, 62)
+	attack_button.add_theme_font_override("font", font)
+	attack_button.button_down.connect(func() -> void: arena.set_touch_attack(true))
+	attack_button.button_up.connect(func() -> void: arena.set_touch_attack(false))
+	combat_controls.add_child(attack_button)
 	var dodge := Button.new()
 	dodge.text = "闪避"
 	dodge.position = Vector2(940, 650)

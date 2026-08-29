@@ -2,6 +2,7 @@ class_name AutomaticEncounterDirector
 extends RefCounted
 
 const CATALOG := preload("res://scripts/enemy_attack/offline_enemy_blueprint_catalog.gd")
+const MECHANISM_AXIS_RESOLVER := preload("res://scripts/combat_feel/mechanism_axis_resolver.gd")
 const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
 
 const RUN_SCHEMA := "forge-automatic-encounter-run-v1"
@@ -34,9 +35,11 @@ func begin_run(weapon_entry: Dictionary) -> Dictionary:
 	if not bool(weapon_validation.get("ok", false)):
 		return weapon_validation
 	equipped_weapon = {
+		"kind": str(weapon_validation.get("kind", "")),
 		"blueprint": weapon_entry.get("blueprint"),
 		"asset": weapon_entry.get("asset"),
 		"ranged_runtime_profile": (weapon_entry.get("ranged_runtime_profile", {}) as Dictionary).duplicate(true),
+		"affordance_profile": weapon_entry.get("affordance_profile"),
 		"display_name": str(weapon_entry.get("display_name", (weapon_entry.get("blueprint") as WeaponBlueprint).display_name)),
 	}
 	encounter_index = -1
@@ -124,8 +127,12 @@ func snapshot() -> Dictionary:
 func _validate_weapon_entry(entry: Dictionary) -> Dictionary:
 	var blueprint := entry.get("blueprint") as WeaponBlueprint
 	var asset := entry.get("asset") as WeaponVisualAsset
+	if blueprint == null or asset == null:
+		return _failure("AUTOMATIC_LEVEL_WEAPON_ENTRY_INCOMPLETE")
+	if blueprint.behavior_family == "heavy_melee":
+		return _validate_mechanism_weapon(blueprint, asset, entry.get("affordance_profile"))
 	var runtime := entry.get("ranged_runtime_profile", {}) as Dictionary
-	if blueprint == null or asset == null or not bool(runtime.get("ok", false)):
+	if not bool(runtime.get("ok", false)):
 		return _failure("AUTOMATIC_LEVEL_WEAPON_ENTRY_INCOMPLETE")
 	var compiled: Dictionary = RANGED_AXIS_RESOLVER.compile(blueprint.affordance, blueprint.affordance_source)
 	if not bool(compiled.get("ok", false)):
@@ -136,7 +143,43 @@ func _validate_weapon_entry(entry: Dictionary) -> Dictionary:
 		or runtime.get("final_parameters", {}) != compiled.get("final_parameters", {})
 	):
 		return _failure("AUTOMATIC_LEVEL_WEAPON_HANDOFF_MISMATCH")
-	return {"ok": true}
+	return {"ok": true, "kind": "ranged_firearm"}
+
+
+func _validate_mechanism_weapon(
+	blueprint: WeaponBlueprint,
+	asset: WeaponVisualAsset,
+	affordance_profile: Variant
+) -> Dictionary:
+	if affordance_profile == null or not affordance_profile.has_method("validation_errors"):
+		return _failure("AUTOMATIC_LEVEL_MECHANISM_PROFILE_MISSING")
+	var errors: Array = affordance_profile.call("validation_errors") as Array
+	if not errors.is_empty():
+		return _failure("AUTOMATIC_LEVEL_MECHANISM_PROFILE_INVALID")
+	var resolved: Dictionary = MECHANISM_AXIS_RESOLVER.resolve_ai(
+		asset,
+		blueprint.affordance,
+		blueprint.affordance_source
+	)
+	if not bool(resolved.get("ok", false)):
+		return _failure("AUTOMATIC_LEVEL_MECHANISM_AXES_INVALID")
+	var expected_profile: Variant = resolved.get("profile")
+	if (
+		expected_profile == null
+		or not expected_profile.has_method("to_dict")
+		or not affordance_profile.has_method("to_dict")
+		or expected_profile.call("to_dict") != affordance_profile.call("to_dict")
+	):
+		return _failure("AUTOMATIC_LEVEL_MECHANISM_HANDOFF_MISMATCH")
+	var uses_soft_visuals := str(affordance_profile.get("flex_topology")) != "none" \
+		or str(affordance_profile.get("tether_topology")) != "none"
+	if uses_soft_visuals and not asset.has_pixel_visual_rig():
+		return _failure("AUTOMATIC_LEVEL_MECHANISM_VISUAL_RIG_MISSING")
+	if asset.visual_rig != null:
+		var visual_axis_errors: Array[String] = asset.visual_rig.axis_errors(affordance_profile)
+		if not visual_axis_errors.is_empty():
+			return _failure("AUTOMATIC_LEVEL_MECHANISM_VISUAL_RIG_MISMATCH")
+	return {"ok": true, "kind": "mechanism_weapon"}
 
 
 func _failure(error: String) -> Dictionary:

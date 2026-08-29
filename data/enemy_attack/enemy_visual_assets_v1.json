@@ -1,0 +1,24 @@
+{
+  "schema": "forge-enemy-visual-assets-v1",
+  "background_path": "res://assets/backgrounds/ruined_ember_forge_courtyard_v1.png",
+  "enemies": {
+    "ember_priest": {
+      "sprite_path": "res://assets/enemies/ember_priest_v1.png",
+      "draw_size": [160, 128],
+      "anchor": [80, 78],
+      "health_bar_y": -72
+    },
+    "mechanical_spider": {
+      "sprite_path": "res://assets/enemies/mechanical_spider_v1.png",
+      "draw_size": [160, 128],
+      "anchor": [80, 76],
+      "health_bar_y": -68
+    },
+    "frost_siege_beast": {
+      "sprite_path": "res://assets/enemies/frost_siege_beast_v1.png",
+      "draw_size": [160, 128],
+      "anchor": [80, 76],
+      "health_bar_y": -70
+    }
+  }
+}

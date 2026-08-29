@@ -1683,6 +1683,7 @@ func _show_mechanism_summary() -> void:
 	actions.add_theme_constant_override("separation", 10)
 	outer.add_child(actions)
 	actions.add_child(_button("进入机制训练区", _start_mechanism_training, true))
+	actions.add_child(_button("带这个物件进三战关卡", _start_automatic_level))
 	actions.add_child(_button("返回 Forge", _show_forge))
 
 func _motion_labels_zh(sequence: PackedStringArray) -> PackedStringArray:
@@ -1815,21 +1816,30 @@ func _start_enemy_playtest() -> void:
 
 
 func _start_automatic_level() -> void:
-	if current_blueprint == null or current_asset == null or not _ranged_mechanism_is_ready():
-		_show_error("枪械图片或 AI 自动机制卡尚未就绪。")
+	if current_blueprint == null or current_asset == null:
+		_show_error("武器图片或 AI 自动机制卡尚未就绪。")
 		return
 	var handoff: Node = get_node_or_null("/root/MechanismHandoff")
-	if handoff == null or not handoff.has_method("store_ranged"):
-		_show_error("枪械关卡交接器不存在。")
+	if handoff == null:
+		_show_error("武器关卡交接器不存在。")
 		return
-	var handoff_error := str(handoff.call(
-		"store_ranged",
-		current_blueprint,
-		current_asset,
-		current_ranged_mechanism
-	))
+	var handoff_error := ""
+	if current_blueprint.behavior_family == "heavy_melee":
+		if not _mechanism_profile_is_ready() or not handoff.has_method("store"):
+			_show_error("通用物件的 AI 机制轴尚未就绪。")
+			return
+		handoff_error = str(handoff.call(
+			"store", current_blueprint, current_asset, current_affordance_profile
+		))
+	else:
+		if not _ranged_mechanism_is_ready() or not handoff.has_method("store_ranged"):
+			_show_error("枪械的 AI 射击机制轴尚未就绪。")
+			return
+		handoff_error = str(handoff.call(
+			"store_ranged", current_blueprint, current_asset, current_ranged_mechanism
+		))
 	if not handoff_error.is_empty():
-		_show_error("枪械无法进入关卡：%s" % handoff_error)
+		_show_error("这件武器无法进入关卡：%s" % handoff_error)
 		return
 	get_tree().change_scene_to_file("res://scenes/automatic_level_loop.tscn")
 
