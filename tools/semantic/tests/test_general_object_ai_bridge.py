@@ -6,6 +6,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 PLAYLAB = Path(__file__).resolve().parents[3]
@@ -165,11 +166,32 @@ class GeneralObjectAIBridgeTests(unittest.TestCase):
         with self.assertRaisesRegex(bridge.GeneralObjectBridgeError, "HANDLE_GRIP_CONFLICT"):
             bridge.validate_response("坏握法", handleless_hand_grip)
 
-    def test_contact_capability_flags_cannot_contradict_selected_surfaces(self) -> None:
+    def test_selected_contact_surfaces_repair_their_redundant_capability_flags(self) -> None:
         value = supported_payload("平板电视")
         value["declaration"]["has_broad_face"] = False
-        with self.assertRaisesRegex(bridge.GeneralObjectBridgeError, "CONTACT_FLAG_CONFLICT_BROAD"):
-            bridge.validate_response("平板电视", value)
+        result = bridge.validate_response("平板电视", value)
+        self.assertTrue(result["declaration"]["has_broad_face"])
+        self.assertFalse(result["declaration"]["has_point"])
+
+        weighted_line = supported_payload(
+            "带配重软线",
+            declaration={
+                "handle_length": "short",
+                "body_length": "long",
+                "grip_topology": "one_hand_handle",
+                "rigidity": "flexible",
+                "contact_surface": "whole_body",
+                "secondary_contact_surface": "point",
+                "flex_topology": "flexible_line",
+                "terminal_load": "heavy",
+                "tether_mode": "wrap",
+                "has_point": False,
+                "has_broad_face": False,
+            },
+        )
+        repaired = bridge.validate_response("带配重软线", weighted_line)
+        self.assertTrue(repaired["declaration"]["has_point"])
+        self.assertEqual(repaired["declaration"]["terminal_load"], "heavy")
 
     def test_powered_vehicle_and_living_actor_stay_inert(self) -> None:
         tank = bridge.validate_response(
@@ -241,6 +263,70 @@ class GeneralObjectAIBridgeTests(unittest.TestCase):
         self.assertIn("bicycle", prompt)
         self.assertFalse(schema["additionalProperties"])
         self.assertFalse(schema["properties"]["declaration"]["additionalProperties"])
+
+    def test_runtime_bridge_contains_no_identity_specific_repairs(self) -> None:
+        source = Path(bridge.__file__).read_text(encoding="utf-8").lower()
+        for forbidden in (
+            "tennis",
+            "racket",
+            "extinguisher",
+            "yo-yo",
+            "yoyo",
+            "网球拍",
+            "灭火器",
+            "溜溜球",
+        ):
+            self.assertNotIn(forbidden, source)
+
+    def test_invalid_first_card_gets_one_automatic_axis_repair_without_player_input(self) -> None:
+        class FakeCompiler:
+            prompts: list[str] = []
+
+            def __init__(self, *, system_prompt: str, **_: object) -> None:
+                self.system_prompt = system_prompt
+
+            def compile(self, identity: str) -> dict:
+                FakeCompiler.prompts.append(self.system_prompt)
+                value = supported_payload(identity)
+                if len(FakeCompiler.prompts) == 1:
+                    value["declaration"]["rigidity"] = "rigid"
+                    value["declaration"]["flex_topology"] = "flexible_line"
+                return {
+                    "tool_name": bridge.BLUEPRINT_TOOL_NAME,
+                    "tool_input": value,
+                    "model_id": "fake-general-object-model",
+                    "usage": {"input_tokens": 10, "output_tokens": 5},
+                }
+
+        with patch.object(bridge, "AnthropicSemanticCompiler", FakeCompiler):
+            response, model_id, usage = bridge.resolve_with_anthropic("匿名新物件")
+        self.assertEqual(response["requested_identity"], "匿名新物件")
+        self.assertEqual(model_id, "fake-general-object-model")
+        self.assertEqual(usage, {"input_tokens": 20, "output_tokens": 10})
+        self.assertEqual(len(FakeCompiler.prompts), 2)
+        self.assertIn("DECLARATION_FLEX_RIGIDITY_CONFLICT", FakeCompiler.prompts[1])
+        self.assertIn("do not change the identity", FakeCompiler.prompts[1])
+
+    def test_identity_substitution_never_enters_the_repair_loop(self) -> None:
+        class FakeCompiler:
+            calls = 0
+
+            def __init__(self, **_: object) -> None:
+                pass
+
+            def compile(self, identity: str) -> dict:
+                FakeCompiler.calls += 1
+                return {
+                    "tool_name": bridge.BLUEPRINT_TOOL_NAME,
+                    "tool_input": supported_payload("替换后的名字"),
+                    "model_id": "fake-general-object-model",
+                    "usage": {},
+                }
+
+        with patch.object(bridge, "AnthropicSemanticCompiler", FakeCompiler):
+            with self.assertRaisesRegex(bridge.GeneralObjectBridgeError, "IDENTITY_ECHO_MISMATCH"):
+                bridge.resolve_with_anthropic("玩家原文")
+        self.assertEqual(FakeCompiler.calls, 1)
 
     def test_transport_schema_keeps_closed_shapes(self) -> None:
         schema = json.loads(bridge.SCHEMA_PATH.read_text(encoding="utf-8"))

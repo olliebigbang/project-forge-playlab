@@ -502,7 +502,13 @@ static func _geometry_conflicts(geometry: Dictionary, ai_affordance: Dictionary)
 	var contact: Dictionary = axes.get("contact_surface", {})
 	var measured_contact := str(contact.get("value", ""))
 	var ai_contact := str(ai_affordance.get("contact_surface", ""))
+	var straight_primary_path := (
+		str(ai_affordance.get("flex_topology", "none")) == "none"
+		and str(ai_affordance.get("tether_topology", "none")) == "none"
+	)
 	if (
+		straight_primary_path
+		and
 		str(contact.get("status", "")) == "measured"
 		and measured_contact == "broad"
 		and ai_contact not in ["broad", "whole_body"]

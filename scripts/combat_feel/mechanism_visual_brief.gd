@@ -282,6 +282,7 @@ static func _gate_rules(body_length: String, flex: String, tether: String, termi
 		minimum_span = 0.34
 	return {
 		"minimum_grip_to_strike_span_ratio": minimum_span,
+		"minimum_broad_contact_span_ratio": 0.17,
 		"minimum_soft_curvature_ratio": 0.09 if flex in ["bending_shaft", "flexible_line"] else 0.0,
 		"minimum_linked_width_peaks": 3 if flex == "linked_segments" or tether == "linked_segments" else 0,
 		"minimum_linked_color_transitions": 6 if flex == "linked_segments" or tether == "linked_segments" else 0,

@@ -17,10 +17,11 @@ static func build(affordance: Dictionary) -> Dictionary:
 		return {"ok": false, "error": validation_error}
 	var image := Image.create(CANVAS_SIZE.x, CANVAS_SIZE.y, false, Image.FORMAT_RGBA8)
 	image.fill(Color.TRANSPARENT)
-	var grip := Vector2(14, 80)
+	var mass := str(affordance.get("mass_distribution", "balanced"))
 	var handle_points := _handle_points(str(affordance.get("handle_length", "short")))
 	var body_start: Vector2 = handle_points[-1]
 	var body_finish := _body_finish(str(affordance.get("body_length", "medium")))
+	var grip := _grip_anchor(handle_points, body_finish, mass)
 	var strike := body_finish
 	var tether_origin := body_finish
 	var roles: Array[String] = ["rigid_root"]
@@ -28,7 +29,6 @@ static func build(affordance: Dictionary) -> Dictionary:
 	var tether := str(affordance.get("tether_topology", "none"))
 	var terminal := str(affordance.get("terminal_load", "none"))
 	var deployment := str(affordance.get("tether_deployment", "none"))
-	var mass := str(affordance.get("mass_distribution", "balanced"))
 	var body_widths := _body_widths(mass)
 
 	_draw_handle(image, affordance, handle_points)
@@ -125,6 +125,8 @@ static func build(affordance: Dictionary) -> Dictionary:
 		)
 		roles.append("terminal")
 
+	_draw_mass_distribution_cue(image, mass, grip, strike)
+
 	return {
 		"ok": true,
 		"image": image,
@@ -172,9 +174,65 @@ static func _body_finish(length: String) -> Vector2:
 
 static func _body_widths(mass_distribution: String) -> Vector2i:
 	match mass_distribution:
-		"rear": return Vector2i(11, 4)
-		"front": return Vector2i(5, 10)
-		_: return Vector2i(7, 5)
+		"rear": return Vector2i(14, 3)
+		"front": return Vector2i(4, 14)
+		_: return Vector2i(7, 6)
+
+
+static func _grip_anchor(
+	handle_points: PackedVector2Array,
+	body_finish: Vector2,
+	mass_distribution: String
+) -> Vector2:
+	var handle_rear: Vector2 = handle_points[0]
+	var handle_front: Vector2 = handle_points[-1]
+	match mass_distribution:
+		# A rear-weighted object is held closer to the body so the visible mass
+		# stays at or behind the hand instead of merely being declared as rear.
+		"rear": return handle_front.lerp(body_finish, 0.16)
+		# A front-weighted object keeps the hand toward the rear of its handle,
+		# leaving the visible body and terminal mass clearly in front of it.
+		"front": return handle_rear.lerp(handle_front, 0.18)
+		_: return handle_rear.lerp(handle_front, 0.45)
+
+
+static func _draw_mass_distribution_cue(
+	image: Image,
+	mass_distribution: String,
+	grip: Vector2,
+	strike: Vector2
+) -> void:
+	if mass_distribution == "balanced" or grip.distance_squared_to(strike) <= 1.0:
+		return
+	# Keep the front-weight cue behind the contact feature. Otherwise a point
+	# or edge would be widened into a false broad face by the mass marker.
+	var target_ratio := 0.10 if mass_distribution == "rear" else 0.60
+	var target := grip.lerp(strike, target_ratio)
+	var center := _nearest_opaque_point(image, target)
+	var radius := 11 if mass_distribution == "rear" else 10
+	_fill_circle(image, Vector2i(center.round()), radius + 2, OUTLINE)
+	_fill_circle(image, Vector2i(center.round()), radius, WOOD_MID if mass_distribution == "rear" else BRASS_MID)
+	_fill_circle(
+		image,
+		Vector2i(center.round()) + Vector2i(-2, -2),
+		maxi(3, radius / 2),
+		WOOD_LIGHT if mass_distribution == "rear" else BRASS_LIGHT
+	)
+
+
+static func _nearest_opaque_point(image: Image, target: Vector2) -> Vector2:
+	var nearest := target
+	var nearest_distance := INF
+	for y: int in range(image.get_height()):
+		for x: int in range(image.get_width()):
+			if image.get_pixel(x, y).a <= 0.10:
+				continue
+			var point := Vector2(x, y)
+			var distance := point.distance_squared_to(target)
+			if distance < nearest_distance:
+				nearest = point
+				nearest_distance = distance
+	return nearest
 
 
 static func _curve_between(
@@ -200,7 +258,9 @@ static func _rigid_body_points(start: Vector2, finish: Vector2, rigidity: String
 
 
 static func _tether_points(origin: Vector2, mode: String, deployment: String) -> PackedVector2Array:
-	var finish := Vector2(89, 80) if origin.y < 52.0 else Vector2(89, 18)
+	# Leave room for point, edge, broad and hook contacts. Clipping those
+	# features against the canvas makes unrelated contact morphologies collapse.
+	var finish := Vector2(84, 72) if origin.y < 52.0 else Vector2(84, 23)
 	var offsets := [0.0, -5.0, -8.0, 5.0, 7.0, 0.0]
 	if mode == "wrap":
 		offsets = [0.0, -8.0, -12.0, 9.0, 13.0, 0.0]

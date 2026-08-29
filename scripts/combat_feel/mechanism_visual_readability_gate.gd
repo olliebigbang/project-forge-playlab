@@ -20,6 +20,13 @@ static func evaluate(asset: WeaponVisualAsset, affordance_profile: Resource, bri
 	var canvas_diagonal := maxf(1.0, Vector2(asset.canvas_size).length())
 	var silhouette_metrics := asset.silhouette_mechanics()
 	metrics["silhouette"] = silhouette_metrics
+	var terminal_broad_span_ratio := _terminal_broad_span_ratio(
+		asset.source_image,
+		asset.grip_primary,
+		asset.tip,
+		float(silhouette_metrics.get("feret_diameter_pixels", canvas_diagonal))
+	)
+	metrics["terminal_broad_span_ratio"] = terminal_broad_span_ratio
 	var chroma_residue := _chroma_residue_metrics(asset.source_image)
 	metrics["chroma_residue"] = chroma_residue
 	if int(chroma_residue.get("pixel_count", 0)) >= 8 \
@@ -34,8 +41,13 @@ static func evaluate(asset: WeaponVisualAsset, affordance_profile: Resource, bri
 			errors.append("AI_VISUAL_READABILITY_BRIEF_AXIS_MISMATCH:%s" % axis)
 	if grip_to_strike_span_ratio < float(rules.get("minimum_grip_to_strike_span_ratio", 0.22)):
 		errors.append("AI_VISUAL_READABILITY_CONTACT_SPAN_TOO_SMALL")
+	var broad_contact_span_ratio := maxf(
+		float(silhouette_metrics.get("contact_span_ratio", 0.0)),
+		terminal_broad_span_ratio
+	)
+	metrics["broad_contact_span_ratio"] = broad_contact_span_ratio
 	if str(affordance_profile.contact_surface) == "broad" \
-			and float(silhouette_metrics.get("contact_span_ratio", 0.0)) < 0.17:
+			and broad_contact_span_ratio < float(rules.get("minimum_broad_contact_span_ratio", 0.17)):
 		errors.append("AI_VISUAL_READABILITY_BROAD_CONTACT_TOO_NARROW")
 
 	var flex := str(affordance_profile.flex_topology)
@@ -106,6 +118,54 @@ static func evaluate(asset: WeaponVisualAsset, affordance_profile: Resource, bri
 		if float(terminal_metrics.get("maximum_extent", 0.0)) < minimum_extent:
 			errors.append("AI_VISUAL_READABILITY_TERMINAL_NOT_DISTINCT")
 	return _result(errors, metrics)
+
+
+static func _terminal_broad_span_ratio(
+	image: Image,
+	grip: Vector2,
+	strike: Vector2,
+	feret: float
+) -> float:
+	if image == null or image.is_empty() or feret <= 0.0001:
+		return 0.0
+	var axis := strike - grip
+	if axis.length_squared() <= 0.0001:
+		return 0.0
+	var axis_length := axis.length()
+	var direction := axis / axis_length
+	var normal := Vector2(-direction.y, direction.x)
+	# The outermost contact ray can touch the corner of a valid broad region
+	# (for example an oval or rounded body) and report only a few pixels. Sample
+	# the full functional half nearest StrikePoint so the gate checks the visible
+	# contact region without treating width near the grip as contact evidence.
+	var minimum_projection := axis_length * 0.45
+	var maximum_projection := axis_length * 1.10
+	var bin_count := 14
+	var minimum_normal: Array[float] = []
+	var maximum_normal: Array[float] = []
+	minimum_normal.resize(bin_count)
+	maximum_normal.resize(bin_count)
+	minimum_normal.fill(INF)
+	maximum_normal.fill(-INF)
+	for y: int in range(image.get_height()):
+		for x: int in range(image.get_width()):
+			if image.get_pixel(x, y).a <= 0.10:
+				continue
+			var relative := Vector2(x, y) - grip
+			var projection := relative.dot(direction)
+			if projection < minimum_projection or projection > maximum_projection:
+				continue
+			var ratio := inverse_lerp(minimum_projection, maximum_projection, projection)
+			var index := clampi(floori(ratio * float(bin_count)), 0, bin_count - 1)
+			var normal_projection := relative.dot(normal)
+			minimum_normal[index] = minf(minimum_normal[index], normal_projection)
+			maximum_normal[index] = maxf(maximum_normal[index], normal_projection)
+	var maximum_span := 0.0
+	for index: int in range(bin_count):
+		if minimum_normal[index] == INF or maximum_normal[index] == -INF:
+			continue
+		maximum_span = maxf(maximum_span, maximum_normal[index] - minimum_normal[index] + 1.0)
+	return maximum_span / feret
 
 
 static func _path_metrics(path: PackedVector2Array, rig: PixelWeaponVisualRig, role: String, canvas_diagonal: float) -> Dictionary:
@@ -368,7 +428,7 @@ static func _retry_prompt(errors: Array[String]) -> String:
 	if errors.has("AI_VISUAL_READABILITY_CHROMA_RESIDUE"):
 		return "Keep identity. Leave a visible gap in any loop so magenta background stays outside the object mask."
 	if errors.has("AI_VISUAL_READABILITY_BROAD_CONTACT_TOO_NARROW"):
-		return "Keep identity. Make the striking end a clearly wider flat blunt mass, at least twice the shaft width at 96px."
+		return "Keep identity. Make the functional contact region visibly wider than its held path at 96px; rounded and oval broad regions may taper at the outermost pixel."
 	if errors.has("AI_VISUAL_READABILITY_LINKS_NOT_VISIBLE") \
 			or errors.has("AI_VISUAL_READABILITY_TETHER_LINKS_NOT_VISIBLE"):
 		return "Keep identity. Draw 3-5 chunky sections; cut two narrow hinge necks into the outer silhouette. Never one smooth bar."

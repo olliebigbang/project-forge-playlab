@@ -34,6 +34,7 @@ CLASSIFICATIONS = frozenset(
 )
 MIN_ACCEPTED_CONFIDENCE = 0.72
 MAX_IDENTITY_LENGTH = 160
+MAX_MODEL_CARD_ATTEMPTS = 2
 STRING_AXIS_KEYS = (
     "handle_length",
     "body_length",
@@ -168,8 +169,12 @@ def _validate_supported_declaration(value: Any) -> dict[str, Any]:
         raise GeneralObjectBridgeError("DECLARATION_TETHER_DEPLOYMENT_CONFLICT")
     surfaces = {declaration["contact_surface"], declaration["secondary_contact_surface"]}
     for surface, flag in (("point", "has_point"), ("edge", "has_edge"), ("broad", "has_broad_face")):
-        if surface in surfaces and not declaration[flag]:
-            raise GeneralObjectBridgeError(f"DECLARATION_CONTACT_FLAG_CONFLICT_{surface.upper()}")
+        # The selected contact surfaces are the authoritative mechanical axes.
+        # Capability flags repeat a directly implied physical fact, so repair a
+        # missing flag deterministically instead of rejecting an otherwise
+        # complete card or asking the player to resolve model bookkeeping.
+        if surface in surfaces:
+            declaration[flag] = True
     return declaration
 
 
@@ -262,25 +267,58 @@ def _clarification_schema() -> dict[str, Any]:
     }
 
 
+def _repair_system_prompt(base_prompt: str, error_code: str) -> str:
+    return (
+        f"{base_prompt}\n\n"
+        "Automatic local validation rejected the previous object card with "
+        f"error code {error_code}. Rebuild the complete card for the exact same "
+        "requested_identity. Correct the schema or physical-axis consistency; "
+        "do not change the identity, ask the player a question, or invent a named template."
+    )
+
+
+def _merge_usage(total: dict[str, int], value: Mapping[str, Any]) -> None:
+    for key, item in value.items():
+        if isinstance(item, int) and not isinstance(item, bool):
+            total[key] = total.get(key, 0) + item
+
+
 def resolve_with_anthropic(identity: str) -> tuple[dict[str, Any], str, dict[str, int]]:
     schema = anthropic_transport_schema(_read_json(SCHEMA_PATH))
     try:
-        prompt = PROMPT_PATH.read_text(encoding="utf-8").strip()
+        base_prompt = PROMPT_PATH.read_text(encoding="utf-8").strip()
     except (OSError, UnicodeError) as exc:
         raise GeneralObjectBridgeError("PROMPT_READ_FAILED") from exc
-    compiler = AnthropicSemanticCompiler(
-        system_prompt=prompt,
-        blueprint_schema=schema,
-        clarification_schema=_clarification_schema(),
-        strict_blueprint_tool=True,
-    )
-    compiled = compiler.compile(identity)
-    if compiled.get("tool_name") != BLUEPRINT_TOOL_NAME:
-        raise GeneralObjectBridgeError("MODEL_DID_NOT_RETURN_OBJECT_CARD")
-    tool_input = compiled.get("tool_input")
-    if not isinstance(tool_input, Mapping):
-        raise GeneralObjectBridgeError("MODEL_TOOL_INPUT_INVALID")
-    return validate_response(identity, tool_input), str(compiled.get("model_id", "")), dict(compiled.get("usage", {}))
+    previous_error = ""
+    usage: dict[str, int] = {}
+    for attempt in range(MAX_MODEL_CARD_ATTEMPTS):
+        prompt = base_prompt if not previous_error else _repair_system_prompt(base_prompt, previous_error)
+        compiler = AnthropicSemanticCompiler(
+            system_prompt=prompt,
+            blueprint_schema=schema,
+            clarification_schema=_clarification_schema(),
+            strict_blueprint_tool=True,
+        )
+        compiled = compiler.compile(identity)
+        raw_usage = compiled.get("usage", {})
+        if isinstance(raw_usage, Mapping):
+            _merge_usage(usage, raw_usage)
+        try:
+            if compiled.get("tool_name") != BLUEPRINT_TOOL_NAME:
+                raise GeneralObjectBridgeError("MODEL_DID_NOT_RETURN_OBJECT_CARD")
+            tool_input = compiled.get("tool_input")
+            if not isinstance(tool_input, Mapping):
+                raise GeneralObjectBridgeError("MODEL_TOOL_INPUT_INVALID")
+            response = validate_response(identity, tool_input)
+            return response, str(compiled.get("model_id", "")), usage
+        except GeneralObjectBridgeError as exc:
+            # Identity substitution is a security boundary, not a repair hint.
+            # All other model-card shape/axis failures get one bounded automatic
+            # regeneration before the bridge fails closed.
+            if exc.code == "IDENTITY_ECHO_MISMATCH" or attempt + 1 >= MAX_MODEL_CARD_ATTEMPTS:
+                raise
+            previous_error = exc.code
+    raise GeneralObjectBridgeError("MODEL_CARD_RETRY_EXHAUSTED")
 
 
 def _atomic_write(path: Path, value: Mapping[str, Any]) -> None:

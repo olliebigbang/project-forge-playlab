@@ -36,6 +36,7 @@ func _run() -> void:
 	_test_a_collinear_second_half_cannot_pass_as_an_independent_tether()
 	_test_a_smooth_line_cannot_pass_as_visible_linked_segments()
 	_test_a_thin_end_cannot_pass_as_a_broad_contact_face()
+	_test_a_broad_terminal_region_can_taper_at_its_outermost_pixel()
 	_test_chroma_background_cannot_become_weapon_pixels()
 	_test_generation_handoff_records_structure_and_bounded_ai_retries()
 	print("MECHANISM_VISUAL_GENERATION_TESTS passed=%d failed=%d" % [passed, failed])
@@ -353,9 +354,16 @@ func _test_formal_pipeline_has_no_identity_name_branches() -> void:
 	var source := (
 		FileAccess.get_file_as_string("res://scripts/combat_feel/mechanism_visual_scaffold_pipeline.gd")
 		+ FileAccess.get_file_as_string("res://scripts/services/local_comfy_forge_visual_provider.gd")
+		+ FileAccess.get_file_as_string("res://scripts/combat_feel/mechanism_visual_readability_gate.gd")
+		+ FileAccess.get_file_as_string("res://scripts/combat_feel/mechanism_pixel_scaffold.gd")
+		+ FileAccess.get_file_as_string("res://scripts/combat_feel/mechanism_axis_resolver.gd")
+		+ FileAccess.get_file_as_string("res://scripts/combat_feel/general_object_ai_resolver.gd")
 	).to_lower()
 	var forbidden_hits: Array[String] = []
-	for forbidden: String in ["fishing_rod", "whip", "braid", "staff", "鱼竿", "鞭", "辫"]:
+	for forbidden: String in [
+		"fishing_rod", "whip", "braid", "staff", "鱼竿", "鞭", "辫",
+		"tennis", "racket", "extinguisher", "yo-yo", "yoyo", "网球拍", "灭火器", "溜溜球",
+	]:
 		if source.contains(forbidden):
 			forbidden_hits.append(forbidden)
 	var ok := forbidden_hits.is_empty()
@@ -462,6 +470,20 @@ func _test_a_thin_end_cannot_pass_as_a_broad_contact_face() -> void:
 	_check(ok, "08 a thin line end cannot fake a broad contact face", gate)
 
 
+func _test_a_broad_terminal_region_can_taper_at_its_outermost_pixel() -> void:
+	var asset := _tapered_broad_region_asset()
+	var profile := _profile("none", "none", "none")
+	profile.contact_surface = "broad"
+	profile.has_broad_face = true
+	var gate := READABILITY_GATE.evaluate(asset, profile, VISUAL_BRIEF.compile(profile.to_dict(), "ai_test_axes"))
+	var metrics: Dictionary = gate.get("metrics", {})
+	var local_span := float((metrics.get("silhouette", {}) as Dictionary).get("contact_span_ratio", 0.0))
+	var region_span := float(metrics.get("terminal_broad_span_ratio", 0.0))
+	var ok := bool(gate.get("ok", false))
+	ok = ok and region_span >= 0.17 and region_span > local_span
+	_check(ok, "08a a visible broad terminal region is accepted even when its outermost contact corner tapers", gate)
+
+
 func _test_chroma_background_cannot_become_weapon_pixels() -> void:
 	var asset := _straight_asset(false)
 	asset.source_image.fill_rect(Rect2i(54, 35, 18, 18), Color("ff26ff"))
@@ -470,7 +492,7 @@ func _test_chroma_background_cannot_become_weapon_pixels() -> void:
 	var gate := READABILITY_GATE.evaluate(asset, profile, VISUAL_BRIEF.compile(profile.to_dict(), "ai_test_axes"))
 	var errors: Array = gate.get("errors", [])
 	var ok := not bool(gate.get("ok", true)) and errors.has("AI_VISUAL_READABILITY_CHROMA_RESIDUE")
-	_check(ok, "08a enclosed chroma background cannot become accepted weapon pixels", gate)
+	_check(ok, "08b enclosed chroma background cannot become accepted weapon pixels", gate)
 
 
 func _test_generation_handoff_records_structure_and_bounded_ai_retries() -> void:
@@ -509,6 +531,32 @@ func _straight_asset(with_terminal: bool) -> WeaponVisualAsset:
 	asset.grip_primary = Vector2(12.0, 48.0)
 	asset.grip_secondary = Vector2(17.0, 48.0)
 	asset.tip = Vector2(88.0, 48.0)
+	asset.tether_origin = asset.tip
+	return asset
+
+
+func _tapered_broad_region_asset() -> WeaponVisualAsset:
+	var image := Image.create(96, 96, false, Image.FORMAT_RGBA8)
+	image.fill(Color.TRANSPARENT)
+	_draw_line(image, Vector2i(8, 72), Vector2i(55, 51), Color("8b5a2b"), 3)
+	var center := Vector2(70.0, 42.0)
+	var radii := Vector2(21.0, 27.0)
+	for y: int in range(14, 70):
+		for x: int in range(49, 93):
+			var normalized := Vector2(
+				(float(x) - center.x) / radii.x,
+				(float(y) - center.y) / radii.y
+			)
+			var distance := normalized.length_squared()
+			if distance <= 1.0 and distance >= 0.62:
+				image.set_pixel(x, y, Color("587ca8"))
+	var asset := WeaponVisualAsset.new()
+	asset.source_image = image
+	asset.canvas_size = image.get_size()
+	asset.opaque_bounds = image.get_used_rect()
+	asset.grip_primary = Vector2(12.0, 70.0)
+	asset.grip_secondary = Vector2(18.0, 67.0)
+	asset.tip = Vector2(89.0, 24.0)
 	asset.tether_origin = asset.tip
 	return asset
 

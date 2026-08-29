@@ -20,8 +20,10 @@ func _initialize() -> void:
 	print("Forge general-object AI affordance parser tests")
 	_run("Fridge TV and bicycle compile to three distinct rigid attacks", _test_rigid_object_matrix)
 	_run("Whip and fishing rod retain different soft and tether attacks", _test_soft_object_matrix)
+	_run("Seeded anonymous physical-axis distribution compiles without identity branches", _test_seeded_anonymous_distribution)
 	_run("AI object profile reaches a complete blueprint without a mechanism question", _test_interpreter_and_flow_boundary)
 	_run("Invalid AI axes fail closed before drawing", _test_invalid_axes_rejected)
+	_run("Selected contact axes repair only their redundant capability flags", _test_contact_flag_canonicalization)
 	_run("Firearms vehicles and living actors route to separate compilers", _test_classification_boundaries)
 	_run("Identity echo blocks prompt substitution", _test_identity_echo_guard)
 	_run("Godot provider receives one atomic offline bridge result", _test_provider_offline_bridge)
@@ -130,6 +132,106 @@ func _test_soft_object_matrix() -> Variant:
 	return true if ok else "soft axes collapsed: whip=%s rod=%s" % [str(whip_motion.to_dict()), str(rod_motion.to_dict())]
 
 
+func _test_seeded_anonymous_distribution() -> Variant:
+	var random := RandomNumberGenerator.new()
+	random.seed = 8292026
+	var runtime_signatures := {}
+	var structural_families := {}
+	for index: int in range(32):
+		var declaration := _seeded_valid_declaration(random, index)
+		var identity := "匿名物理结构%02d" % index
+		var scale: String = str(["handheld", "bulky_two_hand", "oversized_fantasy"][random.randi_range(0, 2)])
+		var compiled: Dictionary = _compile_payload(identity, _payload(identity, declaration, scale))
+		if not bool(compiled.get("ok", false)):
+			return {"case": index, "declaration": declaration, "failure": compiled}
+		var motion := compiled.get("motion_profile") as Resource
+		var recipe: Variant = motion.combo_recipe
+		var signature := JSON.stringify([
+			motion.reach_class,
+			motion.grip_topology,
+			motion.primary_contact_surface,
+			motion.secondary_contact_surface,
+			motion.rigidity_mode,
+			motion.flex_topology,
+			motion.tether_topology,
+			motion.terminal_load,
+			motion.tether_mode,
+			motion.tether_deployment,
+			motion.tempo,
+			motion.charge_style,
+			motion.reach_pixels,
+			motion.hitbox_thickness,
+			recipe.to_dict() if recipe != null else {},
+		])
+		runtime_signatures[signature] = true
+		structural_families["%s|%s" % [declaration.flex_topology, declaration.tether_topology]] = true
+	var ok := runtime_signatures.size() >= 24 and structural_families.size() >= 7
+	return true if ok else {
+		"runtime_signature_count": runtime_signatures.size(),
+		"structural_families": structural_families.keys(),
+	}
+
+
+func _seeded_valid_declaration(random: RandomNumberGenerator, index: int) -> Dictionary:
+	var contact_values := ["point", "edge", "broad", "whole_body"]
+	var primary: String = contact_values[random.randi_range(0, contact_values.size() - 1)]
+	var secondary := "none"
+	var flex := "none"
+	var tether := "none"
+	var terminal := "none"
+	var tether_mode := "none"
+	var deployment := "none"
+	var rigidity := "rigid" if random.randi_range(0, 1) == 0 else "semi_rigid"
+	var structure_case := index % 4
+	match structure_case:
+		1:
+			rigidity = "flexible"
+			flex = ["bending_shaft", "flexible_line", "linked_segments"][random.randi_range(0, 2)]
+			terminal = ["none", "light", "heavy"][random.randi_range(0, 2)]
+			if flex in ["flexible_line", "linked_segments"]:
+				tether_mode = ["none", "wrap", "hook"][random.randi_range(0, 2)]
+		2:
+			flex = "none"
+			tether = ["flexible_line", "linked_segments"][random.randi_range(0, 1)]
+			terminal = ["light", "heavy"][random.randi_range(0, 1)]
+			tether_mode = ["wrap", "hook"][random.randi_range(0, 1)]
+			deployment = ["fixed_length", "cast_retract", "launch_tension"][random.randi_range(0, 2)]
+		3:
+			rigidity = "flexible"
+			flex = ["bending_shaft", "flexible_line", "linked_segments"][random.randi_range(0, 2)]
+			tether = ["flexible_line", "linked_segments"][random.randi_range(0, 1)]
+			terminal = ["light", "heavy"][random.randi_range(0, 1)]
+			tether_mode = ["wrap", "hook"][random.randi_range(0, 1)]
+			deployment = ["fixed_length", "cast_retract", "launch_tension"][random.randi_range(0, 2)]
+	if terminal != "none" or tether_mode == "hook":
+		secondary = "point" if primary != "point" else "none"
+	var handle: String = str(["short", "medium", "long"][random.randi_range(0, 2)])
+	var grip := "two_hand_handle" if handle in ["medium", "long"] and random.randi_range(0, 1) == 1 else "one_hand_handle"
+	if structure_case == 0 and random.randi_range(0, 3) == 0:
+		handle = "none"
+		grip = "body_grip" if random.randi_range(0, 1) == 0 else "clamp_grip"
+	var surfaces := [primary, secondary]
+	return {
+		"handle_length": handle,
+		"body_length": ["short", "medium", "long"][random.randi_range(0, 2)],
+		"grip_topology": grip,
+		"rigidity": rigidity,
+		"mass_distribution": ["rear", "balanced", "front"][random.randi_range(0, 2)],
+		"contact_surface": primary,
+		"secondary_contact_surface": secondary,
+		"flex_topology": flex,
+		"tether_topology": tether,
+		"terminal_load": terminal,
+		"tether_mode": tether_mode,
+		"tether_deployment": deployment,
+		"has_point": "point" in surfaces,
+		"has_edge": "edge" in surfaces,
+		"has_broad_face": "broad" in surfaces,
+		"has_barrel": false,
+		"has_stock": false,
+	}
+
+
 func _test_interpreter_and_flow_boundary() -> Variant:
 	var identity := "冰箱"
 	var payload := _fixture_payload()
@@ -169,6 +271,17 @@ func _test_invalid_axes_rejected() -> Variant:
 	(payload.get("declaration", {}) as Dictionary)["flex_topology"] = "flexible_line"
 	var accepted: Dictionary = AI_RESOLVER.accept_ai_response("冰箱", payload, TEST_SOURCE, false)
 	return true if not bool(accepted.get("ok", false)) and str(accepted.get("error", "")).contains("FLEX") else accepted
+
+
+func _test_contact_flag_canonicalization() -> Variant:
+	var payload := _fixture_payload()
+	var declaration := payload.get("declaration", {}) as Dictionary
+	declaration["has_broad_face"] = false
+	var accepted: Dictionary = AI_RESOLVER.accept_ai_response("冰箱", payload, TEST_SOURCE, false)
+	if not bool(accepted.get("ok", false)):
+		return accepted
+	var repaired := accepted.get("declaration", {}) as Dictionary
+	return true if bool(repaired.get("has_broad_face", false)) and not bool(repaired.get("has_point", true)) else repaired
 
 
 func _test_classification_boundaries() -> Variant:

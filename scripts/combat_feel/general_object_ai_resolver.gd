@@ -109,6 +109,7 @@ static func validate_ai_response(player_text: String, payload: Dictionary, sourc
 	if not payload.get("declaration", {}) is Dictionary:
 		return _failure("AI_GENERAL_OBJECT_DECLARATION_INVALID")
 	var declaration := (payload.get("declaration", {}) as Dictionary).duplicate(true)
+	_canonicalize_redundant_contact_flags(declaration)
 	declaration["confidence"] = confidence
 	declaration["evidence_parts"] = evidence.get("values", [])
 	declaration["source"] = source.strip_edges()
@@ -142,6 +143,20 @@ static func validate_ai_response(player_text: String, payload: Dictionary, sourc
 		"source": source.strip_edges(),
 		"player_confirmation_required": false,
 	}
+
+
+static func _canonicalize_redundant_contact_flags(declaration: Dictionary) -> void:
+	var surfaces: Array[String] = [
+		str(declaration.get("contact_surface", "")),
+		str(declaration.get("secondary_contact_surface", "")),
+	]
+	for requirement: Array in [
+		["point", "has_point"],
+		["edge", "has_edge"],
+		["broad", "has_broad_face"],
+	]:
+		if str(requirement[0]) in surfaces:
+			declaration[str(requirement[1])] = true
 
 
 static func _classification_failure(classification: String, confidence: float) -> Dictionary:

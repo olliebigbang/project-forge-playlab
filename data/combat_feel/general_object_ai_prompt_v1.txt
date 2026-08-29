@@ -26,6 +26,7 @@ For improvised_object_supported:
 - terminal_load, tether_mode, and tether_deployment may be non-none only when a flexible or tether path physically supports them;
 - hook requires a point contact. A separate tether requires a non-none deployment; no tether requires deployment none;
 - has_point, has_edge, has_broad_face, has_barrel, and has_stock are literal large-scale structural facts, not guesses from desired attacks;
+- whenever point, edge, or broad is selected as either contact surface, its matching has_point, has_edge, or has_broad_face flag must be true; these flags are redundant consistency checks, not independent attack choices;
 - confidence must reflect identity and affordance certainty. identity_evidence must cite short visible or structural facts;
 - canonical_name must use the same language and writing system as the player's recognizable identity whenever possible; never replace a clear Chinese name with an English display label;
 - visual_description_en must describe a recognizable side-view 96x96 silhouette;
