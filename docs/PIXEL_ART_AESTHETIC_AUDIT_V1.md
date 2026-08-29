@@ -28,3 +28,15 @@ No visual issue was found that blocks delivery of this playable art version. The
 After the player reported an oversized revolver and an awkward arm position, the independent reviewer compared the original player capture with `screenshots/pixel_art_v1/sidearm_proportion.png`. The follow-up result was **PASS**: the one-hand firearm reads at the intended compact scale, the aiming arm has a visible shoulder-elbow-wrist bend, the other arm rests separately at the player's side, the smaller hand pixels fit the figure, and the barrel remains aligned with the shot direction.
 
 The player then identified the same proportion problem on the QSZ-92. The renderer was tightened from a 44-pixel sidearm target to a name-independent maximum of approximately 34 pixels for every `one_hand` firearm. The reviewer compared the original capture with `screenshots/pixel_art_v1/sidearm_qsz92_proportion.png` and returned **PASS**. The QSZ-92 still retains a readable slide, short barrel, and grip while occupying roughly 38% of the 90-pixel player's height. A finite matrix covering 40, 64, 80, and 96-pixel source widths verifies that differing generated canvases converge on the same display ceiling.
+
+## Three-battle strategy and pressure follow-up
+
+Date: 2026-08-30
+
+Reviewer: Volta, independent read-only pixel-art aesthetic auditor
+
+Result: **PASS**
+
+The reviewer inspected the newly rendered `encounter_1.png`, `encounter_2.png`, `encounter_3.png`, and `sidearm_proportion.png` after the stronger encounter curve and weapon-strategy HUD were integrated. Player arms and weapon placement remain coherent, the firearm scale remains proportional, the two-spider encounter reads as two separate threats, formal enemy silhouettes stay above the background, and the three-line strategy guidance remains inside the HUD without clipping. Pixel edges remain clean and hard.
+
+Two non-blocking observations remain: the second-battle HUD is the densest of the three, and overlapping purple danger circles can look visually heavy. Both remain readable and were not judged delivery blockers. The reviewer made no file or code changes.

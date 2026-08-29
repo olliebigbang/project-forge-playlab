@@ -203,19 +203,37 @@
       "encounter_id": "warmup_ember",
       "title_zh": "第一战 · 看懂预告",
       "brief_zh": "祭司会近身横扫，也会在脚下预告火柱。看到红圈就离开。",
-      "blueprint_ids": ["ember_priest"]
+      "blueprint_ids": ["ember_priest"],
+      "pressure": {
+        "health_multiplier": 1.25,
+        "movement_multiplier": 1.12,
+        "damage_multiplier": 1.10,
+        "attack_tempo_multiplier": 0.95
+      }
     },
     {
       "encounter_id": "mobile_web",
       "title_zh": "第二战 · 改变站位",
-      "brief_zh": "猎蛛会飞扑和喷射。横向移动，不要一直站在同一条线上。",
-      "blueprint_ids": ["mechanical_spider"]
+      "brief_zh": "两只猎蛛会交替飞扑和喷射。横向移动，用武器的控制或覆盖能力拆开夹击。",
+      "blueprint_ids": ["mechanical_spider", "mechanical_spider"],
+      "pressure": {
+        "health_multiplier": 1.10,
+        "movement_multiplier": 1.20,
+        "damage_multiplier": 1.18,
+        "attack_tempo_multiplier": 0.82
+      }
     },
     {
       "encounter_id": "siege_finale",
       "title_zh": "最终战 · 打断重击",
       "brief_zh": "攻城兽冲撞时有硬保护；等它打完，再利用恢复时间反击。",
-      "blueprint_ids": ["frost_siege_beast"]
+      "blueprint_ids": ["frost_siege_beast"],
+      "pressure": {
+        "health_multiplier": 1.45,
+        "movement_multiplier": 1.16,
+        "damage_multiplier": 1.28,
+        "attack_tempo_multiplier": 0.78
+      }
     }
   ]
 }

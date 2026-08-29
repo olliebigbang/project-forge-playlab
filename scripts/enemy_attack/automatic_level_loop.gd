@@ -6,6 +6,7 @@ const ARMORY := preload("res://scripts/combat_feel/player_weapon_armory.gd")
 const AUTOMATIC_ARMORY := preload("res://scripts/combat_feel/automatic_armory_director.gd")
 const DIRECTOR := preload("res://scripts/enemy_attack/automatic_encounter_director.gd")
 const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
+const WEAPON_STRATEGY := preload("res://scripts/combat_feel/weapon_strategy_compiler.gd")
 
 var arena: GameplayArena
 var armory: RefCounted = ARMORY.new()
@@ -360,6 +361,10 @@ func _update_combat_status() -> void:
 				_enemy_delivery_label(str(runtime.current_delivery())),
 			])
 	var weapon_state := _weapon_runtime_status()
+	var strategy_tip := WEAPON_STRATEGY.battle_tip(
+		arena.weapon_strategy_profile,
+		int(current_encounter.get("encounter_number", 1))
+	)
 	status_label.text = (
 		"%s　%d / %d　|　%s　|　生命 %d　%s\n" % [
 			str(current_encounter.get("title_zh", "战斗")),
@@ -369,7 +374,7 @@ func _update_combat_status() -> void:
 			roundi(arena.player_health),
 			weapon_state,
 		]
-		+ "%s\n" % str(current_encounter.get("brief_zh", ""))
+		+ "%s　武器策略：%s\n" % [str(current_encounter.get("brief_zh", "")), strategy_tip]
 		+ "敌人招式：%s　状态：%s" % ["、".join(attack_names), "　".join(runtime_states)]
 	)
 
@@ -468,7 +473,12 @@ func _weapon_runtime_status() -> String:
 	if profile == null:
 		return "机制轴已接管"
 	var soft := str(profile.get("flex_topology")) != "none" or str(profile.get("tether_topology")) != "none"
-	return "柔性攻击" if soft else "实体打击"
+	var strategy := arena.weapon_strategy_profile
+	if soft:
+		return "柔性控制 %.0f%%" % (float(strategy.get("control", 0.0)) * 100.0)
+	if float(strategy.get("defense", 0.0)) >= 0.55:
+		return "攻防展开 %.0f%%" % (float(strategy.get("defense", 0.0)) * 100.0)
+	return "实体打击 · 突进 %.0f" % float(strategy.get("melee_lunge_pixels", 0.0))
 
 
 func _refresh_control_labels() -> void:

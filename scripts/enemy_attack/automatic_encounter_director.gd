@@ -58,11 +58,17 @@ func begin_next_encounter() -> Dictionary:
 		state = "completed"
 		return snapshot()
 	var declaration := (encounters[next_index] as Dictionary).duplicate(true)
+	var pressure := (declaration.get("pressure", {}) as Dictionary).duplicate(true)
 	var profiles: Array[Dictionary] = []
 	for raw_id: Variant in declaration.get("blueprint_ids", []):
 		var profile := ((catalog.get("profiles_by_id", {}) as Dictionary).get(str(raw_id), {}) as Dictionary).duplicate(true)
 		if profile.is_empty():
 			return _failure("AUTOMATIC_LEVEL_BLUEPRINT_MISSING:%s" % str(raw_id))
+		profile["max_health"] = float(profile.get("max_health", 80.0)) * float(pressure.get("health_multiplier", 1.0))
+		profile["move_speed"] = float(profile.get("move_speed", 54.0)) * float(pressure.get("movement_multiplier", 1.0))
+		profile["damage_multiplier"] = float(pressure.get("damage_multiplier", 1.0))
+		profile["attack_tempo_multiplier"] = float(pressure.get("attack_tempo_multiplier", 1.0))
+		profile["pressure_profile"] = pressure.duplicate(true)
 		profiles.append(profile)
 	encounter_index = next_index
 	active_encounter = declaration

@@ -12,6 +12,8 @@ const FIREARM_ACTION_CHOREOGRAPHY := preload(
 const PIXEL_WEAPON_DEFORMER := preload("res://scripts/combat_feel/pixel_weapon_deformer.gd")
 const STATEFUL_PIXEL_MORPHER := preload("res://scripts/combat_feel/stateful_pixel_weapon_morpher.gd")
 const TARGET_INTERACTION := preload("res://scripts/combat_feel/weapon_target_interaction_resolver.gd")
+const WEAPON_PLAYER_FIT := preload("res://scripts/combat_feel/weapon_player_fit_compiler.gd")
+const WEAPON_STRATEGY := preload("res://scripts/combat_feel/weapon_strategy_compiler.gd")
 const ENEMY_ATTACK_RUNTIME := preload("res://scripts/enemy_attack/enemy_attack_runtime_driver.gd")
 const ENEMY_ATTACK_VISUAL := preload("res://scripts/enemy_attack/enemy_attack_visual_language.gd")
 const ENEMY_ATTACK_SPRITE := preload("res://scripts/enemy_attack/enemy_attack_sprite_language.gd")
@@ -117,6 +119,7 @@ var pending_reload_after_cycle := false
 var overheat := 0.0
 var overheat_lock := 0.0
 var ranged_runtime_profile: Dictionary = {}
+var weapon_strategy_profile: Dictionary = {}
 var ammo_in_magazine := 0
 var reload_timer := 0.0
 var weapon_recoil_offset := 0.0
@@ -183,6 +186,7 @@ func start_stage(
 			ranged_runtime_profile = (cached_runtime as Dictionary).duplicate(true)
 		else:
 			ranged_runtime_profile = RANGED_AXIS_RESOLVER.compile(blueprint.affordance, blueprint.affordance_source)
+	weapon_strategy_profile = WEAPON_STRATEGY.compile(blueprint, asset, ranged_runtime_profile)
 	ammo_in_magazine = int(ranged_runtime_profile.get("magazine_size", 0))
 	reload_timer = 0.0
 	weapon_recoil_offset = 0.0
@@ -235,7 +239,7 @@ func _process(delta: float) -> void:
 func _update_player(delta: float) -> void:
 	var keyboard := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var movement := keyboard if keyboard.length() > 0.05 else touch_vector
-	if absf(movement.x) > 0.08:
+	if absf(movement.x) > 0.08 and melee_timer <= 0.0:
 		facing = signf(movement.x)
 	var speed := 220.0
 	if blueprint.weight_class == "heavy":
@@ -267,12 +271,31 @@ func _update_attacks(delta: float) -> void:
 	var just_pressed := touch_attack_requested or (attack_down and not attack_was_down)
 	touch_attack_requested = false
 	attack_was_down = attack_down
+	if attack_down or just_pressed or melee_timer > 0.0:
+		_face_nearest_enemy_for_attack()
 	if just_pressed:
 		metrics["attacks_used"] = int(metrics.get("attacks_used", 0)) + 1
 	match blueprint.behavior_family:
 		"returning_thrown": _update_returning_attack(just_pressed, delta)
 		"heavy_melee": _update_melee_attack(just_pressed, delta)
 		_: _update_sustained_attack(attack_down, just_pressed, delta)
+
+
+func _face_nearest_enemy_for_attack() -> void:
+	var nearest_x_distance := INF
+	var nearest_offset_x := 0.0
+	for enemy: Dictionary in enemies:
+		if float(enemy.get("hp", 0.0)) <= 0.0:
+			continue
+		var offset := Vector2(enemy.get("pos", player_position)) - player_position
+		if absf(offset.x) <= 4.0:
+			continue
+		var distance := absf(offset.x) + absf(offset.y) * 0.35
+		if distance < nearest_x_distance:
+			nearest_x_distance = distance
+			nearest_offset_x = offset.x
+	if nearest_x_distance < INF:
+		facing = signf(nearest_offset_x)
 
 func _update_sustained_attack(attack_down: bool, just_pressed: bool, delta: float) -> void:
 	if _uses_firearm_runtime():
@@ -499,6 +522,12 @@ func _update_melee_attack(just_pressed: bool, delta: float) -> void:
 	if just_pressed and melee_timer <= 0.0:
 		melee_timer = 0.75 * startup_multiplier
 		melee_connected.clear()
+		var lunge := _safe_melee_lunge(float(weapon_strategy_profile.get("melee_lunge_pixels", 0.0)))
+		player_position.x = clampf(
+			player_position.x + lunge * facing,
+			WORLD_RECT.position.x + 34.0,
+			WORLD_RECT.end.x - 34.0
+		)
 	if melee_timer <= 0.0:
 		return
 	melee_timer -= delta
@@ -513,9 +542,32 @@ func _update_melee_attack(just_pressed: bool, delta: float) -> void:
 			melee_connected[enemy_id] = true
 			var damage := RULES.damage_against(blueprint.behavior_family, enemy["type"], _is_front_hit(enemy), blueprint.modifiers)
 			damage *= _melee_axis_damage_multiplier()
-			_damage_enemy(enemy, damage)
+			var interaction_profile := weapon_strategy_profile.get("target_interaction_profile", {}) as Dictionary
+			if not bool(interaction_profile.get("ok", false)):
+				interaction_profile = TARGET_INTERACTION.compile_melee(blueprint.affordance, blueprint.affordance)
+			var direction := direction_to_enemy.normalized() if direction_to_enemy.length_squared() > 1.0 else Vector2(facing, 0.0)
+			var outcome := TARGET_INTERACTION.resolve(
+				interaction_profile,
+				_target_interaction_context(enemy),
+				damage,
+				{"knockback": direction * 22.0, "stagger": 0.18}
+			)
+			_damage_enemy(enemy, float(outcome.get("health_damage", damage)), float(outcome.get("stagger_seconds", 0.18)))
+			_apply_target_interaction(enemy, outcome)
 			_apply_melee_axis_force(enemy, direction_to_enemy)
-			player_health = minf(100.0, player_health + damage * 0.10)
+			player_health = minf(100.0, player_health + float(outcome.get("health_damage", damage)) * 0.10)
+
+
+func _safe_melee_lunge(requested: float) -> float:
+	var nearest_forward := INF
+	for enemy: Dictionary in enemies:
+		var relative := Vector2(enemy.get("pos", player_position)) - player_position
+		var forward := relative.x * facing
+		if forward >= 0.0 and absf(relative.y) <= 64.0:
+			nearest_forward = minf(nearest_forward, forward)
+	if nearest_forward < INF:
+		return minf(requested, maxf(0.0, nearest_forward - 30.0))
+	return requested
 
 
 func _melee_axis_reach() -> float:
@@ -535,6 +587,10 @@ func _melee_axis_reach() -> float:
 
 
 func _melee_axis_contains(relative: Vector2, reach: float) -> bool:
+	# Once a target is already inside the player's body space, a visible sweep
+	# must connect even if the target crosses the facing axis during wind-up.
+	if relative.length() <= 30.0:
+		return true
 	if blueprint == null:
 		return relative.length() <= reach and signf(relative.x) == facing
 	var state := str(blueprint.affordance.get("state_topology", "fixed"))
@@ -605,7 +661,7 @@ func _fire_bullet() -> void:
 		falloff_start = float(ranged_runtime_profile.get("damage_falloff_start_pixels", falloff_start))
 		falloff_end = float(ranged_runtime_profile.get("damage_falloff_end_pixels", falloff_end))
 		axis_signature = str(ranged_runtime_profile.get("axis_signature", ""))
-	var origin := _muzzle_world()
+	var origin := _safe_projectile_origin(_muzzle_world())
 	var shot_direction := Vector2(facing, 0.0).rotated(_firearm_recoil_rotation())
 	var target_interaction_profile := TARGET_INTERACTION.compile_ranged(
 		blueprint.affordance,
@@ -647,6 +703,19 @@ func _fire_bullet() -> void:
 			"axis_signature": axis_signature,
 			"target_interaction_profile": target_interaction_profile,
 		})
+
+
+func _safe_projectile_origin(requested_origin: Vector2) -> Vector2:
+	var forward_distance := (requested_origin.x - player_position.x) * facing
+	var safe_forward_distance := maxf(8.0, forward_distance)
+	for enemy: Dictionary in enemies:
+		if float(enemy.get("hp", 0.0)) <= 0.0:
+			continue
+		var offset := Vector2(enemy.get("pos", player_position)) - player_position
+		var enemy_forward := offset.x * facing
+		if enemy_forward > 0.0 and absf(offset.y) <= 28.0:
+			safe_forward_distance = minf(safe_forward_distance, maxf(8.0, enemy_forward - 12.0))
+	return Vector2(player_position.x + safe_forward_distance * facing, requested_origin.y)
 
 
 func _pellet_angle_degrees(index: int, count: int, spread_degrees: float) -> float:
@@ -748,12 +817,9 @@ func _update_enemies(delta: float) -> void:
 		if to_player.length() > 28.0:
 			enemy["pos"] = Vector2(enemy["pos"]) + to_player.normalized() * speed * delta
 		elif not bool(enemy.get("compiled_attacks_ready", false)) and float(enemy["cooldown"]) <= 0.0 and invulnerable_timer <= 0.0:
-			var damage := 5.0 if enemy["type"] == "swarmling" else 9.0
-			player_health = maxf(1.0, player_health - damage)
-			metrics["damage_taken"] = float(metrics["damage_taken"]) + damage
+			var damage := (5.0 if enemy["type"] == "swarmling" else 9.0) * float(enemy.get("damage_multiplier", 1.0))
+			_take_player_damage(damage)
 			enemy["cooldown"] = 0.85
-			flash_timer = 0.14
-			metrics_changed.emit(metrics)
 	var before := enemies.size()
 	enemies = enemies.filter(func(enemy: Dictionary) -> bool: return float(enemy["hp"]) > 0.0)
 	metrics["defeated"] = int(metrics["defeated"]) + before - enemies.size()
@@ -761,6 +827,17 @@ func _update_enemies(delta: float) -> void:
 func _damage_enemy(enemy: Dictionary, amount: float, hurt_seconds: float = 0.12) -> void:
 	enemy["hp"] = float(enemy["hp"]) - amount
 	enemy["hurt"] = maxf(float(enemy.get("hurt", 0.0)), hurt_seconds)
+
+
+func _take_player_damage(amount: float) -> float:
+	var applied := maxf(0.0, amount)
+	if melee_timer > 0.08 and melee_timer < 0.34:
+		applied *= float(weapon_strategy_profile.get("active_guard_damage_multiplier", 1.0))
+	player_health = maxf(1.0, player_health - applied)
+	metrics["damage_taken"] = float(metrics["damage_taken"]) + applied
+	flash_timer = 0.14
+	metrics_changed.emit(metrics)
+	return applied
 
 
 func _begin_compiled_enemy_attack(enemy: Dictionary, attack_runtime: Variant, to_player: Vector2) -> bool:
@@ -798,10 +875,8 @@ func _update_compiled_enemy_attack(enemy: Dictionary, attack_runtime: Variant, d
 		return
 	attack_runtime.register_active_hit()
 	var damage: float = float({"contact": 6.0, "rush": 12.0, "projectile": 8.0, "marked_impact": 10.0}.get(delivery, 6.0))
-	player_health = maxf(1.0, player_health - damage)
-	metrics["damage_taken"] = float(metrics["damage_taken"]) + damage
-	flash_timer = 0.14
-	metrics_changed.emit(metrics)
+	damage *= float(enemy.get("damage_multiplier", 1.0))
+	_take_player_damage(damage)
 
 
 func _spawn_enemy_attack_hazard(enemy: Dictionary, activation_event: Dictionary) -> void:
@@ -822,7 +897,7 @@ func _spawn_enemy_attack_hazard(enemy: Dictionary, activation_event: Dictionary)
 		"life": lifetime,
 		"maximum_life": lifetime,
 		"hit_region": (activation_event.get("hit_region", {}) as Dictionary).duplicate(true),
-		"damage": 8.0 if delivery == "projectile" else 10.0,
+		"damage": (8.0 if delivery == "projectile" else 10.0) * float(enemy.get("damage_multiplier", 1.0)),
 		"hit_player": false,
 		"player_confirmation_required": false,
 	})
@@ -841,10 +916,7 @@ func _update_enemy_attack_hazards(delta: float) -> void:
 		hazard["hit_player"] = true
 		hazard["life"] = 0.0
 		var damage := float(hazard.get("damage", 0.0))
-		player_health = maxf(1.0, player_health - damage)
-		metrics["damage_taken"] = float(metrics["damage_taken"]) + damage
-		flash_timer = 0.14
-		metrics_changed.emit(metrics)
+		_take_player_damage(damage)
 	enemy_attack_hazards = enemy_attack_hazards.filter(func(hazard: Dictionary) -> bool:
 		return float(hazard.get("life", 0.0)) > 0.0 and WORLD_RECT.grow(100.0).has_point(Vector2(hazard.get("pos", Vector2.ZERO)))
 	)
@@ -1025,7 +1097,10 @@ func _spawn_enemy(type_name: String, position: Vector2, health: float) -> void:
 func _spawn_enemy_blueprint(profile: Dictionary, position: Vector2) -> void:
 	var attack_runtime: RefCounted = ENEMY_ATTACK_RUNTIME.new()
 	var declarations: Array = (profile.get("attack_declarations", []) as Array).duplicate(true)
-	var attack_configuration: Dictionary = attack_runtime.configure(declarations) if not declarations.is_empty() else {"ok": false}
+	var attack_configuration: Dictionary = attack_runtime.configure(
+		declarations,
+		float(profile.get("attack_tempo_multiplier", 1.0))
+	) if not declarations.is_empty() else {"ok": false}
 	var maximum_health := float(profile.get("max_health", 80.0))
 	var type_name := str(profile.get("type_name", "generated_enemy"))
 	var blueprint_id := str(profile.get("catalog_id", profile.get("id", type_name)))
@@ -1040,6 +1115,7 @@ func _spawn_enemy_blueprint(profile: Dictionary, position: Vector2) -> void:
 		"mass_class": str(profile.get("mass_class", "medium")),
 		"armor_integrity": float(profile.get("armor_integrity", 0.0)),
 		"move_speed": float(profile.get("move_speed", 54.0)),
+		"damage_multiplier": float(profile.get("damage_multiplier", 1.0)),
 		"coordination_budget": int(profile.get("coordination_budget", default_coordination_budget)),
 		"visual_identity_axes": (profile.get("visual_identity_axes", {}) as Dictionary).duplicate(true),
 		"pin_seconds": 0.0, "entangle_seconds": 0.0, "suppression_seconds": 0.0,
@@ -1062,9 +1138,10 @@ func _muzzle_world() -> Vector2:
 			action.get("root_pose", {}) as Dictionary,
 			_firearm_draw_scale()
 		)
-	var hand := player_position + Vector2(19.0 * facing, -10.0)
+	var hand := _firearm_hand_base()
 	var relative := asset.muzzle - asset.grip_primary
-	var relative_world := Vector2(relative.x * 1.15 * facing, relative.y * 1.15)
+	var scale := float(_weapon_fit().get("draw_scale", 1.0))
+	var relative_world := Vector2(relative.x * scale * facing, relative.y * scale)
 	return hand + relative_world
 
 
@@ -1075,22 +1152,16 @@ func _firearm_recoil_rotation() -> float:
 
 
 func _firearm_hand_base() -> Vector2:
-	var one_hand := str(blueprint.affordance.get("support_mode", "")) == "one_hand"
-	var local := Vector2(18.0, -10.0) if one_hand else Vector2(18.0, -7.0)
+	var local := Vector2(_weapon_fit().get("primary_hand_offset", Vector2(18.0, -7.0)))
 	return player_position + Vector2(local.x * facing, local.y)
 
 
 func _firearm_draw_scale() -> float:
-	if not _uses_firearm_runtime() or asset == null:
-		return FIREARM_ACTION_CHOREOGRAPHY.DRAW_SCALE
-	var visual_span := maxf(1.0, float(asset.opaque_bounds.size.x))
-	var one_hand := str(blueprint.affordance.get("support_mode", "")) == "one_hand"
-	# Normalize authored and generated sprites to the player instead of trusting
-	# their source-canvas size. A sidearm remains compact; a shouldered weapon may
-	# be longer but cannot become wider than the character's full stance.
-	var target_span := 34.0 if one_hand else 70.0
-	var minimum_scale := 0.34 if one_hand else 0.58
-	return clampf(target_span / visual_span, minimum_scale, 0.88)
+	return float(_weapon_fit().get("draw_scale", FIREARM_ACTION_CHOREOGRAPHY.DRAW_SCALE))
+
+
+func _weapon_fit() -> Dictionary:
+	return WEAPON_PLAYER_FIT.compile(blueprint, asset)
 
 
 func _firearm_action_sample() -> Dictionary:
@@ -1148,22 +1219,27 @@ func _draw_player_and_weapon() -> void:
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	var firearm_action := _firearm_action_sample()
 	var root_pose := firearm_action.get("root_pose", {}) as Dictionary
+	var fit := _weapon_fit()
 	var hand_base := _firearm_hand_base()
 	var hand_primary := hand_base
-	var draw_scale := _firearm_draw_scale() if _uses_firearm_runtime() else 1.15
+	var draw_scale := float(fit.get("draw_scale", 1.0))
 	var weapon_rotation := _melee_weapon_rotation()
 	if _uses_firearm_runtime():
 		hand_primary += root_pose.get("offset", Vector2.ZERO) as Vector2
 		weapon_rotation = float(root_pose.get("rotation", 0.0))
-	var relative_secondary := (asset.grip_secondary - asset.grip_primary) * draw_scale
+	var relative_secondary := Vector2(fit.get(
+		"secondary_grip_delta",
+		(asset.grip_secondary - asset.grip_primary) * draw_scale
+	))
 	var relative_secondary_world := Vector2(relative_secondary.x * facing, relative_secondary.y).rotated(weapon_rotation)
-	var one_hand_firearm := _uses_firearm_runtime() and str(blueprint.affordance.get("support_mode", "")) == "one_hand"
-	var hand_secondary := player_position + Vector2(-12.0 * facing, 15.0) if one_hand_firearm else hand_primary + relative_secondary_world
+	var support_required := bool(fit.get("support_required", true))
+	var resting_support := Vector2(fit.get("resting_support_offset", Vector2(-12.0, 15.0)))
+	var hand_secondary := hand_primary + relative_secondary_world if support_required else player_position + Vector2(resting_support.x * facing, resting_support.y)
 	var support_shoulder := pixel_position + Vector2(-7.0 * facing, -14.0)
 	var primary_shoulder := pixel_position + Vector2(7.0 * facing, -16.0)
 	var support_elbow := (
 		pixel_position + Vector2(-16.0 * facing, 0.0)
-		if one_hand_firearm
+		if not support_required
 		else support_shoulder.lerp(hand_secondary, 0.48) + Vector2(-5.0 * facing, 6.0)
 	)
 	var primary_elbow := primary_shoulder.lerp(hand_primary, 0.48) + Vector2(-2.0 * facing, 5.0)
@@ -1181,7 +1257,7 @@ func _draw_player_and_weapon() -> void:
 	)
 	var state_power := _melee_state_power()
 	if _uses_stateful_pixel_morph() and state_power > 0.01:
-		draw_set_transform(hand_primary, weapon_rotation, Vector2(facing * 1.15, 1.15))
+		draw_set_transform(hand_primary, weapon_rotation, Vector2(facing * draw_scale, draw_scale))
 		_draw_stateful_pixel_weapon_local(state_power)
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	elif _uses_soft_mechanism_visual():
@@ -1360,7 +1436,7 @@ func _draw_soft_mechanism_weapon(geometry: Dictionary) -> void:
 		"contact": geometry.get("contact", Vector2.ZERO),
 		"weapon_angle": float(geometry.get("weapon_angle", 0.0)),
 		"facing": facing,
-		"scale": 1.15,
+		"scale": float(_weapon_fit().get("draw_scale", 1.0)),
 		"pixel_snap": true,
 	})
 	for pixel: Dictionary in deformation.get("pixels", []):
@@ -1428,7 +1504,7 @@ func _soft_weapon_geometry(hand: Vector2, weapon_angle: float) -> Dictionary:
 
 func _soft_source_world(source: Vector2, hand: Vector2, weapon_angle: float) -> Vector2:
 	var local := source - asset.grip_primary
-	local = Vector2(local.x * facing, local.y) * 1.15
+	local = Vector2(local.x * facing, local.y) * float(_weapon_fit().get("draw_scale", 1.0))
 	return hand + local.rotated(weapon_angle)
 
 
@@ -1506,7 +1582,7 @@ func _smooth_unit(value: float) -> float:
 	return clamped * clamped * (3.0 - 2.0 * clamped)
 
 func _draw_world_anchor(hand: Vector2, point: Vector2, grip: Vector2, label: String, color: Color) -> void:
-	var relative := (point - grip) * 1.15
+	var relative := (point - grip) * float(_weapon_fit().get("draw_scale", 1.0))
 	var world := hand + Vector2(relative.x * facing, relative.y)
 	draw_circle(world, 5.0, color)
 	draw_string(ThemeDB.fallback_font, world + Vector2(6, -5), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)

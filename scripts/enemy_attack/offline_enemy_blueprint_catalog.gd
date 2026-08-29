@@ -54,6 +54,9 @@ static func load_validated(path: String = DEFAULT_PATH) -> Dictionary:
 		var blueprint_ids := encounter.get("blueprint_ids", []) as Array
 		if encounter_id.is_empty() or encounter_ids.has(encounter_id) or blueprint_ids.is_empty():
 			return _failure("OFFLINE_ENCOUNTER_ID_INVALID:%s" % encounter_id)
+		var pressure_validation := _validate_pressure(encounter.get("pressure", {}))
+		if not bool(pressure_validation.get("ok", false)):
+			return pressure_validation
 		for raw_id: Variant in blueprint_ids:
 			if not profiles_by_id.has(str(raw_id)):
 				return _failure("OFFLINE_ENCOUNTER_BLUEPRINT_UNKNOWN:%s" % str(raw_id))
@@ -77,6 +80,26 @@ static func load_validated(path: String = DEFAULT_PATH) -> Dictionary:
 		"player_enemy_input_required": false,
 		"player_confirmation_required": false,
 	}
+
+
+static func _validate_pressure(value: Variant) -> Dictionary:
+	if not value is Dictionary:
+		return _failure("OFFLINE_ENCOUNTER_PRESSURE_INVALID")
+	var pressure := value as Dictionary
+	var bounds := {
+		"health_multiplier": Vector2(1.0, 1.6),
+		"movement_multiplier": Vector2(1.0, 1.3),
+		"damage_multiplier": Vector2(1.0, 1.4),
+		"attack_tempo_multiplier": Vector2(0.72, 1.0),
+	}
+	for key: String in bounds:
+		if not pressure.has(key) or typeof(pressure[key]) not in [TYPE_INT, TYPE_FLOAT]:
+			return _failure("OFFLINE_ENCOUNTER_PRESSURE_FIELD_INVALID:%s" % key)
+		var interval := bounds[key] as Vector2
+		var number := float(pressure[key])
+		if not is_finite(number) or number < interval.x or number > interval.y:
+			return _failure("OFFLINE_ENCOUNTER_PRESSURE_FIELD_INVALID:%s" % key)
+	return {"ok": true}
 
 
 static func _failure(error: String) -> Dictionary:

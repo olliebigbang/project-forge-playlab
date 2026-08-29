@@ -19,11 +19,15 @@ var previous_mechanism_signature := ""
 var cooldown_remaining_by_key: Dictionary = {}
 var active_hit_registered := false
 var last_transition_reason := ""
+var pressure_tempo_multiplier := 1.0
+var post_attack_cooldown_seconds := 0.18
 
 
-func configure(declarations: Array) -> Dictionary:
+func configure(declarations: Array, tempo_multiplier: float = 1.0) -> Dictionary:
 	compiled_attacks.clear()
 	reset()
+	pressure_tempo_multiplier = clampf(tempo_multiplier, 0.72, 1.0)
+	post_attack_cooldown_seconds = lerpf(0.08, 0.18, inverse_lerp(0.72, 1.0, pressure_tempo_multiplier))
 	for index: int in range(declarations.size()):
 		var raw: Variant = declarations[index]
 		if not raw is Dictionary:
@@ -34,16 +38,44 @@ func configure(declarations: Array) -> Dictionary:
 			failure["compiler_error"] = compiled.duplicate(true)
 			compiled_attacks.clear()
 			return failure
-		compiled_attacks.append(compiled)
+		compiled_attacks.append(_apply_pressure_tempo(compiled))
 	if compiled_attacks.is_empty():
 		return _failure("ATTACK_DECLARATIONS_EMPTY")
 	return {
 		"ok": true,
 		"schema": SCHEMA,
 		"compiled_attack_count": compiled_attacks.size(),
+		"pressure_tempo_multiplier": pressure_tempo_multiplier,
 		"identity_inputs_used": false,
 		"player_confirmation_required": false,
 	}
+
+
+func _apply_pressure_tempo(compiled: Dictionary) -> Dictionary:
+	var tuned := compiled.duplicate(true)
+	var timeline := tuned.get("timeline", {}) as Dictionary
+	timeline["telegraph_seconds"] = maxf(
+		0.24,
+		float(timeline.get("telegraph_seconds", 0.5)) * pressure_tempo_multiplier
+	)
+	timeline["commit_seconds"] = maxf(
+		0.06,
+		float(timeline.get("commit_seconds", 0.12)) * pressure_tempo_multiplier
+	)
+	timeline["recovery_seconds"] = maxf(
+		0.24,
+		float(timeline.get("recovery_seconds", 0.70)) * pressure_tempo_multiplier
+	)
+	var telegraph := tuned.get("telegraph", {}) as Dictionary
+	telegraph["duration_seconds"] = float(timeline["telegraph_seconds"])
+	var recovery := tuned.get("recovery", {}) as Dictionary
+	recovery["duration_seconds"] = float(timeline["recovery_seconds"])
+	tuned["pressure_tempo_multiplier"] = pressure_tempo_multiplier
+	tuned["mechanism_signature"] = JSON.stringify({
+		"base": str(compiled.get("mechanism_signature", "")),
+		"pressure_tempo_multiplier": pressure_tempo_multiplier,
+	}).sha256_text().left(16)
+	return tuned
 
 
 func reset() -> void:
@@ -294,7 +326,10 @@ func _advance_phase(source_position: Vector2, target_position: Vector2) -> Dicti
 		"recovery":
 			var attack_key := str(current_attack.get("attack_key", ""))
 			if not attack_key.is_empty():
-				cooldown_remaining_by_key[attack_key] = maxf(float(cooldown_remaining_by_key.get(attack_key, 0.0)), 0.18)
+				cooldown_remaining_by_key[attack_key] = maxf(
+					float(cooldown_remaining_by_key.get(attack_key, 0.0)),
+					post_attack_cooldown_seconds
+				)
 			previous_mechanism_signature = str(current_attack.get("mechanism_signature", ""))
 			current_attack.clear()
 			phase = "idle"
