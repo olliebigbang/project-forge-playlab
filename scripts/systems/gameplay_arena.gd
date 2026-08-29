@@ -10,6 +10,7 @@ const FIREARM_ACTION_CHOREOGRAPHY := preload(
 	"res://scripts/combat_feel/firearm_action_choreography.gd"
 )
 const PIXEL_WEAPON_DEFORMER := preload("res://scripts/combat_feel/pixel_weapon_deformer.gd")
+const STATEFUL_PIXEL_MORPHER := preload("res://scripts/combat_feel/stateful_pixel_weapon_morpher.gd")
 const TARGET_INTERACTION := preload("res://scripts/combat_feel/weapon_target_interaction_resolver.gd")
 const ENEMY_ATTACK_RUNTIME := preload("res://scripts/enemy_attack/enemy_attack_runtime_driver.gd")
 const ENEMY_ATTACK_VISUAL := preload("res://scripts/enemy_attack/enemy_attack_visual_language.gd")
@@ -1131,7 +1132,12 @@ func _draw_player_and_weapon() -> void:
 	var hand_secondary := player_position + Vector2(-9.0 * facing, 12.0) if one_hand_firearm else hand_primary + relative_secondary_world
 	draw_line(player_position + Vector2(0, -5), hand_primary, Color("f0c7a6"), 7.0)
 	draw_line(player_position + Vector2(2, 1), hand_secondary, Color("f0c7a6"), 7.0)
-	if _uses_soft_mechanism_visual():
+	var state_power := _melee_state_power()
+	if _uses_stateful_pixel_morph() and state_power > 0.01:
+		draw_set_transform(hand_primary, weapon_rotation, Vector2(facing * 1.15, 1.15))
+		_draw_stateful_pixel_weapon_local(state_power)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	elif _uses_soft_mechanism_visual():
 		_draw_soft_mechanism_weapon(_soft_weapon_geometry(hand_primary, weapon_rotation))
 	else:
 		draw_set_transform(hand_primary, weapon_rotation, Vector2(facing, 1.0))
@@ -1158,6 +1164,38 @@ func _draw_player_and_weapon() -> void:
 			_draw_world_anchor(hand_primary, asset.spin_pivot, asset.grip_primary, "SpinPivot", Color("c084fc"))
 
 
+func _uses_stateful_pixel_morph() -> bool:
+	if blueprint == null or asset == null or asset.source_image == null or asset.source_image.is_empty():
+		return false
+	if blueprint.behavior_family != "heavy_melee":
+		return false
+	return (
+		str(blueprint.affordance.get("activation_mode", "passive")) != "passive"
+		and str(blueprint.affordance.get("state_topology", "fixed")) != "fixed"
+	)
+
+
+func _melee_state_power() -> float:
+	if not _uses_stateful_pixel_morph() or melee_timer <= 0.08 or melee_timer >= 0.34:
+		return 0.0
+	var active_ratio := clampf(inverse_lerp(0.34, 0.08, melee_timer), 0.0, 1.0)
+	return smoothstep(0.0, 0.46, active_ratio)
+
+
+func _draw_stateful_pixel_weapon_local(power: float) -> void:
+	var deformation: Dictionary = STATEFUL_PIXEL_MORPHER.deform_local(
+		asset.source_image,
+		asset.grip_primary,
+		asset.tip,
+		str(blueprint.affordance.get("state_topology", "fixed")),
+		power
+	)
+	for pixel: Dictionary in deformation.get("pixels", []):
+		var position := Vector2(pixel.get("position", Vector2.ZERO))
+		var size := maxf(1.0, float(pixel.get("size", 1.0)))
+		draw_rect(Rect2(position - Vector2(size, size) * 0.5, Vector2(size, size)), Color(pixel.get("color", Color.WHITE)), true)
+
+
 func _draw_melee_state_effect(hand: Vector2) -> void:
 	if blueprint == null or blueprint.behavior_family != "heavy_melee" or melee_timer <= 0.08 or melee_timer >= 0.34:
 		return
@@ -1171,25 +1209,29 @@ func _draw_melee_state_effect(hand: Vector2) -> void:
 	var contact := hand + direction * 74.0
 	var cyan := Color(0.18, 0.86, 1.0, 0.64)
 	var gold := Color(1.0, 0.68, 0.18, 0.72)
-	match state:
-		"hinged":
-			draw_line(contact, contact + direction.rotated(-0.86 * facing) * 38.0, gold, 5.0)
-			draw_circle(contact, 6.0, cyan)
-		"folding":
-			var joint := contact + direction.rotated(-0.48 * facing) * 24.0
-			draw_polyline(PackedVector2Array([contact, joint, joint + direction * 28.0]), gold, 5.0, false)
-		"telescoping":
-			for offset: float in [12.0, 28.0, 44.0]:
-				draw_line(contact + direction * offset - normal * 7.0, contact + direction * offset + normal * 7.0, gold, 3.0)
-		"radial_expand":
-			for angle: float in [-1.15, -0.58, 0.0, 0.58, 1.15]:
-				draw_line(contact, contact + direction.rotated(angle) * 42.0, gold, 3.0)
-			draw_arc(contact, 42.0, -1.2, 1.2, 22, cyan, 4.0)
-		"rotary":
-			draw_arc(contact, 30.0, 0.0, TAU, 28, cyan, 4.0)
-			for angle: float in [0.0, PI * 0.5, PI, PI * 1.5]:
-				var spun: float = angle + float(Time.get_ticks_msec()) * 0.012
-				draw_line(contact + Vector2.from_angle(spun) * 5.0, contact + Vector2.from_angle(spun) * 28.0, gold, 3.0)
+	# Structural state is rendered by transforming/replacing the real source
+	# pixels.  These overlays are retained only as a fallback when an asset has
+	# no usable source image; guide lines must never impersonate the object.
+	if not _uses_stateful_pixel_morph():
+		match state:
+			"hinged":
+				draw_line(contact, contact + direction.rotated(-0.86 * facing) * 38.0, gold, 5.0)
+				draw_circle(contact, 6.0, cyan)
+			"folding":
+				var joint := contact + direction.rotated(-0.48 * facing) * 24.0
+				draw_polyline(PackedVector2Array([contact, joint, joint + direction * 28.0]), gold, 5.0, false)
+			"telescoping":
+				for offset: float in [12.0, 28.0, 44.0]:
+					draw_line(contact + direction * offset - normal * 7.0, contact + direction * offset + normal * 7.0, gold, 3.0)
+			"radial_expand":
+				for angle: float in [-1.15, -0.58, 0.0, 0.58, 1.15]:
+					draw_line(contact, contact + direction.rotated(angle) * 42.0, gold, 3.0)
+				draw_arc(contact, 42.0, -1.2, 1.2, 22, cyan, 4.0)
+			"rotary":
+				draw_arc(contact, 30.0, 0.0, TAU, 28, cyan, 4.0)
+				for angle: float in [0.0, PI * 0.5, PI, PI * 1.5]:
+					var spun: float = angle + float(Time.get_ticks_msec()) * 0.012
+					draw_line(contact + Vector2.from_angle(spun) * 5.0, contact + Vector2.from_angle(spun) * 28.0, gold, 3.0)
 	match output:
 		"directed_stream":
 			var finish := hand + direction * _melee_axis_reach()

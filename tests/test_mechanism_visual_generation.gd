@@ -9,6 +9,7 @@ const PIXEL_SCAFFOLD := preload("res://scripts/combat_feel/mechanism_pixel_scaff
 const SCAFFOLD_PIPELINE := preload("res://scripts/combat_feel/mechanism_visual_scaffold_pipeline.gd")
 const VISUAL_BRIEF := preload("res://scripts/combat_feel/mechanism_visual_brief.gd")
 const READABILITY_GATE := preload("res://scripts/combat_feel/mechanism_visual_readability_gate.gd")
+const STATEFUL_PIXEL_MORPHER := preload("res://scripts/combat_feel/stateful_pixel_weapon_morpher.gd")
 const VISUAL_PROMPT := preload("res://scripts/services/open_identity_visual_prompt.gd")
 
 var passed := 0
@@ -23,6 +24,7 @@ func _run() -> void:
 	_test_axes_compile_to_distinct_anonymous_drawing_contracts()
 	_test_every_structural_axis_changes_the_drawing_contract()
 	_test_every_structural_axis_changes_the_pixel_scaffold()
+	_test_stateful_pixels_replace_the_closed_sprite_with_a_filled_active_silhouette()
 	_test_prompt_carries_mechanism_structure_before_generation()
 	_test_four_existing_structures_pass_the_readability_gate()
 	_test_four_axis_scaffolds_are_distinct_and_machine_readable()
@@ -176,6 +178,32 @@ func _test_every_structural_axis_changes_the_pixel_scaffold() -> void:
 		"02a every mechanism axis alone changes at least 32 pixels in the final 96px scaffold",
 		{"weak_or_unchanged": weak_or_unchanged, "changed_pixel_counts": changed_pixel_counts}
 	)
+
+
+func _test_stateful_pixels_replace_the_closed_sprite_with_a_filled_active_silhouette() -> void:
+	var image := Image.create(96, 96, false, Image.FORMAT_RGBA8)
+	image.fill(Color.TRANSPARENT)
+	image.fill_rect(Rect2i(8, 44, 24, 9), Color("8b5a35"))
+	image.fill_rect(Rect2i(26, 46, 58, 5), Color("111827"))
+	image.fill_rect(Rect2i(34, 40, 48, 14), Color("26384f"))
+	image.fill_rect(Rect2i(39, 43, 40, 8), Color("405a78"))
+	var grip := Vector2(18.0, 48.0)
+	var strike := Vector2(84.0, 48.0)
+	var closed := STATEFUL_PIXEL_MORPHER.deform_local(image, grip, strike, "fixed", 0.0)
+	var opened := STATEFUL_PIXEL_MORPHER.deform_local(image, grip, strike, "radial_expand", 1.0)
+	var closed_metrics := closed.get("metrics", {}) as Dictionary
+	var opened_metrics := opened.get("metrics", {}) as Dictionary
+	var ok := (
+		bool(opened_metrics.get("closed_sprite_replaced", false))
+		and int(opened_metrics.get("generated_fill_pixels", 0)) >= 700
+		and int(opened_metrics.get("retained_source_pixels", 99999)) < int(closed_metrics.get("pixel_count", 0))
+		and float(opened_metrics.get("normal_span", 0.0)) >= float(closed_metrics.get("normal_span", 0.0)) * 2.8
+		and float(opened_metrics.get("filled_area_ratio", 0.0)) >= 0.24
+	)
+	_check(ok, "02b active state replaces the closed sprite with a filled source-palette pixel silhouette rather than guide lines", {
+		"closed": closed_metrics,
+		"opened": opened_metrics,
+	})
 
 
 func _test_prompt_carries_mechanism_structure_before_generation() -> void:

@@ -11,6 +11,7 @@ const MOTION_PRIMITIVE := preload("res://scripts/combat_feel/motion_primitive.gd
 const PERCEPTIBLE_CONTACT := preload("res://scripts/combat_feel/perceptible_contact_mechanics.gd")
 const TARGET_INTERACTION := preload("res://scripts/combat_feel/weapon_target_interaction_resolver.gd")
 const PIXEL_WEAPON_DEFORMER := preload("res://scripts/combat_feel/pixel_weapon_deformer.gd")
+const STATEFUL_PIXEL_MORPHER := preload("res://scripts/combat_feel/stateful_pixel_weapon_morpher.gd")
 const TUNING_SCHEMA := "forge-combat-feel-tuning-v2"
 const TIMING_KEYS: PackedStringArray = ["startup", "active", "recovery", "combo_window", "input_buffer"]
 const TIMING_CLAMPS := {
@@ -1386,7 +1387,12 @@ func _draw_player() -> void:
 	draw_circle(main_shoulder, 4.0, Color("d7b994"))
 	draw_circle(main_elbow, 4.5, Color("e4c8a8"))
 	var primitive: Variant = _current_attack_primitive()
-	if _uses_pixel_visual_deformation(primitive):
+	var state_power := _stateful_mechanism_power(primitive)
+	if _uses_stateful_pixel_morph(primitive) and state_power > 0.01:
+		draw_set_transform(weapon_origin, float(pose["angle"]), Vector2(player_facing * motion_profile.render_scale, motion_profile.render_scale))
+		_draw_stateful_pixel_weapon_local(primitive, state_power)
+		draw_set_transform(Vector2.ZERO)
+	elif _uses_pixel_visual_deformation(primitive):
 		var soft_geometry := _soft_visual_geometry(primitive, Vector2(0.0, run_bob))
 		_draw_deformed_pixel_weapon(soft_geometry)
 		if debug_visible:
@@ -1399,15 +1405,45 @@ func _draw_player() -> void:
 	draw_circle(weapon_origin, 4.0, Color("f6d1ac"))
 
 
-func _draw_stateful_mechanism(primitive: Variant, hand: Vector2) -> void:
+func _uses_stateful_pixel_morph(primitive: Variant) -> bool:
+	if primitive == null or asset == null or asset.source_image == null or asset.source_image.is_empty():
+		return false
+	return (
+		str(primitive.activation_mode) != "passive"
+		and str(primitive.state_topology) != "fixed"
+		and float(primitive.state_extent_ratio) > 0.0
+	)
+
+
+func _stateful_mechanism_power(primitive: Variant) -> float:
 	if primitive == null or float(primitive.state_extent_ratio) <= 0.0 or controller.phase == "idle":
-		return
+		return 0.0
 	var phase_power := 1.0
 	if controller.phase == "startup":
 		phase_power = smoothstep(0.0, 1.0, controller.phase_ratio())
 	elif controller.phase == "recovery" and str(primitive.activation_mode) != "toggle":
 		phase_power = 1.0 - smoothstep(0.0, 1.0, controller.phase_ratio())
-	var power := clampf(float(primitive.state_extent_ratio) * phase_power, 0.0, 1.0)
+	return clampf(float(primitive.state_extent_ratio) * phase_power, 0.0, 1.0)
+
+
+func _draw_stateful_pixel_weapon_local(primitive: Variant, power: float) -> void:
+	var deformation: Dictionary = STATEFUL_PIXEL_MORPHER.deform_local(
+		asset.source_image,
+		asset.grip_primary,
+		asset.tip,
+		str(primitive.state_topology),
+		power
+	)
+	for pixel: Dictionary in deformation.get("pixels", []):
+		var position := Vector2(pixel.get("position", Vector2.ZERO))
+		var size := maxf(1.0, float(pixel.get("size", 1.0)))
+		draw_rect(Rect2(position - Vector2(size, size) * 0.5, Vector2(size, size)), Color(pixel.get("color", Color.WHITE)), true)
+
+
+func _draw_stateful_mechanism(primitive: Variant, hand: Vector2) -> void:
+	if primitive == null or float(primitive.state_extent_ratio) <= 0.0 or controller.phase == "idle":
+		return
+	var power := _stateful_mechanism_power(primitive)
 	if power <= 0.02:
 		return
 	var contact := _primitive_contact_world(primitive, hand)
@@ -1417,30 +1453,31 @@ func _draw_stateful_mechanism(primitive: Variant, hand: Vector2) -> void:
 	var normal := Vector2(-direction.y, direction.x)
 	var cyan := Color(0.22, 0.90, 1.0, 0.34 + power * 0.34)
 	var gold := Color(1.0, 0.70, 0.18, 0.34 + power * 0.38)
-	match str(primitive.state_topology):
-		"hinged":
-			draw_line(contact, contact + direction.rotated(0.86) * 34.0 * power, gold, 5.0)
-			draw_circle(contact, 6.0, cyan)
-		"folding":
-			var p1 := contact + direction.rotated(0.52) * 22.0 * power
-			var p2 := p1 + direction.rotated(-0.48) * 25.0 * power
-			draw_polyline(PackedVector2Array([contact, p1, p2]), gold, 5.0, false)
-			draw_circle(p1, 5.0, cyan)
-		"telescoping":
-			for offset: float in [10.0, 22.0, 34.0]:
-				var center := contact + direction * offset * power
-				draw_line(center - normal * 7.0, center + normal * 7.0, gold, 3.0)
-		"radial_expand":
-			var radius := 12.0 + 27.0 * power
-			for angle: float in [-1.2, -0.6, 0.0, 0.6, 1.2]:
-				draw_line(contact, contact + direction.rotated(angle) * radius, gold, 3.0)
-			draw_arc(contact, radius, direction.angle() - 1.25, direction.angle() + 1.25, 22, cyan, 4.0)
-		"rotary":
-			var radius := 16.0 + 12.0 * power
-			draw_arc(contact, radius, 0.0, TAU, 28, cyan, 4.0)
-			for angle: float in [0.0, PI * 0.5, PI, PI * 1.5]:
-				var spun := angle + elapsed_seconds * 12.0
-				draw_line(contact + Vector2.from_angle(spun) * 5.0, contact + Vector2.from_angle(spun) * radius, gold, 3.0)
+	if not _uses_stateful_pixel_morph(primitive):
+		match str(primitive.state_topology):
+			"hinged":
+				draw_line(contact, contact + direction.rotated(0.86) * 34.0 * power, gold, 5.0)
+				draw_circle(contact, 6.0, cyan)
+			"folding":
+				var p1 := contact + direction.rotated(0.52) * 22.0 * power
+				var p2 := p1 + direction.rotated(-0.48) * 25.0 * power
+				draw_polyline(PackedVector2Array([contact, p1, p2]), gold, 5.0, false)
+				draw_circle(p1, 5.0, cyan)
+			"telescoping":
+				for offset: float in [10.0, 22.0, 34.0]:
+					var center := contact + direction * offset * power
+					draw_line(center - normal * 7.0, center + normal * 7.0, gold, 3.0)
+			"radial_expand":
+				var radius := 12.0 + 27.0 * power
+				for angle: float in [-1.2, -0.6, 0.0, 0.6, 1.2]:
+					draw_line(contact, contact + direction.rotated(angle) * radius, gold, 3.0)
+				draw_arc(contact, radius, direction.angle() - 1.25, direction.angle() + 1.25, 22, cyan, 4.0)
+			"rotary":
+				var radius := 16.0 + 12.0 * power
+				draw_arc(contact, radius, 0.0, TAU, 28, cyan, 4.0)
+				for angle: float in [0.0, PI * 0.5, PI, PI * 1.5]:
+					var spun := angle + elapsed_seconds * 12.0
+					draw_line(contact + Vector2.from_angle(spun) * 5.0, contact + Vector2.from_angle(spun) * radius, gold, 3.0)
 	match str(primitive.functional_output):
 		"directed_stream":
 			var finish: Vector2 = hand + direction * float(motion_profile.reach_pixels) * float(primitive.reach_multiplier)
