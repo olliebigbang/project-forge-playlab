@@ -26,6 +26,7 @@ func _run_all() -> void:
 	_check("Public ranged handoff enters the level without rebuilding the weapon", _test_public_runtime_handoff)
 	_check("A general soft object enters the same level with its AI mechanism profile intact", _test_general_mechanism_handoff)
 	_check("Every accepted enemy blueprint resolves a formal sprite and the arena background", _test_formal_enemy_visual_assets)
+	_check("Formal combat art obeys the hard-alpha and pixel-density contract", _test_pixel_art_render_contract)
 	_check("Level weapon cards preserve bolt-action mechanism timing", _test_cycle_action_weapon_card)
 	_check("Mechanism coverage chooses one missing firearm role without player input", _test_automatic_armory_gap_plan)
 	_check("A level encounter executes two distinct compiled attack deliveries", _test_two_compiled_deliveries_execute)
@@ -340,6 +341,56 @@ func _test_formal_enemy_visual_assets() -> Variant:
 	var result: Variant = true if ok else {"loaded": loaded, "enemy_count": arena.enemies.size()}
 	arena.free()
 	return result
+
+
+func _test_pixel_art_render_contract() -> Variant:
+	var declarations: Array[Dictionary] = [
+		{
+			"path": "res://assets/backgrounds/ruined_ember_forge_courtyard_v2.png",
+			"size": Vector2i(1280, 720), "maximum_colors": 128, "requires_2x_blocks": true,
+		},
+		{
+			"path": "res://assets/player/forge_wanderer_base_v2.png",
+			"size": Vector2i(108, 108), "maximum_colors": 32, "requires_2x_blocks": false,
+		},
+		{
+			"path": "res://assets/enemies/ember_priest_v4.png",
+			"size": Vector2i(160, 128), "maximum_colors": 32, "requires_2x_blocks": true,
+		},
+		{
+			"path": "res://assets/enemies/mechanical_spider_v3.png",
+			"size": Vector2i(160, 128), "maximum_colors": 32, "requires_2x_blocks": true,
+		},
+		{
+			"path": "res://assets/enemies/frost_siege_beast_v3.png",
+			"size": Vector2i(160, 128), "maximum_colors": 32, "requires_2x_blocks": true,
+		},
+	]
+	for declaration: Dictionary in declarations:
+		var path := str(declaration["path"])
+		var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+		if image == null or image.is_empty():
+			return {"path": path, "error": "IMAGE_MISSING"}
+		if image.get_size() != declaration["size"]:
+			return {"path": path, "size": image.get_size(), "expected": declaration["size"]}
+		var colors: Dictionary = {}
+		for y: int in range(image.get_height()):
+			for x: int in range(image.get_width()):
+				var pixel := image.get_pixel(x, y)
+				var alpha_byte := roundi(pixel.a * 255.0)
+				if alpha_byte not in [0, 255]:
+					return {"path": path, "soft_alpha": alpha_byte, "position": Vector2i(x, y)}
+				colors[pixel.to_html(true)] = true
+		if colors.size() > int(declaration["maximum_colors"]):
+			return {"path": path, "colors": colors.size(), "maximum": declaration["maximum_colors"]}
+		if bool(declaration["requires_2x_blocks"]):
+			for y: int in range(0, image.get_height(), 2):
+				for x: int in range(0, image.get_width(), 2):
+					var reference := image.get_pixel(x, y)
+					for offset: Vector2i in [Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
+						if image.get_pixel(x + offset.x, y + offset.y) != reference:
+							return {"path": path, "non_integer_cluster": Vector2i(x, y)}
+	return true
 
 
 func _test_generated_armory_reward() -> Variant:

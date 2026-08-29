@@ -44,6 +44,7 @@ var attack_button: Button
 
 
 func _ready() -> void:
+	RenderingServer.set_default_clear_color(Color("07111b"))
 	arena = ARENA.new() as GameplayArena
 	arena.visible = false
 	arena.stage_completed.connect(_on_stage_completed)
@@ -354,7 +355,10 @@ func _update_combat_status() -> void:
 	for enemy: Dictionary in arena.enemies:
 		var runtime: Variant = enemy.get("attack_runtime", null)
 		if runtime != null and runtime.is_running():
-			runtime_states.append("%s/%s" % [str(runtime.phase), runtime.current_delivery()])
+			runtime_states.append("%s·%s" % [
+				_enemy_phase_label(str(runtime.phase)),
+				_enemy_delivery_label(str(runtime.current_delivery())),
+			])
 	var weapon_state := _weapon_runtime_status()
 	status_label.text = (
 		"%s　%d / %d　|　%s　|　生命 %d　%s\n" % [
@@ -368,6 +372,24 @@ func _update_combat_status() -> void:
 		+ "%s\n" % str(current_encounter.get("brief_zh", ""))
 		+ "敌人招式：%s　状态：%s" % ["、".join(attack_names), "　".join(runtime_states)]
 	)
+
+
+func _enemy_phase_label(phase: String) -> String:
+	return str({
+		"telegraph": "预警",
+		"commit": "蓄势",
+		"active": "出招",
+		"recovery": "收招",
+	}.get(phase, "观察中"))
+
+
+func _enemy_delivery_label(delivery: String) -> String:
+	return str({
+		"contact": "近身攻击",
+		"rush": "冲撞",
+		"projectile": "飞行弹",
+		"marked_impact": "落点攻击",
+	}.get(delivery, "待机"))
 
 
 func _rebuild_weapon_cards() -> void:
@@ -414,6 +436,7 @@ func _rebuild_weapon_cards() -> void:
 		var select := Button.new()
 		select.text = "带它进入三战"
 		select.custom_minimum_size = Vector2(200, 48)
+		_style_pixel_button(select)
 		var selected_index := index
 		select.pressed.connect(func() -> void: _select_armory_weapon(selected_index))
 		card.add_child(select)
@@ -503,14 +526,19 @@ func _reload_feed_label(runtime: Dictionary) -> String:
 
 func _build_ui() -> void:
 	var font := load("res://assets/fonts/NotoSansCJKsc-Regular.otf") as Font
+	if font is FontFile:
+		var pixel_font := font as FontFile
+		pixel_font.antialiasing = TextServer.FONT_ANTIALIASING_NONE
+		pixel_font.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
 	var layer := CanvasLayer.new()
 	layer.layer = 20
 	add_child(layer)
-	var top := ColorRect.new()
-	top.position = Vector2(18, 12)
-	top.size = Vector2(1244, 116)
-	top.color = Color(0.02, 0.05, 0.09, 0.94)
-	layer.add_child(top)
+	var top := _add_pixel_panel(layer, Vector2(18, 12), Vector2(1244, 116), Color(0.02, 0.05, 0.09, 0.96), Color("6f442a"), 4.0)
+	var top_accent := ColorRect.new()
+	top_accent.position = Vector2(18, 124)
+	top_accent.size = Vector2(1244, 4)
+	top_accent.color = Color("9a5a2f")
+	layer.add_child(top_accent)
 	status_label = Label.new()
 	status_label.position = Vector2(32, 20)
 	status_label.size = Vector2(1214, 100)
@@ -521,11 +549,7 @@ func _build_ui() -> void:
 
 	weapon_panel = Control.new()
 	layer.add_child(weapon_panel)
-	var armory_card := ColorRect.new()
-	armory_card.position = Vector2(70, 150)
-	armory_card.size = Vector2(1140, 516)
-	armory_card.color = Color("172535")
-	weapon_panel.add_child(armory_card)
+	var armory_card := _add_pixel_panel(weapon_panel, Vector2(70, 150), Vector2(1140, 516), Color("111c27"), Color("6f442a"), 4.0)
 	var title := Label.new()
 	title.text = "选择你的武器"
 	title.position = Vector2(108, 174)
@@ -545,6 +569,7 @@ func _build_ui() -> void:
 	refresh.position = Vector2(960, 174)
 	refresh.size = Vector2(208, 46)
 	refresh.add_theme_font_override("font", font)
+	_style_pixel_button(refresh)
 	refresh.pressed.connect(_show_weapon_picker)
 	weapon_panel.add_child(refresh)
 	var scroll := ScrollContainer.new()
@@ -569,6 +594,7 @@ func _build_ui() -> void:
 	attack_button.position = Vector2(1090, 638)
 	attack_button.size = Vector2(126, 62)
 	attack_button.add_theme_font_override("font", font)
+	_style_pixel_button(attack_button)
 	attack_button.button_down.connect(func() -> void: arena.set_touch_attack(true))
 	attack_button.button_up.connect(func() -> void: arena.set_touch_attack(false))
 	combat_controls.add_child(attack_button)
@@ -577,17 +603,14 @@ func _build_ui() -> void:
 	dodge.position = Vector2(940, 650)
 	dodge.size = Vector2(122, 50)
 	dodge.add_theme_font_override("font", font)
+	_style_pixel_button(dodge)
 	dodge.pressed.connect(func() -> void: arena.request_touch_dodge())
 	combat_controls.add_child(dodge)
 	combat_controls.visible = false
 
 	message_panel = Control.new()
 	layer.add_child(message_panel)
-	var message_card := ColorRect.new()
-	message_card.position = Vector2(274, 222)
-	message_card.size = Vector2(732, 300)
-	message_card.color = Color("172535")
-	message_panel.add_child(message_card)
+	var message_card := _add_pixel_panel(message_panel, Vector2(274, 222), Vector2(732, 300), Color("111c27"), Color("6f442a"), 4.0)
 	message_title = Label.new()
 	message_title.position = Vector2(316, 258)
 	message_title.size = Vector2(648, 48)
@@ -608,6 +631,7 @@ func _build_ui() -> void:
 	primary_button.size = Vector2(240, 54)
 	primary_button.add_theme_font_override("font", font)
 	primary_button.add_theme_font_size_override("font_size", 18)
+	_style_pixel_button(primary_button)
 	primary_button.pressed.connect(_on_primary_result_pressed)
 	message_panel.add_child(primary_button)
 	secondary_button = Button.new()
@@ -615,6 +639,7 @@ func _build_ui() -> void:
 	secondary_button.size = Vector2(240, 54)
 	secondary_button.add_theme_font_override("font", font)
 	secondary_button.add_theme_font_size_override("font_size", 18)
+	_style_pixel_button(secondary_button)
 	secondary_button.pressed.connect(func() -> void:
 		if state == "error":
 			get_tree().change_scene_to_file("res://scenes/open_identity_spike.tscn")
@@ -623,6 +648,58 @@ func _build_ui() -> void:
 	)
 	message_panel.add_child(secondary_button)
 	message_panel.visible = false
+
+
+func _style_pixel_button(button: Button) -> void:
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color("151e26")
+	normal.border_color = Color("8e5832")
+	normal.set_border_width_all(4)
+	normal.corner_radius_top_left = 0
+	normal.corner_radius_top_right = 0
+	normal.corner_radius_bottom_left = 0
+	normal.corner_radius_bottom_right = 0
+	var hover := normal.duplicate() as StyleBoxFlat
+	hover.bg_color = Color("263443")
+	hover.border_color = Color("d28a4a")
+	var pressed := normal.duplicate() as StyleBoxFlat
+	pressed.bg_color = Color("0b1117")
+	pressed.border_color = Color("f0b565")
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("focus", hover)
+	button.add_theme_color_override("font_color", Color("f1d5a8"))
+	button.add_theme_color_override("font_hover_color", Color("ffffff"))
+	button.add_theme_color_override("font_pressed_color", Color("ffd39a"))
+
+
+func _add_pixel_panel(
+	parent: Node,
+	panel_position: Vector2,
+	panel_size: Vector2,
+	fill: Color,
+	border: Color,
+	border_width: float
+) -> ColorRect:
+	var panel := ColorRect.new()
+	panel.position = panel_position
+	panel.size = panel_size
+	panel.color = fill
+	parent.add_child(panel)
+	for edge: Rect2 in [
+		Rect2(Vector2.ZERO, Vector2(panel_size.x, border_width)),
+		Rect2(Vector2(0.0, panel_size.y - border_width), Vector2(panel_size.x, border_width)),
+		Rect2(Vector2.ZERO, Vector2(border_width, panel_size.y)),
+		Rect2(Vector2(panel_size.x - border_width, 0.0), Vector2(border_width, panel_size.y)),
+	]:
+		var strip := ColorRect.new()
+		strip.position = edge.position
+		strip.size = edge.size
+		strip.color = border
+		strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		panel.add_child(strip)
+	return panel
 
 
 func _argument_value(prefix: String, fallback: String) -> String:

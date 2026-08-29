@@ -17,6 +17,7 @@ const ENEMY_ATTACK_VISUAL := preload("res://scripts/enemy_attack/enemy_attack_vi
 const ENEMY_ATTACK_SPRITE := preload("res://scripts/enemy_attack/enemy_attack_sprite_language.gd")
 const ENEMY_IDENTITY_VISUAL := preload("res://scripts/enemy_attack/enemy_identity_visual_language.gd")
 const ENEMY_VISUAL_ASSET_LIBRARY := preload("res://scripts/enemy_attack/enemy_visual_asset_library.gd")
+const PLAYER_BASE_TEXTURE := preload("res://assets/player/forge_wanderer_base_v2.png")
 const WORLD_RECT := Rect2(34, 116, 1212, 568)
 
 const TARGET_MECHANICAL_PROFILES := {
@@ -1073,7 +1074,9 @@ func _firearm_recoil_rotation() -> float:
 
 
 func _firearm_hand_base() -> Vector2:
-	return player_position + Vector2(19.0 * facing, -10.0)
+	# Long receivers should cross the shoulder line, not erase the face of the
+	# formal player sprite.
+	return player_position + Vector2(22.0 * facing, -3.0)
 
 
 func _firearm_action_sample() -> Dictionary:
@@ -1102,22 +1105,33 @@ func _draw() -> void:
 		draw_texture_rect(arena_background_texture, Rect2(0, 0, 1280, 720), false)
 	else:
 		draw_rect(Rect2(0, 0, 1280, 720), Color("09131f"), true)
-	draw_rect(WORLD_RECT, Color(0.03, 0.07, 0.10, 0.18), true)
-	draw_rect(WORLD_RECT, Color("64748b"), false, 2.0)
-	for x: int in range(80, 1240, 80):
-		draw_line(Vector2(x, WORLD_RECT.position.y), Vector2(x, WORLD_RECT.end.y), Color(0.2, 0.31, 0.4, 0.08), 1.0)
-	for y: int in range(156, 684, 66):
-		draw_line(Vector2(WORLD_RECT.position.x, y), Vector2(WORLD_RECT.end.x, y), Color(0.2, 0.31, 0.4, 0.07), 1.0)
+	# Keep the authored floor visible. The previous debug grid competed with
+	# silhouettes and made the arena look like a test room.
+	draw_rect(WORLD_RECT, Color(0.01, 0.03, 0.05, 0.07), true)
 	_draw_enemies()
 	_draw_player_and_weapon()
 	_draw_attacks()
 
 func _draw_player_and_weapon() -> void:
-	var body_color := Color("fb7185") if flash_timer > 0.0 else Color("67e8f9")
-	draw_circle(player_position + Vector2(0, -25), 13.0, Color("dbeafe"))
-	draw_rect(Rect2(player_position + Vector2(-15, -12), Vector2(30, 42)), body_color, true)
-	draw_line(player_position + Vector2(-8, 30), player_position + Vector2(-13, 49), Color("94a3b8"), 7.0)
-	draw_line(player_position + Vector2(8, 30), player_position + Vector2(13, 49), Color("94a3b8"), 7.0)
+	var pixel_position := Vector2(roundf(player_position.x), roundf(player_position.y))
+	_draw_player_pixel_shadow(pixel_position)
+	draw_set_transform(pixel_position, 0.0, Vector2(facing, 1.0))
+	var player_rect := Rect2(Vector2(-54.0, -53.0), Vector2(108.0, 108.0))
+	for outline_offset: Vector2 in [Vector2(-2, 0), Vector2(2, 0), Vector2(0, -2), Vector2(0, 2)]:
+		draw_texture_rect(
+			PLAYER_BASE_TEXTURE,
+			Rect2(player_rect.position + outline_offset, player_rect.size),
+			false,
+			Color(0.32, 0.86, 0.92, 0.34)
+		)
+	var player_modulate := Color(1.0, 0.58, 0.58) if flash_timer > 0.0 else Color.WHITE
+	draw_texture_rect(
+		PLAYER_BASE_TEXTURE,
+		player_rect,
+		false,
+		player_modulate
+	)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	var firearm_action := _firearm_action_sample()
 	var root_pose := firearm_action.get("root_pose", {}) as Dictionary
 	var hand_base := _firearm_hand_base()
@@ -1130,8 +1144,16 @@ func _draw_player_and_weapon() -> void:
 	var relative_secondary_world := Vector2(relative_secondary.x * facing, relative_secondary.y).rotated(weapon_rotation)
 	var one_hand_firearm := _uses_firearm_runtime() and str(blueprint.affordance.get("support_mode", "")) == "one_hand"
 	var hand_secondary := player_position + Vector2(-9.0 * facing, 12.0) if one_hand_firearm else hand_primary + relative_secondary_world
-	draw_line(player_position + Vector2(0, -5), hand_primary, Color("f0c7a6"), 7.0)
-	draw_line(player_position + Vector2(2, 1), hand_secondary, Color("f0c7a6"), 7.0)
+	_draw_player_pixel_arm(
+		pixel_position + Vector2(-8.0 * facing, -17.0),
+		hand_secondary,
+		Color("d8a77f")
+	)
+	_draw_player_pixel_arm(
+		pixel_position + Vector2(9.0 * facing, -20.0),
+		hand_primary,
+		Color("efc39e")
+	)
 	var state_power := _melee_state_power()
 	if _uses_stateful_pixel_morph() and state_power > 0.01:
 		draw_set_transform(hand_primary, weapon_rotation, Vector2(facing * 1.15, 1.15))
@@ -1147,9 +1169,8 @@ func _draw_player_and_weapon() -> void:
 			_draw_firearm_action_overlays(firearm_action, hand_primary, weapon_rotation)
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_draw_melee_state_effect(hand_primary)
-	draw_circle(hand_primary, 5.0, Color("f8d8b9"))
-	draw_circle(hand_secondary, 5.0, Color("f8d8b9"))
-	draw_line(player_position + Vector2(0, -30), player_position + Vector2(18.0 * facing, -30), Color("fef08a"), 3.0)
+	_draw_player_pixel_hand(hand_primary, Color("f2c9a6"))
+	_draw_player_pixel_hand(hand_secondary, Color("dcae88"))
 	if debug_anchors:
 		if _uses_firearm_runtime():
 			_draw_firearm_world_anchor(hand_base, asset.grip_primary, root_pose, "GripPrimary", Color("5eead4"))
@@ -1162,6 +1183,27 @@ func _draw_player_and_weapon() -> void:
 			_draw_world_anchor(hand_primary, asset.muzzle, asset.grip_primary, "Muzzle", Color("38bdf8"))
 			_draw_world_anchor(hand_primary, asset.tip, asset.grip_primary, "Tip", Color("fb7185"))
 			_draw_world_anchor(hand_primary, asset.spin_pivot, asset.grip_primary, "SpinPivot", Color("c084fc"))
+
+
+func _draw_player_pixel_shadow(position: Vector2) -> void:
+	var core := Color(0.005, 0.008, 0.012, 0.48)
+	var rim := Color(0.10, 0.13, 0.16, 0.30)
+	draw_rect(Rect2(position + Vector2(-16.0, 42.0), Vector2(32.0, 2.0)), rim, true)
+	draw_rect(Rect2(position + Vector2(-24.0, 44.0), Vector2(48.0, 4.0)), core, true)
+	draw_rect(Rect2(position + Vector2(-18.0, 48.0), Vector2(36.0, 2.0)), rim, true)
+
+
+func _draw_player_pixel_arm(start: Vector2, finish: Vector2, skin: Color) -> void:
+	var snapped_start := Vector2(roundf(start.x), roundf(start.y))
+	var snapped_finish := Vector2(roundf(finish.x), roundf(finish.y))
+	draw_line(snapped_start, snapped_finish, Color("111827"), 9.0, false)
+	draw_line(snapped_start, snapped_finish, skin, 5.0, false)
+
+
+func _draw_player_pixel_hand(position: Vector2, skin: Color) -> void:
+	var snapped := Vector2(roundf(position.x), roundf(position.y))
+	draw_rect(Rect2(snapped - Vector2(5.0, 5.0), Vector2(10.0, 10.0)), Color("111827"), true)
+	draw_rect(Rect2(snapped - Vector2(3.0, 3.0), Vector2(6.0, 6.0)), skin, true)
 
 
 func _uses_stateful_pixel_morph() -> bool:
@@ -1563,9 +1605,9 @@ func _draw_attacks() -> void:
 			var region := hazard.get("hit_region", {}) as Dictionary
 			var radius := float(region.get("radius_pixels", 0.0))
 			var life_ratio := clampf(float(hazard.get("life", 0.0)) / maxf(0.001, float(hazard.get("maximum_life", 0.0))), 0.0, 1.0)
-			draw_circle(hazard_position, radius, Color(0.95, 0.18, 0.12, 0.22))
-			draw_arc(hazard_position, radius, 0.0, TAU, 32, Color("fb7185"), 5.0)
-			draw_arc(hazard_position, radius * life_ratio, 0.0, TAU, 28, Color("fde047"), 3.0)
+			_draw_pixel_disc(hazard_position, radius, Color(0.95, 0.18, 0.12, 0.18))
+			_draw_pixel_arc(hazard_position, radius, 0.0, TAU, Color("fb7185"), 5.0, 28)
+			_draw_pixel_arc(hazard_position, radius * life_ratio, 0.0, TAU, Color("fde047"), 3.0, 24)
 	if blueprint != null and blueprint.behavior_family == "heavy_melee" and melee_timer > 0.08 and melee_timer < 0.34:
 		var stateful := str(blueprint.affordance.get("activation_mode", "passive")) != "passive"
 		if not stateful:
@@ -1578,6 +1620,8 @@ func _draw_attacks() -> void:
 func _draw_enemies() -> void:
 	for enemy: Dictionary in enemies:
 		var position: Vector2 = enemy["pos"]
+		var shadow_half_width := 38.0 if str(enemy.get("mass_class", "medium")) == "heavy" else 30.0
+		_draw_unit_pixel_shadow(position + Vector2(0.0, 45.0), shadow_half_width)
 		var sprite_attack := _enemy_sprite_attack(enemy)
 		var formal_sprite_drawn := false
 		var mechanism_sprite_drawn := false
@@ -1595,8 +1639,26 @@ func _draw_enemies() -> void:
 		var ratio := clampf(float(enemy["hp"]) / maxf(1.0, max_hp), 0.0, 1.0)
 		var visual_asset := enemy.get("visual_asset", {}) as Dictionary
 		var health_y := float(visual_asset.get("health_bar_y", -58.0)) if formal_sprite_drawn else (-58.0 if mechanism_sprite_drawn else -40.0)
-		draw_rect(Rect2(position + Vector2(-24, health_y), Vector2(48, 5)), Color("0f172a"), true)
-		draw_rect(Rect2(position + Vector2(-24, health_y), Vector2(48 * ratio, 5)), Color("4ade80"), true)
+		draw_rect(Rect2(position + Vector2(-28, health_y - 3), Vector2(56, 10)), Color("070b0f"), true)
+		draw_rect(Rect2(position + Vector2(-26, health_y - 1), Vector2(52, 6)), Color("27303a"), true)
+		var filled_segments := ceili(ratio * 10.0)
+		for segment: int in range(10):
+			if segment >= filled_segments:
+				break
+			draw_rect(
+				Rect2(position + Vector2(-25 + segment * 5, health_y), Vector2(4, 4)),
+				Color("eaa35c"),
+				true
+			)
+
+
+func _draw_unit_pixel_shadow(position: Vector2, half_width: float) -> void:
+	var snapped := _snap_enemy_pixel(position)
+	var core := Color(0.005, 0.008, 0.012, 0.48)
+	var rim := Color(0.10, 0.13, 0.16, 0.30)
+	draw_rect(Rect2(snapped + Vector2(-half_width * 0.64, -4.0), Vector2(half_width * 1.28, 2.0)), rim, true)
+	draw_rect(Rect2(snapped + Vector2(-half_width, -2.0), Vector2(half_width * 2.0, 4.0)), core, true)
+	draw_rect(Rect2(snapped + Vector2(-half_width * 0.74, 2.0), Vector2(half_width * 1.48, 2.0)), rim, true)
 
 
 func _enemy_sprite_attack(enemy: Dictionary) -> Dictionary:
@@ -2187,6 +2249,39 @@ func _snap_enemy_pixel(point: Vector2) -> Vector2:
 	return Vector2(snappedf(point.x, 2.0), snappedf(point.y, 2.0))
 
 
+func _draw_pixel_arc(
+	center: Vector2,
+	radius: float,
+	start_angle: float,
+	end_angle: float,
+	color: Color,
+	width: float,
+	segments: int = 24
+) -> void:
+	var arc_length := absf(end_angle - start_angle) * radius
+	var safe_segments := clampi(maxi(segments, ceili(arc_length / 3.0)), 4, 256)
+	var block_size := maxf(4.0, snappedf(width, 2.0))
+	var previous := Vector2(INF, INF)
+	for index: int in range(safe_segments + 1):
+		var amount := float(index) / float(safe_segments)
+		var angle := lerpf(start_angle, end_angle, amount)
+		var point := Vector2(snappedf(center.x + cos(angle) * radius, 4.0), snappedf(center.y + sin(angle) * radius, 4.0))
+		if point == previous:
+			continue
+		previous = point
+		draw_rect(Rect2(point - Vector2.ONE * block_size * 0.5, Vector2.ONE * block_size), color, true)
+
+
+func _draw_pixel_disc(center: Vector2, radius: float, color: Color) -> void:
+	var snapped_center := Vector2(snappedf(center.x, 4.0), snappedf(center.y, 4.0))
+	var rows := ceili(radius / 4.0)
+	for row: int in range(-rows, rows + 1):
+		var y := float(row * 4)
+		var half_width := sqrt(maxf(0.0, radius * radius - y * y))
+		half_width = snappedf(half_width, 4.0)
+		draw_rect(Rect2(snapped_center + Vector2(-half_width, y - 2.0), Vector2(half_width * 2.0, 4.0)), color, true)
+
+
 func _draw_enemy_attack_preview(enemy: Dictionary) -> void:
 	var attack_runtime: Variant = enemy.get("attack_runtime", null)
 	if attack_runtime == null or attack_runtime.current_attack.is_empty():
@@ -2229,13 +2324,13 @@ func _draw_attack_hit_region(origin: Vector2, direction: Vector2, region: Dictio
 		"arc":
 			var half_arc := deg_to_rad(float(region.get("arc_degrees", 0.0)) * 0.5)
 			var angle := direction.angle()
-			draw_arc(origin, float(region.get("radius_pixels", 0.0)), angle - half_arc, angle + half_arc, 24, color, 4.0)
+			_draw_pixel_arc(origin, float(region.get("radius_pixels", 0.0)), angle - half_arc, angle + half_arc, color, 4.0, 20)
 		"circle":
 			var impact_radius := float(region.get("radius_pixels", 0.0))
 			var fill := color
 			fill.a *= 0.16
-			draw_circle(origin, impact_radius, fill)
-			draw_arc(origin, impact_radius, 0.0, TAU, 32, color, 4.0)
+			_draw_pixel_disc(origin, impact_radius, fill)
+			_draw_pixel_arc(origin, impact_radius, 0.0, TAU, color, 4.0, 28)
 		"strip", "capsule":
 			var length := float(region.get("length_pixels", 0.0))
 			var side: Vector2 = direction.orthogonal() * float(region.get("width_pixels", 0.0)) * 0.5
@@ -2282,10 +2377,10 @@ func _draw_attack_delivery_marker(
 		"concentric_target":
 			var impact_point := origin
 			var radius := float(region.get("radius_pixels", 0.0))
-			draw_arc(impact_point, radius * 0.58, 0.0, TAU, 28, color, 3.0)
-			draw_circle(impact_point, 5.0, color)
+			_draw_pixel_arc(impact_point, radius * 0.58, 0.0, TAU, color, 3.0, 20)
+			draw_rect(Rect2(_snap_enemy_pixel(impact_point) - Vector2(5.0, 5.0), Vector2(10.0, 10.0)), color, true)
 		_:
-			draw_arc(origin, 27.0, direction.angle() - 0.8, direction.angle() + 0.8, 14, color, 3.0)
+			_draw_pixel_arc(origin, 27.0, direction.angle() - 0.8, direction.angle() + 0.8, color, 3.0, 12)
 
 
 func _draw_attack_lock_marker(
@@ -2316,7 +2411,7 @@ func _draw_attack_lock_marker(
 			var tether := color
 			tether.a *= 0.48
 			draw_dashed_line(origin, tracked, tether, 2.0, 12.0)
-			draw_circle(tracked, 8.0, color, false, 3.0)
+			_draw_pixel_arc(tracked, 8.0, 0.0, TAU, color, 3.0, 12)
 
 
 func _draw_attack_stability_marker(origin: Vector2, phase: String, visual: Dictionary, color: Color) -> void:
@@ -2334,11 +2429,11 @@ func _draw_attack_stability_marker(origin: Vector2, phase: String, visual: Dicti
 			])
 			draw_polyline(frame, color, 6.0 if phase == "commit" else 3.0)
 		"open_ring":
-			draw_arc(origin, 32.0, -0.15, PI - 0.35, 18, color, 3.0)
-			draw_arc(origin, 32.0, PI + 0.15, TAU - 0.35, 18, color, 3.0)
+			_draw_pixel_arc(origin, 32.0, -0.15, PI - 0.35, color, 3.0, 14)
+			_draw_pixel_arc(origin, 32.0, PI + 0.15, TAU - 0.35, color, 3.0, 14)
 		_:
 			for start_angle: float in [0.10, 1.70, 3.30, 4.90]:
-				draw_arc(origin, 31.0, start_angle, start_angle + 0.72, 8, color, 3.0)
+				_draw_pixel_arc(origin, 31.0, start_angle, start_angle + 0.72, color, 3.0, 6)
 
 
 func _draw_enemy_attack_recovery(origin: Vector2, visual: Dictionary, color: Color) -> void:
@@ -2350,7 +2445,7 @@ func _draw_enemy_attack_recovery(origin: Vector2, visual: Dictionary, color: Col
 	for index: int in range(count):
 		var x := -total_width * 0.5 + float(index) * 12.0
 		draw_line(origin + Vector2(x, 30), origin + Vector2(x, 46), color, 5.0)
-		draw_circle(origin + Vector2(x, 50), 3.0, color)
+		draw_rect(Rect2(_snap_enemy_pixel(origin + Vector2(x, 50)) - Vector2(3.0, 3.0), Vector2(6.0, 6.0)), color, true)
 
 
 func _draw_target_interaction(enemy: Dictionary) -> void:
@@ -2365,7 +2460,7 @@ func _draw_target_interaction(enemy: Dictionary) -> void:
 		draw_line(position + Vector2(12, 19), position + Vector2(12, 37), color, 3.0)
 	elif float(enemy.get("entangle_seconds", 0.0)) > 0.0:
 		color = Color("c084fc")
-		draw_arc(position, 31.0, 0.0, TAU, 24, color, 3.0)
+		_draw_pixel_arc(position, 31.0, 0.0, TAU, color, 3.0, 20)
 	elif float(enemy.get("suppression_seconds", 0.0)) > 0.0:
 		color = Color("f59e0b")
 		for offset: float in [-7.0, 0.0, 7.0]:

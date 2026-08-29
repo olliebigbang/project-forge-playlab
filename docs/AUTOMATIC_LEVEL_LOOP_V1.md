@@ -20,7 +20,8 @@ The three encounters teach telegraph reading, changing position, and attacking d
 - The level consumes both public `RuntimeMechanismHandoff` payloads: AI-resolved whole-object/soft mechanisms and AI-compiled firearms.
 - Soft weapon pixels are deformed from `flex_topology`, `tether_topology`, and `tether_deployment`; the level does not branch on names such as fishing rod or whip.
 - The three accepted enemy blueprints resolve formal pixel sprites through `enemy_visual_assets_v1.json`. Identity art is presentation-only; attack selection, telegraphs, hit regions, interruption, and recovery still come from compiled attack axes.
-- `ruined_ember_forge_courtyard_v1.png` provides the arena background while the existing world rectangle remains the authoritative movement and combat space.
+- `ruined_ember_forge_courtyard_v2.png` provides a restrained 640×360 pixel-art master, presented with nearest-neighbour 2× scaling. The existing world rectangle remains the authoritative movement and combat space.
+- The player and all three enemies use hard-alpha, palette-limited formal sprites. Shared contact shadows, two-pixel visual stepping, and square UI treatment keep their pixel density coherent with the arena.
 - Runtime scripts contain no branches for individual enemy names or catalog IDs.
 
 ## Play and test
@@ -34,4 +35,4 @@ $godot = & .\scripts\find_godot.ps1
 & $godot --headless --path . --script res://tests/test_automatic_level_loop.gd
 ```
 
-The focused suite verifies offline blueprint acceptance, absence of player enemy input, reproducible encounter order, both public handoff types, visible soft-weapon deployment, formal enemy/background resource coverage, execution of distinct compiled attacks, completion, and failure.
+The focused suite verifies offline blueprint acceptance, absence of player enemy input, reproducible encounter order, both public handoff types, visible soft-weapon deployment, formal enemy/background resource coverage, the hard-alpha/pixel-density art contract, execution of distinct compiled attacks, completion, and failure.
