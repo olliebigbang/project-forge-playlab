@@ -24,12 +24,14 @@ const FIREARM_IDENTITY_AI_RESOLVER := preload("res://scripts/combat_feel/firearm
 const FIREARM_IDENTITY_AI_PROVIDER := preload("res://scripts/services/firearm_identity_ai_provider.gd")
 const GENERAL_OBJECT_AI_RESOLVER := preload("res://scripts/combat_feel/general_object_ai_resolver.gd")
 const GENERAL_OBJECT_AI_PROVIDER := preload("res://scripts/services/general_object_ai_provider.gd")
+const PLAYER_ARMORY := preload("res://scripts/combat_feel/player_weapon_armory.gd")
 const MODE_MOCK := "MOCK"
 const MODE_LOCAL_COMFYUI := "LOCAL_COMFYUI"
 const MODE_FAL_FIREARM := "FAL_FIREARM"
 const MAX_MECHANISM_VISUAL_RETRIES := 2
 
 var interpreter := OPEN_INTERPRETER.new()
+var player_armory: RefCounted = PLAYER_ARMORY.new()
 var provider
 var provider_mode := MODE_MOCK
 var arena: GameplayArena
@@ -222,7 +224,7 @@ func _show_forge() -> void:
 	outer.add_theme_constant_override("separation", 10)
 	root.add_child(outer)
 	outer.add_child(_header(
-		"FORGE PLAYLAB V1 · OPEN IDENTITY SPIKE 2",
+		"FORGE PLAYLAB · 万物武器工坊",
 		"玩家描述或画出物件；AI 语义与机制轴自动决定怎么握、哪里打和动作特点。可进入训练区或三战关卡。"
 	))
 	var top_controls := HBoxContainer.new()
@@ -278,7 +280,7 @@ func _show_forge() -> void:
 	left.add_child(_section_title("描述想画的物件"))
 	description_edit = TextEdit.new()
 	description_edit.custom_minimum_size = Vector2(0, 145)
-	description_edit.placeholder_text = "例如：中国95式步枪、M4A1、81杠、92式手枪，或描述其他想画的物件。"
+	description_edit.placeholder_text = "描述任何想尝试的物品：它的外形、材质或名字。握法、动作和特点由 AI 与机制轴决定。"
 	description_edit.text = saved_description
 	description_edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
 	left.add_child(description_edit)
@@ -298,6 +300,7 @@ func _show_forge() -> void:
 	left.add_child(actions)
 	actions.add_child(_button("按当前身份锻造", _submit_forge, true))
 	actions.add_child(_button("载入固定 LOCAL SAMPLE", _start_local_sample))
+	left.add_child(_button("打开我的武器库 / 三战关卡", _open_weapon_library))
 	var sample_note := Label.new()
 	sample_note.text = "LOCAL SAMPLE 明确是固定回归图，不会声称理解上方输入。"
 	sample_note.modulate = Color("fcd34d")
@@ -1737,11 +1740,13 @@ func _show_mechanism_summary() -> void:
 	error_label = Label.new()
 	error_label.modulate = Color("fca5a5")
 	details.add_child(error_label)
+	_show_library_save_status(details)
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 10)
 	outer.add_child(actions)
 	actions.add_child(_button("进入三战正式关卡", _start_automatic_level, true))
 	actions.add_child(_button("仅测试物件动作（训练靶）", _start_mechanism_training))
+	actions.add_child(_button("保存并打开武器库", _save_and_open_library))
 	actions.add_child(_button("返回 Forge", _show_forge))
 
 func _motion_labels_zh(sequence: PackedStringArray) -> PackedStringArray:
@@ -1828,12 +1833,18 @@ func _show_ranged_mechanism_summary() -> void:
 	result_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	result_label.modulate = Color("bae6fd")
 	details.add_child(result_label)
+	_show_library_save_status(details)
+	error_label = Label.new()
+	error_label.modulate = Color("fca5a5")
+	error_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	details.add_child(error_label)
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 10)
 	outer.add_child(actions)
 	actions.add_child(_button("进入三战正式关卡", _start_automatic_level, true))
-	actions.add_child(_button("仅测试射击手感（训练靶）", _start_training))
-	actions.add_child(_button("单个 AI 敌人机制测试", _start_enemy_playtest))
+	actions.add_child(_button("射击训练靶", _start_training))
+	actions.add_child(_button("单个敌人测试", _start_enemy_playtest))
+	actions.add_child(_button("保存并打开武器库", _save_and_open_library))
 	actions.add_child(_button("返回 Forge", _show_forge))
 
 func _mechanism_profile_is_ready() -> bool:
@@ -1905,6 +1916,55 @@ func _start_automatic_level() -> void:
 	if not handoff_error.is_empty():
 		_show_error("这件武器无法进入关卡：%s" % handoff_error)
 		return
+	var saved := _persist_current_weapon()
+	if not bool(saved.get("ok", false)):
+		handoff.clear()
+		_show_error("完整武器尚未保存：%s。图片和机制仍在当前页面，可以重试。" % str(saved.get("error", "保存失败")))
+		return
+	handoff_error = str(handoff.store_entry(saved.get("entry", {}) as Dictionary))
+	if not handoff_error.is_empty():
+		_show_error(handoff_error)
+		return
+	get_tree().change_scene_to_file("res://scenes/automatic_level_loop.tscn")
+
+
+func _persist_current_weapon() -> Dictionary:
+	if current_blueprint == null or current_asset == null or not visual_identity_confirmed:
+		return {"ok": false, "error": "WEAPON_LIBRARY_VISUAL_ACCEPTANCE_REQUIRED"}
+	if str(current_manifest.get("visual_mode", "")).contains("fallback"):
+		return {"ok": false, "error": "WEAPON_LIBRARY_FINISHED_ART_REQUIRED"}
+	return player_armory.save_entry({
+		"ok": true, "identity": current_blueprint.player_identity_text,
+		"display_name": current_blueprint.display_name, "blueprint": current_blueprint, "asset": current_asset,
+		"affordance_profile": current_affordance_profile, "ranged_runtime_profile": current_ranged_mechanism,
+		"accepted_visual": true,
+		"visual_evidence": {"source": current_visual_source, "identity_review": "ai_firearm_gate" if _requires_ranged_mechanism_profile() else "player_visual_identity", "gate": current_mechanism_visual_gate.duplicate(true)},
+	})
+
+
+func _show_library_save_status(parent: Control) -> void:
+	if not visual_identity_confirmed:
+		return
+	var saved := _persist_current_weapon()
+	var label := Label.new()
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.text = "已存入武器库：图片、握点、结构动画和机制卡会一起保留。" if bool(saved.get("ok", false)) else "尚未保存：%s。当前结果仍保留，可以重试。" % str(saved.get("error", "保存失败"))
+	label.modulate = Color("86efac") if bool(saved.get("ok", false)) else Color("fca5a5")
+	parent.add_child(label)
+
+
+func _save_and_open_library() -> void:
+	var saved := _persist_current_weapon()
+	if not bool(saved.get("ok", false)):
+		_show_error("保存没有完成：%s" % str(saved.get("error", "未知错误")))
+		return
+	_open_weapon_library()
+
+
+func _open_weapon_library() -> void:
+	var handoff: Node = get_node_or_null("/root/MechanismHandoff")
+	if handoff != null:
+		handoff.clear()
 	get_tree().change_scene_to_file("res://scenes/automatic_level_loop.tscn")
 
 func _behavior_summary(blueprint: WeaponBlueprint) -> String:

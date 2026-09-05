@@ -21,6 +21,12 @@ const LEGAL_AXIS_VALUES := {
 	"tempo": ["quick", "standard", "committed"],
 	"stability": ["fragile", "tell_interruptible", "armored_commit"],
 	"recovery": ["brief", "punishable", "extended"],
+	"hazard_mode": ["instant", "lingering", "pulsing"],
+	"defense_mode": ["none", "frontal_guard", "channel_guard"],
+}
+const OPTIONAL_AXIS_DEFAULTS := {
+	"hazard_mode": "instant",
+	"defense_mode": "none",
 }
 
 const REQUIRED_SELECTION_FIELDS: PackedStringArray = [
@@ -64,6 +70,8 @@ const PARAMETER_OWNERS := {
 	"hit_region.depth_tolerance_pixels": "depth_path",
 	"interruptibility": "stability",
 	"recovery": "recovery",
+	"danger_zone": "hazard_mode",
+	"defense": "defense_mode",
 	"selection.preferred_range": "selection.preferred_range",
 	"selection.depth_fit": "selection.depth_fit",
 	"selection.base_priority": "selection.base_priority",
@@ -94,7 +102,7 @@ static func validate(declaration: Dictionary) -> Dictionary:
 		var axes := axes_value as Dictionary
 		for raw_key: Variant in axes.keys():
 			var key := str(raw_key)
-			if key not in REQUIRED_AXES:
+			if key not in REQUIRED_AXES and not OPTIONAL_AXIS_DEFAULTS.has(key):
 				errors.append("UNSUPPORTED_AXIS:%s" % key)
 		for axis: String in REQUIRED_AXES:
 			if not axes.has(axis):
@@ -103,6 +111,11 @@ static func validate(declaration: Dictionary) -> Dictionary:
 			var value := str(axes.get(axis, ""))
 			if value not in (LEGAL_AXIS_VALUES.get(axis, []) as Array):
 				errors.append("ATTACK_AXIS_INVALID:%s:%s" % [axis, value])
+		for axis: String in OPTIONAL_AXIS_DEFAULTS:
+			if axes.has(axis):
+				var value := str(axes.get(axis, ""))
+				if value not in (LEGAL_AXIS_VALUES.get(axis, []) as Array):
+					errors.append("ATTACK_AXIS_INVALID:%s:%s" % [axis, value])
 		if errors.is_empty():
 			errors.append_array(_combination_errors(axes))
 
@@ -157,6 +170,8 @@ static func compile(declaration: Dictionary) -> Dictionary:
 	var tempo := _tempo_profile(str(axes["tempo"]))
 	var interruptibility := _stability_profile(str(axes["stability"]))
 	var recovery := _recovery_profile(str(axes["recovery"]))
+	var danger_zone := _hazard_profile(str(axes["hazard_mode"]), delivery)
+	var defense := _defense_profile(str(axes["defense_mode"]))
 
 	var hit_region := {
 		"shape": str(hit_shape["shape"]),
@@ -207,6 +222,8 @@ static func compile(declaration: Dictionary) -> Dictionary:
 		"hit_region": hit_region,
 		"interruptibility": interruptibility,
 		"recovery": recovery,
+		"danger_zone": danger_zone,
+		"defense": defense,
 	}
 
 	return {
@@ -222,6 +239,8 @@ static func compile(declaration: Dictionary) -> Dictionary:
 		"attack_motion": attack_motion,
 		"interruptibility": interruptibility,
 		"recovery": recovery,
+		"danger_zone": danger_zone,
+		"defense": defense,
 		"selection": selection,
 		"parameter_owners": PARAMETER_OWNERS.duplicate(true),
 		"identity_inputs_used": false,
@@ -257,7 +276,84 @@ static func _axis_snapshot(raw_axes: Dictionary) -> Dictionary:
 	var axes := {}
 	for axis: String in REQUIRED_AXES:
 		axes[axis] = str(raw_axes[axis])
+	for axis: String in OPTIONAL_AXIS_DEFAULTS:
+		axes[axis] = str(raw_axes.get(axis, OPTIONAL_AXIS_DEFAULTS[axis]))
 	return axes
+
+
+static func _hazard_profile(value: String, delivery: Dictionary) -> Dictionary:
+	var delivery_lifetime := maxf(
+		float(delivery.get("active_seconds", 0.0)),
+		float(delivery.get("hazard_lifetime_seconds", 0.0))
+	)
+	match value:
+		"lingering":
+			return {
+				"mode": "lingering",
+				"duration_seconds": maxf(1.80, delivery_lifetime),
+				"contact_mode": "continuous",
+				"repeat_hit_cooldown_seconds": 0.32,
+				"pulse_interval_seconds": 0.0,
+				"pulse_active_seconds": 0.0,
+				"persists_after_active": true,
+			}
+		"pulsing":
+			return {
+				"mode": "pulsing",
+				"duration_seconds": maxf(2.40, delivery_lifetime),
+				"contact_mode": "pulse",
+				"repeat_hit_cooldown_seconds": 0.0,
+				"pulse_interval_seconds": 0.60,
+				"pulse_active_seconds": 0.14,
+				"persists_after_active": true,
+			}
+		_:
+			return {
+				"mode": "instant",
+				"duration_seconds": delivery_lifetime,
+				"contact_mode": "single",
+				"repeat_hit_cooldown_seconds": 0.0,
+				"pulse_interval_seconds": 0.0,
+				"pulse_active_seconds": 0.0,
+				"persists_after_active": false,
+			}
+
+
+static func _defense_profile(value: String) -> Dictionary:
+	match value:
+		"frontal_guard":
+			return {
+				"mode": "frontal_guard",
+				"guarded_phases": ["telegraph", "commit", "active"],
+				"breakable_phases": ["telegraph", "commit"],
+				"exposed_phases": ["recovery"],
+				"guard_arc_degrees": 120.0,
+				"damage_multiplier": 0.35,
+				"stagger_multiplier": 0.50,
+				"break_strength": 1.25,
+			}
+		"channel_guard":
+			return {
+				"mode": "channel_guard",
+				"guarded_phases": ["telegraph", "commit"],
+				"breakable_phases": ["telegraph", "commit"],
+				"exposed_phases": ["active", "recovery"],
+				"guard_arc_degrees": 170.0,
+				"damage_multiplier": 0.55,
+				"stagger_multiplier": 0.65,
+				"break_strength": 0.90,
+			}
+		_:
+			return {
+				"mode": "none",
+				"guarded_phases": [],
+				"breakable_phases": [],
+				"exposed_phases": ["telegraph", "commit", "active", "recovery"],
+				"guard_arc_degrees": 0.0,
+				"damage_multiplier": 1.0,
+				"stagger_multiplier": 1.0,
+				"break_strength": 0.0,
+			}
 
 
 static func _delivery_profile(value: String) -> Dictionary:

@@ -13,6 +13,7 @@ static func compile(blueprint: WeaponBlueprint, asset: WeaponVisualAsset) -> Dic
 	var grip_topology := str(axes.get("grip_topology", ""))
 	var one_hand := support_mode == "one_hand" or grip_topology == "one_hand_handle"
 	var body_grip := grip_topology in ["body_grip", "clamp_grip"]
+	var styled_links := str(blueprint.modifiers.get("art_style_id", "")) == "church_v1" and (str(axes.get("flex_topology", "none")) == "linked_segments" or str(axes.get("tether_topology", "none")) == "linked_segments")
 	var support_required := not one_hand
 	if not firearm and grip_topology.is_empty():
 		support_required = blueprint.grip_profile == "two_hand_rear"
@@ -30,7 +31,12 @@ static func compile(blueprint: WeaponBlueprint, asset: WeaponVisualAsset) -> Dic
 		minimum_scale = 0.34 if one_hand else 0.58
 		maximum_scale = 0.88
 	elif body_grip:
-		target_span = 54.0
+		# Gripping the body does not make a long, thin object palm-sized. Only
+		# compact/bulky silhouettes use the compact fit; length remains an axis.
+		var slenderness := visual_span / maxf(1.0, float(asset.opaque_bounds.size.y))
+		# A flexible linked body hanging below its grip is not a compact solid
+		# lump. Keep its length-axis fit so link holes and terminal art survive.
+		if slenderness < 4.0 and not styled_links: target_span = minf(target_span, 54.0)
 	elif str(axes.get("flex_topology", "none")) != "none" or str(axes.get("tether_topology", "none")) != "none":
 		# Only the solid part is fitted to the character. Deployed line length is
 		# rendered by the soft-weapon rig and must not shrink the handle/body.

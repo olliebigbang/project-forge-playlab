@@ -187,7 +187,7 @@ Final process/port audit after all work:
 
 ## 10. Actual commands
 
-Run from `C:\Users\Eddie L\Documents\project-forge-playlab`:
+Run from `<USERPROFILE>\Documents\project-forge-playlab`:
 
 ```powershell
 # Download/verify the exact three approved artifacts (already completed)

@@ -3,6 +3,7 @@ extends RefCounted
 
 const PIXEL_VISUAL_RIG := preload("res://scripts/data/pixel_weapon_visual_rig.gd")
 const ALPHA_THRESHOLD := 0.10
+const TERMINAL_BINDING_SOURCE := "ai_axes_plus_alpha_path_v1_terminal_v2"
 const HANDLE_FRACTIONS := {
 	"none": 0.0,
 	"short": 0.12,
@@ -106,7 +107,7 @@ static func build(asset: WeaponVisualAsset, affordance_profile: Resource) -> Dic
 			"role": "terminal",
 			"pivot": [asset.tip.x, asset.tip.y],
 			"source_direction": _array_from_vector(_path_tangent(raw_path, raw_path.size() - 2)),
-			"mask_polygon": _arrays_from_points(_square_polygon(asset.tip, terminal_radius, image.get_size())),
+			"mask_polygon": _arrays_from_points(_terminal_fixture_polygon(original_mask, image.get_size(), asset.tip, asset.grip_primary, terminal_radius)),
 			"priority": 110,
 			"z_index": 3,
 		})
@@ -319,6 +320,57 @@ static func _square_polygon(center: Vector2, radius: float, size: Vector2i) -> P
 		center + Vector2(radius, radius),
 		center + Vector2(-radius, radius),
 	]), size)
+
+
+static func _terminal_fixture_polygon(mask: PackedByteArray, size: Vector2i, tip: Vector2, grip: Vector2, fallback_radius: float) -> PackedVector2Array:
+	# Segment only the binding mask, never change the source Alpha. Eroding a
+	# one-pixel neck isolates a broad terminal fixture from its flexible path.
+	# A fixed square around the strike anchor could cut a tall fixture in half,
+	# assigning its remaining rigid pixels to the stretching cord.
+	var core := PackedByteArray(); core.resize(mask.size()); core.fill(0)
+	for y: int in range(1, size.y - 1):
+		for x: int in range(1, size.x - 1):
+			var i := y * size.x + x
+			if mask[i] and mask[i - 1] and mask[i + 1] and mask[i - size.x] and mask[i + size.x]: core[i] = 1
+	var seed_point := _nearest_mask_point(core, size, Vector2i(tip.round()), 8)
+	if seed_point.x < 0: return _square_polygon(tip, fallback_radius, size)
+	var pending: Array[Vector2i] = [seed_point]
+	var seen := {}; seen[seed_point] = true
+	var bounds := Rect2(Vector2(seed_point), Vector2.ONE)
+	var cursor := 0
+	while cursor < pending.size():
+		var point := pending[cursor]; cursor += 1
+		bounds = bounds.expand(Vector2(point)); bounds = bounds.expand(Vector2(point + Vector2i.ONE))
+		for offset: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+			var candidate := point + offset
+			if candidate.x < 0 or candidate.y < 0 or candidate.x >= size.x or candidate.y >= size.y or seen.has(candidate): continue
+			if core[candidate.y * size.x + candidate.x] == 0: continue
+			seen[candidate] = true; pending.append(candidate)
+	var padded := bounds.grow(1.1)
+	# Do not capture the entire body or held fixture when no separate neck exists.
+	if pending.size() < 3 or padded.has_point(grip) or maxf(padded.size.x, padded.size.y) > maxf(size.x, size.y) * 0.55:
+		return _square_polygon(tip, fallback_radius, size)
+	return _clamped_polygon(PackedVector2Array([padded.position, Vector2(padded.end.x, padded.position.y), padded.end, Vector2(padded.position.x, padded.end.y)]), size)
+
+
+static func refresh_automatic_terminal_binding(asset: WeaponVisualAsset) -> bool:
+	# Runtime-only upgrade of our own older automatic masks. Preserve custom
+	# rigs, source pixels, all anchors/paths and the immutable saved package.
+	if asset == null or asset.source_image == null or asset.visual_rig == null: return false
+	var old := asset.visual_rig
+	if old.source != "ai_axes_plus_alpha_path_v1" or not old.has_role("terminal"): return false
+	var parts: Array[Dictionary] = []
+	for raw: Dictionary in old.parts:
+		var part := raw.duplicate(true)
+		if part.role == "terminal":
+			part.mask_polygon = _terminal_fixture_polygon(_alpha_mask(asset.source_image), asset.source_image.get_size(), Vector2(part.pivot), asset.grip_primary, 8.0)
+		for key: String in ["source_path", "mask_polygon"]: part[key] = _arrays_from_points(part[key])
+		for key: String in ["pivot", "source_direction"]: part[key] = _array_from_vector(part[key])
+		parts.append(part)
+	var fresh := PIXEL_VISUAL_RIG.from_dict({"schema": old.schema, "source": TERMINAL_BINDING_SOURCE, "automatic": old.automatic, "player_confirmation_required": old.player_confirmation_required, "confidence": old.confidence, "parts": parts}, asset.source_image)
+	if not fresh.validation_errors().is_empty(): return false
+	asset.visual_rig = fresh; asset.visual_rig_source = TERMINAL_BINDING_SOURCE
+	return true
 
 
 static func _clamped_polygon(points: PackedVector2Array, size: Vector2i) -> PackedVector2Array:

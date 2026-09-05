@@ -1,0 +1,17 @@
+{
+  "schema": "sunny-live-acceptance-samples-v1",
+  "seed": 20260904,
+  "selection": "V3 visual promotion 1 of 2: loaded flexible path; test identity only, never a mechanism override",
+  "max_first_pass_visual_requests": 1,
+  "max_visual_requests_per_sample": 1,
+  "reserve_visual_requests": 0,
+  "pools": [],
+  "samples": [
+    {
+      "id": "v3-05-loaded-line",
+      "group": "loaded_flexible_path_visual",
+      "identity": "一个黄铜铅锤，顶部系着一根长细绳",
+      "candidate_index": 0
+    }
+  ]
+}

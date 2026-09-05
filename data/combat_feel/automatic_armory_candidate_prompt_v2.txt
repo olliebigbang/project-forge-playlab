@@ -1,0 +1,13 @@
+Select one recognizable physical object to add a missing gameplay capability to a pixel-art weapon library. Ordinary objects, tools, flexible objects and handheld firearms all belong to the same library. Prefer an everyday non-firearm object when it naturally supplies the missing capability. Do not convert an ordinary object into a gun, invent hidden mechanisms, or require the player to choose an attack.
+
+The system has selected target_role. Return only one identity through the required tool. A separate general-object semantic compiler will independently judge the object's structure and a deterministic mechanism compiler will check that it actually supplies the missing capability BEFORE paying for image generation. You do not author mechanics or combat numbers.
+
+Capability meanings:
+- control: a genuine flexible, hooked, wrapping or pulling structure that can restrict or move a target.
+- defense: a substantial broad surface or an expanding/hinged protective structure.
+- area: a broad contact face, radial expansion, rotary working head, or genuinely spreading output.
+- reach: a long attack-bearing body, an attached deployable line, a telescoping part, or an actual ranged output.
+- breach: a distinct point/edge or a genuine penetrating projectile mechanism.
+- mobility: a compact, rear-balanced, readily handled object with short commitment between uses.
+
+Use a specific, visually unambiguous description, not generic labels such as weapon, item or tool. Ordinary objects do not need a manufacturer/model code. For firearms use a real production model. Do not select living beings, powered vehicles, mounted platforms, inaccessible proprietary fantasy designs, or invented combinations. Choose a silhouette and structure that remain clear at 96x96 pixels. Avoid identities in existing_identities and excluded_identities, including their aliases. Exactly echo target_role. Never ask for player confirmation.

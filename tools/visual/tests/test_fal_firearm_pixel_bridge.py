@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 import json
 import os
 import tempfile
 import unittest
+import urllib.error
 from pathlib import Path
 from unittest import mock
 
@@ -62,6 +64,18 @@ def request_fixture() -> dict:
         "retry_index": 0,
         "retry_prompt": "",
     }
+
+
+class StocklessSupportTests(unittest.TestCase):
+    def test_stockless_two_hand_layout_reaches_visual_prompt(self) -> None:
+        request = request_fixture()
+        request["axes"]["stock_structure"] = "none"
+        request["axes"]["support_mode"] = "two_hand_free"
+        validated = BRIDGE.validate_request(request)
+        self.assertEqual(validated["axes"]["support_mode"], "two_hand_free")
+        request["axes"]["support_mode"] = "two_hand_shouldered"
+        with self.assertRaisesRegex(BRIDGE.FalFirearmBridgeError, "CONVENTIONAL_CONFLICT"):
+            BRIDGE.validate_request(request)
 
 
 class FalFirearmPixelBridgeTests(unittest.TestCase):
@@ -341,6 +355,25 @@ class FalFirearmPixelBridgeTests(unittest.TestCase):
         self.assertNotIn("secret-that-must-not-be-recorded", json.dumps(manifest))
         self.assertFalse(manifest["presentable_to_player"])
         self.assertTrue(manifest["ai_visual_identity_verification"]["passed"])
+
+    def test_provider_http_error_body_maps_to_closed_non_secret_reason(self) -> None:
+        error = urllib.error.HTTPError(
+            BRIDGE.IDENTITY_ENDPOINT,
+            403,
+            "Forbidden",
+            {},
+            io.BytesIO(b'{"detail":"Exhausted account balance; add credits"}'),
+        )
+        self.assertEqual(BRIDGE._safe_http_error_detail(error), "ACCOUNT_BALANCE")
+
+        unknown = urllib.error.HTTPError(
+            BRIDGE.IDENTITY_ENDPOINT,
+            403,
+            "Forbidden",
+            {},
+            io.BytesIO(b'{"detail":"opaque provider refusal","request_id":"abc"}'),
+        )
+        self.assertEqual(BRIDGE._safe_http_error_detail(unknown), "")
 
     def test_missing_key_writes_redacted_atomic_failure(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

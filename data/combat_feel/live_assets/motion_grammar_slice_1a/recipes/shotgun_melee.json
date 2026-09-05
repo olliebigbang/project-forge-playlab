@@ -86,8 +86,8 @@
       "contact_anchor": "tip",
       "contact_surface": "point",
       "uses_secondary_contact": false,
-      "start_angle": 0.303584,
-      "end_angle": 0.616416,
+      "start_angle": 0.289696,
+      "end_angle": -0.609696,
       "local_start_offset": [
         0.0,
         0.0
@@ -277,7 +277,7 @@
       "camera_kick_multiplier": 0.94176,
       "movement_allowed_ratio": 0.034848
     },
-    "recipe_signature": "04e0ff3395129df4a5d2c8abf25721bff08d7598592496b14bf05841f2ddde6a",
+    "recipe_signature": "55c15bb9b46bbe773e9f3f5b14cb4420de4827b158e66df81c5997b37912ab77",
     "compile_reason": "orthogonal affordance composition v5: {\"activation_mode\":\"passive\",\"body_length\":\"long\",\"confidence\":1.0,\"contact_surface\":\"point\",\"evidence_parts\":[\"long rigid main axis\",\"forward barrel end\",\"rear stock contact\"],\"flex_topology\":\"none\",\"functional_output\":\"contact_only\",\"grip_topology\":\"two_hand_handle\",\"handle_length\":\"medium\",\"has_barrel\":true,\"has_broad_face\":false,\"has_edge\":false,\"has_point\":true,\"has_stock\":true,\"mass_distribution\":\"rear\",\"rigidity\":\"rigid\",\"secondary_contact_surface\":\"broad\",\"state_topology\":\"fixed\",\"terminal_load\":\"none\",\"tether_deployment\":\"none\",\"tether_mode\":\"none\",\"tether_topology\":\"none\"}",
     "mechanism_axes": {
       "handle_length": "medium",

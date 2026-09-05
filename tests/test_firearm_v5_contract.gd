@@ -18,6 +18,7 @@ const FROZEN_PARAMETERS := [
 	"damage_falloff_min_multiplier", "muzzle_flash_seconds", "muzzle_flash_scale",
 	"sustained_climb_per_shot_degrees", "sustained_climb_cap_degrees",
 	"sustained_recovery_multiplier", "sustained_window_seconds",
+	"muzzle_climb_cap_degrees",
 ]
 
 var passed := 0
@@ -67,6 +68,7 @@ func _test_curated_profiles() -> Variant:
 
 
 func _test_family_fixtures() -> Variant:
+	var fixture_runtimes := {}
 	for fixture: Dictionary in FIXTURES:
 		var payload: Variant = JSON.parse_string(FileAccess.get_file_as_string(str(fixture["path"])))
 		if not payload is Dictionary:
@@ -86,6 +88,12 @@ func _test_family_fixtures() -> Variant:
 			or int(runtime.get("magazine_size", -1)) != int(fixture["capacity"])
 		):
 			return {"fixture": fixture["identity"], "runtime": runtime}
+		fixture_runtimes[str(fixture.identity)] = runtime
+	var m4_declaration := (CATALOG.resolve_identity("M4A1").get("declaration", {}) as Dictionary).duplicate(true)
+	var m4_runtime := AXES.compile(m4_declaration, str(m4_declaration.get("source", "")))
+	var support_runtime := fixture_runtimes.get("M249", {}) as Dictionary
+	if float(support_runtime.get("muzzle_climb_cap_degrees", 0.0)) <= float(m4_runtime.get("muzzle_climb_cap_degrees", INF)):
+		return {"carbine": m4_runtime, "support": support_runtime, "error": "weapon-axis climb caps collapsed"}
 	return true
 
 

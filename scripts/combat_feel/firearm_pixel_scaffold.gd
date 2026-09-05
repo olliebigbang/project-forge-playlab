@@ -236,7 +236,7 @@ static func _required_roles(declaration: Dictionary) -> Array[String]:
 		"revolver": roles.append_array(["cylinder", "hammer", "revolver_grip"])
 		"belt_fed_support": roles.append_array(["stock", "feed_cover", "ammunition_belt", "belt_box", "support_grip"])
 		_: pass
-	if str(declaration.get("support_mode", "")) == "two_hand_shouldered" and "support_grip" not in roles:
+	if str(declaration.get("support_mode", "")) in ["two_hand_shouldered", "two_hand_free"] and "support_grip" not in roles:
 		roles.append_array(["stock", "support_grip"])
 	elif str(declaration.get("layout", "")) == "pistol":
 		roles.append("slide")

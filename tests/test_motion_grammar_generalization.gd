@@ -62,7 +62,7 @@ func _test_existing_orthogonal_chain_compiles_all_assets() -> void:
 			continue
 		signatures[compiled.combo_recipe.signature()] = true
 		sequences["|".join(compiled.combo_recipe.primitive_sequence())] = true
-		ok = ok and str(compiled.compile_trace.get("composer", "")) == "orthogonal_affordance_v5"
+		ok = ok and str(compiled.compile_trace.get("composer", "")) == "orthogonal_affordance_v6"
 		ok = ok and not bool(compiled.compile_trace.get("identity_inputs_used", true))
 	_check(ok and signatures.size() == 3 and sequences.size() == 3, "02 new assets compile through the existing orthogonal chain into distinct runtime recipes")
 

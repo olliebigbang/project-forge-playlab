@@ -142,4 +142,4 @@ static func _upper_clause(value: String) -> String:
 
 
 static func _support_clause(value: String) -> String:
-	return "Leave distinct primary and support-hand regions" if value == "two_hand_shouldered" else "Keep one dominant pistol grip"
+	return "Leave distinct primary and support-hand regions; no shoulder stock" if value == "two_hand_free" else ("Leave distinct primary and support-hand regions" if value == "two_hand_shouldered" else "Keep one dominant pistol grip")

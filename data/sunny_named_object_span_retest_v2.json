@@ -1,0 +1,17 @@
+{
+  "schema": "sunny-live-acceptance-samples-v1",
+  "seed": 20260903,
+  "selection": "single fresh named-object body-span contract retest; test input only, never an identity-specific mechanism or attack override",
+  "max_first_pass_visual_requests": 1,
+  "max_visual_requests_per_sample": 1,
+  "reserve_visual_requests": 0,
+  "pools": [],
+  "samples": [
+    {
+      "id": "named-span-01",
+      "group": "named_object_full_size_blade_retest",
+      "identity": "雪饮狂刀",
+      "candidate_index": 0
+    }
+  ]
+}

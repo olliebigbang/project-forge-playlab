@@ -208,6 +208,7 @@ func interpret_with_ai_object_profile(
 	blueprint.modifiers["general_object_canonical_name"] = str(profile.get("canonical_name", identity))
 	blueprint.modifiers["general_object_scale_treatment"] = str(profile.get("scale_treatment", "handheld"))
 	blueprint.modifiers["general_object_visual_exclusions"] = (profile.get("confusable_exclusions_en", []) as Array).duplicate()
+	blueprint.modifiers["general_object_mechanism_roles"] = (profile.get("mechanism_roles", {}) as Dictionary).duplicate(true)
 	_apply_geometry_evidence(blueprint, sketch_png, geometry)
 	blueprint.visual_prompt = VISUAL_PROMPT_SCRIPT.build(blueprint)
 	blueprint.validate_and_repair()
@@ -332,7 +333,7 @@ func _apply_ai_firearm_identity(blueprint: WeaponBlueprint, profile: Dictionary)
 	blueprint.signature_effect = "impact"
 	blueprint.drawback = "magazine_reload"
 	blueprint.cadence = str(declaration.get("fire_control", "semi_auto"))
-	blueprint.grip_profile = "two_hand_rear" if str(declaration.get("support_mode", "")) == "two_hand_shouldered" else "rear_grip"
+	blueprint.grip_profile = "two_hand_rear" if str(declaration.get("support_mode", "")) in ["two_hand_shouldered", "two_hand_free"] else "rear_grip"
 	blueprint.weight_class = {"agile": "light", "balanced": "medium", "heavy": "heavy"}.get(str(declaration.get("handling", "balanced")), "medium")
 	blueprint.palette_hint = str(declaration.get("finish_palette", "gunmetal_black"))
 	blueprint.silhouette_aspect = 2.0 if str(declaration.get("layout", "")) == "pistol" else 4.1

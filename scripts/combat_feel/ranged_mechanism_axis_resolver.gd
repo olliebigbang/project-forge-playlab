@@ -32,7 +32,7 @@ const LEGAL_VALUES := {
 	"magazine_shape": ["straight", "curved", "in_grip", "tube", "cylinder", "belt_box"],
 	"barrel_length": ["short", "medium", "long"],
 	"upper_profile": ["carry_handle", "top_rail", "raised_gas_tube", "slide", "ribbed_barrel", "revolver_frame", "feed_cover"],
-	"support_mode": ["one_hand", "two_hand_shouldered"],
+	"support_mode": ["one_hand", "two_hand_shouldered", "two_hand_free"],
 	"fire_control": ["semi_auto", "three_round_burst", "select_fire_auto"],
 	"action_mechanism": ["self_loading", "bolt_action", "pump_action", "revolving_cylinder"],
 	"feed_system": ["detachable_box", "internal_tube", "revolving_cylinder", "belt_box"],
@@ -88,7 +88,7 @@ const OPTION_LABELS_ZH := {
 	"magazine_shape": {"straight": "直弹匣", "curved": "弯弹匣", "in_grip": "藏在握把内", "tube": "管式弹仓", "cylinder": "转轮弹巢", "belt_box": "弹链箱"},
 	"barrel_length": {"short": "短", "medium": "中等", "long": "长"},
 	"upper_profile": {"carry_handle": "提把轮廓", "top_rail": "平直导轨", "raised_gas_tube": "抬高导气结构", "slide": "手枪套筒", "ribbed_barrel": "霰弹枪枪管与护木", "revolver_frame": "转轮枪架", "feed_cover": "弹链供弹盖"},
-	"support_mode": {"one_hand": "单手", "two_hand_shouldered": "双手抵肩"},
+	"support_mode": {"one_hand": "单手", "two_hand_shouldered": "双手抵肩", "two_hand_free": "双手持握·不抵肩"},
 	"fire_control": {
 		"semi_auto": "按一下打一发",
 		"three_round_burst": "按一下三连发",
@@ -136,6 +136,7 @@ const PARAMETER_OWNERS := {
 	"recoil_recovery_pixels_per_second": "recoil_recovery",
 	"muzzle_climb_recovery_degrees_per_second": "recoil_recovery",
 	"muzzle_climb_degrees_per_shot": "muzzle_climb",
+	"muzzle_climb_cap_degrees": "muzzle_climb",
 	"spread_velocity": "accuracy",
 	"projectile_damage": "impact_force",
 	"hit_stagger_seconds": "impact_force",
@@ -162,7 +163,7 @@ const AUDITED_PARAMETERS: PackedStringArray = [
 	"sustained_recovery_multiplier", "sustained_window_seconds",
 	"shot_interval_seconds", "recoil_pixels",
 	"recoil_recovery_pixels_per_second", "muzzle_climb_recovery_degrees_per_second",
-	"muzzle_climb_degrees_per_shot", "spread_velocity", "projectile_damage",
+	"muzzle_climb_degrees_per_shot", "muzzle_climb_cap_degrees", "spread_velocity", "projectile_damage",
 	"hit_stagger_seconds", "projectile_radius_pixels", "armor_damage_multiplier",
 	"pierce_budget", "tracer_width_pixels",
 	"reload_seconds", "projectile_speed", "projectile_life_seconds",
@@ -191,6 +192,7 @@ const PARAMETER_BOUNDS := {
 	"recoil_recovery_pixels_per_second": [30.0, 130.0],
 	"muzzle_climb_recovery_degrees_per_second": [10.0, 45.0],
 	"muzzle_climb_degrees_per_shot": [1.0, 11.0],
+	"muzzle_climb_cap_degrees": [3.0, 18.0],
 	"spread_velocity": [2.0, 26.0],
 	"projectile_damage": [5.0, 18.0],
 	"hit_stagger_seconds": [0.06, 0.22],
@@ -460,6 +462,11 @@ static func _raw_parameter_matrix(payload: Dictionary) -> Dictionary:
 		"recoil_recovery_pixels_per_second": float({"quick": 112.0, "balanced": 70.0, "slow": 42.0}[recoil_recovery]),
 		"muzzle_climb_recovery_degrees_per_second": float({"quick": 38.0, "balanced": 24.0, "slow": 15.0}[recoil_recovery]),
 		"muzzle_climb_degrees_per_shot": float({"low": 2.5, "medium": 5.5, "high": 9.0}[muzzle_climb]),
+		# Immediate climb used to share one hidden 18-degree cap, so a nominally
+		# low-climb carbine eventually pointed as high as a support gun. Keep the
+		# cap owned by the same declared axis: low remains controllable while a
+		# high/progressive belt-fed gun still has a deliberately dramatic cone.
+		"muzzle_climb_cap_degrees": float({"low": 4.0, "medium": 9.0, "high": 16.0}[muzzle_climb]),
 		"spread_velocity": float({"precise": 4.0, "controlled": 11.0, "loose": 22.0}[accuracy]),
 		"projectile_damage": float({"light": 7.0, "medium": 10.0, "strong": 14.0}[impact_force]),
 		"hit_stagger_seconds": float({"light": 0.08, "medium": 0.12, "strong": 0.18}[impact_force]),
@@ -545,7 +552,8 @@ static func _combination_errors(payload: Dictionary) -> PackedStringArray:
 			if feed != "behind_grip" or stock != "integrated" or support != "two_hand_shouldered":
 				errors.append("AI_RANGED_STRUCTURE_CONFLICT:BULLPUP")
 		"conventional_rifle":
-			if feed != "ahead_of_grip" or stock == "none" or support != "two_hand_shouldered":
+			var support_matches := (stock != "none" and support == "two_hand_shouldered") or (stock == "none" and support in ["one_hand", "two_hand_free"])
+			if feed != "ahead_of_grip" or not support_matches:
 				errors.append("AI_RANGED_STRUCTURE_CONFLICT:CONVENTIONAL")
 		"pistol":
 			if feed != "in_grip" or magazine != "in_grip" or stock != "none" or support != "one_hand" or barrel != "short" or upper != "slide":

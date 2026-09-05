@@ -66,7 +66,7 @@
         "magazine_shape": {"type": "string", "enum": ["straight", "curved", "in_grip", "tube", "cylinder", "belt_box", "not_applicable"]},
         "barrel_length": {"type": "string", "enum": ["short", "medium", "long", "not_applicable"]},
         "upper_profile": {"type": "string", "enum": ["carry_handle", "top_rail", "raised_gas_tube", "slide", "ribbed_barrel", "revolver_frame", "feed_cover", "not_applicable"]},
-        "support_mode": {"type": "string", "enum": ["one_hand", "two_hand_shouldered", "not_applicable"]},
+        "support_mode": {"type": "string", "enum": ["one_hand", "two_hand_shouldered", "two_hand_free", "not_applicable"]},
         "fire_control": {"type": "string", "enum": ["semi_auto", "three_round_burst", "select_fire_auto", "not_applicable"]},
         "action_mechanism": {"type": "string", "enum": ["self_loading", "bolt_action", "pump_action", "revolving_cylinder", "not_applicable"]},
         "feed_system": {"type": "string", "enum": ["detachable_box", "internal_tube", "revolving_cylinder", "belt_box", "not_applicable"]},

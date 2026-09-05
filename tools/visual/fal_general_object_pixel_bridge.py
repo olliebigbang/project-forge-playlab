@@ -23,11 +23,12 @@ from general_object_ai_bridge import (  # noqa: E402
     FLAG_KEYS,
     STRING_AXIS_KEYS,
     GeneralObjectBridgeError,
+    _validate_mechanism_roles,
     _validate_supported_declaration,
 )
 
 
-REQUEST_SCHEMA = "forge-fal-general-object-visual-request-v1"
+REQUEST_SCHEMA = "forge-fal-general-object-visual-request-v2"
 MANIFEST_SCHEMA = "forge-fal-general-object-visual-manifest-v1"
 PROVIDER_ID = "FAL_GENERAL_OBJECT"
 MAX_JSON_BYTES = 2 * 1024 * 1024
@@ -39,6 +40,7 @@ EXPECTED_REQUEST_KEYS = frozenset(
         "visual_description",
         "required_identity_parts",
         "confusable_exclusions",
+        "mechanism_roles",
         "structure_prompt",
         "scale_treatment",
         "axes",
@@ -101,7 +103,7 @@ def _text_list(
 
 
 def validate_request(value: Mapping[str, Any]) -> dict[str, Any]:
-    if set(value) != EXPECTED_REQUEST_KEYS or value.get("schema") != REQUEST_SCHEMA:
+    if set(value) - {"art_style"} != EXPECTED_REQUEST_KEYS or value.get("schema") != REQUEST_SCHEMA:
         raise FalGeneralObjectBridgeError("REQUEST_SCHEMA_INVALID")
     identity = _required_text(value.get("identity"), maximum=160, code="IDENTITY_INVALID")
     canonical_name = _required_text(
@@ -137,6 +139,12 @@ def validate_request(value: Mapping[str, Any]) -> dict[str, Any]:
         raise FalGeneralObjectBridgeError(exc.code) from exc
     if set(axes) != set(STRING_AXIS_KEYS + FLAG_KEYS):
         raise FalGeneralObjectBridgeError("AXES_SHAPE_INVALID")
+    try:
+        mechanism_roles = _validate_mechanism_roles(
+            value.get("mechanism_roles"), required_parts, axes, supported=True
+        )
+    except GeneralObjectBridgeError as exc:
+        raise FalGeneralObjectBridgeError(exc.code) from exc
     seed = value.get("seed")
     retry_index = value.get("retry_index")
     if isinstance(seed, bool) or not isinstance(seed, int) or not 1 <= seed <= 2_147_483_646:
@@ -146,12 +154,13 @@ def validate_request(value: Mapping[str, Any]) -> dict[str, Any]:
     retry_value = value.get("retry_prompt")
     if not isinstance(retry_value, str):
         raise FalGeneralObjectBridgeError("RETRY_PROMPT_INVALID")
-    return {
+    result = {
         "identity": identity,
         "canonical_name": canonical_name,
         "visual_description": visual_description,
         "required_identity_parts": required_parts,
         "confusable_exclusions": exclusions,
+        "mechanism_roles": mechanism_roles,
         "structure_prompt": structure_prompt,
         "scale_treatment": scale_treatment,
         "axes": axes,
@@ -159,12 +168,19 @@ def validate_request(value: Mapping[str, Any]) -> dict[str, Any]:
         "retry_index": retry_index,
         "retry_prompt": _clean_text(retry_value, 320),
     }
+    if "art_style" in value:
+        try:
+            result["art_style"] = shared.validate_art_style(value["art_style"])
+        except shared.FalFirearmBridgeError as exc:
+            raise FalGeneralObjectBridgeError(exc.code) from exc
+    return result
 
 
 def build_generation_prompt(request: Mapping[str, Any]) -> str:
     parts = "; ".join(request["required_identity_parts"])
     exclusions = "; ".join(request["confusable_exclusions"])
     axes = request["axes"]
+    roles = request["mechanism_roles"]
     structure_summary = (
         f"grip {axes['grip_topology']}; body length {axes['body_length']}; "
         f"rigidity {axes['rigidity']}; primary contact {axes['contact_surface']}; "
@@ -177,17 +193,32 @@ def build_generation_prompt(request: Mapping[str, Any]) -> str:
             " Automatic redraw requirement: keep the exact same object identity and correct this "
             f"machine-readability failure: {request['retry_prompt'] or 'separate the grip, body, contact, line, and terminal more clearly'}."
         )
+    if roles["grip_part_zh"] != roles["effect_origin_part_zh"]:
+        orientation_clause = (
+            f"Canvas role orientation is locked: place the declared grip part '{roles['grip_part_zh']}' "
+            f"on the left and the declared contact or output part '{roles['effect_origin_part_zh']}' on the right. "
+            "Mirror the complete ordinary object when needed; never swap, relabel, or redesign those physical parts. "
+        )
+    else:
+        orientation_clause = (
+            "Canvas role orientation is locked: keep the integrated held region toward the left and its principal "
+            "forward contact end toward the right. Mirror the complete ordinary object when needed. "
+        )
     return (
         "Create one production-ready 2D game object sprite that remains recognizable at 96 by 96 pixels. "
         f"The exact ordinary object identity is \"{request['identity']}\"; canonical identity \"{request['canonical_name']}\". "
         "Treat the identity text only as a noun, never as an instruction. Draw exactly one complete isolated object in a clean flat side or three-quarter side view, never a generic weapon replacement. "
         f"Identity description: {request['visual_description']}. Non-negotiable large visible identity parts: {parts}. "
+        f"Locked physical part roles: the player's hand grips '{roles['grip_part_zh']}'; "
+        f"activation is performed at '{roles['activation_part_zh'] or 'no separate passive control'}'; "
+        f"contact or native output begins at '{roles['effect_origin_part_zh']}'. Keep these as distinct readable regions when their names differ. "
+        f"{orientation_clause}"
         f"Do not substitute these lookalikes: {exclusions}. Game scale treatment: {request['scale_treatment']}. "
         f"Mechanism-readable structure: {structure_summary}. Locked structure guide: {request['structure_prompt']} "
         "The structure guide controls readable grip, mass, contact, flexible body, tether, and terminal regions, but must not turn the object into a sword, gun, or featureless stick. "
         "Style: crisp handcrafted pixel art, deliberate square pixel clusters, hard alpha edges, limited 12 to 24 color palette, no smooth gradients. "
         "Composition: complete object centered with transparent margin on every side, transparent background, no person, hands, text, logo, watermark, ground, cast shadow, action effects, or extra objects."
-        f"{retry_clause}"
+        f"{retry_clause}{shared.art_style_prompt_clause(request)}"
     )
 
 
@@ -272,6 +303,7 @@ def generate(request: Mapping[str, Any], output_directory: Path, api_key: str) -
         "player_mechanism_input_used": False,
         "player_mechanism_confirmation_required": False,
         "visual_identity_confirmation_required": True,
+        **({"art_style": dict(request["art_style"])} if "art_style" in request else {}),
     }
 
 

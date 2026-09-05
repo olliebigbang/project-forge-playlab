@@ -1,5 +1,7 @@
 # Architecture
 
+> 历史架构快照：下文是早期 Mock → 训练 → 双房间修改流程，不是现在的 AI 工坊、完整武器库和三战主流程。当前总体流程见 [GAME_DESIGN.md](../GAME_DESIGN.md)，活动入口与代码索引见 [PROJECT_STATUS.md](../PROJECT_STATUS.md)。保留原图作为历史证据。
+
 ## Runtime flow
 
 ```mermaid

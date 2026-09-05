@@ -17,6 +17,7 @@ func _initialize() -> void:
 	_run("Per-round reload gains rounds and can be interrupted to attack", _test_interruptible_per_round_reload)
 	_run("Cylinder reload advances in non-interruptible declared batches", _test_cylinder_batch_reload)
 	_run("Sustained fire adds capped climb and recovers only after release window", _test_sustained_climb)
+	_run("Immediate climb consumes each weapon axis cap instead of one universal cap", _test_weapon_specific_climb_caps)
 	_run("V4 profiles keep their single-projectile and whole-magazine defaults", _test_v4_defaults)
 	_run("Runtime behavior contains no firearm model or family branch", _test_identity_free_runtime)
 	print("FIREARM V5 RUNTIME RESULT: %d passed, %d failed" % [passed, failed])
@@ -226,6 +227,19 @@ func _test_sustained_climb() -> Variant:
 	var ok := is_equal_approx(arena.sustained_muzzle_climb_degrees, expected_after_recovery)
 	arena.free()
 	return true if ok else "sustained recovery did not consume only post-window time"
+
+
+func _test_weapon_specific_climb_caps() -> Variant:
+	var low := _arena({"automatic_fire": true, "muzzle_climb_degrees_per_shot": 2.5, "muzzle_climb_cap_degrees": 4.0})
+	var high := _arena({"automatic_fire": true, "muzzle_climb_degrees_per_shot": 9.0, "muzzle_climb_cap_degrees": 16.0})
+	for shot_index: int in range(5):
+		low.shot_cooldown = 0.0
+		low._update_firearm_attack(true, shot_index == 0)
+		high.shot_cooldown = 0.0
+		high._update_firearm_attack(true, shot_index == 0)
+	var ok := is_equal_approx(low.weapon_muzzle_climb_degrees, 4.0) and is_equal_approx(high.weapon_muzzle_climb_degrees, 16.0)
+	low.free(); high.free()
+	return true if ok else "low/high climb caps were not consumed independently"
 
 
 func _test_v4_defaults() -> Variant:

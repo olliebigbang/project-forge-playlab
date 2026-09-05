@@ -24,6 +24,49 @@ var role_pixel_counts: Dictionary = {}
 var source_opaque_pixels := 0
 var unassigned_pixels := 0
 var canvas_size := Vector2i.ZERO
+var _linked_joint_cache: PackedFloat32Array = PackedFloat32Array()
+var _linked_joint_measured := false
+
+
+func linked_joint_ratios() -> PackedFloat32Array:
+	# Narrow runs in the actual alpha-bound body identify connectors. No item
+	# name or assumed number of rods: an unsegmented silhouette stays rigid.
+	if _linked_joint_measured: return _linked_joint_cache
+	_linked_joint_measured = true
+	var path := source_path_for_role("deform_body")
+	var length := 0.0
+	for index: int in range(path.size() - 1): length += path[index].distance_to(path[index + 1])
+	var bins := maxi(2, roundi(length) + 1)
+	var lows: Array[float] = []
+	var highs: Array[float] = []
+	lows.resize(bins); lows.fill(INF)
+	highs.resize(bins); highs.fill(-INF)
+	for binding: Dictionary in bindings:
+		if str(binding.get("role", "")) != "deform_body": continue
+		var index := clampi(roundi(float(binding.get("ratio", 0.0)) * (bins - 1)), 0, bins - 1)
+		var offset := float(binding.get("normal_offset", 0.0))
+		lows[index] = minf(lows[index], offset)
+		highs[index] = maxf(highs[index], offset)
+	var widths: Array[float] = []
+	var thick := 0.0
+	for index: int in range(bins):
+		var width := maxf(0.0, highs[index] - lows[index] + 1.0)
+		widths.append(width)
+		thick = maxf(thick, width)
+	if thick < 3.0: return _linked_joint_cache
+	var run := -1
+	for index: int in range(bins):
+		var narrow := widths[index] <= thick * 0.60
+		if narrow and run < 0: run = index
+		if not narrow and run >= 0:
+			var middle := float(run + index - 1) * 0.5
+			var ratio := middle / float(bins - 1)
+			# Both sides must have substantial rod material, not a tapered tip.
+			if run >= 4 and index < bins - 4 and index - run <= bins * 0.18:
+				if _linked_joint_cache.is_empty() or ratio - _linked_joint_cache[-1] >= 0.12:
+					_linked_joint_cache.append(ratio)
+			run = -1
+	return _linked_joint_cache
 
 
 static func from_dict(data: Dictionary, image: Image, flip_x: bool = false) -> PixelWeaponVisualRig:
@@ -167,6 +210,8 @@ func _load_contract(data: Dictionary, image_size: Vector2i, flip_x: bool) -> voi
 
 
 func _bind_pixels(image: Image) -> void:
+	_linked_joint_measured = false
+	_linked_joint_cache.clear()
 	bindings.clear()
 	role_pixel_counts.clear()
 	source_opaque_pixels = 0

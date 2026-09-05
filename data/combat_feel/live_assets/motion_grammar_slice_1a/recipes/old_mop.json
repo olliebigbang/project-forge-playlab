@@ -132,11 +132,11 @@
     },
     "hit_3": {
       "motion_family": "bash",
-      "contact_anchor": "rear_contact",
+      "contact_anchor": "tip",
       "contact_surface": "broad",
       "uses_secondary_contact": true,
-      "start_angle": 2.47448865358979,
-      "end_angle": 3.48869665358979,
+      "start_angle": -0.667104,
+      "end_angle": 0.347104,
       "local_start_offset": [
         0.0,
         0.0
@@ -277,7 +277,7 @@
       "camera_kick_multiplier": 0.9776,
       "movement_allowed_ratio": 0.1452
     },
-    "recipe_signature": "5bf56c41765ad21d76ca20cbaee8304d6f4158cd9cd38fd8b17f953dec9ee2f5",
+    "recipe_signature": "8d3f75bac667c8f46d7fb30f1546a77ec9756c9260d10492f88f511fbf41fd29",
     "compile_reason": "orthogonal affordance composition v5: {\"activation_mode\":\"passive\",\"body_length\":\"long\",\"confidence\":1.0,\"contact_surface\":\"whole_body\",\"evidence_parts\":[\"long shaft\",\"broad mop head\",\"two-hand grip span\"],\"flex_topology\":\"none\",\"functional_output\":\"contact_only\",\"grip_topology\":\"two_hand_handle\",\"handle_length\":\"long\",\"has_barrel\":false,\"has_broad_face\":true,\"has_edge\":false,\"has_point\":false,\"has_stock\":false,\"mass_distribution\":\"front\",\"rigidity\":\"semi_rigid\",\"secondary_contact_surface\":\"broad\",\"state_topology\":\"fixed\",\"terminal_load\":\"none\",\"tether_deployment\":\"none\",\"tether_mode\":\"none\",\"tether_topology\":\"none\"}",
     "mechanism_axes": {
       "handle_length": "long",

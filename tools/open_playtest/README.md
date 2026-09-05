@@ -7,7 +7,7 @@
 在新的 PowerShell 窗口执行：
 
 ```powershell
-cd "C:\Users\Eddie L\Documents\project-forge-playlab"
+cd "<USERPROFILE>\Documents\project-forge-playlab"
 .\scripts\run_open_playtest.ps1
 ```
 

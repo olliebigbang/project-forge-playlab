@@ -14,6 +14,7 @@
     "visual_description_en",
     "required_identity_parts_zh",
     "confusable_exclusions_en",
+    "mechanism_roles",
     "behavior_family",
     "scale_treatment",
     "declaration"
@@ -51,6 +52,16 @@
       "minItems": 0,
       "maxItems": 8,
       "items": {"type": "string", "minLength": 1, "maxLength": 220}
+    },
+    "mechanism_roles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["grip_part_zh", "activation_part_zh", "effect_origin_part_zh"],
+      "properties": {
+        "grip_part_zh": {"type": "string", "maxLength": 64},
+        "activation_part_zh": {"type": "string", "maxLength": 64},
+        "effect_origin_part_zh": {"type": "string", "maxLength": 64}
+      }
     },
     "behavior_family": {"type": "string", "enum": ["heavy_melee", "not_applicable"]},
     "scale_treatment": {

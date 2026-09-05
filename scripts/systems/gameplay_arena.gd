@@ -14,6 +14,7 @@ const STATEFUL_PIXEL_MORPHER := preload("res://scripts/combat_feel/stateful_pixe
 const TARGET_INTERACTION := preload("res://scripts/combat_feel/weapon_target_interaction_resolver.gd")
 const WEAPON_PLAYER_FIT := preload("res://scripts/combat_feel/weapon_player_fit_compiler.gd")
 const WEAPON_STRATEGY := preload("res://scripts/combat_feel/weapon_strategy_compiler.gd")
+const MELEE_RUNTIME := preload("res://scripts/combat_feel/arena_melee_runtime.gd")
 const ENEMY_ATTACK_RUNTIME := preload("res://scripts/enemy_attack/enemy_attack_runtime_driver.gd")
 const ENEMY_ATTACK_VISUAL := preload("res://scripts/enemy_attack/enemy_attack_visual_language.gd")
 const ENEMY_ATTACK_SPRITE := preload("res://scripts/enemy_attack/enemy_attack_sprite_language.gd")
@@ -128,7 +129,12 @@ var sustained_muzzle_climb_degrees := 0.0
 var sustained_fire_window_timer := 0.0
 var muzzle_flash_timer := 0.0
 var muzzle_flash_scale := 1.0
-var melee_timer := 0.0
+var melee_timer := 0.0 # Status only; never determines hits.
+var melee_runtime: RefCounted = MELEE_RUNTIME.new()
+var melee_frame: Dictionary = {}
+var melee_source_pixels: Array = []
+var melee_frame_key := ""
+var melee_morph_cache: Dictionary = {}
 var melee_connected: Dictionary = {}
 var dodge_timer := 0.0
 var invulnerable_timer := 0.0
@@ -182,11 +188,19 @@ func start_stage(
 			cached_runtime is Dictionary
 			and bool((cached_runtime as Dictionary).get("ok", false))
 			and str((cached_runtime as Dictionary).get("schema", "")) == RANGED_AXIS_RESOLVER.RUNTIME_SCHEMA
+			and (cached_runtime as Dictionary).has("muzzle_climb_cap_degrees")
 		):
 			ranged_runtime_profile = (cached_runtime as Dictionary).duplicate(true)
 		else:
 			ranged_runtime_profile = RANGED_AXIS_RESOLVER.compile(blueprint.affordance, blueprint.affordance_source)
 	weapon_strategy_profile = WEAPON_STRATEGY.compile(blueprint, asset, ranged_runtime_profile)
+	melee_runtime.configure(blueprint, asset)
+	melee_frame.clear()
+	melee_frame_key = ""
+	melee_morph_cache.clear()
+	melee_source_pixels.clear()
+	if blueprint.behavior_family == "heavy_melee" and asset.source_image != null:
+		melee_source_pixels = STATEFUL_PIXEL_MORPHER.deform_local(asset.source_image, asset.grip_primary, asset.tip, "fixed", 0.0).get("pixels", [])
 	ammo_in_magazine = int(ranged_runtime_profile.get("magazine_size", 0))
 	reload_timer = 0.0
 	weapon_recoil_offset = 0.0
@@ -248,7 +262,9 @@ func _update_player(delta: float) -> void:
 		speed *= float(ranged_runtime_profile.get("movement_multiplier", 1.0))
 		if shot_cooldown > 0.0:
 			speed *= float(ranged_runtime_profile.get("firing_movement_multiplier", 1.0))
-	if attack_charge > 0.0 or melee_timer > 0.0:
+	if melee_runtime.busy():
+		speed *= melee_runtime.movement_ratio()
+	elif attack_charge > 0.0:
 		speed *= 0.62
 	if reload_timer > 0.0:
 		speed *= 0.82
@@ -257,27 +273,37 @@ func _update_player(delta: float) -> void:
 		speed = 510.0
 	var wants_dodge := Input.is_action_just_pressed("dodge") or touch_dodge_requested
 	touch_dodge_requested = false
-	if wants_dodge and dodge_timer <= 0.0:
+	var can_dodge: bool = not melee_runtime.busy() or melee_runtime.controller.can_dodge_cancel()
+	if wants_dodge and dodge_timer <= 0.0 and can_dodge:
+		if melee_runtime.profile != null: melee_runtime.controller.press_dodge()
 		dodge_timer = 0.20
 		invulnerable_timer = 0.26
 		metrics["dodge_count"] = int(metrics["dodge_count"]) + 1
 		metrics_changed.emit(metrics)
 	player_position += movement.limit_length(1.0) * speed * delta
-	player_position.x = clampf(player_position.x, WORLD_RECT.position.x + 34.0, WORLD_RECT.end.x - 34.0)
-	player_position.y = clampf(player_position.y, WORLD_RECT.position.y + 48.0, WORLD_RECT.end.y - 28.0)
+	var bounds := _world_bounds()
+	player_position.x = clampf(player_position.x, bounds.position.x + 34.0, bounds.end.x - 34.0)
+	player_position.y = clampf(player_position.y, bounds.position.y + 48.0, bounds.end.y - 28.0)
+
+
+## Campaign arenas may be wider than one viewport. Returning a virtual bounds
+## rectangle keeps movement, lunges, projectiles and displacement in the same
+## authoritative world instead of faking travel by sliding only the backdrop.
+func _world_bounds() -> Rect2:
+	return WORLD_RECT
 
 func _update_attacks(delta: float) -> void:
 	var attack_down := Input.is_action_pressed("attack") or touch_attack
 	var just_pressed := touch_attack_requested or (attack_down and not attack_was_down)
 	touch_attack_requested = false
 	attack_was_down = attack_down
-	if attack_down or just_pressed or melee_timer > 0.0:
+	if (attack_down or just_pressed) and not melee_runtime.busy():
 		_face_nearest_enemy_for_attack()
 	if just_pressed:
 		metrics["attacks_used"] = int(metrics.get("attacks_used", 0)) + 1
 	match blueprint.behavior_family:
 		"returning_thrown": _update_returning_attack(just_pressed, delta)
-		"heavy_melee": _update_melee_attack(just_pressed, delta)
+		"heavy_melee": _update_melee_attack(just_pressed, delta, attack_down)
 		_: _update_sustained_attack(attack_down, just_pressed, delta)
 
 
@@ -358,7 +384,7 @@ func _update_firearm_attack(attack_down: bool, just_pressed: bool) -> void:
 		metrics["manual_cycle_count"] = int(metrics.get("manual_cycle_count", 0)) + 1
 	weapon_recoil_offset = float(ranged_runtime_profile.get("recoil_pixels", 6.0))
 	weapon_muzzle_climb_degrees = minf(
-		18.0,
+		maxf(0.0, float(ranged_runtime_profile.get("muzzle_climb_cap_degrees", 18.0))),
 		weapon_muzzle_climb_degrees
 			+ float(ranged_runtime_profile.get("muzzle_climb_degrees_per_shot", 4.0))
 	)
@@ -514,48 +540,63 @@ func _update_returning_attack(just_pressed: bool, delta: float) -> void:
 		var enemy_id := int(enemy["id"])
 		if not hit_set.has(enemy_id) and position.distance_to(enemy["pos"]) < 32.0:
 			hit_set[enemy_id] = true
-			_damage_enemy(enemy, RULES.damage_against(blueprint.behavior_family, enemy["type"], _is_front_hit(enemy), blueprint.modifiers))
+			var base_damage := RULES.damage_against(blueprint.behavior_family, enemy["type"], _is_front_hit(enemy), blueprint.modifiers)
+			var outcome := _resolve_enemy_defense(enemy, {"ok": true, "health_damage": base_damage, "stagger_seconds": 0.12, "interrupt_strength": 0.45, "knockback": Vector2.ZERO}, position)
+			_damage_enemy(enemy, float(outcome.get("health_damage", base_damage)), float(outcome.get("stagger_seconds", 0.12)))
+			_apply_target_interaction(enemy, outcome)
 			_chain_damage(enemy, 8.0)
 
-func _update_melee_attack(just_pressed: bool, delta: float) -> void:
-	var startup_multiplier := float(blueprint.modifiers.get("startup_multiplier", 1.0))
-	if just_pressed and melee_timer <= 0.0:
-		melee_timer = 0.75 * startup_multiplier
-		melee_connected.clear()
-		var lunge := _safe_melee_lunge(float(weapon_strategy_profile.get("melee_lunge_pixels", 0.0)))
-		player_position.x = clampf(
-			player_position.x + lunge * facing,
-			WORLD_RECT.position.x + 34.0,
-			WORLD_RECT.end.x - 34.0
-		)
-	if melee_timer <= 0.0:
-		return
-	melee_timer -= delta
-	var active_window := melee_timer < 0.34 and melee_timer > 0.08
-	if not active_window:
-		return
-	var range := _melee_axis_reach() * float(blueprint.modifiers.get("area_multiplier", 1.0))
+func _update_melee_attack(just_pressed: bool, delta: float, held: bool = false) -> void:
+	if melee_runtime.profile == null:
+		if not melee_runtime.configure(blueprint, asset): return
+	melee_runtime.input_attack(just_pressed, held)
+	# A delayed frame must not skip a fast active phase.
+	var remaining := maxf(0.0, delta)
+	var active_sampled := false
+	while remaining > 0.00001:
+		var step := minf(remaining, 1.0 / 120.0)
+		melee_runtime.tick(step)
+		var travel := _safe_melee_lunge(melee_runtime.root_step())
+		var bounds := _world_bounds()
+		player_position.x = clampf(player_position.x + travel * facing, bounds.position.x + 34.0, bounds.end.x - 34.0)
+		# Runtime timing remains 120 Hz, but deforming hundreds of source pixels
+		# four times inside one visible 30 Hz frame produces identical overdraw.
+		# One authoritative active sample per displayed update still catches a
+		# phase crossed by a delayed frame and preserves registered-hit semantics.
+		if melee_runtime.active() and not active_sampled:
+			_build_melee_frame()
+			_resolve_compiled_melee_hits()
+			active_sampled = true
+		remaining -= step
+	if not active_sampled: _build_melee_frame()
+	melee_timer = 1.0 if melee_runtime.busy() else 0.0
+
+
+func _resolve_compiled_melee_hits() -> void:
+	var primitive: Variant = melee_runtime.primitive()
+	var interaction: Dictionary = TARGET_INTERACTION.compile_melee(melee_runtime.affordance, primitive)
 	for enemy: Dictionary in enemies:
-		var enemy_id := int(enemy["id"])
-		var direction_to_enemy: Vector2 = enemy["pos"] - player_position
-		if not melee_connected.has(enemy_id) and _melee_axis_contains(direction_to_enemy, range):
-			melee_connected[enemy_id] = true
-			var damage := RULES.damage_against(blueprint.behavior_family, enemy["type"], _is_front_hit(enemy), blueprint.modifiers)
-			damage *= _melee_axis_damage_multiplier()
-			var interaction_profile := weapon_strategy_profile.get("target_interaction_profile", {}) as Dictionary
-			if not bool(interaction_profile.get("ok", false)):
-				interaction_profile = TARGET_INTERACTION.compile_melee(blueprint.affordance, blueprint.affordance)
-			var direction := direction_to_enemy.normalized() if direction_to_enemy.length_squared() > 1.0 else Vector2(facing, 0.0)
-			var outcome := TARGET_INTERACTION.resolve(
-				interaction_profile,
-				_target_interaction_context(enemy),
-				damage,
-				{"knockback": direction * 22.0, "stagger": 0.18}
-			)
-			_damage_enemy(enemy, float(outcome.get("health_damage", damage)), float(outcome.get("stagger_seconds", 0.18)))
-			_apply_target_interaction(enemy, outcome)
-			_apply_melee_axis_force(enemy, direction_to_enemy)
+		if melee_runtime.controller.hit_targets.has(int(enemy["id"])): continue
+		if float(enemy.get("hp", 0.0)) <= 0.0 or not _melee_frame_contains(Vector2(enemy["pos"])): continue
+		if not melee_runtime.controller.register_hit(int(enemy["id"])): continue
+		melee_connected[int(enemy["id"])] = true
+		var direction := (Vector2(enemy["pos"]) - player_position).normalized()
+		var damage := RULES.damage_against(blueprint.behavior_family, enemy["type"], _is_front_hit(enemy), blueprint.modifiers)
+		damage *= float(primitive.damage_multiplier) * _melee_axis_damage_multiplier()
+		var reaction := {"knockback": direction * 22.0 * float(primitive.knockback_multiplier), "stagger": 0.18 * float(primitive.stagger_multiplier)}
+		var outcome := TARGET_INTERACTION.resolve(interaction, _target_interaction_context(enemy), damage, reaction)
+		outcome = _resolve_enemy_defense(enemy, outcome, player_position)
+		_damage_enemy(enemy, float(outcome.get("health_damage", damage)), float(outcome.get("stagger_seconds", 0.18)))
+		_apply_target_interaction(enemy, outcome)
+		_apply_melee_axis_force(enemy, Vector2(enemy["pos"]) - player_position)
+		melee_runtime.controller.begin_hitstop(minf(0.055, 0.025 * float(primitive.hitstop_multiplier)))
+		if blueprint.effect_type == "lifesteal":
 			player_health = minf(100.0, player_health + float(outcome.get("health_damage", damage)) * 0.10)
+		metrics["melee_hits"] = int(metrics.get("melee_hits", 0)) + 1
+		metrics["last_melee_stage"] = melee_runtime.controller.combo_index
+		metrics["last_melee_surface"] = str(primitive.contact_surface)
+		metrics["last_melee_verb"] = str(outcome.get("primary_reaction", ""))
+		metrics_changed.emit(metrics)
 
 
 func _safe_melee_lunge(requested: float) -> float:
@@ -570,55 +611,162 @@ func _safe_melee_lunge(requested: float) -> float:
 	return requested
 
 
+## Shared presentation/contact root. Native-pose adapters override this once;
+## source pixels, soft geometry and all effective contacts use the same result.
+func _melee_root_pose() -> Dictionary:
+	var pose: Dictionary = melee_runtime.pose(facing)
+	pose["hand"] = _firearm_hand_base() + Vector2(pose.get("offset", Vector2.ZERO))
+	return pose
+
+func _build_melee_frame() -> void:
+	if asset == null or melee_runtime.profile == null: return
+	var pose := _melee_root_pose()
+	var hand := Vector2(pose.hand)
+	var angle := float(pose.angle)
+	var longitudinal_scale := float(pose.get("longitudinal_scale", 1.0))
+	var trajectory_plane := str(pose.get("trajectory_plane", "screen_arc"))
+	var depth_layer := float(pose.get("depth_layer", 0.0))
+	var scale := float(_weapon_fit().get("draw_scale", 1.0))
+	var p: Variant = melee_runtime.primitive()
+	var frame_key := "%s/%0.5f/%0.4f/%0.3f/%s/%s/%0.5f" % [hand, angle, longitudinal_scale, melee_runtime.state_power(), melee_runtime.controller.attack_serial, melee_runtime.controller.phase, melee_runtime.motion_ratio()]
+	if frame_key == melee_frame_key: return
+	melee_frame_key = frame_key
+	var pixels: Array = []
+	var contacts := PackedVector2Array()
+	var is_soft := _uses_soft_mechanism_visual()
+	var geometry: Dictionary = {}
+	var power := _melee_state_power()
+	if is_soft:
+		geometry = _soft_weapon_geometry(hand, angle, longitudinal_scale)
+		depth_layer = float(geometry.get("depth_layer", depth_layer))
+		# Styled chain sprites already have deliberate dark outlines and holes.
+		# The old readability lift bleached those outlines; the solid strand
+		# resampler painted over their holes. Deform the actual source pixels.
+		geometry.merge({"source_grip": asset.grip_primary, "facing": facing, "scale": scale, "pixel_snap": true})
+		geometry.merge(_soft_pixel_render_options())
+		# Runtime needs final pixels only. Skip report-only centroids/bounds and
+		# collapse exact overdraw created when a flexible strand folds on itself.
+		geometry["include_metadata"] = false
+		geometry["compact_pixels"] = true
+		pixels = PIXEL_WEAPON_DEFORMER.deform(asset.visual_rig, geometry).get("pixels", [])
+	else:
+		var local_pixels := melee_source_pixels
+		if local_pixels.is_empty() and asset.source_image != null:
+			local_pixels = STATEFUL_PIXEL_MORPHER.deform_local(asset.source_image, asset.grip_primary, asset.tip, "fixed", 0.0).get("pixels", [])
+			melee_source_pixels = local_pixels
+		if power > 0.01:
+			var morph_key := roundi(power * 24.0)
+			if not melee_morph_cache.has(morph_key):
+				melee_morph_cache[morph_key] = STATEFUL_PIXEL_MORPHER.deform_local(asset.source_image, asset.grip_primary, asset.tip, str(blueprint.affordance.get("state_topology", "fixed")), float(morph_key) / 24.0, blueprint.affordance).get("pixels", [])
+			local_pixels = melee_morph_cache[morph_key]
+		for pixel: Dictionary in local_pixels:
+			var local := Vector2(pixel.get("position", Vector2.ZERO)) * scale
+			local.x *= longitudinal_scale
+			var world := hand + Vector2(local.x * facing, local.y).rotated(angle)
+			pixels.append({"position": world.round(), "size": maxf(1.0, ceilf(scale)), "color": pixel.get("color", Color.WHITE), "source_position": pixel.get("source_position", asset.grip_primary), "generated": pixel.get("generated", false)})
+	if p != null:
+		var anchor := asset.muzzle if str(p.contact_anchor) == "muzzle" else asset.tip
+		if str(p.contact_anchor) == "rear_contact":
+			anchor = asset.rear_contact
+			if anchor.distance_to(asset.grip_primary) < 5.0 or anchor == Vector2.ZERO:
+				# Farthest opaque pixel opposite the primary strike direction.
+				var direction := (asset.tip - asset.grip_primary).normalized()
+				var back := 0.0
+				for pixel: Dictionary in melee_source_pixels:
+					var source := Vector2(pixel.get("source_position", asset.grip_primary))
+					var projection := (source - asset.grip_primary).dot(direction)
+					if projection < back:
+						back = projection
+						anchor = source
+		var span := maxf(8.0, anchor.distance_to(asset.grip_primary))
+		var start_ratio := float({"point": 0.80, "broad": 0.50, "edge": 0.24, "whole_body": 0.0}.get(str(p.contact_surface), 0.24))
+		var contact := Vector2(geometry.get("contact", hand))
+		for pixel: Dictionary in pixels:
+			var world := Vector2(pixel["position"])
+			var eligible := false
+			if is_soft:
+				var role := str(pixel.get("role", ""))
+				if str(p.contact_surface) == "point":
+					eligible = role == "terminal" or world.distance_to(contact) <= 6.0 + float(p.terminal_load_ratio) * 7.0
+				else:
+					eligible = role in ["deform_body", "tether", "terminal"] and world.distance_to(hand) >= contact.distance_to(hand) * maxf(start_ratio, float(p.soft_contact_start_ratio))
+			else:
+				var source := Vector2(pixel.get("source_position", asset.grip_primary))
+				var projection := (source - asset.grip_primary).dot((anchor - asset.grip_primary).normalized())
+				eligible = projection >= span * start_ratio
+				if power > 0.01 and bool(pixel.get("generated", false)): eligible = true
+			if eligible and world.distance_to(hand) >= float(p.inner_deadzone_pixels) * scale:
+				contacts.append(world)
+	var field := PackedVector2Array()
+	if p != null and melee_runtime.state_power() > 0.0 and str(p.functional_output) != "contact_only":
+		var direction := Vector2(facing, 0.0).rotated(angle).normalized()
+		var normal := Vector2(-direction.y, direction.x)
+		var reach := _melee_axis_reach()
+		if str(p.functional_output) == "radial_field":
+			for index: int in range(40): field.append(hand + Vector2.from_angle(TAU * index / 40.0) * reach * 0.82)
+		else:
+			var nozzle := _soft_source_world(asset.muzzle, hand, angle)
+			# Fixed rigid outputs begin at the validated native-function anchor.
+			# Only a structure that actually deploys/deforms may replace that closed
+			# source anchor with its farthest currently drawn working pixel.
+			var deployed_output := str(p.state_topology) != "fixed" or str(p.flex_topology) != "none" or str(p.tether_topology) != "none"
+			if deployed_output:
+				var forward := -INF
+				for point: Vector2 in contacts:
+					var projection := (point - hand).dot(direction)
+					if projection > forward:
+						forward = projection
+						nozzle = point
+			var finish := nozzle + direction * reach
+			var width := float(melee_runtime.profile.hitbox_thickness) * float(p.hitbox_width_multiplier) * 0.65
+			field = PackedVector2Array([nozzle - normal * 4.0, finish - normal * width, finish + normal * width, nozzle + normal * 4.0])
+	geometry["trajectory_plane"] = trajectory_plane
+	geometry["longitudinal_scale"] = longitudinal_scale
+	geometry["depth_layer"] = depth_layer
+	melee_frame = {
+		"pixels": pixels,
+		"contacts": contacts,
+		"field": field,
+		"hand": hand,
+		"angle": angle,
+		"active": melee_runtime.active(),
+		"state_power": power,
+		"trajectory_plane": trajectory_plane,
+		"longitudinal_scale": longitudinal_scale,
+		"depth_layer": depth_layer,
+		"geometry": geometry,
+	}
+
+
+func _melee_frame_contains(target: Vector2, target_radius: float = 24.0) -> bool:
+	if not melee_runtime.active(): return false
+	var field: PackedVector2Array = melee_frame.get("field", PackedVector2Array())
+	if not field.is_empty():
+		if Geometry2D.is_point_in_polygon(target, field): return true
+		for index: int in range(field.size()):
+			if Geometry2D.get_closest_point_to_segment(target, field[index], field[(index + 1) % field.size()]).distance_to(target) <= target_radius: return true
+	var contacts: PackedVector2Array = melee_frame.get("contacts", PackedVector2Array())
+	for point: Vector2 in contacts:
+		if point.distance_squared_to(target) <= target_radius * target_radius: return true
+	return false
+
+
 func _melee_axis_reach() -> float:
-	if blueprint == null:
-		return 105.0
-	var state := str(blueprint.affordance.get("state_topology", "fixed"))
-	var output := str(blueprint.affordance.get("functional_output", "contact_only"))
-	var scale := float({
-		"fixed": 1.00, "hinged": 1.06, "folding": 1.16,
-		"telescoping": 1.48, "radial_expand": 1.12, "rotary": 1.08,
-	}.get(state, 1.00))
-	scale *= float({
-		"contact_only": 1.00, "directed_stream": 1.56,
-		"radial_field": 1.12, "pull_field": 1.42,
-	}.get(output, 1.00))
-	return 105.0 * scale
+	return melee_runtime.reach()
 
 
-func _melee_axis_contains(relative: Vector2, reach: float) -> bool:
-	# Once a target is already inside the player's body space, a visible sweep
-	# must connect even if the target crosses the facing axis during wind-up.
-	if relative.length() <= 30.0:
-		return true
-	if blueprint == null:
-		return relative.length() <= reach and signf(relative.x) == facing
-	var state := str(blueprint.affordance.get("state_topology", "fixed"))
-	var output := str(blueprint.affordance.get("functional_output", "contact_only"))
-	if output == "radial_field" or state in ["radial_expand", "rotary"]:
-		return relative.length() <= reach
-	if output in ["directed_stream", "pull_field"] or state == "telescoping":
-		var forward := relative.x * facing
-		var width_ratio := 0.48 if output == "directed_stream" else 0.62
-		return forward >= 0.0 and forward <= reach and absf(relative.y) <= 24.0 + forward * width_ratio
-	var forward := relative.x * facing
-	var half_angle := 0.96 if state in ["hinged", "folding"] else 0.72
-	return relative.length() <= reach and forward >= 0.0 and absf(relative.angle_to(Vector2(facing, 0.0))) <= half_angle
+func _melee_axis_contains(relative: Vector2, _reach: float) -> bool:
+	return _melee_frame_contains(player_position + relative)
 
 
 func _melee_axis_damage_multiplier() -> float:
-	if blueprint == null:
-		return 1.0
-	return float({
-		"contact_only": 1.0,
-		"directed_stream": 0.74,
-		"radial_field": 0.68,
-		"pull_field": 0.62,
-	}.get(str(blueprint.affordance.get("functional_output", "contact_only")), 1.0))
+	if melee_runtime.state_power() <= 0.0: return 1.0
+	var p: Variant = melee_runtime.primitive()
+	return float({"contact_only": 1.0, "directed_stream": 0.74, "radial_field": 0.68, "pull_field": 0.62}.get(str(p.functional_output), 1.0))
 
 
 func _apply_melee_axis_force(enemy: Dictionary, relative: Vector2) -> void:
-	if blueprint == null or relative.length_squared() < 1.0:
+	if blueprint == null or relative.length_squared() < 1.0 or melee_runtime.state_power() <= 0.0:
 		return
 	var output := str(blueprint.affordance.get("functional_output", "contact_only"))
 	var direction := relative.normalized()
@@ -754,6 +902,7 @@ func _projectile_damage_against(projectile: Dictionary, enemy: Dictionary) -> fl
 
 func _update_projectiles(delta: float) -> void:
 	for projectile: Dictionary in projectiles:
+		var previous_position := Vector2(projectile["pos"])
 		var travel_step := Vector2(projectile["vel"]) * delta
 		projectile["pos"] = Vector2(projectile["pos"]) + travel_step
 		projectile["distance_travelled"] = float(projectile.get("distance_travelled", 0.0)) + travel_step.length()
@@ -761,7 +910,7 @@ func _update_projectiles(delta: float) -> void:
 		for enemy: Dictionary in enemies:
 			var enemy_id := int(enemy["id"])
 			var hit: Dictionary = projectile["hit"]
-			if not hit.has(enemy_id) and Vector2(projectile["pos"]).distance_to(enemy["pos"]) < 23.0:
+			if not hit.has(enemy_id) and _projectile_contacts_enemy(previous_position, Vector2(projectile["pos"]), projectile, enemy):
 				hit[enemy_id] = true
 				_resolve_projectile_hit(projectile, enemy)
 				enemy["burn"] = 2.2
@@ -769,7 +918,14 @@ func _update_projectiles(delta: float) -> void:
 					projectile["pierces"] = int(projectile["pierces"]) - 1
 				else:
 					projectile["life"] = 0.0
-	projectiles = projectiles.filter(func(projectile: Dictionary) -> bool: return float(projectile["life"]) > 0.0 and WORLD_RECT.grow(80).has_point(projectile["pos"]))
+					break
+	var bounds := _world_bounds()
+	projectiles = projectiles.filter(func(projectile: Dictionary) -> bool: return float(projectile["life"]) > 0.0 and bounds.grow(80).has_point(projectile["pos"]))
+
+
+func _projectile_contacts_enemy(start: Vector2, finish: Vector2, _projectile: Dictionary, enemy: Dictionary) -> bool:
+	# Sweep the travelled segment: a frame must not skip a small target.
+	return _distance_to_segment(Vector2(enemy.pos), start, finish) < 23.0
 
 func _update_enemies(delta: float) -> void:
 	for enemy: Dictionary in enemies:
@@ -831,7 +987,7 @@ func _damage_enemy(enemy: Dictionary, amount: float, hurt_seconds: float = 0.12)
 
 func _take_player_damage(amount: float) -> float:
 	var applied := maxf(0.0, amount)
-	if melee_timer > 0.08 and melee_timer < 0.34:
+	if melee_runtime.active() and melee_runtime.state_power() > 0.0:
 		applied *= float(weapon_strategy_profile.get("active_guard_damage_multiplier", 1.0))
 	player_health = maxf(1.0, player_health - applied)
 	metrics["damage_taken"] = float(metrics["damage_taken"]) + applied
@@ -845,7 +1001,7 @@ func _begin_compiled_enemy_attack(enemy: Dictionary, attack_runtime: Variant, to
 		"distance_pixels": to_player.length(),
 		"depth_delta_pixels": to_player.y,
 		"available_coordination_budget": int(enemy.get("coordination_budget", 1)),
-		"clear_path": true,
+		"clear_path": _enemy_has_clear_path(enemy, player_position),
 	}, Vector2(enemy["pos"]), player_position)
 	if not bool(selected.get("ok", false)):
 		return false
@@ -860,8 +1016,16 @@ func _update_compiled_enemy_attack(enemy: Dictionary, attack_runtime: Variant, d
 	enemy["last_attack_mechanism"] = result.duplicate(true)
 	var delivery := str(result.get("delivery", attack_runtime.current_delivery()))
 	var activation_event := result.get("activation_event", {}) as Dictionary
-	if bool(activation_event.get("ok", false)) and delivery in ["projectile", "marked_impact"]:
-		_spawn_enemy_attack_hazard(enemy, activation_event)
+	if bool(activation_event.get("ok", false)):
+		var danger_zone := activation_event.get("danger_zone", {}) as Dictionary
+		# Projectile/impact attacks already detach into world hazards. A residue
+		# modifier must also leave the SAME compiled contact/rush region behind;
+		# otherwise the family silently has no effect whenever that attack wins
+		# selection.
+		if delivery in ["projectile", "marked_impact"] or bool(danger_zone.get("persists_after_active", false)):
+			_spawn_enemy_attack_hazard(enemy, activation_event)
+	for echo_event: Dictionary in result.get("echo_events", []) as Array:
+		_spawn_enemy_attack_hazard(enemy, echo_event)
 	var active_seconds := float(result.get("active_seconds_this_step", 0.0))
 	if active_seconds <= 0.0:
 		return
@@ -881,24 +1045,48 @@ func _update_compiled_enemy_attack(enemy: Dictionary, attack_runtime: Variant, d
 
 func _spawn_enemy_attack_hazard(enemy: Dictionary, activation_event: Dictionary) -> void:
 	var delivery := str(activation_event.get("delivery", ""))
-	if delivery not in ["projectile", "marked_impact"]:
+	var event_schema := str(activation_event.get("schema", ""))
+	var is_echo := event_schema == "forge-enemy-attack-echo-event-v1"
+	var danger_zone := (activation_event.get("danger_zone", {}) as Dictionary).duplicate(true)
+	var is_residue := str(danger_zone.get("modifier_source", "")) == "residue"
+	if delivery not in ["projectile", "marked_impact"] and not is_echo and not is_residue:
 		return
 	var origin: Vector2 = Vector2(activation_event.get("origin", enemy.get("pos", Vector2.ZERO)))
 	var lifetime := float(activation_event.get("hazard_lifetime_seconds", 0.0))
+	var region := (activation_event.get("hit_region", {}) as Dictionary).duplicate(true)
+	var region_scale := maxf(0.1, float(activation_event.get("region_scale", 1.0)))
+	for key: String in ["radius_pixels", "length_pixels", "width_pixels"]:
+		if region.has(key):
+			region[key] = float(region[key]) * region_scale
+	var contact_mode := str(danger_zone.get("contact_mode", "single"))
+	var hazard_mode := str(danger_zone.get("mode", "instant"))
+	var damage_multiplier := float(danger_zone.get("damage_multiplier", 1.0))
+	damage_multiplier *= float(activation_event.get("damage_multiplier", 1.0))
+	var effect_family := "echo" if is_echo else ("residue" if is_residue else "")
+	var base_damage := float({"contact": 6.0, "rush": 12.0, "projectile": 8.0, "marked_impact": 10.0}.get(delivery, 6.0))
 	enemy_attack_hazards.append({
-		"schema": "forge-enemy-attack-hazard-v1",
+		"schema": "forge-enemy-attack-hazard-v2",
 		"owner_id": int(enemy.get("id", -1)),
 		"attack_key": str(activation_event.get("attack_key", "")),
 		"mechanism_signature": str(activation_event.get("mechanism_signature", "")),
 		"delivery": delivery,
+		"effect_family": effect_family,
+		"echo_repeat_index": int(activation_event.get("echo_repeat_index", -1)),
 		"pos": origin,
 		"previous_pos": origin,
 		"vel": Vector2(activation_event.get("velocity", Vector2.ZERO)),
+		"locked_direction": Vector2(activation_event.get("locked_direction", Vector2.RIGHT)),
 		"life": lifetime,
 		"maximum_life": lifetime,
-		"hit_region": (activation_event.get("hit_region", {}) as Dictionary).duplicate(true),
-		"damage": (8.0 if delivery == "projectile" else 10.0) * float(enemy.get("damage_multiplier", 1.0)),
+		"age": 0.0,
+		"repeat_cooldown": 0.0,
+		"danger_zone": danger_zone,
+		"hazard_mode": hazard_mode,
+		"contact_mode": contact_mode,
+		"hit_region": region,
+		"damage": base_damage * float(enemy.get("damage_multiplier", 1.0)) * damage_multiplier,
 		"hit_player": false,
+		"damage_event_serial": 0,
 		"player_confirmation_required": false,
 	})
 
@@ -908,28 +1096,83 @@ func _update_enemy_attack_hazards(delta: float) -> void:
 		hazard["previous_pos"] = Vector2(hazard.get("pos", Vector2.ZERO))
 		if str(hazard.get("delivery", "")) == "projectile":
 			hazard["pos"] = Vector2(hazard["pos"]) + Vector2(hazard.get("vel", Vector2.ZERO)) * delta
+		hazard["age"] = float(hazard.get("age", 0.0)) + delta
+		hazard["repeat_cooldown"] = maxf(0.0, float(hazard.get("repeat_cooldown", 0.0)) - delta)
 		hazard["life"] = float(hazard.get("life", 0.0)) - delta
-		if bool(hazard.get("hit_player", false)) or invulnerable_timer > 0.0:
+		if bool(hazard.get("hit_player", false)) or invulnerable_timer > 0.0 or not _enemy_hazard_dangerous_now(hazard):
+			continue
+		if float(hazard.get("repeat_cooldown", 0.0)) > 0.0:
 			continue
 		if not _enemy_attack_hazard_contains(hazard, player_position):
 			continue
-		hazard["hit_player"] = true
-		hazard["life"] = 0.0
+		var contact_mode := str(hazard.get("contact_mode", "single"))
+		if contact_mode == "single":
+			hazard["hit_player"] = true
+			hazard["life"] = 0.0
+		else:
+			var danger_zone := hazard.get("danger_zone", {}) as Dictionary
+			if contact_mode == "pulse":
+				hazard["repeat_cooldown"] = maxf(0.08, float(danger_zone.get("pulse_interval_seconds", 0.60)))
+			else:
+				hazard["repeat_cooldown"] = maxf(0.08, float(danger_zone.get("repeat_hit_cooldown_seconds", 0.32)))
 		var damage := float(hazard.get("damage", 0.0))
+		hazard["damage_event_serial"] = int(hazard.get("damage_event_serial", 0)) + 1
 		_take_player_damage(damage)
+	var bounds := _world_bounds()
 	enemy_attack_hazards = enemy_attack_hazards.filter(func(hazard: Dictionary) -> bool:
-		return float(hazard.get("life", 0.0)) > 0.0 and WORLD_RECT.grow(100.0).has_point(Vector2(hazard.get("pos", Vector2.ZERO)))
+		return float(hazard.get("life", 0.0)) > 0.0 and bounds.grow(100.0).has_point(Vector2(hazard.get("pos", Vector2.ZERO)))
 	)
+
+
+func _enemy_hazard_dangerous_now(hazard: Dictionary) -> bool:
+	var mode := str(hazard.get("hazard_mode", "instant"))
+	if mode != "pulsing":
+		return true
+	var danger_zone := hazard.get("danger_zone", {}) as Dictionary
+	var interval := maxf(0.001, float(danger_zone.get("pulse_interval_seconds", 0.60)))
+	var active_seconds := clampf(float(danger_zone.get("pulse_active_seconds", 0.14)), 0.0, interval)
+	return fmod(float(hazard.get("age", 0.0)), interval) <= active_seconds
 
 
 func _enemy_attack_hazard_contains(hazard: Dictionary, point: Vector2) -> bool:
 	var region := hazard.get("hit_region", {}) as Dictionary
-	if str(hazard.get("delivery", "")) == "marked_impact":
-		return point.distance_to(Vector2(hazard.get("pos", Vector2.ZERO))) <= float(region.get("radius_pixels", 0.0))
+	var delivery := str(hazard.get("delivery", ""))
+	if delivery != "projectile":
+		return _enemy_attack_region_contains(
+			Vector2(hazard.get("pos", Vector2.ZERO)),
+			point,
+			Vector2(hazard.get("locked_direction", Vector2.RIGHT)),
+			region
+		)
 	var start: Vector2 = Vector2(hazard.get("previous_pos", hazard.get("pos", Vector2.ZERO)))
 	var finish: Vector2 = Vector2(hazard.get("pos", Vector2.ZERO))
 	var radius := maxf(4.0, float(region.get("width_pixels", 0.0)) * 0.5)
 	return _distance_to_segment(point, start, finish) <= radius
+
+
+func _enemy_attack_region_contains(origin: Vector2, point: Vector2, direction_value: Vector2, region: Dictionary) -> bool:
+	var offset := point - origin
+	var depth_tolerance := float(region.get("depth_tolerance_pixels", 100000.0))
+	if str(region.get("path_mode", "same_lane")) == "same_lane" and absf(offset.y) > depth_tolerance:
+		return false
+	match str(region.get("shape", "capsule")):
+		"circle":
+			return offset.length() <= float(region.get("radius_pixels", 0.0))
+		"arc":
+			var radius := float(region.get("radius_pixels", 0.0))
+			if offset.length() > radius or offset.length() <= 0.001:
+				return false
+			return absf(direction_value.angle_to(offset.normalized())) <= deg_to_rad(float(region.get("arc_degrees", 0.0)) * 0.5)
+		"strip", "capsule":
+			var direction := direction_value.normalized()
+			if direction.is_zero_approx():
+				direction = Vector2.RIGHT
+			var forward := offset.dot(direction)
+			var sideways := absf(offset.cross(direction))
+			return forward >= 0.0 \
+				and forward <= float(region.get("length_pixels", 0.0)) \
+				and sideways <= float(region.get("width_pixels", 0.0)) * 0.5
+	return false
 
 
 func _distance_to_segment(point: Vector2, start: Vector2, finish: Vector2) -> float:
@@ -961,6 +1204,7 @@ func _resolve_projectile_hit(projectile: Dictionary, enemy: Dictionary) -> Dicti
 			"stagger": float(projectile.get("hit_stagger_seconds", 0.12)),
 		}
 	)
+	outcome = _resolve_enemy_defense(enemy, outcome, Vector2(projectile.get("pos", player_position)))
 	_damage_enemy(
 		enemy,
 		float(outcome.get("health_damage", base_damage)),
@@ -968,6 +1212,51 @@ func _resolve_projectile_hit(projectile: Dictionary, enemy: Dictionary) -> Dicti
 	)
 	_apply_target_interaction(enemy, outcome)
 	return outcome
+
+
+func _resolve_enemy_defense(enemy: Dictionary, outcome: Dictionary, source_position: Vector2) -> Dictionary:
+	var resolved := outcome.duplicate(true)
+	var attack_runtime: Variant = enemy.get("attack_runtime", null)
+	if attack_runtime == null:
+		return resolved
+	var incoming_from := (source_position - Vector2(enemy.get("pos", Vector2.ZERO))).normalized()
+	var defense_result: Dictionary = attack_runtime.resolve_defense(
+		incoming_from,
+		float(resolved.get("interrupt_strength", resolved.get("stagger_seconds", 0.0))),
+		bool(resolved.get("armor_break", false))
+	)
+	var damage_multiplier := float(defense_result.get("damage_multiplier", 1.0))
+	var stagger_multiplier := float(defense_result.get("stagger_multiplier", 1.0))
+	resolved["health_damage"] = float(resolved.get("health_damage", 0.0)) * damage_multiplier
+	resolved["armor_damage"] = float(resolved.get("armor_damage", 0.0)) * damage_multiplier
+	resolved["stagger_seconds"] = float(resolved.get("stagger_seconds", 0.0)) * stagger_multiplier
+	resolved["interrupt_strength"] = float(resolved.get("interrupt_strength", 0.0)) * stagger_multiplier
+	resolved["knockback"] = Vector2(resolved.get("knockback", Vector2.ZERO)) * stagger_multiplier
+	resolved["enemy_defense"] = defense_result.duplicate(true)
+	if bool(defense_result.get("guard_broken", false)):
+		resolved["status"] = "GUARD BROKEN"
+		resolved["status_seconds"] = maxf(0.45, float(resolved.get("status_seconds", 0.0)))
+	elif bool(defense_result.get("blocked", false)):
+		resolved["status"] = "GUARDED"
+		resolved["status_seconds"] = maxf(0.20, float(resolved.get("status_seconds", 0.0)))
+	return resolved
+
+
+func _enemy_has_clear_path(owner: Dictionary, target_position: Vector2) -> bool:
+	var start := Vector2(owner.get("pos", Vector2.ZERO))
+	var finish := target_position
+	for candidate: Dictionary in enemies:
+		if int(candidate.get("id", -1)) == int(owner.get("id", -2)) or float(candidate.get("hp", 0.0)) <= 0.0:
+			continue
+		var point := Vector2(candidate.get("pos", Vector2.ZERO))
+		var segment := finish - start
+		var length_squared := segment.length_squared()
+		if length_squared <= 0.000001:
+			return true
+		var amount := (point - start).dot(segment) / length_squared
+		if amount > 0.08 and amount < 0.92 and _distance_to_segment(point, start, finish) < 30.0:
+			return false
+	return true
 
 
 func _target_interaction_context(enemy: Dictionary) -> Dictionary:
@@ -1010,7 +1299,7 @@ func _apply_target_interaction(enemy: Dictionary, outcome: Dictionary) -> void:
 		"toward_source": displacement *= -1.0
 	if displacement.length() > 0.0:
 		var moved := Vector2(enemy["pos"]) + displacement
-		var target_bounds := WORLD_RECT.grow(-26.0)
+		var target_bounds := _world_bounds().grow(-26.0)
 		moved.x = clampf(moved.x, target_bounds.position.x, target_bounds.end.x)
 		moved.y = clampf(moved.y, target_bounds.position.y, target_bounds.end.y)
 		enemy["pos"] = moved
@@ -1035,7 +1324,9 @@ func _target_suppression_speed(enemy: Dictionary) -> float:
 func _chain_damage(source: Dictionary, amount: float) -> void:
 	for enemy: Dictionary in enemies:
 		if enemy != source and Vector2(enemy["pos"]).distance_to(source["pos"]) < 105.0:
-			_damage_enemy(enemy, amount)
+			var outcome := _resolve_enemy_defense(enemy, {"ok": true, "health_damage": amount, "stagger_seconds": 0.08, "interrupt_strength": 0.30, "knockback": Vector2.ZERO}, Vector2(source["pos"]))
+			_damage_enemy(enemy, float(outcome.get("health_damage", amount)), float(outcome.get("stagger_seconds", 0.08)))
+			_apply_target_interaction(enemy, outcome)
 
 func _is_front_hit(enemy: Dictionary) -> bool:
 	var enemy_facing := float(enemy.get("facing", -1.0))
@@ -1099,7 +1390,8 @@ func _spawn_enemy_blueprint(profile: Dictionary, position: Vector2) -> void:
 	var declarations: Array = (profile.get("attack_declarations", []) as Array).duplicate(true)
 	var attack_configuration: Dictionary = attack_runtime.configure(
 		declarations,
-		float(profile.get("attack_tempo_multiplier", 1.0))
+		float(profile.get("attack_tempo_multiplier", 1.0)),
+		(profile.get("enemy_modifier_declarations", []) as Array).duplicate(true)
 	) if not declarations.is_empty() else {"ok": false}
 	var maximum_health := float(profile.get("max_health", 80.0))
 	var type_name := str(profile.get("type_name", "generated_enemy"))
@@ -1117,6 +1409,7 @@ func _spawn_enemy_blueprint(profile: Dictionary, position: Vector2) -> void:
 		"move_speed": float(profile.get("move_speed", 54.0)),
 		"damage_multiplier": float(profile.get("damage_multiplier", 1.0)),
 		"coordination_budget": int(profile.get("coordination_budget", default_coordination_budget)),
+		"enemy_modifier_declarations": (profile.get("enemy_modifier_declarations", []) as Array).duplicate(true),
 		"visual_identity_axes": (profile.get("visual_identity_axes", {}) as Dictionary).duplicate(true),
 		"pin_seconds": 0.0, "entangle_seconds": 0.0, "suppression_seconds": 0.0,
 		"interaction_status": "", "interaction_status_time": 0.0,
@@ -1200,6 +1493,13 @@ func _draw() -> void:
 func _draw_player_and_weapon() -> void:
 	var pixel_position := Vector2(roundf(player_position.x), roundf(player_position.y))
 	_draw_player_pixel_shadow(pixel_position)
+	_draw_player_body(pixel_position)
+	_draw_player_weapon_and_arms(pixel_position)
+
+
+## Presentation-only seam: a themed arena can animate a different body without
+## duplicating or replacing the production weapon/anchor/hit-geometry renderer.
+func _draw_player_body(pixel_position: Vector2) -> void:
 	draw_set_transform(pixel_position, 0.0, Vector2(facing, 1.0))
 	var player_rect := Rect2(Vector2(-54.0, -53.0), Vector2(108.0, 108.0))
 	for outline_offset: Vector2 in [Vector2(-2, 0), Vector2(2, 0), Vector2(0, -2), Vector2(0, 2)]:
@@ -1217,11 +1517,15 @@ func _draw_player_and_weapon() -> void:
 		player_modulate
 	)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+func _draw_player_weapon_and_arms(pixel_position: Vector2) -> void:
 	var firearm_action := _firearm_action_sample()
 	var root_pose := firearm_action.get("root_pose", {}) as Dictionary
 	var fit := _weapon_fit()
 	var hand_base := _firearm_hand_base()
 	var hand_primary := hand_base
+	if melee_runtime.busy(): hand_primary += Vector2(melee_runtime.pose(facing).get("offset", Vector2.ZERO))
 	var draw_scale := float(fit.get("draw_scale", 1.0))
 	var weapon_rotation := _melee_weapon_rotation()
 	if _uses_firearm_runtime():
@@ -1256,7 +1560,14 @@ func _draw_player_and_weapon() -> void:
 		Color("3a6872")
 	)
 	var state_power := _melee_state_power()
-	if _uses_stateful_pixel_morph() and state_power > 0.01:
+	if blueprint.delivery == "whole_object_return" and not boomerang.is_empty():
+		pass # The same object is in flight, not duplicated in the hand.
+	elif melee_runtime.profile != null:
+		if melee_frame.is_empty(): _build_melee_frame()
+		for pixel: Dictionary in melee_frame.get("pixels", []):
+			var size := float(pixel.get("size", 1.0))
+			draw_rect(Rect2(Vector2(pixel["position"]) - Vector2.ONE * size * 0.5, Vector2.ONE * size), Color(pixel["color"]), true)
+	elif _uses_stateful_pixel_morph() and state_power > 0.01:
 		draw_set_transform(hand_primary, weapon_rotation, Vector2(facing * draw_scale, draw_scale))
 		_draw_stateful_pixel_weapon_local(state_power)
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
@@ -1324,10 +1635,7 @@ func _uses_stateful_pixel_morph() -> bool:
 
 
 func _melee_state_power() -> float:
-	if not _uses_stateful_pixel_morph() or melee_timer <= 0.08 or melee_timer >= 0.34:
-		return 0.0
-	var active_ratio := clampf(inverse_lerp(0.34, 0.08, melee_timer), 0.0, 1.0)
-	return smoothstep(0.0, 0.46, active_ratio)
+	return melee_runtime.state_power() if _uses_stateful_pixel_morph() else 0.0
 
 
 func _draw_stateful_pixel_weapon_local(power: float) -> void:
@@ -1345,73 +1653,43 @@ func _draw_stateful_pixel_weapon_local(power: float) -> void:
 		draw_rect(Rect2(position - Vector2(size, size) * 0.5, Vector2(size, size)), Color(pixel.get("color", Color.WHITE)), true)
 
 
-func _draw_melee_state_effect(hand: Vector2) -> void:
-	if blueprint == null or blueprint.behavior_family != "heavy_melee" or melee_timer <= 0.08 or melee_timer >= 0.34:
+func _draw_melee_state_effect(_hand: Vector2) -> void:
+	if not melee_runtime.active(): return
+	var polygon: PackedVector2Array = melee_frame.get("field", PackedVector2Array())
+	if polygon.size() < 3: return
+	var output := str(melee_runtime.primitive().functional_output)
+	if output == "directed_stream" and polygon.size() == 4:
+		var start := (polygon[0] + polygon[3]) * 0.5
+		var finish := (polygon[1] + polygon[2]) * 0.5
+		var direction := (finish - start).normalized()
+		var normal := Vector2(-direction.y, direction.x)
+		var half_width := polygon[1].distance_to(polygon[2]) * 0.5
+		for lane: int in range(-2, 3):
+			for segment: int in range(6):
+				var begin_ratio := 0.03 + float(segment) * 0.17 + float(abs(lane)) * 0.012
+				var end_ratio := minf(0.98, begin_ratio + (0.11 if lane == 0 else 0.075))
+				var lateral_begin := half_width * float(lane) / 3.2 * pow(begin_ratio, 1.35)
+				var lateral_end := half_width * float(lane) / 3.2 * pow(end_ratio, 1.35)
+				var line_start := start.lerp(finish, begin_ratio) + normal * lateral_begin
+				var line_finish := start.lerp(finish, end_ratio) + normal * lateral_end
+				draw_line(line_start.round(), line_finish.round(), Color("edf3e9" if lane == 0 and segment % 2 == 0 else "67e8f9", 0.94 if lane == 0 else 0.74), 2.0 if lane == 0 else 1.0, false)
+		for index: int in range(1, 13):
+			var ratio := (float(index) + 0.35) / 13.0
+			var drift := sin(float(index) * 2.17) * half_width * ratio * 0.48
+			var point := start.lerp(finish, ratio) + normal * drift
+			var size := Vector2(3, 2) if index % 4 else Vector2(4, 3)
+			draw_rect(Rect2((point - size * 0.5).round(), size), Color("edf3e9" if index % 4 == 0 else "67e8f9", 0.92), true)
 		return
-	var activation := str(blueprint.affordance.get("activation_mode", "passive"))
-	if activation == "passive":
-		return
-	var state := str(blueprint.affordance.get("state_topology", "fixed"))
-	var output := str(blueprint.affordance.get("functional_output", "contact_only"))
-	var direction := Vector2(facing, 0.0)
-	var normal := Vector2(0.0, 1.0)
-	var contact := hand + direction * 74.0
-	var cyan := Color(0.18, 0.86, 1.0, 0.64)
-	var gold := Color(1.0, 0.68, 0.18, 0.72)
-	# Structural state is rendered by transforming/replacing the real source
-	# pixels.  These overlays are retained only as a fallback when an asset has
-	# no usable source image; guide lines must never impersonate the object.
-	if not _uses_stateful_pixel_morph():
-		match state:
-			"hinged":
-				draw_line(contact, contact + direction.rotated(-0.86 * facing) * 38.0, gold, 5.0)
-				draw_circle(contact, 6.0, cyan)
-			"folding":
-				var joint := contact + direction.rotated(-0.48 * facing) * 24.0
-				draw_polyline(PackedVector2Array([contact, joint, joint + direction * 28.0]), gold, 5.0, false)
-			"telescoping":
-				for offset: float in [12.0, 28.0, 44.0]:
-					draw_line(contact + direction * offset - normal * 7.0, contact + direction * offset + normal * 7.0, gold, 3.0)
-			"radial_expand":
-				for angle: float in [-1.15, -0.58, 0.0, 0.58, 1.15]:
-					draw_line(contact, contact + direction.rotated(angle) * 42.0, gold, 3.0)
-				draw_arc(contact, 42.0, -1.2, 1.2, 22, cyan, 4.0)
-			"rotary":
-				draw_arc(contact, 30.0, 0.0, TAU, 28, cyan, 4.0)
-				for angle: float in [0.0, PI * 0.5, PI, PI * 1.5]:
-					var spun: float = angle + float(Time.get_ticks_msec()) * 0.012
-					draw_line(contact + Vector2.from_angle(spun) * 5.0, contact + Vector2.from_angle(spun) * 28.0, gold, 3.0)
-	match output:
-		"directed_stream":
-			var finish := hand + direction * _melee_axis_reach()
-			draw_colored_polygon(PackedVector2Array([contact, finish - normal * 34.0, finish + normal * 34.0]), Color(cyan, 0.22))
-		"radial_field":
-			draw_arc(player_position, _melee_axis_reach(), 0.0, TAU, 40, cyan, 5.0)
-		"pull_field":
-			var finish := hand + direction * _melee_axis_reach()
-			for ratio: float in [0.42, 0.68, 0.92]:
-				var center := hand.lerp(finish, ratio)
-				draw_polyline(PackedVector2Array([center + direction * 11.0 + normal * 10.0, center, center + direction * 11.0 - normal * 10.0]), cyan, 3.0, false)
+	var color := Color("67e8f9") if output != "pull_field" else Color("c4b5fd")
+	draw_colored_polygon(polygon, Color(color, 0.18))
+	var rim := polygon.duplicate()
+	rim.append(polygon[0])
+	draw_polyline(rim, Color(color, 0.70), 2.0, false)
+	# This is emitted energy, not a substitute for the object's source pixels.
+
 
 func _melee_weapon_rotation() -> float:
-	if blueprint == null or blueprint.behavior_family != "heavy_melee" or melee_timer <= 0.0:
-		return 0.0
-	var startup_multiplier := float(blueprint.modifiers.get("startup_multiplier", 1.0))
-	var total_duration := maxf(0.35, 0.75 * startup_multiplier)
-	var rotation := 0.0
-	if melee_timer > 0.34:
-		# Wind up above and behind the primary grip.
-		var windup := _smooth_unit(inverse_lerp(total_duration, 0.34, melee_timer))
-		rotation = lerpf(0.0, -1.12, windup)
-	elif melee_timer > 0.08:
-		# The visible downswing is deliberately aligned with the damage window.
-		var strike := _smooth_unit(inverse_lerp(0.34, 0.08, melee_timer))
-		rotation = lerpf(-1.12, 1.18, strike)
-	else:
-		# Recover without snapping the generated Sprite back to its idle pose.
-		var recovery := _smooth_unit(inverse_lerp(0.08, 0.0, melee_timer))
-		rotation = lerpf(1.18, 0.0, recovery)
-	return rotation * facing
+	return float(melee_runtime.pose(facing).get("angle", 0.0))
 
 
 func _uses_soft_mechanism_visual() -> bool:
@@ -1425,6 +1703,13 @@ func _uses_soft_mechanism_visual() -> bool:
 	)
 
 
+func _soft_pixel_render_options() -> Dictionary:
+	var legacy_linked := str(blueprint.affordance.get("flex_topology", "none")) == "linked_segments"
+	var linked := legacy_linked or str(blueprint.affordance.get("tether_topology", "none")) == "linked_segments"
+	var styled_links := linked and str(blueprint.modifiers.get("art_style_id", "")) == "church_v1"
+	return {"readable_tether": not styled_links, "readable_links": legacy_linked and not styled_links}
+
+
 func _draw_soft_mechanism_weapon(geometry: Dictionary) -> void:
 	if geometry.is_empty() or asset == null or asset.visual_rig == null:
 		return
@@ -1435,9 +1720,12 @@ func _draw_soft_mechanism_weapon(geometry: Dictionary) -> void:
 		"source_grip": asset.grip_primary,
 		"contact": geometry.get("contact", Vector2.ZERO),
 		"weapon_angle": float(geometry.get("weapon_angle", 0.0)),
+		"longitudinal_scale": float(geometry.get("longitudinal_scale", 1.0)),
 		"facing": facing,
 		"scale": float(_weapon_fit().get("draw_scale", 1.0)),
 		"pixel_snap": true,
+		"include_metadata": false,
+		"compact_pixels": true,
 	})
 	for pixel: Dictionary in deformation.get("pixels", []):
 		var size := float(pixel.get("size", 1.0))
@@ -1449,7 +1737,7 @@ func _draw_soft_mechanism_weapon(geometry: Dictionary) -> void:
 		)
 
 
-func _soft_weapon_geometry(hand: Vector2, weapon_angle: float) -> Dictionary:
+func _soft_weapon_geometry(hand: Vector2, weapon_angle: float, longitudinal_scale: float = 1.0) -> Dictionary:
 	if not _uses_soft_mechanism_visual():
 		return {}
 	var flex_topology := str(blueprint.affordance.get("flex_topology", "none"))
@@ -1457,10 +1745,10 @@ func _soft_weapon_geometry(hand: Vector2, weapon_angle: float) -> Dictionary:
 	var body_source: PackedVector2Array = asset.visual_rig.source_path_for_role("deform_body")
 	var tether_source: PackedVector2Array = asset.visual_rig.source_path_for_role("tether")
 	var body_start := hand
-	var body_finish := _soft_source_world(asset.tip, hand, weapon_angle)
+	var body_finish := _soft_source_world(asset.tip, hand, weapon_angle, longitudinal_scale)
 	if not body_source.is_empty():
-		body_start = _soft_source_world(body_source[0], hand, weapon_angle)
-		body_finish = _soft_source_world(body_source[body_source.size() - 1], hand, weapon_angle)
+		body_start = _soft_source_world(body_source[0], hand, weapon_angle, longitudinal_scale)
+		body_finish = _soft_source_world(body_source[body_source.size() - 1], hand, weapon_angle, longitudinal_scale)
 	var tether_start := body_finish
 	var resting_contact := body_finish
 	if not tether_source.is_empty():
@@ -1468,23 +1756,53 @@ func _soft_weapon_geometry(hand: Vector2, weapon_angle: float) -> Dictionary:
 		resting_contact = _soft_source_world(tether_source[tether_source.size() - 1], hand, weapon_angle)
 	var contact := resting_contact
 	var attack_ratio := _soft_attack_ratio()
-	if tether_topology != "none":
+	var presentation := str(melee_runtime.primitive().presentation_family) if melee_runtime.primitive() != null else "default"
+	var weighted_structure := (
+		presentation.begins_with("weighted_")
+		and (flex_topology in ["flexible_line", "linked_segments"] or tether_topology in ["flexible_line", "linked_segments"])
+	)
+	var depth_layer := 0.0
+	if weighted_structure:
+		# The terminal-loaded body and its attached segment are one continuous
+		# mechanism. Drive the terminal around the held end before splitting that
+		# same curve back into the rig's body/tether roles for source-pixel binding.
+		contact = _weighted_flexible_contact(body_start, resting_contact, attack_ratio, presentation)
+		var contact_span := maxf(1.0, body_start.distance_to(contact))
+		depth_layer = clampf((contact.y - body_start.y) / contact_span, -1.0, 1.0)
+	elif tether_topology != "none":
 		contact = _soft_deployment_contact(
 			tether_start,
 			resting_contact,
 			attack_ratio,
-			str(blueprint.affordance.get("tether_deployment", "none"))
+			str(melee_runtime.primitive().tether_deployment) if melee_runtime.primitive() != null else "fixed_length"
 		)
-	elif flex_topology in ["flexible_line", "linked_segments"]:
+	elif flex_topology == "flexible_line":
 		contact = _soft_deployment_contact(body_start, resting_contact, attack_ratio, "lash")
 		body_finish = contact
 	var bend_sign := -facing
 	var propagation := _soft_topology_propagation(attack_ratio, flex_topology)
 	var body_path := PackedVector2Array()
-	if flex_topology != "none":
-		body_path = _soft_curve_points(body_start, body_finish, flex_topology, propagation, bend_sign)
 	var tether_path := PackedVector2Array()
-	if tether_topology != "none":
+	if weighted_structure:
+		var weighted_paths := _weighted_flexible_paths(
+			body_start,
+			contact,
+			body_source,
+			tether_source,
+			presentation,
+			bend_sign
+		)
+		body_path = weighted_paths.get("body", PackedVector2Array())
+		tether_path = weighted_paths.get("tether", PackedVector2Array())
+		if not body_path.is_empty(): body_finish = body_path[-1]
+		if not tether_path.is_empty(): tether_start = tether_path[0]
+	elif flex_topology != "none":
+		body_path = _soft_curve_points(body_start, body_finish, flex_topology, propagation, bend_sign)
+		if flex_topology == "linked_segments":
+			body_path = _linked_body_points(body_start, body_finish, body_source, propagation, bend_sign)
+			contact = body_path[-1]
+			if tether_topology != "none": tether_start = contact
+	if tether_topology != "none" and not weighted_structure:
 		tether_path = _soft_curve_points(
 			tether_start,
 			contact,
@@ -1495,24 +1813,140 @@ func _soft_weapon_geometry(hand: Vector2, weapon_angle: float) -> Dictionary:
 	return {
 		"weapon_origin": hand,
 		"weapon_angle": weapon_angle,
+		"longitudinal_scale": longitudinal_scale,
 		"body": body_path,
 		"tether": tether_path,
 		"contact": contact,
 		"attack_ratio": attack_ratio,
+		"depth_layer": depth_layer,
 	}
 
 
-func _soft_source_world(source: Vector2, hand: Vector2, weapon_angle: float) -> Vector2:
+func _linked_body_points(start: Vector2, finish: Vector2, source: PackedVector2Array, propagation: float, bend_sign: float) -> PackedVector2Array:
+	var joints: PackedFloat32Array = asset.visual_rig.linked_joint_ratios()
+	if joints.is_empty(): return PackedVector2Array([start, finish])
+	var source_length := 0.0
+	for index: int in range(source.size() - 1): source_length += source[index].distance_to(source[index + 1])
+	var length := source_length * float(_weapon_fit().get("draw_scale", 1.0))
+	var ratios := joints.duplicate()
+	ratios.append(1.0)
+	var points := PackedVector2Array([start])
+	var previous := 0.0
+	var base_angle := (finish - start).angle()
+	var presentation := str(melee_runtime.primitive().presentation_family) if melee_runtime.primitive() != null else "default"
+	if presentation.begins_with("weighted_"):
+		# Preserve every source segment length while laying the chain on one
+		# readable arc. Alternating per-link lag used to fold adjacent links back
+		# over the hand and made a full-length chain look like a short rigid nub.
+		var arc_strength := 0.18 + 0.34 * sin(clampf(propagation, 0.0, 1.0) * PI)
+		var overarm := presentation in ["weighted_lash_cross", "weighted_retract", "weighted_cast_charge"]
+		var arc := arc_strength * (-bend_sign if overarm else bend_sign)
+		for index: int in range(ratios.size()):
+			var finish_ratio := float(ratios[index])
+			var middle_ratio := (previous + finish_ratio) * 0.5
+			var tangent_angle := base_angle - arc * 0.5 + arc * middle_ratio
+			var segment_length := length * (finish_ratio - previous)
+			points.append(points[-1] + Vector2.from_angle(tangent_angle) * segment_length)
+			previous = finish_ratio
+		return points
+	var lag_amplitude := 1.25
+	for index: int in range(ratios.size()):
+		var lag := 0.0 if index == 0 else sin(propagation * TAU - float(index) * 0.90) * lag_amplitude * bend_sign
+		var segment_length := length * (ratios[index] - previous)
+		points.append(points[-1] + Vector2.from_angle(base_angle + lag) * segment_length)
+		previous = ratios[index]
+	return points
+
+
+func _weighted_flexible_paths(
+	start: Vector2,
+	finish: Vector2,
+	body_source: PackedVector2Array,
+	tether_source: PackedVector2Array,
+	presentation: String,
+	bend_sign: float
+) -> Dictionary:
+	# Preserve the measured source length of the complete flexible structure.
+	# The rig may call its two contiguous sections `deform_body` and `tether`,
+	# but they must not animate as a fixed handle plus a tiny line at the tip.
+	var scale := float(_weapon_fit().get("draw_scale", 1.0))
+	var body_length := _polyline_length(body_source) * scale
+	var tether_length := _polyline_length(tether_source) * scale
+	var source_length := body_length + tether_length
+	if source_length <= 0.5:
+		return {"body": PackedVector2Array([start, finish]), "tether": PackedVector2Array()}
+	var chord := start.distance_to(finish)
+	var route_length := maxf(source_length, chord)
+	var body_fraction := clampf(body_length / source_length, 0.0, 1.0)
+	var curve_sign := bend_sign
+	if presentation in ["weighted_lash_cross", "weighted_retract", "weighted_cast_charge"]:
+		curve_sign *= -1.0
+	var arc := _fixed_length_arc(start, finish, route_length, curve_sign)
+	var ratios: Array[float] = [0.0, 1.0]
+	for index: int in range(1, 33):
+		ratios.append(float(index) / 33.0)
+	if body_length > 0.0 and tether_length > 0.0:
+		ratios.append(body_fraction)
+	ratios.sort()
+	var body := PackedVector2Array()
+	var tether := PackedVector2Array()
+	for ratio: float in ratios:
+		var point := start.lerp(finish, ratio)
+		if not bool(arc.get("linear", true)):
+			point = Vector2(arc.center) + Vector2(arc.start_vector).rotated(float(arc.delta) * ratio)
+		if tether_length <= 0.0 or ratio <= body_fraction + 0.0001:
+			body.append(point)
+		if tether_length > 0.0 and ratio >= body_fraction - 0.0001:
+			tether.append(point)
+	if body.is_empty(): body.append(start)
+	if tether_length > 0.0 and tether.is_empty(): tether = PackedVector2Array([body[-1], finish])
+	return {"body": body, "tether": tether}
+
+
+func _fixed_length_arc(start: Vector2, finish: Vector2, length: float, bend_sign: float) -> Dictionary:
+	var chord := start.distance_to(finish)
+	if chord <= 0.5 or length <= chord * 1.001:
+		return {"linear": true}
+	# Solve chord / arc = 2 sin(theta / 2) / theta. This supports both
+	# ordinary swings and a genuinely slack structure whose path exceeds a
+	# semicircle; the source length must not disappear merely because the two
+	# endpoints happen to be close together.
+	var target := clampf(chord / length, 0.000001, 0.999999)
+	var low := 0.0001
+	var high := TAU - 0.0001
+	for _step: int in range(32):
+		var theta := (low + high) * 0.5
+		var ratio := 2.0 * sin(theta * 0.5) / theta
+		if ratio > target: low = theta
+		else: high = theta
+	var theta := (low + high) * 0.5
+	var radius := length / theta
+	var direction := (finish - start).normalized()
+	var normal := Vector2(-direction.y, direction.x)
+	var center_distance := sqrt(maxf(0.0, radius * radius - chord * chord * 0.25))
+	var side := -1.0 if bend_sign < 0.0 else 1.0
+	var center_side := side if theta <= PI else -side
+	var center := (start + finish) * 0.5 + normal * center_distance * center_side
+	var start_vector := start - center
+	return {"linear": false, "center": center, "start_vector": start_vector, "delta": theta * side}
+
+
+func _polyline_length(path: PackedVector2Array) -> float:
+	var result := 0.0
+	for index: int in range(path.size() - 1):
+		result += path[index].distance_to(path[index + 1])
+	return result
+
+
+func _soft_source_world(source: Vector2, hand: Vector2, weapon_angle: float, longitudinal_scale: float = 1.0) -> Vector2:
 	var local := source - asset.grip_primary
 	local = Vector2(local.x * facing, local.y) * float(_weapon_fit().get("draw_scale", 1.0))
+	local.x *= longitudinal_scale
 	return hand + local.rotated(weapon_angle)
 
 
 func _soft_attack_ratio() -> float:
-	if melee_timer <= 0.0:
-		return 0.0
-	var total_duration := maxf(0.35, 0.75 * float(blueprint.modifiers.get("startup_multiplier", 1.0)))
-	return clampf(1.0 - melee_timer / total_duration, 0.0, 1.0)
+	return melee_runtime.motion_ratio()
 
 
 func _soft_deployment_contact(
@@ -1525,20 +1959,68 @@ func _soft_deployment_contact(
 		return resting_contact
 	if deployment not in ["cast_retract", "launch_tension", "lash"]:
 		return resting_contact
-	var source_span := maxf(70.0, origin.distance_to(resting_contact))
-	var reach := maxf(170.0, source_span * (2.05 if deployment == "cast_retract" else 1.75))
+	var reach := maxf(origin.distance_to(resting_contact), _melee_axis_reach())
 	var target := origin + Vector2(facing * reach, -minf(36.0, reach * 0.16))
 	var tucked := origin + Vector2(-facing * 7.0, 18.0)
-	if ratio < 0.20:
-		return resting_contact.lerp(tucked, smoothstep(0.0, 1.0, ratio / 0.20))
+	if ratio < 0.30:
+		return resting_contact.lerp(tucked, smoothstep(0.0, 1.0, ratio / 0.30))
 	if ratio < 0.58:
-		var outbound := smoothstep(0.0, 1.0, (ratio - 0.20) / 0.38)
+		var outbound := smoothstep(0.0, 1.0, (ratio - 0.30) / 0.28)
 		return tucked.lerp(target, outbound) + Vector2.UP * sin(outbound * PI) * 30.0
-	if ratio < 0.76 or deployment == "launch_tension":
+	if ratio < 0.82:
 		return target
 	if ratio < 0.94:
-		return target.lerp(tucked, smoothstep(0.0, 1.0, (ratio - 0.76) / 0.18))
+		return target.lerp(tucked, smoothstep(0.0, 1.0, (ratio - 0.82) / 0.12))
 	return tucked.lerp(resting_contact, smoothstep(0.0, 1.0, (ratio - 0.94) / 0.06))
+
+
+func _weighted_flexible_contact(
+	origin: Vector2,
+	resting_contact: Vector2,
+	ratio: float,
+	presentation: String
+) -> Vector2:
+	if ratio <= 0.0:
+		return resting_contact
+	var radius := maxf(24.0, origin.distance_to(resting_contact))
+	var rest_local := Vector2(
+		(resting_contact.x - origin.x) * facing,
+		resting_contact.y - origin.y
+	) / radius
+	# These points are a projected ground-plane orbit, not a circle painted in
+	# the camera plane. X carries the broad left/right travel while the smaller Y
+	# excursion supplies depth. A visible terminal may pass behind the body in
+	# the active phase because the same pixels, draw layer and collision all use
+	# this path; there is no hidden rear damage sector.
+	var times := PackedFloat32Array([0.0, 0.08, 0.20, 0.30, 0.46, 0.64, 0.82, 0.93, 1.0])
+	var points := PackedVector2Array()
+	match presentation:
+		"weighted_cast_low", "weighted_dodge_lash":
+			points = PackedVector2Array([
+				rest_local, Vector2(0.40, 0.18), Vector2(-0.55, 0.22),
+				Vector2(-0.92, 0.18), Vector2(-0.06, 0.34), Vector2(1.00, 0.06),
+				Vector2(0.84, 0.24), Vector2(0.24, 0.20), rest_local,
+			])
+		"weighted_lash_cross", "weighted_cast_charge":
+			points = PackedVector2Array([
+				rest_local, Vector2(0.35, -0.14), Vector2(-0.62, -0.20),
+				Vector2(-0.96, -0.16), Vector2(-0.08, -0.34), Vector2(1.00, 0.04),
+				Vector2(0.82, 0.26), Vector2(0.18, 0.20), rest_local,
+			])
+		_:
+			# Pull/recovery reverses across the waist before returning to the hand.
+			points = PackedVector2Array([
+				rest_local, Vector2(0.40, 0.12), Vector2(-0.48, 0.18),
+				Vector2(-0.90, 0.12), Vector2(-0.02, -0.30), Vector2(1.00, -0.02),
+				Vector2(0.68, 0.22), Vector2(-0.18, 0.16), rest_local,
+			])
+	var clamped_ratio := clampf(ratio, 0.0, 1.0)
+	for index: int in range(times.size() - 1):
+		if clamped_ratio <= times[index + 1]:
+			var segment_ratio := inverse_lerp(times[index], times[index + 1], clamped_ratio)
+			var local := points[index].lerp(points[index + 1], smoothstep(0.0, 1.0, segment_ratio))
+			return origin + Vector2(local.x * facing, local.y) * radius
+	return resting_contact
 
 
 func _soft_topology_propagation(ratio: float, topology: String) -> float:
@@ -1685,6 +2167,9 @@ func _draw_firearm_muzzle_flash() -> void:
 		flash_muzzle + Vector2(5.0 * facing * flash_scale.x, 0),
 	]), Color("fde047"))
 
+func _enemy_ground_draw_offset() -> Vector2:
+	return Vector2.ZERO
+
 func _draw_attacks() -> void:
 	for projectile: Dictionary in projectiles:
 		var position: Vector2 = projectile["pos"]
@@ -1702,23 +2187,56 @@ func _draw_attacks() -> void:
 		draw_line(position - Vector2(16, 0), position + Vector2(16, 0), Color("a78bfa"), 4.0)
 	for hazard: Dictionary in enemy_attack_hazards:
 		var hazard_position: Vector2 = Vector2(hazard.get("pos", Vector2.ZERO))
+		var effect_family := str(hazard.get("effect_family", ""))
 		if str(hazard.get("delivery", "")) == "projectile":
 			var velocity: Vector2 = Vector2(hazard.get("vel", Vector2.ZERO))
 			var direction := velocity.normalized() if velocity.length() > 0.001 else Vector2.RIGHT
-			draw_line(hazard_position - direction * 18.0, hazard_position, Color(1.0, 0.32, 0.18, 0.72), 5.0)
-			draw_circle(hazard_position, 7.0, Color("fb923c"))
+			var projectile_edge := Color("d8b4fe") if effect_family == "echo" else (Color("a3e635") if effect_family == "residue" else Color("fb923c"))
+			draw_line(hazard_position - direction * 18.0, hazard_position, projectile_edge.darkened(0.25), 5.0)
+			draw_circle(hazard_position, 7.0, projectile_edge)
 			draw_circle(hazard_position, 3.0, Color("fff7ed"))
 		else:
 			var region := hazard.get("hit_region", {}) as Dictionary
-			var radius := float(region.get("radius_pixels", 0.0))
+			hazard_position += _enemy_ground_draw_offset()
 			var life_ratio := clampf(float(hazard.get("life", 0.0)) / maxf(0.001, float(hazard.get("maximum_life", 0.0))), 0.0, 1.0)
-			_draw_pixel_disc(hazard_position, radius, Color(0.95, 0.18, 0.12, 0.18))
-			_draw_pixel_arc(hazard_position, radius, 0.0, TAU, Color("fb7185"), 5.0, 28)
-			_draw_pixel_arc(hazard_position, radius * life_ratio, 0.0, TAU, Color("fde047"), 3.0, 24)
-	if blueprint != null and blueprint.behavior_family == "heavy_melee" and melee_timer > 0.08 and melee_timer < 0.34:
-		var stateful := str(blueprint.affordance.get("activation_mode", "passive")) != "passive"
-		if not stateful:
-			draw_arc(player_position, 104.0, -0.8 if facing > 0 else PI - 0.8, 0.8 if facing > 0 else PI + 0.8, 24, Color("fb7185"), 8.0)
+			var hazard_mode := str(hazard.get("hazard_mode", "instant"))
+			var dangerous_now := _enemy_hazard_dangerous_now(hazard)
+			var fill_color := Color(0.38, 0.76, 0.26, 0.22) if hazard_mode == "lingering" else Color(0.95, 0.18, 0.12, 0.18)
+			var edge_color := Color("84cc16") if hazard_mode == "lingering" else Color("fb7185")
+			if effect_family == "echo":
+				fill_color = Color(0.69, 0.42, 0.94, 0.15)
+				edge_color = Color("d8b4fe")
+			elif effect_family == "residue":
+				fill_color = Color(0.51, 0.78, 0.18, 0.22)
+				edge_color = Color("a3e635")
+			if hazard_mode == "pulsing":
+				fill_color = Color(0.45, 0.32, 0.95, 0.30 if dangerous_now else 0.08)
+				edge_color = Color("c4b5fd") if dangerous_now else Color(0.55, 0.48, 0.75, 0.62)
+			var direction := Vector2(hazard.get("locked_direction", Vector2.RIGHT)).normalized()
+			if direction.is_zero_approx(): direction = Vector2.RIGHT
+			if str(region.get("shape", "")) in ["strip", "capsule"]:
+				var forward_length := float(region.get("length_pixels", 0.0))
+				var half_width := float(region.get("width_pixels", 0.0)) * 0.5
+				var side := direction.orthogonal() * half_width
+				var lane_fill := PackedVector2Array([
+					hazard_position + side,
+					hazard_position + direction * forward_length + side,
+					hazard_position + direction * forward_length - side,
+					hazard_position - side,
+				])
+				draw_colored_polygon(lane_fill, fill_color)
+			_draw_attack_hit_region(hazard_position, direction, region, edge_color)
+			if str(region.get("shape", "")) == "circle":
+				var radius := float(region.get("radius_pixels", 0.0))
+				_draw_pixel_disc(hazard_position, radius, fill_color)
+				_draw_pixel_arc(hazard_position, radius, 0.0, TAU, edge_color, 5.0, 28)
+				_draw_pixel_arc(hazard_position, radius * life_ratio, 0.0, TAU, Color("fde047"), 3.0, 24)
+			elif effect_family == "echo":
+				# Three square ticks make the delayed repeat legible without a
+				# smooth vector clock that would clash with the pixel art.
+				for tick: int in range(3):
+					draw_rect(Rect2((hazard_position + Vector2(-8 + tick * 8, -20)).round(), Vector2(4, 4)), edge_color)
+	# No generic arc: the actual weapon and compiled output are drawn.
 	if blueprint != null and blueprint.behavior_family == "sustained_ranged" and attack_charge > 0.0:
 		var muzzle := _muzzle_world()
 		draw_circle(muzzle, 6.0 + minf(attack_charge, 0.35) * 15.0, Color(0.15, 0.78, 1.0, 0.7), false, 3.0)
@@ -1726,37 +2244,42 @@ func _draw_attacks() -> void:
 
 func _draw_enemies() -> void:
 	for enemy: Dictionary in enemies:
-		var position: Vector2 = enemy["pos"]
-		var shadow_half_width := 38.0 if str(enemy.get("mass_class", "medium")) == "heavy" else 30.0
-		_draw_unit_pixel_shadow(position + Vector2(0.0, 45.0), shadow_half_width)
-		var sprite_attack := _enemy_sprite_attack(enemy)
-		var formal_sprite_drawn := false
-		var mechanism_sprite_drawn := false
-		if not sprite_attack.is_empty():
-			formal_sprite_drawn = _draw_enemy_formal_sprite(enemy, sprite_attack)
-			if not formal_sprite_drawn:
-				mechanism_sprite_drawn = _draw_enemy_axis_sprite(enemy, sprite_attack)
-		if not formal_sprite_drawn and not mechanism_sprite_drawn:
-			_draw_noncombat_target(enemy, position)
-		if float(enemy.get("burn", 0.0)) > 0.0:
-			draw_rect(Rect2(position + Vector2(-6, -74), Vector2(12, 12)), Color("38bdf8"), true)
-		_draw_enemy_attack_preview(enemy)
-		_draw_target_interaction(enemy)
-		var max_hp := float(enemy["max_hp"])
-		var ratio := clampf(float(enemy["hp"]) / maxf(1.0, max_hp), 0.0, 1.0)
-		var visual_asset := enemy.get("visual_asset", {}) as Dictionary
-		var health_y := float(visual_asset.get("health_bar_y", -58.0)) if formal_sprite_drawn else (-58.0 if mechanism_sprite_drawn else -40.0)
-		draw_rect(Rect2(position + Vector2(-28, health_y - 3), Vector2(56, 10)), Color("070b0f"), true)
-		draw_rect(Rect2(position + Vector2(-26, health_y - 1), Vector2(52, 6)), Color("27303a"), true)
-		var filled_segments := ceili(ratio * 10.0)
-		for segment: int in range(10):
-			if segment >= filled_segments:
-				break
-			draw_rect(
-				Rect2(position + Vector2(-25 + segment * 5, health_y), Vector2(4, 4)),
-				Color("eaa35c"),
-				true
-			)
+		_draw_enemy(enemy)
+
+
+## Single-unit rendering lets themed arenas depth-sort without mutating enemies.
+func _draw_enemy(enemy: Dictionary) -> void:
+	var position: Vector2 = enemy["pos"]
+	var shadow_half_width := 38.0 if str(enemy.get("mass_class", "medium")) == "heavy" else 30.0
+	_draw_unit_pixel_shadow(position + Vector2(0.0, 45.0), shadow_half_width)
+	var sprite_attack := _enemy_sprite_attack(enemy)
+	var formal_sprite_drawn := false
+	var mechanism_sprite_drawn := false
+	if not sprite_attack.is_empty():
+		formal_sprite_drawn = _draw_enemy_formal_sprite(enemy, sprite_attack)
+		if not formal_sprite_drawn:
+			mechanism_sprite_drawn = _draw_enemy_axis_sprite(enemy, sprite_attack)
+	if not formal_sprite_drawn and not mechanism_sprite_drawn:
+		_draw_noncombat_target(enemy, position)
+	if float(enemy.get("burn", 0.0)) > 0.0:
+		draw_rect(Rect2(position + Vector2(-6, -74), Vector2(12, 12)), Color("38bdf8"), true)
+	_draw_enemy_attack_preview(enemy)
+	_draw_target_interaction(enemy)
+	var max_hp := float(enemy["max_hp"])
+	var ratio := clampf(float(enemy["hp"]) / maxf(1.0, max_hp), 0.0, 1.0)
+	var visual_asset := enemy.get("visual_asset", {}) as Dictionary
+	var health_y := float(visual_asset.get("health_bar_y", -58.0)) if formal_sprite_drawn else (-58.0 if mechanism_sprite_drawn else -40.0)
+	draw_rect(Rect2(position + Vector2(-28, health_y - 3), Vector2(56, 10)), Color("070b0f"), true)
+	draw_rect(Rect2(position + Vector2(-26, health_y - 1), Vector2(52, 6)), Color("27303a"), true)
+	var filled_segments := ceili(ratio * 10.0)
+	for segment: int in range(10):
+		if segment >= filled_segments:
+			break
+		draw_rect(
+			Rect2(position + Vector2(-25 + segment * 5, health_y), Vector2(4, 4)),
+			Color("eaa35c"),
+			true
+		)
 
 
 func _draw_unit_pixel_shadow(position: Vector2, half_width: float) -> void:
@@ -2391,7 +2914,10 @@ func _draw_pixel_disc(center: Vector2, radius: float, color: Color) -> void:
 
 func _draw_enemy_attack_preview(enemy: Dictionary) -> void:
 	var attack_runtime: Variant = enemy.get("attack_runtime", null)
-	if attack_runtime == null or attack_runtime.current_attack.is_empty():
+	if attack_runtime == null:
+		return
+	_draw_enemy_defense_preview(enemy, attack_runtime)
+	if attack_runtime.current_attack.is_empty():
 		return
 	var visual: Dictionary = ENEMY_ATTACK_VISUAL.compile(attack_runtime.current_attack)
 	if not bool(visual.get("ok", false)):
@@ -2424,6 +2950,22 @@ func _draw_enemy_attack_preview(enemy: Dictionary) -> void:
 	_draw_attack_delivery_marker(marker_origin, direction, region, attack_motion, visual, color)
 	_draw_attack_lock_marker(origin, direction, region, attack_runtime, visual, color)
 	_draw_attack_stability_marker(origin, phase, visual, color)
+
+
+func _draw_enemy_defense_preview(enemy: Dictionary, attack_runtime: Variant) -> void:
+	var origin := Vector2(enemy.get("pos", Vector2.ZERO))
+	if int(attack_runtime.barrier_charges_remaining) > 0:
+		_draw_pixel_arc(origin, 48.0, 0.0, TAU, Color("67e8f9"), 5.0, 28)
+		_draw_pixel_arc(origin, 40.0, 0.0, TAU, Color(0.40, 0.91, 0.96, 0.48), 3.0, 24)
+	var defense := attack_runtime.current_attack.get("defense", {}) as Dictionary
+	if str(defense.get("mode", "none")) == "none" or str(attack_runtime.phase) not in defense.get("guarded_phases", []):
+		return
+	var direction := Vector2(attack_runtime.locked_direction).normalized()
+	if direction.is_zero_approx():
+		direction = Vector2(float(enemy.get("facing", -1.0)), 0.0)
+	var half_arc := deg_to_rad(float(defense.get("guard_arc_degrees", 0.0)) * 0.5)
+	var angle := direction.angle()
+	_draw_pixel_arc(origin, 44.0, angle - half_arc, angle + half_arc, Color("facc15"), 7.0, 20)
 
 
 func _draw_attack_hit_region(origin: Vector2, direction: Vector2, region: Dictionary, color: Color) -> void:

@@ -13,42 +13,76 @@ static func deform(rig: PixelWeaponVisualRig, geometry: Dictionary) -> Dictionar
 	var weapon_angle := float(geometry.get("weapon_angle", 0.0))
 	var facing := -1.0 if float(geometry.get("facing", 1.0)) < 0.0 else 1.0
 	var scale := maxf(0.01, float(geometry.get("scale", 1.0)))
+	var longitudinal_scale := clampf(float(geometry.get("longitudinal_scale", 1.0)), 0.05, 1.0)
 	var pixel_snap := bool(geometry.get("pixel_snap", true))
+	var readable_tether := bool(geometry.get("readable_tether", false))
+	var readable_links := bool(geometry.get("readable_links", false))
+	var include_metadata := bool(geometry.get("include_metadata", true))
+	var compact_pixels := bool(geometry.get("compact_pixels", false))
+	var body_sampler := _polyline_sampler(body_path)
+	var tether_sampler := _polyline_sampler(tether_path)
+	var terminal_tangent := _path_end_tangent(tether_path, _path_end_tangent(body_path, Vector2.from_angle(weapon_angle) * facing))
+	var output_size := maxf(1.0, ceilf(scale))
 	var pixels: Array[Dictionary] = []
 	var role_points: Dictionary = {}
+	var adjusted_colors: Dictionary = {}
 	for binding: Dictionary in rig.bindings:
 		var role := str(binding.get("role", ""))
 		var world := weapon_origin
 		match role:
 			"deform_body":
-				world = _curve_bound_position(binding, body_path, facing, scale, weapon_origin, weapon_angle, source_grip)
+				world = _curve_bound_position_sampled(binding, body_sampler, facing, scale, weapon_origin, weapon_angle, source_grip, longitudinal_scale)
 			"tether":
-				world = _curve_bound_position(binding, tether_path, facing, scale, weapon_origin, weapon_angle, source_grip)
+				world = _curve_bound_position_sampled(binding, tether_sampler, facing, scale, weapon_origin, weapon_angle, source_grip, longitudinal_scale)
 			"terminal":
-				var target_tangent := _path_end_tangent(tether_path, _path_end_tangent(body_path, Vector2.from_angle(weapon_angle) * facing))
-				world = _terminal_bound_position(binding, contact, target_tangent, facing, scale)
+				world = _terminal_bound_position(binding, contact, terminal_tangent, facing, scale)
 			_:
-				world = _rigid_bound_position(binding, weapon_origin, source_grip, weapon_angle, facing, scale)
+				world = _rigid_bound_position(binding, weapon_origin, source_grip, weapon_angle, facing, scale, longitudinal_scale)
 		if pixel_snap:
 			world = Vector2(roundf(world.x), roundf(world.y))
+		var color := Color(binding.get("color", Color.WHITE))
+		if (readable_tether and role == "tether") or readable_links:
+			var color_key := str([color.to_rgba32(), role, readable_tether, readable_links])
+			if adjusted_colors.has(color_key): color = adjusted_colors[color_key]
+			else:
+				if readable_tether and role == "tether": color = _tether_color(color)
+				if readable_links: color = _linked_color(color)
+				adjusted_colors[color_key] = color
 		var pixel := {
 			"position": world,
-			"color": Color(binding.get("color", Color.WHITE)),
+			"color": color,
 			"role": role,
 			"part_id": str(binding.get("part_id", "")),
 			"z_index": int(binding.get("z_index", 0)),
-			"size": maxf(1.0, ceilf(scale)),
+			"size": output_size,
 		}
 		pixels.append(pixel)
-		if not role_points.has(role):
-			role_points[role] = PackedVector2Array()
-		var points: PackedVector2Array = role_points[role]
-		points.append(world)
-		role_points[role] = points
+		if include_metadata:
+			if not role_points.has(role): role_points[role] = PackedVector2Array()
+			var points: PackedVector2Array = role_points[role]
+			points.append(world)
+			role_points[role] = points
+	# Resample the declared tether itself at screen-pixel density when stretched.
+	# These are real rendered/contact pixels, not a separate debug guide line.
+	if readable_tether and rig.has_role("tether") and tether_path.size() >= 2:
+		var line_color := Color(0.60, 0.68, 0.70)
+		for binding: Dictionary in rig.bindings:
+			if str(binding.get("role", "")) == "tether":
+				line_color = _tether_color(Color(binding.get("color", line_color)))
+				break
+		var samples := clampi(ceili(float(tether_sampler.total)), 1, 1024)
+		var points: PackedVector2Array = role_points.get("tether", PackedVector2Array()) if include_metadata else PackedVector2Array()
+		for index: int in range(samples + 1):
+			var sampled := _sample_polyline_fast(tether_sampler, float(index) / samples)
+			var point := Vector2(sampled.x, sampled.y).round()
+			pixels.append({"position": point, "color": line_color, "role": "tether", "part_id": "resampled_declared_tether", "z_index": 2, "size": 1.0})
+			if include_metadata: points.append(point)
+		if include_metadata: role_points["tether"] = points
+	if compact_pixels: pixels = _compact_pixels(pixels)
 	return {
 		"pixels": pixels,
-		"role_bounds": _role_bounds(role_points),
-		"role_centroids": _role_centroids(role_points),
+		"role_bounds": _role_bounds(role_points) if include_metadata else {},
+		"role_centroids": _role_centroids(role_points) if include_metadata else {},
 		"role_points": role_points,
 		"body_path": body_path,
 		"tether_path": tether_path,
@@ -57,38 +91,61 @@ static func deform(rig: PixelWeaponVisualRig, geometry: Dictionary) -> Dictionar
 	}
 
 
+static func _tether_color(color: Color) -> Color:
+	var luminance := color.r * 0.2126 + color.g * 0.7152 + color.b * 0.0722
+	if luminance >= 0.58: return color
+	var readable := color.lerp(Color(0.72, 0.80, 0.82, color.a), 0.76)
+	readable.a = color.a
+	return readable
+
+
+static func _linked_color(color: Color) -> Color:
+	# Thin source rods need a bounded display contrast lift against the arena.
+	# Preserve their hue, alpha, pixel positions and original finite palette.
+	var luminance := color.r * 0.2126 + color.g * 0.7152 + color.b * 0.0722
+	if luminance >= 0.42: return color
+	return color.lerp(Color(1.0, 1.0, 1.0, color.a), (0.42 - luminance) / (1.0 - luminance))
+
+
 static func sample_polyline(path: PackedVector2Array, ratio: float) -> Dictionary:
-	if path.is_empty():
-		return {"point": Vector2.ZERO, "tangent": Vector2.RIGHT, "normal": Vector2.UP}
-	if path.size() == 1:
-		return {"point": path[0], "tangent": Vector2.RIGHT, "normal": Vector2.UP}
-	var lengths: Array[float] = []
+	var sampled := _sample_polyline_fast(_polyline_sampler(path), ratio)
+	var tangent := Vector2(sampled.z, sampled.w)
+	return {
+		"point": Vector2(sampled.x, sampled.y),
+		"tangent": tangent,
+		"normal": Vector2(-tangent.y, tangent.x),
+	}
+
+
+static func _polyline_sampler(path: PackedVector2Array) -> Dictionary:
+	var cumulative := PackedFloat32Array([0.0])
 	var total := 0.0
 	for index: int in range(path.size() - 1):
-		var length := path[index].distance_to(path[index + 1])
-		lengths.append(length)
-		total += length
+		total += path[index].distance_to(path[index + 1])
+		cumulative.append(total)
+	return {"path": path, "cumulative": cumulative, "total": total}
+
+
+## Packed point+tangent avoids allocating a Dictionary for every bound pixel.
+static func _sample_polyline_fast(sampler: Dictionary, ratio: float) -> Vector4:
+	var path: PackedVector2Array = sampler.path
+	if path.is_empty(): return Vector4(0.0, 0.0, 1.0, 0.0)
+	if path.size() == 1: return Vector4(path[0].x, path[0].y, 1.0, 0.0)
+	var cumulative: PackedFloat32Array = sampler.cumulative
+	var total := float(sampler.total)
 	var target := clampf(ratio, 0.0, 1.0) * total
-	var consumed := 0.0
 	for index: int in range(path.size() - 1):
-		var length: float = lengths[index]
-		if length <= 0.0001:
-			continue
-		if consumed + length >= target or index == path.size() - 2:
-			var local_ratio := clampf((target - consumed) / length, 0.0, 1.0)
+		var start_distance := float(cumulative[index])
+		var finish_distance := float(cumulative[index + 1])
+		var length := finish_distance - start_distance
+		if length <= 0.0001: continue
+		if finish_distance >= target or index == path.size() - 2:
+			var local_ratio := clampf((target - start_distance) / length, 0.0, 1.0)
 			var tangent := (path[index + 1] - path[index]) / length
-			return {
-				"point": path[index].lerp(path[index + 1], local_ratio),
-				"tangent": tangent,
-				"normal": Vector2(-tangent.y, tangent.x),
-			}
-		consumed += length
-	var fallback_tangent := (path[path.size() - 1] - path[path.size() - 2]).normalized()
-	return {
-		"point": path[path.size() - 1],
-		"tangent": fallback_tangent,
-		"normal": Vector2(-fallback_tangent.y, fallback_tangent.x),
-	}
+			var point := path[index].lerp(path[index + 1], local_ratio)
+			return Vector4(point.x, point.y, tangent.x, tangent.y)
+	var fallback := (path[-1] - path[-2]).normalized()
+	return Vector4(path[-1].x, path[-1].y, fallback.x, fallback.y)
 
 
 static func distance_to_polyline(point: Vector2, path: PackedVector2Array, start_ratio: float = 0.0) -> float:
@@ -199,14 +256,42 @@ static func _curve_bound_position(
 	scale: float,
 	weapon_origin: Vector2,
 	weapon_angle: float,
-	source_grip: Vector2
+	source_grip: Vector2,
+	longitudinal_scale: float = 1.0
 ) -> Vector2:
+	return _curve_bound_position_sampled(binding, _polyline_sampler(path), facing, scale, weapon_origin, weapon_angle, source_grip, longitudinal_scale)
+
+
+static func _curve_bound_position_sampled(
+	binding: Dictionary,
+	sampler: Dictionary,
+	facing: float,
+	scale: float,
+	weapon_origin: Vector2,
+	weapon_angle: float,
+	source_grip: Vector2,
+	longitudinal_scale: float = 1.0
+) -> Vector2:
+	var path: PackedVector2Array = sampler.path
 	if path.size() < 2:
-		return _rigid_bound_position(binding, weapon_origin, source_grip, weapon_angle, facing, scale)
-	var sample := sample_polyline(path, float(binding.get("ratio", 0.0)))
-	var normal := Vector2(sample.get("normal", Vector2.UP))
+		return _rigid_bound_position(binding, weapon_origin, source_grip, weapon_angle, facing, scale, longitudinal_scale)
+	var sample := _sample_polyline_fast(sampler, float(binding.get("ratio", 0.0)))
+	var normal := Vector2(-sample.w, sample.z)
 	var offset := float(binding.get("normal_offset", 0.0)) * facing * scale
-	return Vector2(sample.get("point", weapon_origin)) + normal * offset
+	return Vector2(sample.x, sample.y) + normal * offset
+
+
+static func _compact_pixels(pixels: Array[Dictionary]) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var index_by_position: Dictionary = {}
+	for pixel: Dictionary in pixels:
+		var position := Vector2(pixel.get("position", Vector2.ZERO))
+		var key := Vector2i(roundi(position.x), roundi(position.y))
+		if index_by_position.has(key): result[int(index_by_position[key])] = pixel
+		else:
+			index_by_position[key] = result.size()
+			result.append(pixel)
+	return result
 
 
 static func _rigid_bound_position(
@@ -215,10 +300,12 @@ static func _rigid_bound_position(
 	source_grip: Vector2,
 	weapon_angle: float,
 	facing: float,
-	scale: float
+	scale: float,
+	longitudinal_scale: float = 1.0
 ) -> Vector2:
 	var source := Vector2(binding.get("source_position", source_grip)) - source_grip
 	var mirrored := Vector2(source.x * facing, source.y) * scale
+	mirrored.x *= longitudinal_scale
 	return weapon_origin + mirrored.rotated(weapon_angle)
 
 

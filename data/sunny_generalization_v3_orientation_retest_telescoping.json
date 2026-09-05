@@ -1,0 +1,17 @@
+{
+  "schema": "sunny-live-acceptance-samples-v1",
+  "seed": 20260905,
+  "selection": "V3 grip/effect canvas-orientation contract retest 1 of 2; exact prior telescoping identity, one fresh visual pipeline, no reserve",
+  "max_first_pass_visual_requests": 1,
+  "max_visual_requests_per_sample": 1,
+  "reserve_visual_requests": 0,
+  "pools": [],
+  "samples": [
+    {
+      "id": "v3-orient-01-telescoping",
+      "group": "grip_effect_orientation_telescoping",
+      "identity": "一根末端有手机夹、可以伸缩的自拍杆",
+      "candidate_index": 0
+    }
+  ]
+}

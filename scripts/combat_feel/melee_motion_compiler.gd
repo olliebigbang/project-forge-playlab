@@ -216,8 +216,15 @@ func _compose_orthogonal_profile(
 		selected[stage] = family
 		if stage.begins_with("hit_"):
 			used.append(family)
+	var presentation_grammar := _structural_presentation_grammar(affordance_profile)
+	if presentation_grammar == "polearm_point":
+		selected = {"hit_1": "thrust", "hit_2": "thrust", "hit_3": "thrust", "charge": "thrust", "dodge": "thrust"}
+	elif presentation_grammar == "weighted_flexible":
+		# A flexible weighted endpoint is cast and recovered. It never borrows the
+		# rigid-weapon thrust or a multi-turn sword spin merely to vary a combo.
+		selected = {"hit_1": "sweep", "hit_2": "sweep", "hit_3": "sweep", "charge": "sweep", "dodge": "sweep"}
 	var recipe: Variant = RECIPE.new()
-	recipe.compile_reason = "orthogonal affordance composition v5: %s" % JSON.stringify(_mechanism_axes(affordance_profile))
+	recipe.compile_reason = "orthogonal affordance composition v6 (%s): %s" % [presentation_grammar, JSON.stringify(_mechanism_axes(affordance_profile))]
 	recipe.mechanism_axes = _mechanism_axes(affordance_profile)
 	recipe.primitive_scores = base_scores.duplicate(true)
 	var tether_origin_ratio := _tether_origin_ratio(anchor_data, affordance_profile.tether_topology)
@@ -226,6 +233,7 @@ func _compose_orthogonal_profile(
 	recipe.hit_3 = _synthesize_primitive(str(selected["hit_3"]), "hit_3", affordance_profile, tether_origin_ratio)
 	recipe.charge_attack = _synthesize_primitive(str(selected["charge"]), "charge", affordance_profile, tether_origin_ratio)
 	recipe.dodge_attack = _synthesize_primitive(str(selected["dodge"]), "dodge", affordance_profile, tether_origin_ratio)
+	_apply_structural_presentation(recipe, presentation_grammar)
 	profile.combo_recipe = recipe
 	profile.motion_family = _legacy_family(str(selected["charge"]))
 	profile.reach_class = _reach_class(affordance_profile)
@@ -265,8 +273,9 @@ func _compose_orthogonal_profile(
 	profile.mechanism_axes = recipe.mechanism_axes.duplicate(true)
 	profile.primitive_scores = recipe.primitive_scores.duplicate(true)
 	profile.compile_trace = {
-		"composer": "orthogonal_affordance_v5",
+		"composer": "orthogonal_affordance_v6",
 		"selected": selected.duplicate(true),
+		"presentation_grammar": presentation_grammar,
 		"effective_secondary_contact": effective_secondary,
 		"axis_roles": {
 			"handle_length": "lever_and_inner_deadzone",
@@ -289,6 +298,73 @@ func _compose_orthogonal_profile(
 		"silhouette_mechanics": (anchor_data.get("silhouette_mechanics", {}) as Dictionary).duplicate(true),
 	}
 	return profile
+
+
+func _structural_presentation_grammar(affordance_profile: Resource) -> String:
+	var long_lever: bool = affordance_profile.handle_length == "long" or affordance_profile.body_length == "long"
+	var no_soft_path: bool = affordance_profile.flex_topology == "none" and affordance_profile.tether_topology == "none"
+	if affordance_profile.rigidity == "rigid" \
+		and affordance_profile.grip_topology == "two_hand_handle" \
+		and affordance_profile.contact_surface == "point" \
+		and long_lever and no_soft_path and not affordance_profile.has_barrel:
+		return "polearm_point"
+	if affordance_profile.flex_topology in ["flexible_line", "linked_segments"] \
+		and affordance_profile.terminal_load != "none":
+		return "weighted_flexible"
+	return "generic"
+
+
+func _apply_structural_presentation(recipe: Resource, grammar: String) -> void:
+	if grammar == "generic":
+		return
+	var slots := {
+		"hit_1": recipe.hit_1,
+		"hit_2": recipe.hit_2,
+		"hit_3": recipe.hit_3,
+		"charge": recipe.charge_attack,
+		"dodge": recipe.dodge_attack,
+	}
+	if grammar == "polearm_point":
+		var pole_specs := {
+			# A point lever needs more than pitch. Hit 2 is a ground-plane sweep:
+			# its far endpoint begins behind the body, foreshortens while crossing
+			# the depth axis, and finishes in front. Hit 3 keeps the vertical plant.
+			"hit_1": ["pole_jab", 0.16, -0.10, 0.82, "thrust_line"],
+			"hit_2": ["pole_rake", -2.72, 0.38, 0.78, "ground_sweep"],
+			"hit_3": ["pole_pin", -0.92, 0.55, 0.72, "screen_arc"],
+			"charge": ["pole_charge", -1.10, 0.60, 0.86, "screen_arc"],
+			"dodge": ["pole_dodge", 0.20, -0.18, 0.94, "thrust_line"],
+		}
+		for stage: String in slots:
+			var primitive: Resource = slots[stage]
+			var spec: Array = pole_specs[stage]
+			primitive.presentation_family = spec[0]
+			primitive.start_angle = spec[1]
+			primitive.end_angle = spec[2]
+			primitive.extension_pixels *= float(spec[3])
+			primitive.trajectory_plane = spec[4]
+			if str(spec[4]) == "ground_sweep":
+				primitive.local_start_offset = Vector2(-6.0, -3.0)
+				primitive.local_end_offset = Vector2(10.0, 5.0)
+		return
+	var weighted_specs := {
+		"hit_1": ["weighted_cast_low", 0.95, -0.15, "ground_orbit"],
+		"hit_2": ["weighted_lash_cross", -0.78, 0.42, "ground_sweep"],
+		"hit_3": ["weighted_retract", 0.48, -0.08, "ground_orbit"],
+		"charge": ["weighted_cast_charge", 1.08, -0.32, "ground_orbit"],
+		"dodge": ["weighted_dodge_lash", 0.38, -0.18, "ground_sweep"],
+	}
+	for stage: String in slots:
+		var primitive: Resource = slots[stage]
+		var spec: Array = weighted_specs[stage]
+		primitive.presentation_family = spec[0]
+		primitive.start_angle = spec[1]
+		primitive.end_angle = spec[2]
+		primitive.trajectory_plane = spec[3]
+		# The visible terminal mass remains the live contact. Keep the contact
+		# lane focused on the cast instead of the former 238-degree spin sector.
+		primitive.contact_anchor = "tip"
+		primitive.contact_arc_degrees = minf(primitive.contact_arc_degrees, 138.0)
 
 
 func _score_primitives(affordance_profile: Resource) -> Dictionary:
@@ -417,7 +493,9 @@ func _synthesize_primitive(
 	var uses_secondary: bool = stage == "hit_3" and effective_secondary != "none" and not active_state
 	var active_surface: String = effective_secondary if uses_secondary else affordance_profile.contact_surface
 	if stage == "hit_2" and family in ["bash", "sweep"]:
-		angle_data = [float(angle_data[1]), -float(angle_data[0])]
+		# Reverse the same arc, not [end, -start], which collapses a 136-degree
+		# sweep into a barely visible 10-degree movement.
+		angle_data = [float(angle_data[1]), float(angle_data[0])]
 	var rigidity_runtime: Dictionary = RIGIDITY_RUNTIME[affordance_profile.rigidity]
 	var grip_runtime: Dictionary = GRIP_RUNTIME[affordance_profile.grip_topology]
 	var flex_runtime: Dictionary = FLEX_RUNTIME[affordance_profile.flex_topology]
@@ -528,7 +606,14 @@ func _contact_anchor_for(family: String, stage: String, affordance_profile: Reso
 	if affordance_profile.flex_topology != "none" or affordance_profile.tether_topology != "none":
 		return "tip"
 	if stage == "hit_3" and effective_secondary != "none":
-		return "whole_body" if effective_secondary == "whole_body" else "rear_contact"
+		# A second kind of surface does NOT establish that it is on the back.
+		# Only an explicitly declared stock licenses the rear broad contact.
+		# Otherwise use the measured strike/output region we actually possess,
+		# retaining secondary surface/arc/impact without inventing a rear blade.
+		if effective_secondary == "whole_body": return "whole_body"
+		if effective_secondary == "broad" and affordance_profile.has_stock: return "rear_contact"
+		if effective_secondary == "point" and affordance_profile.has_barrel: return "muzzle"
+		return "tip"
 	if family == "spin" or affordance_profile.contact_surface == "whole_body":
 		return "whole_body"
 	if family == "thrust" and affordance_profile.has_barrel:

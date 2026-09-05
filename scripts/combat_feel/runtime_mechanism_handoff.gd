@@ -6,6 +6,17 @@ const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanis
 var _pending: Dictionary = {}
 
 
+func store_entry(entry: Dictionary) -> String:
+	var validator := preload("res://scripts/enemy_attack/automatic_encounter_director.gd").new()
+	var validation: Dictionary = validator._validate_weapon_entry(entry)
+	if not bool(validation.get("ok", false)):
+		return str(validation.get("error", "WEAPON_HANDOFF_INVALID"))
+	_pending = entry.duplicate(true)
+	_pending["kind"] = str(validation.get("kind", ""))
+	_pending["mechanism_handoff"] = true
+	return ""
+
+
 func store(blueprint: WeaponBlueprint, asset: WeaponVisualAsset, affordance_profile: Resource) -> String:
 	if blueprint == null or asset == null or affordance_profile == null:
 		return "MECHANISM_HANDOFF_INCOMPLETE"

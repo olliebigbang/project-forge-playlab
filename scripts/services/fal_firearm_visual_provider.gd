@@ -5,6 +5,7 @@ const OPEN_IDENTITY_PROMPT := preload("res://scripts/services/open_identity_visu
 const FIREARM_SCAFFOLD_PIPELINE := preload("res://scripts/combat_feel/firearm_visual_scaffold_pipeline.gd")
 const CACHE_POLICY := preload("res://scripts/combat_feel/firearm_visual_cache_policy.gd")
 const ANCHOR_RESOLVER := preload("res://scripts/systems/anchor_resolver.gd")
+const CHURCH_PIXEL_STYLE := preload("res://scripts/art_vertical_slice_v1/church_pixel_style.gd")
 const BRIDGE_SCRIPT := "res://tools/visual/fal_firearm_pixel_bridge.py"
 const REQUEST_SCHEMA := "forge-fal-firearm-visual-request-v2"
 const MANIFEST_SCHEMA := CACHE_POLICY.MANIFEST_SCHEMA
@@ -120,6 +121,9 @@ func request_visual(
 	if not _is_supported_blueprint(blueprint):
 		failure_reason = "FIREARM_VISUAL_FAL_REQUIRES_HANDHELD_FIREARM"
 		return active_revision
+	if not _art_style_id(blueprint).is_empty() and _art_style_contract(blueprint).is_empty():
+		failure_reason = "FIREARM_VISUAL_ART_STYLE_UNSUPPORTED"
+		return active_revision
 	active_preparation = FIREARM_SCAFFOLD_PIPELINE.prepare(blueprint)
 	if not bool(active_preparation.get("ok", false)):
 		failure_reason = str(active_preparation.get("error", "FIREARM_VISUAL_PREPARE_FAILED"))
@@ -131,13 +135,13 @@ func request_visual(
 	active_request_payload = _build_request_payload(blueprint, active_preparation)
 	active_cache_key = _cache_key(active_request_payload)
 	var cache_directory := _absolute_path(cache_root.path_join(active_cache_key))
-	if _cache_entry_valid(cache_directory, active_cache_key):
+	if _can_reuse_visual_cache() and _cache_entry_valid(cache_directory, active_cache_key):
 		active_output_directory = cache_directory
 		active_cache_hit = true
 		active_request_route = "local_immediate_hit"
 		process_id = -1
 		return active_revision
-	if _try_migrate_legacy_cache(cache_directory, active_cache_key):
+	if _can_reuse_visual_cache() and _try_migrate_legacy_cache(cache_directory, active_cache_key):
 		active_output_directory = cache_directory
 		active_cache_hit = true
 		active_request_route = "local_immediate_hit"
@@ -214,6 +218,8 @@ func poll() -> Dictionary:
 
 func load_atomic_result(directory: String, blueprint: WeaponBlueprint) -> Dictionary:
 	active_blueprint = blueprint
+	if not _art_style_id(blueprint).is_empty() and _art_style_contract(blueprint).is_empty():
+		return _failure("FIREARM_VISUAL_ART_STYLE_UNSUPPORTED", false)
 	active_preparation = FIREARM_SCAFFOLD_PIPELINE.prepare(blueprint)
 	if not bool(active_preparation.get("ok", false)):
 		return active_preparation
@@ -259,6 +265,9 @@ func _load_completed_result(manifest_path: String) -> Dictionary:
 		delivered = true
 		var bridge_error := str(manifest.get("failure_reason", "FIREARM_VISUAL_FAL_GENERATION_FAILED"))
 		return _failure(bridge_error, _fal_error_is_retryable(bridge_error))
+	if not _art_style_matches(manifest):
+		delivered = true
+		return _failure("FIREARM_VISUAL_ART_STYLE_MANIFEST_MISMATCH", false)
 	if active_cache_hit:
 		return _load_accepted_cache_result(manifest, validated_cache_sprite_bytes)
 	var visual_verification := manifest.get("ai_visual_identity_verification", {}) as Dictionary
@@ -305,6 +314,10 @@ func _load_completed_result(manifest_path: String) -> Dictionary:
 	if not bool(normalized.get("ok", false)):
 		delivered = true
 		return _failure(str(normalized.get("error", "FIREARM_VISUAL_FAL_NORMALIZE_FAILED")), true)
+	var styled := _apply_art_style(normalized, manifest, false)
+	if not bool(styled.get("ok", false)):
+		delivered = true
+		return _failure(str(styled.get("error", "FIREARM_VISUAL_ART_STYLE_FAILED")), false)
 	manifest["candidate_source"] = candidate_source
 	manifest["cache"] = {
 		"schema": CACHE_SCHEMA,
@@ -377,6 +390,15 @@ func _load_accepted_cache_result(manifest: Dictionary, sprite_bytes: PackedByteA
 	if sprite_bytes.is_empty() or image.load_png_from_buffer(sprite_bytes) != OK or image.is_empty():
 		delivered = true
 		return _failure("FIREARM_VISUAL_CACHE_SPRITE_DECODE_FAILED", false)
+	if not _art_style_matches(manifest):
+		delivered = true
+		return _failure("FIREARM_VISUAL_ART_STYLE_MANIFEST_MISMATCH", false)
+	var normalized := {"image": image}
+	var styled := _apply_art_style(normalized, manifest, true)
+	if not bool(styled.get("ok", false)):
+		delivered = true
+		return _failure(str(styled.get("error", "FIREARM_VISUAL_ART_STYLE_FAILED")), false)
+	image = normalized.get("image") as Image
 	var asset: WeaponVisualAsset = ANCHOR_RESOLVER.resolve(image, active_blueprint)
 	if asset == null:
 		delivered = true
@@ -450,7 +472,7 @@ func _build_request_payload(blueprint: WeaponBlueprint, preparation: Dictionary)
 	var identity := blueprint.player_identity_text.strip_edges()
 	if identity.is_empty():
 		identity = blueprint.source_identity.strip_edges()
-	return {
+	var payload := {
 		"schema": REQUEST_SCHEMA,
 		"identity": identity,
 		"identity_prompt_text": OPEN_IDENTITY_PROMPT._model_text(identity, 160),
@@ -467,10 +489,65 @@ func _build_request_payload(blueprint: WeaponBlueprint, preparation: Dictionary)
 		"retry_index": clampi(int(blueprint.modifiers.get("mechanism_visual_retry_count", 0)), 0, 2),
 		"retry_prompt": str(blueprint.modifiers.get("mechanism_visual_retry_prompt", "")),
 	}
+	var style := _art_style_contract(blueprint)
+	if not style.is_empty():
+		payload["art_style"] = style
+	return payload
+
+
+func _art_style_id(blueprint: WeaponBlueprint) -> String:
+	return "" if blueprint == null else str(blueprint.modifiers.get("art_style_id", "")).strip_edges()
+
+
+func _art_style_contract(blueprint: WeaponBlueprint) -> Dictionary:
+	var id := _art_style_id(blueprint)
+	if id.is_empty():
+		return {}
+	var style: Dictionary = CHURCH_PIXEL_STYLE.contract(id)
+	if str(style.get("id", "")) != id or str(style.get("version", "")).is_empty() or str(style.get("prompt", "")).is_empty():
+		return {}
+	return {"id": id, "version": str(style.version), "prompt": str(style.prompt)}
+
+
+func _art_style_matches(evidence: Dictionary) -> bool:
+	var expected: Dictionary = active_request_payload.get("art_style", {})
+	if expected.is_empty():
+		return not evidence.has("art_style")
+	return evidence.get("art_style") is Dictionary and evidence.art_style == expected
+
+
+func _apply_art_style(normalized: Dictionary, manifest: Dictionary, from_cache: bool) -> Dictionary:
+	var style: Dictionary = active_request_payload.get("art_style", {})
+	if style.is_empty():
+		return {"ok": true}
+	if not _art_style_matches(manifest):
+		return {"ok": false, "error": "FIREARM_VISUAL_ART_STYLE_MANIFEST_MISMATCH"}
+	var image := normalized.get("image") as Image
+	var original_bytes := image.get_data()
+	var applied: Dictionary = CHURCH_PIXEL_STYLE.normalize(image, str(style.id))
+	if not bool(applied.get("ok", false)) or not applied.get("image") is Image:
+		return {"ok": false, "error": str(applied.get("error", "FIREARM_VISUAL_ART_STYLE_FAILED"))}
+	var styled_image := applied.get("image") as Image
+	if from_cache:
+		var report: Dictionary = manifest.get("art_style_report", {}) if manifest.get("art_style_report") is Dictionary else {}
+		if not bool(report.get("ok", false)) or report.get("id") != style.id or report.get("version") != style.version or styled_image.get_data() != original_bytes:
+			return {"ok": false, "error": "FIREARM_VISUAL_ART_STYLE_CACHE_NOT_CANONICAL"}
+	if not from_cache:
+		if _save_png_atomic(styled_image, active_output_directory.path_join("processed_sprite.png")) != OK:
+			return {"ok": false, "error": "FIREARM_VISUAL_ART_STYLE_WRITE_FAILED"}
+		manifest["art_style_report"] = (applied.get("report", {}) as Dictionary).duplicate(true)
+	normalized["image"] = styled_image
+	normalized["opaque_colors_after"] = _opaque_color_count(styled_image)
+	return {"ok": true}
 
 
 func _cache_key(request_payload: Dictionary) -> String:
 	return _cache_key_for_version(request_payload, VISUAL_PIPELINE_VERSION)
+
+
+func _can_reuse_visual_cache() -> bool:
+	# A rejected candidate must not satisfy its own automatic redraw request.
+	return int(active_request_payload.get("retry_index", 0)) == 0
 
 
 func _cache_key_for_version(request_payload: Dictionary, pipeline_version: String) -> String:
@@ -487,6 +564,8 @@ func _cache_key_for_version(request_payload: Dictionary, pipeline_version: Strin
 	var identity_reference_id := str(request_payload.get("identity_reference_id", "")).strip_edges()
 	if not identity_reference_id.is_empty():
 		fingerprint["identity_reference_id"] = identity_reference_id
+	if request_payload.has("art_style"):
+		fingerprint["art_style"] = (request_payload.art_style as Dictionary).duplicate(true)
 	return JSON.stringify(fingerprint).sha256_text()
 
 
@@ -505,6 +584,8 @@ func _cache_entry_valid(directory: String, key: String) -> bool:
 		return false
 	var record := record_value as Dictionary
 	var manifest := manifest_value as Dictionary
+	if not _art_style_matches(manifest) or not _art_style_matches(record):
+		return false
 	var sprite_bytes := FileAccess.get_file_as_bytes(directory.path_join("processed_sprite.png"))
 	var valid := CACHE_POLICY.evidence_errors(record, manifest, sprite_bytes, key, false).is_empty()
 	if valid:
@@ -514,6 +595,9 @@ func _cache_entry_valid(directory: String, key: String) -> bool:
 
 
 func _try_migrate_legacy_cache(target_directory: String, target_key: String) -> bool:
+	# Legacy records have no Church style contract; never relabel those pixels as styled.
+	if active_request_payload.has("art_style"):
+		return false
 	for legacy_version: String in CACHE_POLICY.LEGACY_PIPELINE_VERSIONS:
 		var legacy_key := _cache_key_for_version(active_request_payload, legacy_version)
 		var legacy_directory := _absolute_path(cache_root.path_join(legacy_key))
@@ -602,6 +686,8 @@ func _persist_cache(source_directory: String, manifest: Dictionary) -> Dictionar
 		"processed_sprite_sha256": _bytes_sha256(sprite_bytes),
 		"player_confirmation_required": false,
 	}
+	if active_request_payload.has("art_style"):
+		record["art_style"] = (active_request_payload.art_style as Dictionary).duplicate(true)
 	if _write_json_atomic(cache_directory.path_join("cache_record.json"), record) != OK:
 		return {"ok": false, "error": "FIREARM_VISUAL_CACHE_RECORD_WRITE_FAILED"}
 	return {"ok": true, "directory": cache_directory, "key": active_cache_key}

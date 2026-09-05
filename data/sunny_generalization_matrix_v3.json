@@ -1,0 +1,143 @@
+{
+  "schema": "sunny-generalization-matrix-v3",
+  "seed": 20260904,
+  "selection": "LCG uint32 x=1664525*x+1013904223, index=x%4; frozen before calls; expectations are audit assertions only and never runtime mechanism overrides",
+  "semantic_request_limit": 12,
+  "visual_promotion_limit": 2,
+  "pools": [
+    {
+      "group": "compact_rigid",
+      "candidates": [
+        "一个银色金属订书机，顶部可以向下按压",
+        "一个带弧形侧把的陶瓷马克杯",
+        "一只短柄木工刨",
+        "一支带橡胶防滑筒身和前端灯头的手电筒"
+      ],
+      "expect": {"policy": "supported_object", "checks": [{"path": "declaration.rigidity", "in": ["rigid"]}]}
+    },
+    {
+      "group": "broad_contact",
+      "candidates": [
+        "一口带长柄的圆形铸铁煎锅",
+        "一把宽塑料头的长柄雪铲",
+        "一支椭圆网面和短柄的网球拍",
+        "一个方形网面的长柄苍蝇拍"
+      ],
+      "expect": {"policy": "supported_object", "checks": [{"path": "declaration.contact_surface", "in": ["broad", "whole_body"]}]}
+    },
+    {
+      "group": "long_shaft",
+      "candidates": [
+        "一根前端带橡胶头的木制台球杆",
+        "一把长柄、前端装有圆筒滚轮的油漆滚筒",
+        "一支木制冰球杆",
+        "一把宽齿金属头的长柄花园耙"
+      ],
+      "expect": {"policy": "supported_object", "checks": [{"path": "declaration.handle_length", "in": ["long"]}]}
+    },
+    {
+      "group": "flexible_strip",
+      "candidates": [
+        "一条柔软的长羊毛围巾，两端有短流苏",
+        "一条带金属方扣的宽皮带",
+        "一条没有接头的黑色自行车内胎",
+        "一卷可以拉开的黄色软裁缝皮尺"
+      ],
+      "expect": {"policy": "supported_object", "checks": [{"path": "declaration.flex_topology", "in": ["flexible_line", "linked_segments", "bending_shaft"]}]}
+    },
+    {
+      "group": "loaded_tether",
+      "candidates": [
+        "一个木制悠悠球，两片圆盘之间连着细绳",
+        "一条末端带金属登山扣的编织牵引绳",
+        "一串由短金属链连接的大钥匙环",
+        "一个黄铜铅锤，顶部系着一根长细绳"
+      ],
+      "expect": {"policy": "supported_object", "checks": [{"path": "declaration.flex_topology", "in": ["flexible_line", "linked_segments"]}, {"path": "declaration.terminal_load", "in": ["light", "heavy"]}]}
+    },
+    {
+      "group": "multi_part_flexible",
+      "candidates": [
+        "一条带两个泡棉握柄的跳绳",
+        "一张带四角系绳的小型捕鱼网",
+        "一根挂着三只金属夹子的短晾衣绳",
+        "一条由许多短木节串接成的训练软鞭"
+      ],
+      "expect": {"policy": "supported_object", "checks": [{"path": "declaration.flex_topology", "in": ["flexible_line", "linked_segments"]}, {"path": "declaration.terminal_load", "in": ["light", "heavy"]}]}
+    },
+    {
+      "group": "deployable",
+      "candidates": [
+        "一把带弯柄、可以撑开的折叠雨伞",
+        "一根末端有手机夹、可以伸缩的自拍杆",
+        "一把竹骨和纸面的折扇",
+        "一个能从方形外壳中拉出金属尺带的卷尺"
+      ],
+      "expect": {"policy": "supported_object", "checks": [{"path": "declaration.state_topology", "in": ["hinged", "folding", "telescoping", "radial_expand", "rotary"]}]}
+    },
+    {
+      "group": "directed_output",
+      "candidates": [
+        "一个红色灭火器，顶部有压把，侧面软管末端连接喷嘴",
+        "一个带侧把和泵杆的园艺压力喷壶",
+        "一个前端有小孔的软塑料挤压瓶",
+        "一台带握柄、扳机和前端圆形风口的电吹风"
+      ],
+      "expect": {"policy": "supported_object", "checks": [{"path": "declaration.functional_output", "in": ["directed_stream"]}, {"path": "declaration.activation_mode", "in": ["momentary", "toggle", "charge_release", "continuous_hold"]}]}
+    },
+    {
+      "group": "manual_actuator",
+      "candidates": [
+        "一把带摇柄和前端钻头的手摇钻",
+        "一个带曲柄和两只金属搅拌头的手动打蛋器",
+        "一个有T形把手、长筒和底部软管的手动打气筒",
+        "一把双长柄、中心铰链连接的修篱剪"
+      ],
+      "expect": {"policy": "supported_object", "checks": [{"path": "declaration.state_topology", "in": ["hinged", "folding", "telescoping", "rotary"]}]}
+    },
+    {
+      "group": "bulky_body",
+      "candidates": [
+        "一把带靠背和四条腿的塑料椅",
+        "一块安装在短金属杆上的八角形道路标志牌",
+        "一个带顶部提手和四只小轮子的硬壳旅行箱",
+        "一辆没有骑手的普通城市自行车"
+      ],
+      "expect": {"policy": "supported_object", "checks": [{"path": "declaration.rigidity", "in": ["rigid", "semi_rigid"]}]}
+    },
+    {
+      "group": "proper_named_object",
+      "candidates": [
+        "如意金箍棒",
+        "Excalibur",
+        "倚天剑",
+        "青龙偃月刀"
+      ],
+      "expect": {"policy": "supported_object", "checks": [{"path": "declaration.body_length", "in": ["long"]}]}
+    },
+    {
+      "group": "actor_vehicle_boundary",
+      "candidates": [
+        "一只活着的橘色虎斑猫",
+        "一辆正在运行的红色小汽车",
+        "一名穿雨衣的普通路人",
+        "一匹活着的棕色马"
+      ],
+      "expect": {"policy": "safe_route", "classifications": ["living_actor_required", "powered_vehicle_actor_required"]}
+    }
+  ],
+  "samples": [
+    {"id": "v3-01", "group": "compact_rigid", "identity": "一支带橡胶防滑筒身和前端灯头的手电筒", "candidate_index": 3},
+    {"id": "v3-02", "group": "broad_contact", "identity": "一支椭圆网面和短柄的网球拍", "candidate_index": 2},
+    {"id": "v3-03", "group": "long_shaft", "identity": "一把长柄、前端装有圆筒滚轮的油漆滚筒", "candidate_index": 1},
+    {"id": "v3-04", "group": "flexible_strip", "identity": "一条柔软的长羊毛围巾，两端有短流苏", "candidate_index": 0},
+    {"id": "v3-05", "group": "loaded_tether", "identity": "一个黄铜铅锤，顶部系着一根长细绳", "candidate_index": 3},
+    {"id": "v3-06", "group": "multi_part_flexible", "identity": "一根挂着三只金属夹子的短晾衣绳", "candidate_index": 2},
+    {"id": "v3-07", "group": "deployable", "identity": "一根末端有手机夹、可以伸缩的自拍杆", "candidate_index": 1},
+    {"id": "v3-08", "group": "directed_output", "identity": "一个红色灭火器，顶部有压把，侧面软管末端连接喷嘴", "candidate_index": 0},
+    {"id": "v3-09", "group": "manual_actuator", "identity": "一把双长柄、中心铰链连接的修篱剪", "candidate_index": 3},
+    {"id": "v3-10", "group": "bulky_body", "identity": "一个带顶部提手和四只小轮子的硬壳旅行箱", "candidate_index": 2},
+    {"id": "v3-11", "group": "proper_named_object", "identity": "Excalibur", "candidate_index": 1},
+    {"id": "v3-12", "group": "actor_vehicle_boundary", "identity": "一只活着的橘色虎斑猫", "candidate_index": 0}
+  ]
+}

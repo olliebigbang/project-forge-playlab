@@ -8,6 +8,7 @@ const FIREARM_SCAFFOLD_PIPELINE := preload("res://scripts/combat_feel/firearm_vi
 const CACHE_POLICY := preload("res://scripts/combat_feel/firearm_visual_cache_policy.gd")
 const OPEN_IDENTITY_INTERPRETER := preload("res://scripts/services/open_identity_interpreter.gd")
 const ANCHOR_RESOLVER := preload("res://scripts/systems/anchor_resolver.gd")
+const LIBRARY := preload("res://scripts/combat_feel/weapon_library_store.gd")
 
 const DEFAULT_VISUAL_CACHE_ROOT := "user://playlab/fal_firearm_visual/cache_v1"
 const DEFAULT_PROFILE_CACHE_PATHS := [
@@ -20,6 +21,8 @@ const DEFAULT_PROFILE_CACHE_PATHS := [
 var visual_cache_root := DEFAULT_VISUAL_CACHE_ROOT
 var profile_cache_paths := DEFAULT_PROFILE_CACHE_PATHS.duplicate()
 var last_load_diagnostics: Dictionary = {}
+var library: RefCounted = LIBRARY.new()
+var allow_legacy_cache_updates := true
 
 var _memory_entries: Array[Dictionary] = []
 var _memory_dependency_snapshot: Dictionary = {}
@@ -40,6 +43,89 @@ func invalidate_cache() -> void:
 
 
 func load_entries() -> Array[Dictionary]:
+	var saved: Array[Dictionary] = library.load_entries()
+	var saved_identities := {}
+	for entry: Dictionary in saved:
+		saved_identities[_normalize(str(entry.get("identity", "")))] = true
+	for identity: String in library.locked_reward_identities:
+		if not identity.is_empty():
+			saved_identities[_normalize(identity)] = true
+	for entry: Dictionary in _load_legacy_entries():
+		if not saved_identities.has(_normalize(str(entry.get("identity", "")))):
+			saved.append(entry)
+	last_load_diagnostics["library_rejections"] = library.diagnostics.duplicate(true)
+	last_load_diagnostics["entry_count"] = saved.size()
+	var equipped_key := str(library.read_session().get("equipped_key", ""))
+	for index: int in range(saved.size()):
+		if not equipped_key.is_empty() and str(saved[index].get("library_key", "")) == equipped_key:
+			saved[index]["last_equipped"] = true
+			saved.push_front(saved.pop_at(index))
+			break
+	return saved
+
+
+func save_entry(entry: Dictionary) -> Dictionary:
+	var result: Dictionary = library.save_entry(entry)
+	if bool(result.get("ok", false)):
+		entry["library_key"] = str(result.get("library_key", ""))
+		invalidate_cache()
+	return result
+
+
+func remember_equipped(entry: Dictionary) -> Dictionary:
+	var key := str(entry.get("library_key", ""))
+	if key.is_empty():
+		var saved := save_entry(entry)
+		if not bool(saved.get("ok", false)):
+			return saved
+		key = str(saved.get("library_key", ""))
+	var changes := {"equipped_key": key}
+	var session: Dictionary = library.read_session()
+	var stored: Dictionary = library.load_entry(key)
+	if not bool(stored.get("ok", false)):
+		return stored
+	if bool(stored.get("completion_reward", false)) and key not in session.get("unlocked_reward_keys", []):
+		return {"ok": false, "error": "WEAPON_LIBRARY_REWARD_NOT_UNLOCKED"}
+	if str(session.get("pending_reward_key", "")) == key and key in session.get("unlocked_reward_keys", []):
+		changes["pending_reward_key"] = ""
+	return library.update_session(changes)
+
+
+func stage_reward(entry: Dictionary) -> Dictionary:
+	var previous: Dictionary = pending_reward()
+	if not previous.is_empty():
+		return {"ok": true, "entry": previous, "already_pending": true}
+	var saved: Dictionary = library.save_entry(entry, true)
+	if not bool(saved.get("ok", false)):
+		return saved
+	var recorded: Dictionary = library.update_session({"pending_reward_key": str(saved.get("library_key", ""))})
+	if not bool(recorded.get("ok", false)):
+		return recorded
+	return {"ok": true, "entry": saved.get("entry", {})}
+
+
+func pending_reward() -> Dictionary:
+	var session: Dictionary = library.read_session()
+	var key := str(session.get("pending_reward_key", ""))
+	if key.is_empty():
+		return {}
+	var entry: Dictionary = library.load_entry(key)
+	return entry if bool(entry.get("ok", false)) else {}
+
+
+func record_run(entry: Dictionary, completed: bool, metrics: Dictionary) -> Dictionary:
+	var session: Dictionary = library.read_session()
+	var unlocked: Array = (session.get("unlocked_reward_keys", []) as Array).duplicate()
+	var pending_key := str(session.get("pending_reward_key", ""))
+	if completed and not pending_key.is_empty() and pending_key not in unlocked:
+		unlocked.append(pending_key)
+	return library.update_session({
+		"unlocked_reward_keys": unlocked,
+		"last_run": {"completed": completed, "library_key": str(entry.get("library_key", "")), "display_name": str(entry.get("display_name", "")), "metrics": metrics.duplicate(true), "finished_unix_time": int(Time.get_unix_time_from_system())},
+	})
+
+
+func _load_legacy_entries() -> Array[Dictionary]:
 	var started_usec := Time.get_ticks_usec()
 	if _memory_cache_ready:
 		var current_snapshot := _dependency_snapshot(_tracked_entry_files)
@@ -160,7 +246,7 @@ func _load_visual_entry(directory_path: String, cached_profiles: Dictionary) -> 
 			key
 		)
 		record = CACHE_POLICY.upgraded_record(record, key, sprite_bytes)
-		if (
+		if allow_legacy_cache_updates and (
 			_write_json_atomic(directory_path.path_join("manifest.json"), manifest) != OK
 			or _write_json_atomic(directory_path.path_join("cache_record.json"), record) != OK
 		):
@@ -184,6 +270,8 @@ func _load_visual_entry(directory_path: String, cached_profiles: Dictionary) -> 
 		"cache_directory": directory_path,
 		"cached_unix_time": modified,
 		"source_kind": "fal_firearm_cache",
+		"accepted_visual": true,
+		"visual_evidence": {"source": "validated_firearm_cache", "gate": manifest.get("firearm_visual_identity_gate", {})},
 		"cache_status": "validated_local_finished_art",
 		"visual_pipeline_version": str(record.get("pipeline_version", "")),
 		"locally_revalidated": pipeline_version != CACHE_POLICY.CURRENT_PIPELINE_VERSION,

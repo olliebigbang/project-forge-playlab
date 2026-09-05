@@ -4,7 +4,7 @@ config_version=5
 [application]
 
 config/name="Forge Playlab V1"
-run/main_scene="res://scenes/open_identity_spike.tscn"
+run/main_scene="res://scenes/sunny_expedition.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [autoload]

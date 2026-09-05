@@ -1,0 +1,17 @@
+{
+  "schema": "sunny-live-acceptance-samples-v1",
+  "seed": 20260902,
+  "selection": "single fresh function/part-role retest authorized after the v2 role-bound gate; test data only, never a mechanism override",
+  "max_first_pass_visual_requests": 1,
+  "max_visual_requests_per_sample": 1,
+  "reserve_visual_requests": 0,
+  "pools": [],
+  "samples": [
+    {
+      "id": "native-01",
+      "group": "directed_output_retest",
+      "identity": "一个手持容器，顶部有可按压泵杆，侧面有弧形把手，圆筒罐体前方伸出细喷口，按压时从喷口出水",
+      "candidate_index": 0
+    }
+  ]
+}

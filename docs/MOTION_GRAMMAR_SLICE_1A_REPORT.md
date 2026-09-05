@@ -92,7 +92,7 @@ Rule C Hit 3 uses the normalized `rear_contact`; it does not branch on the word 
 Run:
 
 ```powershell
-cd "C:\Users\Eddie L\Documents\project-forge-playlab"
+cd "<USERPROFILE>\Documents\project-forge-playlab"
 .\scripts\run_motion_grammar_slice_1a.ps1 -BlindComparison
 ```
 

@@ -33,27 +33,9 @@ func _update_returning_attack(just_pressed: bool, delta: float) -> void:
 			if blueprint.effect_type == "electric_current":
 				_chain_damage(enemy, 8.0)
 
-func _update_melee_attack(just_pressed: bool, delta: float) -> void:
-	var startup_multiplier := float(blueprint.modifiers.get("startup_multiplier", 1.0))
-	if just_pressed and melee_timer <= 0.0:
-		melee_timer = 0.75 * startup_multiplier
-		melee_connected.clear()
-	if melee_timer <= 0.0:
-		return
-	melee_timer -= delta
-	var active_window := melee_timer < 0.34 and melee_timer > 0.08
-	if not active_window:
-		return
-	var attack_range := 105.0 * float(blueprint.modifiers.get("area_multiplier", 1.0))
-	for enemy: Dictionary in enemies:
-		var enemy_id := int(enemy["id"])
-		var direction_to_enemy: Vector2 = enemy["pos"] - player_position
-		if not melee_connected.has(enemy_id) and direction_to_enemy.length() <= attack_range and signf(direction_to_enemy.x) == facing:
-			melee_connected[enemy_id] = true
-			var damage := RULES.damage_against(blueprint.behavior_family, enemy["type"], _is_front_hit(enemy), blueprint.modifiers)
-			_damage_enemy(enemy, damage)
-			if blueprint.effect_type == "lifesteal":
-				player_health = minf(100.0, player_health + damage * 0.10)
+func _update_melee_attack(just_pressed: bool, delta: float, held: bool = false) -> void:
+	super._update_melee_attack(just_pressed, delta, held)
+
 
 func _update_projectiles(delta: float) -> void:
 	for projectile: Dictionary in projectiles:
@@ -79,52 +61,9 @@ func _update_projectiles(delta: float) -> void:
 	)
 
 func _draw_player_and_weapon() -> void:
-	var body_color := Color("fb7185") if flash_timer > 0.0 else Color("67e8f9")
-	draw_circle(player_position + Vector2(0, -25), 13.0, Color("dbeafe"))
-	draw_rect(Rect2(player_position + Vector2(-15, -12), Vector2(30, 42)), body_color, true)
-	draw_line(player_position + Vector2(-8, 30), player_position + Vector2(-13, 49), Color("94a3b8"), 7.0)
-	draw_line(player_position + Vector2(8, 30), player_position + Vector2(13, 49), Color("94a3b8"), 7.0)
-	var firearm_action := _firearm_action_sample()
-	var root_pose := firearm_action.get("root_pose", {}) as Dictionary
-	var hand_base := _firearm_hand_base()
-	var hand_primary := hand_base
-	var weapon_rotation := 0.0
-	if _uses_firearm_runtime():
-		hand_primary += root_pose.get("offset", Vector2.ZERO) as Vector2
-		weapon_rotation = float(root_pose.get("rotation", 0.0))
-	elif blueprint.delivery == "whole_object_strike" and melee_timer > 0.0:
-		var swing_progress := clampf((0.75 - melee_timer) / 0.67, 0.0, 1.0)
-		weapon_rotation = lerpf(-0.65, 0.75, swing_progress) * facing
-	var relative_secondary := (asset.grip_secondary - asset.grip_primary) * 1.15
-	var relative_secondary_world := Vector2(relative_secondary.x * facing, relative_secondary.y).rotated(weapon_rotation)
-	var one_hand_firearm := _uses_firearm_runtime() and str(blueprint.affordance.get("support_mode", "")) == "one_hand"
-	var hand_secondary := player_position + Vector2(-9.0 * facing, 12.0) if one_hand_firearm else hand_primary + relative_secondary_world
-	draw_line(player_position + Vector2(0, -5), hand_primary, Color("f0c7a6"), 7.0)
-	draw_line(player_position + Vector2(2, 1), hand_secondary, Color("f0c7a6"), 7.0)
-	var object_is_in_flight := blueprint.delivery == "whole_object_return" and not boomerang.is_empty()
-	if not object_is_in_flight:
-		draw_set_transform(hand_primary, weapon_rotation, Vector2(facing, 1.0))
-		var local_position := FIREARM_ACTION_CHOREOGRAPHY.weapon_origin(asset.grip_primary)
-		draw_texture_rect(asset.texture, Rect2(local_position, Vector2(asset.canvas_size) * 1.15), false)
-		if _uses_firearm_runtime():
-			_draw_firearm_action_overlays(firearm_action, hand_primary, weapon_rotation)
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	draw_circle(hand_primary, 7.0, Color("5eead4"), false, 2.0)
-	draw_circle(hand_primary, 4.0, Color("f8d8b9"))
-	draw_circle(hand_secondary, 4.0, Color("f8d8b9"))
-	draw_line(player_position + Vector2(0, -30), player_position + Vector2(18.0 * facing, -30), Color("fef08a"), 3.0)
-	if debug_anchors and not object_is_in_flight:
-		if _uses_firearm_runtime():
-			_draw_firearm_world_anchor(hand_base, asset.grip_primary, root_pose, "GripPrimary", Color("5eead4"))
-			_draw_firearm_world_anchor(hand_base, asset.grip_secondary, root_pose, "GripSecondary", Color("facc15"))
-			_draw_firearm_world_anchor(hand_base, asset.muzzle, root_pose, "EffectOrigin", Color("38bdf8"))
-			_draw_firearm_world_anchor(hand_base, asset.tip, root_pose, "StrikePoint", Color("fb7185"))
-		else:
-			_draw_world_anchor(hand_primary, asset.grip_primary, asset.grip_primary, "GripPrimary", Color("5eead4"))
-			_draw_world_anchor(hand_primary, asset.grip_secondary, asset.grip_primary, "GripSecondary", Color("facc15"))
-			_draw_world_anchor(hand_primary, asset.muzzle, asset.grip_primary, "EffectOrigin", Color("38bdf8"))
-			_draw_world_anchor(hand_primary, asset.tip, asset.grip_primary, "StrikePoint", Color("fb7185"))
-			_draw_world_anchor(hand_primary, asset.spin_pivot, asset.grip_primary, "SpinPivot", Color("c084fc"))
+	super._draw_player_and_weapon()
+
+
 func _draw_attacks() -> void:
 	for projectile: Dictionary in projectiles:
 		var position: Vector2 = projectile["pos"]
@@ -163,9 +102,6 @@ func _draw_attacks() -> void:
 		draw_texture_rect(asset.texture, Rect2(-asset.spin_pivot, Vector2(asset.canvas_size)), false)
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 		draw_arc(object_position, 32.0, 0.0, TAU, 24, Color(0.36, 0.91, 0.83, 0.55), 2.0)
-	if blueprint.delivery == "whole_object_strike" and melee_timer > 0.08 and melee_timer < 0.34:
-		var strike_color := Color("fb7185") if blueprint.effect_type == "lifesteal" else Color("fbbf24")
-		draw_arc(player_position, 104.0, -0.8 if facing > 0 else PI - 0.8, 0.8 if facing > 0 else PI + 0.8, 24, strike_color, 8.0)
 	if blueprint.delivery == "continuous_emission" and attack_charge > 0.0:
 		var effect_origin := _muzzle_world()
 		draw_arc(effect_origin, 6.0 + minf(attack_charge, 0.35) * 15.0, 0.0, TAU, 16, Color("5eead4"), 3.0)

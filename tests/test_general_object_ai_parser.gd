@@ -26,11 +26,14 @@ func _initialize() -> void:
 	_run("Object action words cannot bypass the general-object AI mechanism decision", _test_action_words_do_not_bypass_general_object_ai)
 	_run("Invalid AI axes fail closed before drawing", _test_invalid_axes_rejected)
 	_run("Selected contact axes repair only their redundant capability flags", _test_contact_flag_canonicalization)
+	_run("Mechanism roles bind real visible grip activation and effect parts", _test_mechanism_role_contract)
 	_run("Firearms vehicles and living actors route to separate compilers", _test_classification_boundaries)
 	_run("Identity echo blocks prompt substitution", _test_identity_echo_guard)
 	_run("Godot provider receives one atomic offline bridge result", _test_provider_offline_bridge)
 	_run("FAL general-object candidate becomes a real 96px Alpha asset", _test_fal_visual_provider_handoff)
+	_run("Remote pixelizer failure falls back only when validated identity art exists", _test_pixelizer_failure_local_recovery)
 	_run("One-hand point-contact silhouettes resolve handle and strike endpoints before facing normalization", _test_one_hand_endpoint_role_orientation)
+	_run("Long one-hand edged silhouettes use the narrow point terminal instead of the legacy left-side guess", _test_one_hand_edge_orientation)
 	_run("Validated object identities round-trip through the local cache", _test_cache_round_trip)
 	_run("Old cache entries missing state axes are rejected for live regeneration", _test_stale_cache_requires_regeneration)
 	print("GENERAL OBJECT AI PARSER RESULT: %d passed, %d failed" % [passed, failed])
@@ -96,6 +99,28 @@ func _test_rigid_object_matrix() -> Variant:
 		or not is_equal_approx(compiled_profiles[2].body_coverage_ratio, 1.0):
 		return "body-length axis did not survive compilation"
 	return true
+
+
+func _test_mechanism_role_contract() -> Variant:
+	var payload := _payload("匿名泵压结构", {
+		"handle_length": "short", "body_length": "medium", "grip_topology": "one_hand_handle",
+		"rigidity": "rigid", "mass_distribution": "balanced", "contact_surface": "broad",
+		"secondary_contact_surface": "point", "flex_topology": "none", "tether_topology": "none",
+		"terminal_load": "none", "tether_mode": "none", "tether_deployment": "none",
+		"state_topology": "fixed", "activation_mode": "momentary", "functional_output": "directed_stream",
+		"has_point": true, "has_edge": false, "has_broad_face": true, "has_barrel": false, "has_stock": false,
+	}, "handheld")
+	var accepted := AI_RESOLVER.accept_ai_response("匿名泵压结构", payload, TEST_SOURCE, false)
+	if not bool(accepted.get("ok", false)): return accepted
+	if (accepted.get("mechanism_roles", {}) as Dictionary).get("activation_part_zh", "") != "启动部": return accepted
+	var interpreted := INTERPRETER.new().interpret_with_ai_object_profile("匿名泵压结构", PackedByteArray(), {}, accepted)
+	var blueprint := interpreted.get("blueprint") as WeaponBlueprint
+	if blueprint == null or (blueprint.modifiers.get("general_object_mechanism_roles", {}) as Dictionary) != accepted.mechanism_roles: return interpreted
+	var conflicted := payload.duplicate(true)
+	conflicted["mechanism_roles"] = (payload.mechanism_roles as Dictionary).duplicate(true)
+	conflicted.mechanism_roles.effect_origin_part_zh = conflicted.mechanism_roles.grip_part_zh
+	var rejection := AI_RESOLVER.accept_ai_response("匿名泵压结构", conflicted, TEST_SOURCE, false)
+	return not bool(rejection.get("ok", false)) and str(rejection.get("error", "")).contains("HANDLE_EFFECT_ROLE_CONFLICT")
 
 
 func _test_soft_object_matrix() -> Variant:
@@ -412,6 +437,54 @@ func _test_fal_visual_provider_handoff() -> Variant:
 	return true
 
 
+func _test_pixelizer_failure_local_recovery() -> Variant:
+	var accepted: Dictionary = AI_RESOLVER.accept_ai_response("冰箱", _fixture_payload(), TEST_SOURCE, false)
+	if not bool(accepted.get("ok", false)): return accepted
+	var interpretation: Dictionary = INTERPRETER.new().interpret_with_ai_object_profile("冰箱", PackedByteArray(), {}, accepted)
+	var blueprint := interpretation.get("blueprint") as WeaponBlueprint
+	if blueprint == null: return interpretation
+	blueprint.modifiers["art_style_id"] = "sunny_v1"
+	var directory := "user://playlab/tests/fal_general_object_recovery_%d" % Time.get_ticks_usec()
+	var absolute_directory := ProjectSettings.globalize_path(directory)
+	DirAccess.make_dir_recursive_absolute(absolute_directory)
+	var image := Image.create(256, 256, false, Image.FORMAT_RGBA8)
+	image.fill(Color.TRANSPARENT)
+	image.fill_rect(Rect2i(48, 36, 152, 184), Color("d7dce2"))
+	image.fill_rect(Rect2i(56, 52, 128, 144), Color("4a9f6f"))
+	image.fill_rect(Rect2i(184, 76, 12, 72), Color("303841"))
+	if image.save_png(absolute_directory.path_join("ai_raw.png")) != OK: return "could not create raw identity art"
+	var failed_manifest := {
+		"schema": "forge-fal-general-object-visual-manifest-v1",
+		"status": "failed",
+		"provider": "FAL_GENERAL_OBJECT",
+		"failure_reason": "GENERAL_OBJECT_VISUAL_FAL_PIXELIZER_HTTP_403",
+		"finished_art": false,
+		"presentable_to_player": false,
+	}
+	var manifest_file := FileAccess.open(absolute_directory.path_join("manifest.json"), FileAccess.WRITE)
+	if manifest_file == null: return "could not create recovery manifest"
+	manifest_file.store_string(JSON.stringify(failed_manifest, "  ")); manifest_file.close()
+	var provider := FAL_VISUAL_PROVIDER.new()
+	var recovered: Dictionary = provider.load_atomic_result(directory, blueprint)
+	var recovered_manifest: Dictionary = recovered.get("manifest", {})
+	var recovered_asset := recovered.get("asset") as WeaponVisualAsset
+	if str(recovered.get("status", "")) != "success" or recovered_asset == null: return recovered
+	if str(recovered_manifest.get("candidate_source", "")) != "fal_transparent_identity_art_local_pixel_fallback": return recovered_manifest
+	if str(recovered_manifest.get("pixelizer_failure_reason", "")) != "GENERAL_OBJECT_VISUAL_FAL_PIXELIZER_HTTP_403": return recovered_manifest
+	if int((recovered_manifest.get("recovery", {}) as Dictionary).get("new_network_requests", -1)) != 0: return recovered_manifest
+	if not FileAccess.file_exists(absolute_directory.path_join("processed_sprite.png")) or recovered_asset.source_image.get_size() != Vector2i(96, 96): return "local recovery did not produce the real 96px asset"
+
+	var rejected_directory := directory + "_identity_failure"
+	var rejected_absolute := ProjectSettings.globalize_path(rejected_directory)
+	DirAccess.make_dir_recursive_absolute(rejected_absolute)
+	var rejected_file := FileAccess.open(rejected_absolute.path_join("manifest.json"), FileAccess.WRITE)
+	if rejected_file == null: return "could not create nonrecoverable manifest"
+	failed_manifest.failure_reason = "GENERAL_OBJECT_VISUAL_FAL_IDENTITY_RENDERER_HTTP_403"
+	rejected_file.store_string(JSON.stringify(failed_manifest, "  ")); rejected_file.close()
+	var rejected: Dictionary = FAL_VISUAL_PROVIDER.new().load_atomic_result(rejected_directory, blueprint)
+	return str(rejected.get("status", "")) == "failed" and str(rejected.get("failure_reason", "")).contains("IDENTITY_RENDERER_HTTP_403")
+
+
 func _test_one_hand_endpoint_role_orientation() -> Variant:
 	var blueprint := WeaponBlueprint.new()
 	blueprint.behavior_family = "heavy_melee"
@@ -444,6 +517,71 @@ func _test_one_hand_endpoint_role_orientation() -> Variant:
 		and asset.orientation_source == "GripPrimary->StrikePoint:alpha+ai_axes"
 	)
 	return true if ok else asset.anchors_dict()
+
+
+func _test_one_hand_edge_orientation() -> Variant:
+	var blueprint := WeaponBlueprint.new()
+	blueprint.behavior_family = "heavy_melee"
+	blueprint.grip_profile = "rear_grip"
+	blueprint.affordance = {
+		"handle_length": "medium",
+		"body_length": "long",
+		"grip_topology": "one_hand_handle",
+		"mass_distribution": "front",
+		"contact_surface": "edge",
+		"secondary_contact_surface": "point",
+		"has_edge": true,
+		"has_point": true,
+	}
+	var image := Image.create(96, 96, false, Image.FORMAT_RGBA8)
+	image.fill(Color.TRANSPARENT)
+	# A pointed blade extends left from a visibly wider handle on the right.
+	# The test contains no object name or hand-authored anchor coordinates.
+	for x: int in range(7, 64):
+		var thickness := clampi(1 + int((x - 7) / 2), 1, 8)
+		image.fill_rect(Rect2i(x, 48 - thickness / 2, 1, thickness), Color("94a3b8"))
+	image.fill_rect(Rect2i(64, 42, 4, 11), Color("7c2d12"))
+	image.fill_rect(Rect2i(68, 44, 16, 5), Color("92400e"))
+	image.fill_rect(Rect2i(84, 43, 5, 7), Color("78350f"))
+	var asset := ANCHOR_RESOLVER.resolve(image, blueprint)
+	if asset == null:
+		return "synthetic long-edge silhouette did not resolve"
+	var provider := FAL_VISUAL_PROVIDER.new()
+	provider._apply_mechanism_anchor_intent(asset, blueprint)
+	var generated_ok := (
+		asset.orientation_flipped
+		and asset.tip.x > asset.grip_primary.x
+		and asset.grip_primary.distance_to(asset.tip) >= 48.0
+		and asset.anchor_source == "alpha_principal_terminals+ai_contact_surface"
+	)
+	if not generated_ok:
+		return asset.anchors_dict()
+	var normalized_pixels := asset.source_image.get_data()
+
+	# The same rule repairs already-saved automatic entries in memory without
+	# rewriting their source image or semantic card.
+	var legacy := ANCHOR_RESOLVER.resolve(image, blueprint)
+	var original_blueprint := var_to_bytes(blueprint.to_dict()).hex_encode().sha256_text()
+	var migrated := provider.refresh_automatic_handle_binding(legacy, blueprint)
+	var migration_ok := (
+		migrated
+		and legacy.orientation_flipped
+		and legacy.tip.x > legacy.grip_primary.x
+		and legacy.anchor_source == "alpha_principal_terminals+ai_contact_surface"
+		and original_blueprint == var_to_bytes(blueprint.to_dict()).hex_encode().sha256_text()
+	)
+	if not migration_ok:
+		return legacy.anchors_dict()
+	var mirrored := image.duplicate() as Image
+	mirrored.flip_x()
+	var mirrored_asset := ANCHOR_RESOLVER.resolve(mirrored, blueprint)
+	provider._apply_mechanism_anchor_intent(mirrored_asset, blueprint)
+	var reflection_ok := (
+		mirrored_asset.source_image.get_data() == normalized_pixels
+		and mirrored_asset.grip_primary == asset.grip_primary
+		and mirrored_asset.tip == asset.tip
+	)
+	return true if reflection_ok else mirrored_asset.anchors_dict()
 
 
 func _test_cache_round_trip() -> Variant:
@@ -541,7 +679,7 @@ func _payload(identity: String, declaration: Dictionary, scale_treatment: String
 	payload["canonical_name"] = identity
 	payload["identity_evidence"] = ["recognizable physical structure determines the complete affordance card"]
 	payload["visual_description_en"] = "recognizable side-view object with large readable identity parts and a clear physical silhouette"
-	payload["required_identity_parts_zh"] = ["主体轮廓", "主要结构件"]
+	payload["required_identity_parts_zh"] = ["握持部", "作用主体"]
 	payload["confusable_exclusions_en"] = ["not a generic featureless bar"]
 	payload["scale_treatment"] = scale_treatment
 	var complete_declaration := declaration.duplicate(true)
@@ -549,6 +687,11 @@ func _payload(identity: String, declaration: Dictionary, scale_treatment: String
 	complete_declaration["activation_mode"] = str(complete_declaration.get("activation_mode", "passive"))
 	complete_declaration["functional_output"] = str(complete_declaration.get("functional_output", "contact_only"))
 	payload["declaration"] = complete_declaration
+	var activation_part := ""
+	if str(complete_declaration.activation_mode) != "passive":
+		activation_part = "启动部"
+		payload["required_identity_parts_zh"].append(activation_part)
+	payload["mechanism_roles"] = {"grip_part_zh": "握持部", "activation_part_zh": activation_part, "effect_origin_part_zh": "作用主体"}
 	return payload
 
 
@@ -568,6 +711,7 @@ func _inert_payload(identity: String, classification: String) -> Dictionary:
 		"visual_description_en": "",
 		"required_identity_parts_zh": [],
 		"confusable_exclusions_en": [],
+		"mechanism_roles": {"grip_part_zh": "", "activation_part_zh": "", "effect_origin_part_zh": ""},
 		"behavior_family": "not_applicable",
 		"scale_treatment": "not_applicable",
 		"declaration": declaration,

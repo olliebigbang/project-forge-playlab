@@ -4,8 +4,8 @@ extends RefCounted
 const MECHANISM_AXES := preload("res://scripts/combat_feel/mechanism_axis_resolver.gd")
 const AFFORDANCE_PROFILE := preload("res://scripts/combat_feel/object_affordance_profile.gd")
 
-const CACHE_PATH := "user://playlab/general_object_ai/cache_v1.json"
-const CACHE_SCHEMA := "forge-general-object-ai-cache-v1"
+const CACHE_PATH := "user://playlab/general_object_ai/cache_v2.json"
+const CACHE_SCHEMA := "forge-general-object-ai-cache-v2"
 const RESPONSE_SCHEMA := "forge-general-object-ai-response-v1"
 const SUPPORTED_CLASSIFICATION := "improvised_object_supported"
 const CLASSIFICATIONS: PackedStringArray = [
@@ -121,6 +121,9 @@ static func validate_ai_response(player_text: String, payload: Dictionary, sourc
 	var relationship_errors := _declaration_relationship_errors(declaration)
 	if not relationship_errors.is_empty():
 		return _failure("AI_GENERAL_OBJECT_DECLARATION_CONFLICT:%s" % ",".join(relationship_errors))
+	var role_validation := _validate_mechanism_roles(payload.get("mechanism_roles", {}), visible_parts.get("values", []), declaration)
+	if not bool(role_validation.get("ok", false)):
+		return role_validation
 	var profile := {
 		"id": "object_%s" % _normalize(player_text).sha256_text().left(16),
 		"canonical_name": canonical_name,
@@ -128,6 +131,7 @@ static func validate_ai_response(player_text: String, payload: Dictionary, sourc
 		"visual_description_en": visual_description,
 		"required_identity_parts_zh": visible_parts.get("values", []),
 		"confusable_exclusions_en": exclusions.get("values", []),
+		"mechanism_roles": (role_validation.get("roles", {}) as Dictionary).duplicate(true),
 		"identity_evidence": evidence.get("values", []),
 		"behavior_family": "heavy_melee",
 		"scale_treatment": scale_treatment,
@@ -193,6 +197,30 @@ static func _validated_string_array(value: Variant, minimum: int, maximum: int, 
 	return {"ok": true, "values": values}
 
 
+static func _validate_mechanism_roles(value: Variant, visible_parts: Array, declaration: Dictionary) -> Dictionary:
+	var keys: Array[String] = ["grip_part_zh", "activation_part_zh", "effect_origin_part_zh"]
+	if not value is Dictionary or (value as Dictionary).size() != keys.size():
+		return _failure("AI_GENERAL_OBJECT_MECHANISM_ROLES_SHAPE_INVALID")
+	var roles := value as Dictionary
+	for key: String in keys:
+		if not roles.has(key) or not roles[key] is String or str(roles[key]).length() > 64:
+			return _failure("AI_GENERAL_OBJECT_MECHANISM_ROLE_INVALID")
+	var grip := str(roles.grip_part_zh).strip_edges()
+	var activation := str(roles.activation_part_zh).strip_edges()
+	var effect_origin := str(roles.effect_origin_part_zh).strip_edges()
+	if grip.is_empty() or grip not in visible_parts:
+		return _failure("AI_GENERAL_OBJECT_MECHANISM_GRIP_ROLE_INVALID")
+	if effect_origin.is_empty() or effect_origin not in visible_parts:
+		return _failure("AI_GENERAL_OBJECT_MECHANISM_EFFECT_ROLE_INVALID")
+	if str(declaration.get("activation_mode", "")) == "passive":
+		if not activation.is_empty(): return _failure("AI_GENERAL_OBJECT_MECHANISM_PASSIVE_ACTIVATION_ROLE_CONFLICT")
+	elif activation.is_empty() or activation not in visible_parts:
+		return _failure("AI_GENERAL_OBJECT_MECHANISM_ACTIVATION_ROLE_INVALID")
+	if str(declaration.get("grip_topology", "")) in ["one_hand_handle", "two_hand_handle"] and grip == effect_origin:
+		return _failure("AI_GENERAL_OBJECT_MECHANISM_HANDLE_EFFECT_ROLE_CONFLICT")
+	return {"ok": true, "roles": {"grip_part_zh": grip, "activation_part_zh": activation, "effect_origin_part_zh": effect_origin}}
+
+
 static func _declaration_relationship_errors(declaration: Dictionary) -> Array[String]:
 	var profile: ObjectAffordanceProfile = AFFORDANCE_PROFILE.new()
 	for axis: String in MECHANISM_AXES.REQUIRED_AXES:
@@ -229,6 +257,11 @@ static func _validate_cached_profile(profile: Dictionary) -> Dictionary:
 	if str(profile.get("behavior_family", "")) != "heavy_melee":
 		return _failure("AI_GENERAL_OBJECT_CACHE_PROFILE_INVALID")
 	if str(profile.get("scale_treatment", "")) not in SCALE_TREATMENTS:
+		return _failure("AI_GENERAL_OBJECT_CACHE_PROFILE_INVALID")
+	if not profile.get("required_identity_parts_zh", []) is Array:
+		return _failure("AI_GENERAL_OBJECT_CACHE_PROFILE_INVALID")
+	var role_validation := _validate_mechanism_roles(profile.get("mechanism_roles", {}), profile.get("required_identity_parts_zh", []), declaration)
+	if not bool(role_validation.get("ok", false)):
 		return _failure("AI_GENERAL_OBJECT_CACHE_PROFILE_INVALID")
 	return {"ok": true}
 

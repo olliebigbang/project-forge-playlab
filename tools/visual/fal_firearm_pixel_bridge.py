@@ -73,6 +73,9 @@ EXPECTED_REQUEST_KEYS = frozenset(
         "retry_prompt",
     }
 )
+ART_STYLE_ID = "church_v1"
+ART_STYLE_VERSION = "church-pixel-v1.0"
+ART_STYLE_VERSIONS = {ART_STYLE_ID: ART_STYLE_VERSION, "sunny_v1": "sunny-pixel-v1.0"}
 CURATED_IDENTITY_REFERENCES: dict[str, dict[str, str]] = {
     "type_81_museum_cc_by_sa_v1": {
         "identity_id": "type_81",
@@ -110,7 +113,7 @@ AXIS_LEGAL_VALUES = {
     "upper_profile": frozenset(
         {"carry_handle", "top_rail", "raised_gas_tube", "slide", "ribbed_barrel", "revolver_frame", "feed_cover"}
     ),
-    "support_mode": frozenset({"one_hand", "two_hand_shouldered"}),
+    "support_mode": frozenset({"one_hand", "two_hand_shouldered", "two_hand_free"}),
     "finish_palette": frozenset({"gunmetal_black", "olive_black", "wood_steel", "dark_polymer"}),
 }
 PROMPT_SYNTAX = ("(", ")", "[", "]", "{", "}", "<", ">", ":")
@@ -189,9 +192,10 @@ def _validate_axes(value: Any) -> dict[str, str]:
     ):
         raise FalFirearmBridgeError("AXES_BULLPUP_CONFLICT")
     if layout == "conventional_rifle" and not (
-        axes["stock_structure"] != "none"
-        and axes["feed_position"] == "ahead_of_grip"
-        and axes["support_mode"] == "two_hand_shouldered"
+        axes["feed_position"] == "ahead_of_grip" and (
+            (axes["stock_structure"] != "none" and axes["support_mode"] == "two_hand_shouldered")
+            or (axes["stock_structure"] == "none" and axes["support_mode"] in {"one_hand", "two_hand_free"})
+        )
     ):
         raise FalFirearmBridgeError("AXES_CONVENTIONAL_CONFLICT")
     if layout == "pistol" and not (
@@ -258,8 +262,34 @@ def _resolve_identity_reference(value: Any, identity_card: Mapping[str, Any]) ->
     return {"reference_id": reference_id, **registered}
 
 
+def validate_art_style(value: Any) -> dict[str, str]:
+    """An optional art-only contract, not a second source of object mechanics."""
+    if not isinstance(value, Mapping) or set(value) != {"id", "version", "prompt"}:
+        raise FalFirearmBridgeError("ART_STYLE_SCHEMA_INVALID")
+    if not isinstance(value.get("id"), str) or value.get("id") not in ART_STYLE_VERSIONS or value.get("version") != ART_STYLE_VERSIONS[value["id"]]:
+        raise FalFirearmBridgeError("ART_STYLE_UNSUPPORTED")
+    prompt = value.get("prompt")
+    if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > 2400:
+        raise FalFirearmBridgeError("ART_STYLE_PROMPT_INVALID")
+    if any(ord(character) < 32 for character in prompt):
+        raise FalFirearmBridgeError("ART_STYLE_PROMPT_INVALID")
+    return {"id": value["id"], "version": value["version"], "prompt": prompt}
+
+
+def art_style_prompt_clause(request: Mapping[str, Any]) -> str:
+    if "art_style" not in request:
+        return ""
+    style = validate_art_style(request["art_style"])
+    return (
+        " Locked shared game art direction, affecting appearance only and never object identity, "
+        f"parts, dimensions or mechanics: {style['prompt']} "
+        "Preserve the exact named object and all locked structural landmarks; this palette and "
+        "shading contract does not authorize a fantasy redesign or extra decorations."
+    )
+
+
 def validate_request(value: Mapping[str, Any]) -> dict[str, Any]:
-    if set(value) != EXPECTED_REQUEST_KEYS or value.get("schema") != REQUEST_SCHEMA:
+    if set(value) - {"art_style"} != EXPECTED_REQUEST_KEYS or value.get("schema") != REQUEST_SCHEMA:
         raise FalFirearmBridgeError("REQUEST_SCHEMA_INVALID")
     identity = _required_text(value.get("identity"), maximum=160, code="IDENTITY_INVALID")
     identity_prompt = _required_text(
@@ -304,7 +334,7 @@ def validate_request(value: Mapping[str, Any]) -> dict[str, Any]:
     identity_reference = _resolve_identity_reference(
         value.get("identity_reference_id"), identity_card
     )
-    return {
+    result = {
         "identity": identity,
         "identity_prompt_text": identity_prompt,
         "canonical_name": canonical_name,
@@ -319,6 +349,9 @@ def validate_request(value: Mapping[str, Any]) -> dict[str, Any]:
         "retry_index": retry_index,
         "retry_prompt": retry_prompt,
     }
+    if "art_style" in value:
+        result["art_style"] = validate_art_style(value["art_style"])
+    return result
 
 
 def build_generation_prompt(request: Mapping[str, Any]) -> str:
@@ -418,6 +451,7 @@ def build_generation_prompt(request: Mapping[str, Any]) -> str:
         "replace it with a generic rifle, generic pistol, toy, fantasy gun, or sci-fi redesign."
         f"{reference_clause}{retry_clause} No text, labels, logos, watermark, person, hands. {ammunition_exclusion} muzzle flash, "
         "ground, or shadow."
+        f"{art_style_prompt_clause(request)}"
     )
 
 
@@ -457,6 +491,26 @@ def _read_limited(response: Any, maximum: int, code: str) -> bytes:
     return data
 
 
+def _safe_http_error_detail(error: urllib.error.HTTPError) -> str:
+    """Map a small provider error body to a closed, non-secret diagnostic code."""
+    try:
+        raw = error.read(4097)
+    except Exception:
+        return ""
+    if len(raw) > 4096:
+        return ""
+    text = raw.decode("utf-8", errors="ignore").lower()
+    if any(token in text for token in ("balance", "credit", "insufficient funds", "payment required")):
+        return "ACCOUNT_BALANCE"
+    if any(token in text for token in ("content policy", "moderation", "safety policy")):
+        return "CONTENT_POLICY"
+    if any(token in text for token in ("invalid api key", "invalid key", "authentication", "unauthenticated")):
+        return "AUTH"
+    if any(token in text for token in ("permission", "not permitted", "access denied", "model access")):
+        return "MODEL_ACCESS"
+    return ""
+
+
 def _post_json(endpoint: str, payload: Mapping[str, Any], api_key: str, stage: str) -> dict[str, Any]:
     encoded = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     request = urllib.request.Request(
@@ -477,7 +531,9 @@ def _post_json(endpoint: str, payload: Mapping[str, Any], api_key: str, stage: s
     except FalFirearmBridgeError:
         raise
     except urllib.error.HTTPError as exc:
-        raise FalFirearmBridgeError(f"{stage}_HTTP_{exc.code}") from exc
+        detail = _safe_http_error_detail(exc)
+        suffix = f"_{detail}" if detail else ""
+        raise FalFirearmBridgeError(f"{stage}_HTTP_{exc.code}{suffix}") from exc
     except (urllib.error.URLError, TimeoutError, socket.timeout) as exc:
         raise FalFirearmBridgeError(f"{stage}_NETWORK_FAILED") from exc
     try:
@@ -917,6 +973,7 @@ def generate(request: Mapping[str, Any], output_directory: Path, api_key: str) -
         "player_mechanism_input_used": False,
         "player_mechanism_confirmation_required": False,
         "visual_identity_confirmation_required": False,
+        **({"art_style": dict(request["art_style"])} if "art_style" in request else {}),
     }
 
 

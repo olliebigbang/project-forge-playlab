@@ -2,6 +2,13 @@ class_name MotionPrimitive
 extends Resource
 
 const MOTION_FAMILIES: PackedStringArray = ["bash", "sweep", "thrust", "slam", "spin"]
+const TRAJECTORY_PLANES: PackedStringArray = ["screen_arc", "ground_sweep", "ground_orbit", "thrust_line"]
+const PRESENTATION_FAMILIES: PackedStringArray = [
+	"default",
+	"pole_jab", "pole_drive", "pole_rake", "pole_pin", "pole_charge", "pole_dodge",
+	"weighted_cast_low", "weighted_lash_cross", "weighted_retract",
+	"weighted_cast_charge", "weighted_dodge_lash",
+]
 const CONTACT_ANCHORS: PackedStringArray = ["tip", "muzzle", "rear_contact", "whole_body"]
 const CONTACT_SURFACES: PackedStringArray = ["point", "edge", "broad", "whole_body"]
 const FLEX_TOPOLOGIES: PackedStringArray = ["none", "bending_shaft", "flexible_line", "linked_segments"]
@@ -13,6 +20,8 @@ const ACTIVATION_MODES: PackedStringArray = ["passive", "momentary", "toggle", "
 const FUNCTIONAL_OUTPUTS: PackedStringArray = ["contact_only", "directed_stream", "radial_field", "pull_field"]
 
 @export_enum("bash", "sweep", "thrust", "slam", "spin") var motion_family := "sweep"
+@export_enum("screen_arc", "ground_sweep", "ground_orbit", "thrust_line") var trajectory_plane := "screen_arc"
+@export_enum("default", "pole_jab", "pole_drive", "pole_rake", "pole_pin", "pole_charge", "pole_dodge", "weighted_cast_low", "weighted_lash_cross", "weighted_retract", "weighted_cast_charge", "weighted_dodge_lash") var presentation_family := "default"
 @export var start_angle := -1.18
 @export var end_angle := 1.02
 @export_enum("tip", "muzzle", "rear_contact", "whole_body") var contact_anchor := "tip"
@@ -59,6 +68,10 @@ func validation_errors() -> Array[String]:
 	var errors: Array[String] = []
 	if motion_family not in MOTION_FAMILIES:
 		errors.append("INVALID_MOTION_FAMILY")
+	if trajectory_plane not in TRAJECTORY_PLANES:
+		errors.append("INVALID_TRAJECTORY_PLANE")
+	if presentation_family not in PRESENTATION_FAMILIES:
+		errors.append("INVALID_PRESENTATION_FAMILY")
 	if contact_anchor not in CONTACT_ANCHORS:
 		errors.append("INVALID_CONTACT_ANCHOR")
 	if contact_surface not in CONTACT_SURFACES:
@@ -137,7 +150,7 @@ func validation_errors() -> Array[String]:
 
 
 func to_dict() -> Dictionary:
-	return {
+	var data := {
 		"motion_family": motion_family,
 		"contact_anchor": contact_anchor,
 		"contact_surface": contact_surface,
@@ -180,3 +193,10 @@ func to_dict() -> Dictionary:
 		"camera_kick_multiplier": camera_kick_multiplier,
 		"movement_allowed_ratio": movement_allowed_ratio,
 	}
+	# Keep signatures for all existing default primitives byte-for-byte stable.
+	# Extra structure presentation fields are serialized only when selected.
+	if trajectory_plane != "screen_arc":
+		data["trajectory_plane"] = trajectory_plane
+	if presentation_family != "default":
+		data["presentation_family"] = presentation_family
+	return data

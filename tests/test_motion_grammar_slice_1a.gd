@@ -57,6 +57,7 @@ func _run() -> void:
 	_test_v2_grips_change_cancel_mobility_and_pose_rules()
 	_test_v2_mass_owns_tempo_and_recovery_carry()
 	_test_v2_contact_surfaces_change_shape_damage_and_reaction()
+	_test_v2_rigid_edge_profiles_compile_distinct_blade_recipes()
 	_test_v2_secondary_contact_reserves_hit_three()
 	_test_v2_redundant_capability_flags_are_covered_not_double_counted()
 	_test_v2_rigidity_moves_the_real_contact_hitbox()
@@ -68,6 +69,7 @@ func _run() -> void:
 	_test_v4_fishing_rod_asset_compiles_from_ai_axes_without_name_rules()
 	_test_v7_tether_deployment_owns_endpoint_timeline()
 	_test_v8_state_activation_and_output_axes_reach_runtime()
+	_test_v9_structure_selects_pole_and_weighted_action_grammar()
 	_test_v5_ai_visual_rig_binds_every_visible_source_pixel()
 	_test_v5_original_pixels_follow_body_tether_and_terminal_paths()
 	_test_v5_topology_axes_produce_distinct_pixel_geometry()
@@ -116,7 +118,7 @@ func _test_three_structure_rules() -> void:
 		ok = ok and pan.combo_recipe.signature() != broom.combo_recipe.signature()
 		ok = ok and pan.combo_recipe.signature() != shotgun.combo_recipe.signature()
 		ok = ok and broom.combo_recipe.signature() != shotgun.combo_recipe.signature()
-		ok = ok and pan.compile_trace.get("composer") == "orthogonal_affordance_v5"
+		ok = ok and pan.compile_trace.get("composer") == "orthogonal_affordance_v6"
 		ok = ok and not bool(pan.compile_trace.get("identity_inputs_used", true))
 	_check(ok, "03 distinct affordance axes produce valid distinct recipes with an identity-free trace")
 
@@ -575,9 +577,10 @@ func _test_secondary_contacts_have_distinct_runtime_channels() -> void:
 	var broad: Resource = profiles["broad"]
 	var whole_body: Resource = profiles["whole_body"]
 	var expected := {
-		"point": ["thrust", "point", "rear_contact"],
-		"edge": ["sweep", "edge", "rear_contact"],
-		"broad": ["bash", "broad", "rear_contact"],
+		# A secondary surface alone supplies no rear-part geometry/identity.
+		"point": ["thrust", "point", "tip"],
+		"edge": ["sweep", "edge", "tip"],
+		"broad": ["bash", "broad", "tip"],
 		"whole_body": ["spin", "whole_body", "whole_body"],
 	}
 	var signatures := {}
@@ -900,6 +903,33 @@ func _test_v2_contact_surfaces_change_shape_damage_and_reaction() -> void:
 	_check(ok, "34 primary contact selects a distinct hit shape damage tradeoff and enemy reaction")
 
 
+func _test_v2_rigid_edge_profiles_compile_distinct_blade_recipes() -> void:
+	var balanced_medium := _anonymous_profile()
+	balanced_medium.handle_length = "short"
+	balanced_medium.body_length = "medium"
+	balanced_medium.mass_distribution = "balanced"
+	balanced_medium.contact_surface = "edge"
+	balanced_medium.secondary_contact_surface = "point"
+	balanced_medium.has_edge = true
+	balanced_medium.has_point = true
+	balanced_medium.has_broad_face = false
+	var front_short := _copy_affordance(balanced_medium)
+	front_short.body_length = "short"
+	front_short.mass_distribution = "front"
+	var balanced_profile := _compile_anonymous(balanced_medium)
+	var front_profile := _compile_anonymous(front_short)
+	var ok := balanced_profile != null and front_profile != null
+	if ok:
+		ok = balanced_profile.combo_recipe.primitive_sequence() == PackedStringArray(["sweep", "bash", "thrust"])
+		ok = ok and front_profile.combo_recipe.primitive_sequence() == PackedStringArray(["sweep", "slam", "thrust"])
+		ok = ok and balanced_profile.combo_recipe.charge_attack.motion_family == "sweep"
+		ok = ok and front_profile.combo_recipe.charge_attack.motion_family == "sweep"
+		ok = ok and balanced_profile.combo_recipe.dodge_attack.motion_family == "sweep"
+		ok = ok and front_profile.combo_recipe.dodge_attack.motion_family == "sweep"
+		ok = ok and balanced_profile.combo_recipe.signature() != front_profile.combo_recipe.signature()
+	_check(ok, "34b rigid edge profiles use an edge opener plus point finisher while body length and mass change the middle hit")
+
+
 func _test_v2_secondary_contact_reserves_hit_three() -> void:
 	var baseline := _anonymous_profile()
 	var secondary := _copy_affordance(baseline)
@@ -911,7 +941,7 @@ func _test_v2_secondary_contact_reserves_hit_three() -> void:
 	ok = ok and base_profile.combo_recipe.hit_2.to_dict() == secondary_profile.combo_recipe.hit_2.to_dict()
 	ok = ok and base_profile.combo_recipe.hit_3.to_dict() != third.to_dict()
 	ok = ok and third.uses_secondary_contact and third.contact_surface == "point"
-	ok = ok and third.motion_family == "thrust" and third.contact_anchor == "rear_contact"
+	ok = ok and third.motion_family == "thrust" and third.contact_anchor == "tip"
 	ok = ok and secondary_profile.secondary_contact_stage == "hit_3"
 	_check(ok, "35 a secondary surface changes one reserved move instead of weakly buffing every move")
 
@@ -1267,6 +1297,60 @@ func _test_v8_state_activation_and_output_axes_reach_runtime() -> void:
 	ok = ok and runtime_source.contains("primitive.functional_output")
 	ok = ok and signatures.size() == definitions.size()
 	_check(ok, "43b state change activation and functional output axes compile into distinct real hit geometry timing and force without identity branches")
+
+
+func _test_v9_structure_selects_pole_and_weighted_action_grammar() -> void:
+	var pole: Resource = _anonymous_profile()
+	pole.handle_length = "long"
+	pole.body_length = "long"
+	pole.grip_topology = "two_hand_handle"
+	pole.rigidity = "rigid"
+	pole.contact_surface = "point"
+	pole.has_point = true
+	var pole_compiled := _compile_anonymous(pole)
+	var weighted: Resource = _anonymous_profile()
+	weighted.handle_length = "none"
+	weighted.body_length = "long"
+	weighted.grip_topology = "body_grip"
+	weighted.rigidity = "flexible"
+	weighted.flex_topology = "linked_segments"
+	weighted.terminal_load = "heavy"
+	weighted.mass_distribution = "front"
+	weighted.contact_surface = "whole_body"
+	var weighted_compiled := _compile_anonymous(weighted)
+	var ok := pole_compiled != null and weighted_compiled != null
+	if ok:
+		ok = pole_compiled.validation_errors().is_empty() and weighted_compiled.validation_errors().is_empty()
+		ok = ok and pole_compiled.compile_trace.get("presentation_grammar") == "polearm_point"
+		ok = ok and weighted_compiled.compile_trace.get("presentation_grammar") == "weighted_flexible"
+		ok = ok and pole_compiled.combo_recipe.primitive_sequence() == PackedStringArray(["thrust", "thrust", "thrust"])
+		ok = ok and weighted_compiled.combo_recipe.primitive_sequence() == PackedStringArray(["sweep", "sweep", "sweep"])
+		var pole_presentations := PackedStringArray()
+		var weighted_presentations := PackedStringArray()
+		var pole_planes := PackedStringArray()
+		var weighted_planes := PackedStringArray()
+		for slot: String in ["hit_1", "hit_2", "hit_3", "charge_attack", "dodge_attack"]:
+			pole_presentations.append(str(pole_compiled.combo_recipe.get(slot).presentation_family))
+			weighted_presentations.append(str(weighted_compiled.combo_recipe.get(slot).presentation_family))
+			pole_planes.append(str(pole_compiled.combo_recipe.get(slot).trajectory_plane))
+			weighted_planes.append(str(weighted_compiled.combo_recipe.get(slot).trajectory_plane))
+			ok = ok and weighted_compiled.combo_recipe.get(slot).contact_anchor == "tip"
+		ok = ok and pole_presentations == PackedStringArray(["pole_jab", "pole_rake", "pole_pin", "pole_charge", "pole_dodge"])
+		ok = ok and weighted_presentations == PackedStringArray(["weighted_cast_low", "weighted_lash_cross", "weighted_retract", "weighted_cast_charge", "weighted_dodge_lash"])
+		ok = ok and pole_planes == PackedStringArray(["thrust_line", "ground_sweep", "screen_arc", "screen_arc", "thrust_line"])
+		ok = ok and weighted_planes == PackedStringArray(["ground_orbit", "ground_sweep", "ground_orbit", "ground_orbit", "ground_sweep"])
+		var pole_jab: Resource = pole_compiled.combo_recipe.hit_1
+		var pole_rake: Resource = pole_compiled.combo_recipe.hit_2
+		var pole_pin: Resource = pole_compiled.combo_recipe.hit_3
+		ok = ok and absf(float(pole_jab.end_angle) - float(pole_jab.start_angle)) >= 0.20
+		ok = ok and float(pole_rake.start_angle) < -2.50 and float(pole_rake.end_angle) > 0.20
+		ok = ok and float(pole_pin.start_angle) < -0.70 and float(pole_pin.end_angle) > 0.35
+		ok = ok and absf(float(weighted_compiled.combo_recipe.hit_1.end_angle) - float(weighted_compiled.combo_recipe.hit_1.start_angle)) < PI
+		ok = ok and absf(float(weighted_compiled.combo_recipe.hit_2.end_angle) - float(weighted_compiled.combo_recipe.hit_2.start_angle)) < PI
+	var compiler_source := FileAccess.get_file_as_string("res://scripts/combat_feel/melee_motion_compiler.gd").to_lower()
+	for forbidden_name: String in ["garden fork", "padlock chain", "园艺叉", "挂锁"]:
+		ok = ok and not compiler_source.contains(forbidden_name)
+	_check(ok, "43c anonymous rigid two-hand point levers jab rake and plant while linked terminal loads cast orbit and retract without identity rules")
 
 
 func _test_v5_ai_visual_rig_binds_every_visible_source_pixel() -> void:

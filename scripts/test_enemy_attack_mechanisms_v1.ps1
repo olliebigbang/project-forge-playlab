@@ -8,7 +8,7 @@ $TestExit = $LASTEXITCODE
 $TestOutput = Get-Content -LiteralPath $TestLog.FullName -Raw
 Remove-Item -LiteralPath $TestLog.FullName
 
-$ExpectedSummary = "ENEMY ATTACK MECHANISMS V1 RESULT: 12 passed, 0 failed"
+$ExpectedSummary = "ENEMY ATTACK MECHANISMS V1 RESULT: 17 passed, 0 failed"
 if (
     $TestExit -ne 0 -or
     $TestOutput -match "ERROR: FAIL|failed=[1-9]|ENEMY ATTACK MECHANISMS V1 RESULT:.*[1-9] failed" -or

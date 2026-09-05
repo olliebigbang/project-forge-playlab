@@ -53,6 +53,11 @@ def supported_payload(identity: str = "冰箱", *, declaration: dict | None = No
         ),
         "required_identity_parts_zh": ["主体轮廓", "主要结构件"],
         "confusable_exclusions_en": ["not a generic featureless bar"],
+        "mechanism_roles": {
+            "grip_part_zh": "主体轮廓",
+            "activation_part_zh": "",
+            "effect_origin_part_zh": "主要结构件",
+        },
         "behavior_family": "heavy_melee",
         "scale_treatment": "bulky_two_hand",
         "declaration": axes,
@@ -67,6 +72,7 @@ def inert_payload(identity: str, classification: str) -> dict:
     value["visual_description_en"] = ""
     value["required_identity_parts_zh"] = []
     value["confusable_exclusions_en"] = []
+    value["mechanism_roles"] = {key: "" for key in bridge.MECHANISM_ROLE_KEYS}
     value["declaration"] = {
         key: "not_applicable" for key in bridge.STRING_AXIS_KEYS
     }
@@ -157,12 +163,19 @@ class GeneralObjectAIBridgeTests(unittest.TestCase):
         self.assertEqual(rod_result["declaration"]["tether_deployment"], "cast_retract")
         self.assertNotEqual(whip_result["declaration"], rod_result["declaration"])
 
-    def test_conflicting_flex_and_grip_axes_are_rejected(self) -> None:
+    def test_specific_flex_topology_repairs_coarse_rigidity_but_missing_topology_is_rejected(self) -> None:
         rigid_with_flex = supported_payload(
             "坏结构", declaration={"rigidity": "rigid", "flex_topology": "flexible_line"}
         )
+        repaired = bridge.validate_response("坏结构", rigid_with_flex)
+        self.assertEqual(repaired["declaration"]["rigidity"], "flexible")
+        flexible_without_topology = supported_payload(
+            "不完整软结构", declaration={"rigidity": "flexible", "flex_topology": "none"}
+        )
         with self.assertRaisesRegex(bridge.GeneralObjectBridgeError, "FLEX_RIGIDITY_CONFLICT"):
-            bridge.validate_response("坏结构", rigid_with_flex)
+            bridge.validate_response("不完整软结构", flexible_without_topology)
+
+    def test_handleless_handle_grip_is_rejected(self) -> None:
         handleless_hand_grip = supported_payload(
             "坏握法", declaration={"grip_topology": "one_hand_handle"}
         )
@@ -182,8 +195,47 @@ class GeneralObjectAIBridgeTests(unittest.TestCase):
                 "functional_output": "directed_stream",
             },
         )
+        active_output["required_identity_parts_zh"] = ["握持部", "泵压部", "出口"]
+        active_output["mechanism_roles"] = {
+            "grip_part_zh": "握持部",
+            "activation_part_zh": "泵压部",
+            "effect_origin_part_zh": "出口",
+        }
         result = bridge.validate_response("匿名喷流结构", active_output)
         self.assertEqual(result["declaration"]["functional_output"], "directed_stream")
+
+    def test_mechanism_roles_bind_grip_activation_and_effect_to_visible_parts(self) -> None:
+        value = supported_payload(
+            "匿名泵压容器",
+            declaration={
+                "handle_length": "short",
+                "grip_topology": "one_hand_handle",
+                "activation_mode": "momentary",
+                "functional_output": "directed_stream",
+            },
+        )
+        value["required_identity_parts_zh"] = ["侧把", "泵压杆", "前端出口"]
+        value["mechanism_roles"] = {
+            "grip_part_zh": "侧把",
+            "activation_part_zh": "泵压杆",
+            "effect_origin_part_zh": "前端出口",
+        }
+        result = bridge.validate_response("匿名泵压容器", value)
+        self.assertEqual(result["mechanism_roles"]["grip_part_zh"], "侧把")
+        self.assertEqual(result["mechanism_roles"]["effect_origin_part_zh"], "前端出口")
+
+        value["mechanism_roles"]["grip_part_zh"] = "前端出口"
+        with self.assertRaisesRegex(bridge.GeneralObjectBridgeError, "HANDLE_EFFECT_ROLE_CONFLICT"):
+            bridge.validate_response("匿名泵压容器", value)
+
+    def test_active_output_cannot_omit_or_invent_role_parts(self) -> None:
+        value = supported_payload(
+            "匿名主动结构",
+            declaration={"activation_mode": "continuous_hold", "functional_output": "pull_field"},
+        )
+        value["mechanism_roles"]["activation_part_zh"] = "不存在的按钮"
+        with self.assertRaisesRegex(bridge.GeneralObjectBridgeError, "ACTIVATION_ROLE_INVALID"):
+            bridge.validate_response("匿名主动结构", value)
 
     def test_selected_contact_surfaces_repair_their_redundant_capability_flags(self) -> None:
         value = supported_payload("平板电视")
@@ -211,6 +263,32 @@ class GeneralObjectAIBridgeTests(unittest.TestCase):
         repaired = bridge.validate_response("带配重软线", weighted_line)
         self.assertTrue(repaired["declaration"]["has_point"])
         self.assertEqual(repaired["declaration"]["terminal_load"], "heavy")
+
+    def test_rigid_object_clears_impossible_soft_path_values_without_changing_structure(self) -> None:
+        rigid = supported_payload("匿名刚性物件")
+        rigid["declaration"]["terminal_load"] = "heavy"
+        rigid["declaration"]["tether_mode"] = "hook"
+        rigid["declaration"]["tether_deployment"] = "continuous"
+        result = bridge.validate_response("匿名刚性物件", rigid)
+        self.assertEqual(result["declaration"]["terminal_load"], "none")
+        self.assertEqual(result["declaration"]["tether_mode"], "none")
+        self.assertEqual(result["declaration"]["tether_deployment"], "none")
+        self.assertEqual(result["declaration"]["rigidity"], "rigid")
+        self.assertEqual(result["declaration"]["flex_topology"], "none")
+        self.assertEqual(result["declaration"]["state_topology"], "fixed")
+
+        soft = supported_payload(
+            "匿名软体物件",
+            declaration={
+                "rigidity": "flexible",
+                "flex_topology": "flexible_line",
+                "contact_surface": "whole_body",
+                "secondary_contact_surface": "none",
+                "terminal_load": "not_applicable",
+            },
+        )
+        with self.assertRaisesRegex(bridge.GeneralObjectBridgeError, "TERMINAL_LOAD"):
+            bridge.validate_response("匿名软体物件", soft)
 
     def test_powered_vehicle_and_living_actor_stay_inert(self) -> None:
         tank = bridge.validate_response(
@@ -277,12 +355,27 @@ class GeneralObjectAIBridgeTests(unittest.TestCase):
     def test_prompt_and_schema_are_closed_and_forbid_mechanism_questions(self) -> None:
         prompt = bridge.PROMPT_PATH.read_text(encoding="utf-8")
         schema = json.loads(bridge.SCHEMA_PATH.read_text(encoding="utf-8"))
+        named_prompt = bridge.NAMED_IDENTITY_PROMPT_PATH.read_text(encoding="utf-8")
+        named_schema = json.loads(bridge.NAMED_IDENTITY_SCHEMA_PATH.read_text(encoding="utf-8"))
         self.assertIn("untrusted identity data", prompt)
         self.assertIn("Do not ask the player how the object attacks", prompt)
         self.assertIn("bicycle", prompt)
         self.assertIn("rigid sections joined into a freely articulated chain", prompt)
+        self.assertIn("mechanism_roles assigns those exact large parts", prompt)
+        self.assertIn("Proper names and titled artifacts", prompt)
+        self.assertIn("physical head noun", prompt)
+        self.assertIn("never add a title-specific combat recipe", prompt)
+        self.assertIn("mechanism_roles", schema["required"])
         self.assertFalse(schema["additionalProperties"])
         self.assertFalse(schema["properties"]["declaration"]["additionalProperties"])
+        self.assertIn("constrained physical-class resolver", named_prompt)
+        self.assertIn("Do not choose attacks", named_prompt)
+        self.assertIn("proper title", named_prompt)
+        self.assertIn("body_span is a locked class-level silhouette fact", named_prompt)
+        self.assertIn("Never shrink a full-size object", named_prompt)
+        self.assertIn("locked body_span", prompt)
+        self.assertEqual(named_schema["$id"], bridge.NAMED_IDENTITY_SCHEMA)
+        self.assertFalse(named_schema["additionalProperties"])
 
     def test_runtime_bridge_contains_no_identity_specific_repairs(self) -> None:
         source = Path(bridge.__file__).read_text(encoding="utf-8").lower()
@@ -295,6 +388,8 @@ class GeneralObjectAIBridgeTests(unittest.TestCase):
             "网球拍",
             "灭火器",
             "溜溜球",
+            "雪饮狂刀",
+            "绝世好剑",
         ):
             self.assertNotIn(forbidden, source)
 
@@ -309,8 +404,7 @@ class GeneralObjectAIBridgeTests(unittest.TestCase):
                 FakeCompiler.prompts.append(self.system_prompt)
                 value = supported_payload(identity)
                 if len(FakeCompiler.prompts) == 1:
-                    value["declaration"]["rigidity"] = "rigid"
-                    value["declaration"]["flex_topology"] = "flexible_line"
+                    value["declaration"]["grip_topology"] = "one_hand_handle"
                 return {
                     "tool_name": bridge.BLUEPRINT_TOOL_NAME,
                     "tool_input": value,
@@ -324,14 +418,279 @@ class GeneralObjectAIBridgeTests(unittest.TestCase):
         self.assertEqual(model_id, "fake-general-object-model")
         self.assertEqual(usage, {"input_tokens": 20, "output_tokens": 10})
         self.assertEqual(len(FakeCompiler.prompts), 2)
-        self.assertIn("DECLARATION_FLEX_RIGIDITY_CONFLICT", FakeCompiler.prompts[1])
-        self.assertIn("any non-none flex_topology requires rigidity flexible", FakeCompiler.prompts[1])
+        self.assertIn("DECLARATION_HANDLE_GRIP_CONFLICT", FakeCompiler.prompts[1])
+        self.assertIn("handle_length none requires body_grip or clamp_grip", FakeCompiler.prompts[1])
         self.assertIn("do not change the identity", FakeCompiler.prompts[1])
+
+    def test_low_confidence_named_card_gets_one_bounded_class_resolution_pass(self) -> None:
+        class FakeCompiler:
+            prompts: list[str] = []
+            identities: list[str] = []
+
+            def __init__(self, *, system_prompt: str, **_: object) -> None:
+                self.system_prompt = system_prompt
+
+            def compile(self, identity: str) -> dict:
+                FakeCompiler.prompts.append(self.system_prompt)
+                FakeCompiler.identities.append(identity)
+                if "constrained physical-class resolver" in self.system_prompt:
+                    value = {
+                        "schema": bridge.NAMED_IDENTITY_SCHEMA,
+                        "requested_identity": identity,
+                        "status": "resolved",
+                        "physical_class_zh": "长柄单刃刀",
+                        "body_span": "long",
+                        "confidence": 0.88,
+                        "identity_evidence": ["专名指向稳定的实体刀类"],
+                    }
+                else:
+                    value = supported_payload(identity)
+                    if identity == "长柄单刃刀":
+                        value["declaration"]["body_length"] = "long"
+                    value["confidence"] = 0.60 if len(FakeCompiler.prompts) == 1 else 0.84
+                return {
+                    "tool_name": bridge.BLUEPRINT_TOOL_NAME,
+                    "tool_input": value,
+                    "model_id": "fake-general-object-model",
+                    "usage": {"input_tokens": 7, "output_tokens": 3},
+                }
+
+        with patch.object(bridge, "AnthropicSemanticCompiler", FakeCompiler):
+            response, _, usage = bridge.resolve_with_anthropic("某专名物件")
+        self.assertEqual(response["requested_identity"], "某专名物件")
+        self.assertEqual(response["canonical_name"], "某专名物件")
+        self.assertEqual(response["confidence"], 0.84)
+        self.assertEqual(usage, {"input_tokens": 21, "output_tokens": 9})
+        self.assertEqual(len(FakeCompiler.prompts), 3)
+        self.assertEqual(FakeCompiler.identities, ["某专名物件", "某专名物件", "长柄单刃刀"])
+        self.assertIn("constrained physical-class resolver", FakeCompiler.prompts[1])
+        self.assertIn("internal normalized physical-class pass", FakeCompiler.prompts[2])
+        self.assertIn("exact generic physical class", FakeCompiler.prompts[2])
+        self.assertIn("Independently score confidence", FakeCompiler.prompts[2])
+        self.assertNotIn("class_confidence", FakeCompiler.prompts[2])
+        self.assertIn("Do not reconstruct the title", FakeCompiler.prompts[2])
+        self.assertIn("专名指向稳定的实体刀类", response["identity_evidence"])
+
+    def test_named_identity_resolution_is_closed_and_keeps_unknown_class_empty(self) -> None:
+        resolved = bridge.validate_named_identity_resolution(
+            "某专名物件",
+            {
+                "schema": bridge.NAMED_IDENTITY_SCHEMA,
+                "requested_identity": "某专名物件",
+                "status": "resolved",
+                "physical_class_zh": "弧形单刃刀",
+                "body_span": "medium",
+                "confidence": 0.91,
+                "identity_evidence": ["公开身份能确定普通实物类别"],
+            },
+        )
+        self.assertEqual(resolved["physical_class_zh"], "弧形单刃刀")
+
+        unknown = dict(resolved)
+        unknown.update({"status": "unknown", "physical_class_zh": "", "body_span": "unknown", "confidence": 0.31})
+        self.assertEqual(
+            bridge.validate_named_identity_resolution("某专名物件", unknown)["status"],
+            "unknown",
+        )
+        unknown["physical_class_zh"] = "猜测武器"
+        with self.assertRaisesRegex(bridge.GeneralObjectBridgeError, "UNKNOWN_CLASS_MUST_BE_EMPTY"):
+            bridge.validate_named_identity_resolution("某专名物件", unknown)
+
+    def test_literal_physical_head_noun_supports_bounded_named_resolution(self) -> None:
+        value = {
+            "schema": bridge.NAMED_IDENTITY_SCHEMA,
+            "requested_identity": "某某狂刀",
+            "status": "resolved",
+            "physical_class_zh": "弧形单刃刀",
+            "body_span": "long",
+            "confidence": 0.60,
+            "identity_evidence": ["名称包含明确的实体中心词"],
+        }
+        result = bridge.validate_named_identity_resolution("某某狂刀", value)
+        self.assertEqual(result["physical_class_zh"], "弧形单刃刀")
+
+        value["requested_identity"] = "某某神器"
+        with self.assertRaisesRegex(bridge.GeneralObjectBridgeError, "CONFIDENCE_TOO_LOW"):
+            bridge.validate_named_identity_resolution("某某神器", value)
+
+        value.update({"physical_class_zh": "某类器", "confidence": 0.60})
+        with self.assertRaisesRegex(bridge.GeneralObjectBridgeError, "CONFIDENCE_TOO_LOW"):
+            bridge.validate_named_identity_resolution("某某神器", value)
+
+    def test_named_identity_resolver_rejects_identity_substitution(self) -> None:
+        value = {
+            "schema": bridge.NAMED_IDENTITY_SCHEMA,
+            "requested_identity": "替换名字",
+            "status": "resolved",
+            "physical_class_zh": "直身双刃剑",
+            "body_span": "long",
+            "confidence": 0.90,
+            "identity_evidence": ["实体类别明确"],
+        }
+        with self.assertRaisesRegex(bridge.GeneralObjectBridgeError, "IDENTITY_ECHO_MISMATCH"):
+            bridge.validate_named_identity_resolution("玩家原文", value)
+
+    def test_named_body_span_is_locally_enforced_and_gets_one_bounded_repair(self) -> None:
+        class FakeCompiler:
+            prompts: list[str] = []
+
+            def __init__(self, *, system_prompt: str, **_: object) -> None:
+                self.system_prompt = system_prompt
+
+            def compile(self, identity: str) -> dict:
+                FakeCompiler.prompts.append(self.system_prompt)
+                if "constrained physical-class resolver" in self.system_prompt:
+                    value = {
+                        "schema": bridge.NAMED_IDENTITY_SCHEMA,
+                        "requested_identity": identity,
+                        "status": "resolved",
+                        "physical_class_zh": "全尺寸弧形单刃刀",
+                        "body_span": "long",
+                        "confidence": 0.86,
+                        "identity_evidence": ["稳定类别是全尺寸长刃刀"],
+                    }
+                else:
+                    value = supported_payload(identity)
+                    if len(FakeCompiler.prompts) == 1:
+                        value["confidence"] = 0.60
+                    elif "NAMED_IDENTITY_BODY_SPAN_CONFLICT" in self.system_prompt:
+                        value["declaration"]["body_length"] = "long"
+                    else:
+                        value["declaration"]["body_length"] = "short"
+                return {
+                    "tool_name": bridge.BLUEPRINT_TOOL_NAME,
+                    "tool_input": value,
+                    "model_id": "fake-general-object-model",
+                    "usage": {"input_tokens": 5, "output_tokens": 2},
+                }
+
+        with patch.object(bridge, "AnthropicSemanticCompiler", FakeCompiler):
+            response, _, usage = bridge.resolve_with_anthropic("某专名长刃")
+        self.assertEqual(response["requested_identity"], "某专名长刃")
+        self.assertEqual(response["declaration"]["body_length"], "long")
+        self.assertEqual(usage, {"input_tokens": 20, "output_tokens": 8})
+        self.assertEqual(len(FakeCompiler.prompts), 4)
+        self.assertIn("body_span to 'long'", FakeCompiler.prompts[2])
+        self.assertIn("NAMED_IDENTITY_BODY_SPAN_CONFLICT", FakeCompiler.prompts[3])
+        self.assertIn("Preserve it exactly", FakeCompiler.prompts[3])
+
+    def test_normalized_class_confidence_repairs_without_resolving_the_name_again(self) -> None:
+        class FakeCompiler:
+            prompts: list[str] = []
+            named_calls = 0
+
+            def __init__(self, *, system_prompt: str, **_: object) -> None:
+                self.system_prompt = system_prompt
+
+            def compile(self, identity: str) -> dict:
+                FakeCompiler.prompts.append(self.system_prompt)
+                if "constrained physical-class resolver" in self.system_prompt:
+                    FakeCompiler.named_calls += 1
+                    value = {
+                        "schema": bridge.NAMED_IDENTITY_SCHEMA,
+                        "requested_identity": identity,
+                        "status": "resolved",
+                        "physical_class_zh": "全尺寸弧形单刃刀",
+                        "body_span": "long",
+                        "confidence": 0.60,
+                        "identity_evidence": ["名称含明确实体中心词"],
+                    }
+                else:
+                    value = supported_payload(identity)
+                    if len(FakeCompiler.prompts) == 1:
+                        value["confidence"] = 0.60
+                    elif "NORMALIZED_CLASS_CONFIDENCE_TOO_LOW" in self.system_prompt:
+                        value["confidence"] = 0.84
+                        value["declaration"]["body_length"] = "long"
+                    else:
+                        value["confidence"] = 0.60
+                        value["declaration"]["body_length"] = "long"
+                return {
+                    "tool_name": bridge.BLUEPRINT_TOOL_NAME,
+                    "tool_input": value,
+                    "model_id": "fake-general-object-model",
+                    "usage": {},
+                }
+
+        with patch.object(bridge, "AnthropicSemanticCompiler", FakeCompiler):
+            response, _, _ = bridge.resolve_with_anthropic("某专名刀")
+        self.assertEqual(response["declaration"]["body_length"], "long")
+        self.assertEqual(response["confidence"], 0.84)
+        self.assertEqual(FakeCompiler.named_calls, 1)
+        self.assertEqual(len(FakeCompiler.prompts), 4)
+        self.assertIn("NORMALIZED_CLASS_CONFIDENCE_TOO_LOW", FakeCompiler.prompts[3])
+        self.assertIn("already the resolved ordinary physical class", FakeCompiler.prompts[3])
+
+    def test_named_identity_gets_one_bounded_recheck_before_failing_closed(self) -> None:
+        class FakeCompiler:
+            prompts: list[str] = []
+            named_calls = 0
+
+            def __init__(self, *, system_prompt: str, **_: object) -> None:
+                self.system_prompt = system_prompt
+
+            def compile(self, identity: str) -> dict:
+                FakeCompiler.prompts.append(self.system_prompt)
+                if "constrained physical-class resolver" in self.system_prompt:
+                    FakeCompiler.named_calls += 1
+                    if FakeCompiler.named_calls == 1:
+                        value = {
+                            "schema": bridge.NAMED_IDENTITY_SCHEMA,
+                            "requested_identity": identity,
+                            "status": "unknown",
+                            "physical_class_zh": "",
+                            "body_span": "unknown",
+                            "confidence": 0.30,
+                            "identity_evidence": ["第一轮无法确定"],
+                        }
+                    else:
+                        value = {
+                            "schema": bridge.NAMED_IDENTITY_SCHEMA,
+                            "requested_identity": identity,
+                            "status": "resolved",
+                            "physical_class_zh": "全尺寸直身双刃剑",
+                            "body_span": "long",
+                            "confidence": 0.78,
+                            "identity_evidence": ["复核后实体类别稳定"],
+                        }
+                else:
+                    value = supported_payload(identity)
+                    if len(FakeCompiler.prompts) == 1:
+                        value["confidence"] = 0.60
+                    else:
+                        value["confidence"] = 0.84
+                        value["declaration"]["body_length"] = "long"
+                return {
+                    "tool_name": bridge.BLUEPRINT_TOOL_NAME,
+                    "tool_input": value,
+                    "model_id": "fake-general-object-model",
+                    "usage": {"input_tokens": 4, "output_tokens": 2},
+                }
+
+        with patch.object(bridge, "AnthropicSemanticCompiler", FakeCompiler):
+            response, _, usage = bridge.resolve_with_anthropic("某专名剑")
+        self.assertEqual(response["declaration"]["body_length"], "long")
+        self.assertEqual(FakeCompiler.named_calls, 2)
+        self.assertEqual(len(FakeCompiler.prompts), 4)
+        self.assertEqual(usage, {"input_tokens": 16, "output_tokens": 8})
 
     def test_repair_prompt_explains_handle_grip_consistency_without_naming_an_object(self) -> None:
         prompt = bridge._repair_system_prompt("base", "DECLARATION_HANDLE_GRIP_CONFLICT")
         self.assertIn("handle_length none requires body_grip or clamp_grip", prompt)
         self.assertNotIn("ladder", prompt.lower())
+
+        roles_prompt = bridge._repair_system_prompt("base", "MECHANISM_ACTIVATION_ROLE_INVALID")
+        self.assertIn("copy each non-empty mechanism_roles value exactly", roles_prompt)
+        self.assertIn("re-evaluate the real native function", roles_prompt.lower())
+
+        soft_prompt = bridge._repair_system_prompt("base", "DECLARATION_SOFT_FACTOR_CONFLICT")
+        self.assertIn("rigid end fixture, clamp, head, or attachment", soft_prompt)
+        self.assertIn("set all three soft-path fields to none", soft_prompt)
+
+    def test_base_prompt_trusts_explicit_physical_structure_without_requiring_a_catalog_name(self) -> None:
+        prompt = bridge.PROMPT_PATH.read_text(encoding="utf-8")
+        self.assertIn("literal description already states ordinary parts", prompt)
+        self.assertIn("catalog name", prompt)
 
     def test_identity_substitution_never_enters_the_repair_loop(self) -> None:
         class FakeCompiler:

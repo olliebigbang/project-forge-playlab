@@ -38,7 +38,7 @@ For handheld_firearm_supported:
 
 Structural invariants:
 - bullpup: rifle, integrated stock, behind_grip feed, two_hand_shouldered;
-- conventional_rifle: rifle, precision_rifle, or submachine_gun; non-none stock, ahead_of_grip feed, two_hand_shouldered;
+- conventional_rifle: rifle, precision_rifle, or submachine_gun; ahead_of_grip feed. A present stock uses two_hand_shouldered. An actually stockless version uses stock_structure none and two_hand_free (both hands, no shoulder contact) or one_hand if physically appropriate. Never invent a stock just to match this layout, and never claim shoulder support with no stock;
 - pistol: semi_auto_pistol, no stock, in_grip feed and magazine, short barrel, slide, one_hand;
 - conventional_shotgun: shotgun family, non-none stock, under_barrel tube, ribbed_barrel, two_hand_shouldered;
 - revolver: revolver family, no stock, cylinder_center feed, cylinder magazine, revolver_frame, one_hand;

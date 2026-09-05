@@ -1,5 +1,0 @@
-case_id=case_b
-run_id=seed_41002_s00
-seed=41002
-status=failed
-failure_reason=OBJECT_TOUCHES_RAW_EDGE

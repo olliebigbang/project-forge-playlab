@@ -3,6 +3,7 @@ extends RefCounted
 
 const COMPILER := preload("res://scripts/enemy_attack/enemy_attack_mechanism_compiler.gd")
 const SELECTOR := preload("res://scripts/enemy_attack/enemy_attack_selector.gd")
+const MODIFIER_COMPILER := preload("res://scripts/enemy_attack/enemy_modifier_compiler.gd")
 
 const SCHEMA := "forge-enemy-attack-runtime-driver-v1"
 const ATTACK_PHASES: PackedStringArray = ["telegraph", "commit", "active"]
@@ -21,13 +22,28 @@ var active_hit_registered := false
 var last_transition_reason := ""
 var pressure_tempo_multiplier := 1.0
 var post_attack_cooldown_seconds := 0.18
+var compiled_modifiers: Dictionary = {}
+var active_hazards: Array[Dictionary] = []
+var scheduled_echoes: Array[Dictionary] = []
+var barrier_charges_remaining := 0
+var last_selection_context: Dictionary = {}
 
 
-func configure(declarations: Array, tempo_multiplier: float = 1.0) -> Dictionary:
+func configure(
+	declarations: Array,
+	tempo_multiplier: float = 1.0,
+	modifier_declarations: Array = []
+) -> Dictionary:
 	compiled_attacks.clear()
+	compiled_modifiers.clear()
 	reset()
 	pressure_tempo_multiplier = clampf(tempo_multiplier, 0.72, 1.0)
 	post_attack_cooldown_seconds = lerpf(0.08, 0.18, inverse_lerp(0.72, 1.0, pressure_tempo_multiplier))
+	var modifier_result: Dictionary = MODIFIER_COMPILER.compile_stack(modifier_declarations)
+	if not bool(modifier_result.get("ok", false)):
+		return modifier_result
+	compiled_modifiers = modifier_result.duplicate(true)
+	barrier_charges_remaining = int((compiled_modifiers.get("barrier", {}) as Dictionary).get("charges", 0))
 	for index: int in range(declarations.size()):
 		var raw: Variant = declarations[index]
 		if not raw is Dictionary:
@@ -38,17 +54,45 @@ func configure(declarations: Array, tempo_multiplier: float = 1.0) -> Dictionary
 			failure["compiler_error"] = compiled.duplicate(true)
 			compiled_attacks.clear()
 			return failure
-		compiled_attacks.append(_apply_pressure_tempo(compiled))
+		compiled_attacks.append(_apply_modifier_contract(_apply_pressure_tempo(compiled)))
 	if compiled_attacks.is_empty():
 		return _failure("ATTACK_DECLARATIONS_EMPTY")
 	return {
 		"ok": true,
 		"schema": SCHEMA,
 		"compiled_attack_count": compiled_attacks.size(),
+		"compiled_modifier_count": (compiled_modifiers.get("families", []) as Array).size(),
+		"modifier_signature": str(compiled_modifiers.get("modifier_signature", "")),
 		"pressure_tempo_multiplier": pressure_tempo_multiplier,
 		"identity_inputs_used": false,
 		"player_confirmation_required": false,
 	}
+
+
+func _apply_modifier_contract(compiled: Dictionary) -> Dictionary:
+	var tuned := compiled.duplicate(true)
+	var danger_zone := (tuned.get("danger_zone", {}) as Dictionary).duplicate(true)
+	var residue := compiled_modifiers.get("residue", {}) as Dictionary
+	if bool(residue.get("enabled", false)):
+		danger_zone["base_mode"] = str(danger_zone.get("mode", "instant"))
+		danger_zone["mode"] = str(residue.get("hazard_mode_override", "lingering"))
+		danger_zone["contact_mode"] = "continuous"
+		danger_zone["duration_seconds"] = maxf(
+			float(danger_zone.get("duration_seconds", 0.0)),
+			float(residue.get("minimum_duration_seconds", 0.0))
+		)
+		danger_zone["repeat_hit_cooldown_seconds"] = float(residue.get("repeat_hit_cooldown_seconds", 0.0))
+		danger_zone["persists_after_active"] = true
+		danger_zone["damage_multiplier"] = float(residue.get("damage_multiplier", 1.0))
+		danger_zone["modifier_source"] = "residue"
+	tuned["danger_zone"] = danger_zone
+	tuned["modifier_contract"] = compiled_modifiers.duplicate(true)
+	tuned["mechanism_signature"] = JSON.stringify({
+		"base": str(compiled.get("mechanism_signature", "")),
+		"pressure_tempo_multiplier": pressure_tempo_multiplier,
+		"modifier_signature": str(compiled_modifiers.get("modifier_signature", "")),
+	}).sha256_text().left(16)
+	return tuned
 
 
 func _apply_pressure_tempo(compiled: Dictionary) -> Dictionary:
@@ -84,6 +128,10 @@ func reset() -> void:
 	phase_elapsed = 0.0
 	active_hit_registered = false
 	last_transition_reason = ""
+	active_hazards.clear()
+	scheduled_echoes.clear()
+	last_selection_context.clear()
+	barrier_charges_remaining = int((compiled_modifiers.get("barrier", {}) as Dictionary).get("charges", 0))
 
 
 func begin_attack(context: Dictionary, source_position: Vector2, target_position: Vector2) -> Dictionary:
@@ -92,6 +140,7 @@ func begin_attack(context: Dictionary, source_position: Vector2, target_position
 	var selection_context := context.duplicate(true)
 	selection_context["cooldown_remaining_by_key"] = cooldown_remaining_by_key.duplicate(true)
 	selection_context["previous_mechanism_signature"] = previous_mechanism_signature
+	last_selection_context = selection_context.duplicate(true)
 	var selected: Dictionary = SELECTOR.select_attack(compiled_attacks, selection_context)
 	if not bool(selected.get("ok", false)):
 		return selected
@@ -111,6 +160,8 @@ func begin_attack(context: Dictionary, source_position: Vector2, target_position
 
 func step(delta: float, source_position: Vector2, target_position: Vector2) -> Dictionary:
 	_tick_cooldowns(delta)
+	var hazard_events := _tick_persistent_hazards(delta)
+	var echo_events := _tick_scheduled_echoes(delta)
 	var active_seconds_this_step := 0.0
 	var entered_active := false
 	var completed_attack := false
@@ -133,6 +184,7 @@ func step(delta: float, source_position: Vector2, target_position: Vector2) -> D
 		if str(transition.get("entered", "")) == "active":
 			entered_active = true
 			activation_event = _activation_event(source_position)
+			_activate_runtime_extensions(activation_event)
 		completed_attack = completed_attack or bool(transition.get("completed", false))
 		if phase_remaining <= 0.000001 and consumed <= 0.000001 and phase != "idle":
 			continue
@@ -140,6 +192,8 @@ func step(delta: float, source_position: Vector2, target_position: Vector2) -> D
 	result["active_seconds_this_step"] = active_seconds_this_step
 	result["entered_active"] = entered_active
 	result["activation_event"] = activation_event
+	result["hazard_events"] = hazard_events
+	result["echo_events"] = echo_events
 	result["completed_attack"] = completed_attack
 	return result
 
@@ -202,6 +256,131 @@ func is_telegraphing() -> bool:
 	return phase in ["telegraph", "commit"]
 
 
+func runtime_multipliers() -> Dictionary:
+	var movement := 1.0
+	var turn_rate := 1.0
+	var incoming_stagger := 1.0
+	if phase == "recovery" and not current_attack.is_empty():
+		var recovery := current_attack.get("recovery", {}) as Dictionary
+		movement = float(recovery.get("movement_multiplier", 1.0))
+		turn_rate = float(recovery.get("turn_rate_multiplier", 1.0))
+		incoming_stagger = float(recovery.get("incoming_stagger_multiplier", 1.0))
+	return {
+		"movement_multiplier": movement,
+		"turn_rate_multiplier": turn_rate,
+		"incoming_stagger_multiplier": incoming_stagger,
+		"source_phase": phase,
+	}
+
+
+func movement_multiplier() -> float:
+	return float(runtime_multipliers()["movement_multiplier"])
+
+
+func turn_rate_multiplier() -> float:
+	return float(runtime_multipliers()["turn_rate_multiplier"])
+
+
+func incoming_stagger_multiplier() -> float:
+	return float(runtime_multipliers()["incoming_stagger_multiplier"])
+
+
+func scale_incoming_stagger(raw_stagger: float) -> float:
+	return maxf(0.0, raw_stagger) * incoming_stagger_multiplier()
+
+
+func resolve_defense(
+	incoming_from_direction: Vector2,
+	break_strength: float = 0.0,
+	explicit_armor_break: bool = false
+) -> Dictionary:
+	var barrier := compiled_modifiers.get("barrier", {}) as Dictionary
+	if barrier_charges_remaining > 0 and bool(barrier.get("enabled", false)):
+		var barrier_threshold := float(barrier.get("break_strength", 0.0))
+		var barrier_broken := explicit_armor_break or break_strength + 0.000001 >= barrier_threshold
+		if barrier_broken:
+			barrier_charges_remaining -= 1
+			return {
+				"blocked": false,
+				"guard_broken": true,
+				"source": "barrier",
+				"damage_multiplier": 1.0,
+				"stagger_multiplier": 1.0,
+				"barrier_charges_remaining": barrier_charges_remaining,
+			}
+		return {
+			"blocked": true,
+			"guard_broken": false,
+			"source": "barrier",
+			"damage_multiplier": float(barrier.get("damage_multiplier", 1.0)),
+			"stagger_multiplier": float(barrier.get("stagger_multiplier", 1.0)),
+			"barrier_charges_remaining": barrier_charges_remaining,
+		}
+
+	var defense := current_attack.get("defense", {}) as Dictionary
+	var guarded_phases := defense.get("guarded_phases", []) as Array
+	var facing := locked_direction.normalized()
+	var incoming := incoming_from_direction.normalized()
+	var arc_degrees := float(defense.get("guard_arc_degrees", 0.0))
+	var inside_arc := not facing.is_zero_approx() and not incoming.is_zero_approx() \
+		and absf(facing.angle_to(incoming)) <= deg_to_rad(arc_degrees * 0.5)
+	if phase not in guarded_phases or not inside_arc:
+		return {
+			"blocked": false,
+			"guard_broken": false,
+			"source": "none",
+			"damage_multiplier": 1.0,
+			"stagger_multiplier": incoming_stagger_multiplier(),
+		}
+
+	var breakable_phases := defense.get("breakable_phases", []) as Array
+	var threshold := float(defense.get("break_strength", 0.0))
+	var guard_broken := phase in breakable_phases \
+		and (explicit_armor_break or break_strength + 0.000001 >= threshold)
+	if guard_broken:
+		force_recovery("directional_guard_broken")
+		return {
+			"blocked": false,
+			"guard_broken": true,
+			"source": str(defense.get("mode", "none")),
+			"damage_multiplier": 1.0,
+			"stagger_multiplier": incoming_stagger_multiplier(),
+			"break_threshold": threshold,
+		}
+	return {
+		"blocked": true,
+		"guard_broken": false,
+		"source": str(defense.get("mode", "none")),
+		"damage_multiplier": float(defense.get("damage_multiplier", 1.0)),
+		"stagger_multiplier": float(defense.get("stagger_multiplier", 1.0)),
+		"break_threshold": threshold,
+	}
+
+
+func hazard_snapshots() -> Array[Dictionary]:
+	var snapshots: Array[Dictionary] = []
+	for hazard: Dictionary in active_hazards:
+		var snapshot := hazard.duplicate(true)
+		snapshot["dangerous_now"] = _hazard_is_dangerous(hazard)
+		snapshots.append(snapshot)
+	return snapshots
+
+
+func hazard_hit_contains(hazard_index: int, target_position: Vector2) -> bool:
+	if hazard_index < 0 or hazard_index >= active_hazards.size():
+		return false
+	var hazard := active_hazards[hazard_index]
+	if not _hazard_is_dangerous(hazard):
+		return false
+	return _region_contains(
+		Vector2(hazard.get("origin", Vector2.ZERO)),
+		target_position,
+		Vector2(hazard.get("locked_direction", Vector2.RIGHT)),
+		hazard.get("hit_region", {}) as Dictionary,
+		str(hazard.get("delivery", ""))
+	)
+
+
 func current_delivery() -> String:
 	return str((current_attack.get("axes", {}) as Dictionary).get("delivery", ""))
 
@@ -214,6 +393,16 @@ func current_hit_contains(source_position: Vector2, target_position: Vector2) ->
 	var origin := source_position
 	if str(region.get("origin_mode", "attacker")) == "locked_point":
 		origin = locked_point
+	return _region_contains(origin, target_position, locked_direction, region, delivery)
+
+
+func _region_contains(
+	origin: Vector2,
+	target_position: Vector2,
+	direction_value: Vector2,
+	region: Dictionary,
+	delivery: String
+) -> bool:
 	var offset := target_position - origin
 	var depth_tolerance := float(region.get("depth_tolerance_pixels", 100000.0))
 	if str(region.get("path_mode", "same_lane")) == "same_lane" and absf(offset.y) > depth_tolerance:
@@ -225,9 +414,9 @@ func current_hit_contains(source_position: Vector2, target_position: Vector2) ->
 			var radius := float(region.get("radius_pixels", 0.0))
 			if offset.length() > radius or offset.length() <= 0.001:
 				return false
-			return absf(locked_direction.angle_to(offset.normalized())) <= deg_to_rad(float(region.get("arc_degrees", 0.0)) * 0.5)
+			return absf(direction_value.angle_to(offset.normalized())) <= deg_to_rad(float(region.get("arc_degrees", 0.0)) * 0.5)
 		"strip", "capsule":
-			var direction := locked_direction.normalized()
+			var direction := direction_value.normalized()
 			var forward := offset.dot(direction)
 			var sideways := absf(offset.cross(direction))
 			var length := float(region.get("length_pixels", 0.0))
@@ -267,6 +456,13 @@ func snapshot() -> Dictionary:
 		"hit_region": (attack.get("hit_region", {}) as Dictionary).duplicate(true),
 		"attack_motion": (attack.get("attack_motion", {}) as Dictionary).duplicate(true),
 		"recovery": (attack.get("recovery", {}) as Dictionary).duplicate(true),
+		"danger_zone": (attack.get("danger_zone", {}) as Dictionary).duplicate(true),
+		"defense": (attack.get("defense", {}) as Dictionary).duplicate(true),
+		"runtime_multipliers": runtime_multipliers(),
+		"active_hazards": hazard_snapshots(),
+		"modifier_contract": compiled_modifiers.duplicate(true),
+		"barrier_charges_remaining": barrier_charges_remaining,
+		"last_selection_clear_path": last_selection_context.get("clear_path", null),
 		"active_hit_registered": active_hit_registered,
 		"last_transition_reason": last_transition_reason,
 		"identity_inputs_used": false,
@@ -285,6 +481,10 @@ func _activation_event(source_position: Vector2) -> Dictionary:
 	if str(motion.get("origin_mode", "attacker")) == "locked_point":
 		origin = locked_point
 	var speed := float(motion.get("travel_speed_pixels_per_second", 0.0))
+	var danger_zone := current_attack.get("danger_zone", {}) as Dictionary
+	var event_lifetime := float(motion.get("hazard_lifetime_seconds", 0.0))
+	if bool(danger_zone.get("persists_after_active", false)):
+		event_lifetime = maxf(event_lifetime, float(danger_zone.get("duration_seconds", 0.0)))
 	return {
 		"ok": true,
 		"schema": "forge-enemy-attack-activation-event-v1",
@@ -295,13 +495,94 @@ func _activation_event(source_position: Vector2) -> Dictionary:
 		"locked_direction": locked_direction,
 		"locked_point": locked_point,
 		"velocity": locked_direction * speed,
-		"hazard_lifetime_seconds": float(motion.get("hazard_lifetime_seconds", 0.0)),
+		"hazard_lifetime_seconds": event_lifetime,
 		"active_seconds": _timeline_seconds(current_attack, "active_seconds"),
 		"hit_region": region.duplicate(true),
 		"attack_motion": motion.duplicate(true),
+		"danger_zone": danger_zone.duplicate(true),
+		"defense": (current_attack.get("defense", {}) as Dictionary).duplicate(true),
+		"modifier_contract": compiled_modifiers.duplicate(true),
 		"identity_inputs_used": false,
 		"player_confirmation_required": false,
 	}
+
+
+func _activate_runtime_extensions(activation_event: Dictionary) -> void:
+	var danger_zone := activation_event.get("danger_zone", {}) as Dictionary
+	if bool(danger_zone.get("persists_after_active", false)):
+		active_hazards.append({
+			"attack_key": str(activation_event.get("attack_key", "")),
+			"mechanism_signature": str(activation_event.get("mechanism_signature", "")),
+			"delivery": str(activation_event.get("delivery", "")),
+			"origin": Vector2(activation_event.get("origin", Vector2.ZERO)),
+			"locked_direction": Vector2(activation_event.get("locked_direction", Vector2.RIGHT)),
+			"hit_region": (activation_event.get("hit_region", {}) as Dictionary).duplicate(true),
+			"danger_zone": danger_zone.duplicate(true),
+			"elapsed_seconds": 0.0,
+		})
+	var echo := compiled_modifiers.get("echo", {}) as Dictionary
+	if bool(echo.get("enabled", false)):
+		for repeat_index: int in range(int(echo.get("repeat_count", 0))):
+			scheduled_echoes.append({
+				"remaining_seconds": float(echo.get("delay_seconds", 0.0)) * float(repeat_index + 1),
+				"repeat_index": repeat_index,
+				"damage_multiplier": float(echo.get("damage_multiplier", 1.0)),
+				"region_scale": float(echo.get("region_scale", 1.0)),
+				"activation_event": activation_event.duplicate(true),
+			})
+
+
+func _tick_persistent_hazards(delta: float) -> Array[Dictionary]:
+	var events: Array[Dictionary] = []
+	for index: int in range(active_hazards.size() - 1, -1, -1):
+		var hazard := active_hazards[index]
+		var was_dangerous := _hazard_is_dangerous(hazard)
+		hazard["elapsed_seconds"] = float(hazard.get("elapsed_seconds", 0.0)) + maxf(0.0, delta)
+		var danger_zone := hazard.get("danger_zone", {}) as Dictionary
+		var elapsed := float(hazard.get("elapsed_seconds", 0.0))
+		var duration := float(danger_zone.get("duration_seconds", 0.0))
+		if elapsed + 0.000001 >= duration:
+			events.append({"type": "expired", "attack_key": str(hazard.get("attack_key", ""))})
+			active_hazards.remove_at(index)
+			continue
+		var is_dangerous := _hazard_is_dangerous(hazard)
+		if str(danger_zone.get("mode", "")) == "pulsing" and is_dangerous and not was_dangerous:
+			events.append({
+				"type": "pulse",
+				"attack_key": str(hazard.get("attack_key", "")),
+				"origin": Vector2(hazard.get("origin", Vector2.ZERO)),
+				"hit_region": (hazard.get("hit_region", {}) as Dictionary).duplicate(true),
+			})
+	return events
+
+
+func _hazard_is_dangerous(hazard: Dictionary) -> bool:
+	var danger_zone := hazard.get("danger_zone", {}) as Dictionary
+	var mode := str(danger_zone.get("mode", "instant"))
+	if mode == "lingering":
+		return true
+	if mode != "pulsing":
+		return false
+	var interval := maxf(0.001, float(danger_zone.get("pulse_interval_seconds", 0.60)))
+	var active_seconds := clampf(float(danger_zone.get("pulse_active_seconds", 0.14)), 0.0, interval)
+	return fmod(float(hazard.get("elapsed_seconds", 0.0)), interval) <= active_seconds
+
+
+func _tick_scheduled_echoes(delta: float) -> Array[Dictionary]:
+	var events: Array[Dictionary] = []
+	for index: int in range(scheduled_echoes.size() - 1, -1, -1):
+		var echo := scheduled_echoes[index]
+		echo["remaining_seconds"] = float(echo.get("remaining_seconds", 0.0)) - maxf(0.0, delta)
+		if float(echo.get("remaining_seconds", 0.0)) > 0.000001:
+			continue
+		var event := (echo.get("activation_event", {}) as Dictionary).duplicate(true)
+		event["schema"] = "forge-enemy-attack-echo-event-v1"
+		event["echo_repeat_index"] = int(echo.get("repeat_index", 0))
+		event["damage_multiplier"] = float(echo.get("damage_multiplier", 1.0))
+		event["region_scale"] = float(echo.get("region_scale", 1.0))
+		events.append(event)
+		scheduled_echoes.remove_at(index)
+	return events
 
 
 func _advance_phase(source_position: Vector2, target_position: Vector2) -> Dictionary:

@@ -1,0 +1,102 @@
+{
+  "schema": "sunny-live-acceptance-samples-v1",
+  "seed": 20260901,
+  "selection": "LCG uint32 x=1664525*x+1013904223, index=x%4; frozen before calls; strata are test expectations, never mechanism overrides",
+  "max_first_pass_visual_requests": 6,
+  "max_visual_requests_per_sample": 1,
+  "reserve_visual_requests": 2,
+  "pools": [
+    {
+      "group": "short_handle",
+      "candidates": [
+        "一把黄色橡胶头、短木柄的小橡皮锤",
+        "一把蓝色塑料柄的浴室清洁刷",
+        "一个带木柄和圆形金属刀片的披萨滚刀",
+        "一把绿色短柄园艺铲"
+      ]
+    },
+    {
+      "group": "long_handle",
+      "candidates": [
+        "一根长柄蓝色鸡毛掸子",
+        "一把宽头长木柄雪铲",
+        "一支单片桨叶的木制独木舟船桨",
+        "一根细长竹制晾衣杆"
+      ]
+    },
+    {
+      "group": "flexible",
+      "candidates": [
+        "一条棕色皮带，末端有黄铜方形扣",
+        "一条末端绑着红色橡胶球的编织绳",
+        "一条带两个蓝色握柄的跳绳",
+        "一根由短竹节连接成的软鞭"
+      ]
+    },
+    {
+      "group": "deployable",
+      "candidates": [
+        "一把蓝色纸面、竹制扇骨的折扇",
+        "一个能伸缩的长柄垃圾夹，前端有两个夹爪",
+        "一个可以折叠的金属晾衣架",
+        "一个带长柄、可折叠的硅胶滤网"
+      ]
+    },
+    {
+      "group": "directed_output",
+      "candidates": [
+        "一个带侧把手和前端喷嘴的手压式园艺喷水壶",
+        "一个红色电吹风，前方是圆形出风口",
+        "一个前端有细喷嘴的橡胶洗耳球",
+        "一把透明蓝色的水枪"
+      ]
+    },
+    {
+      "group": "firearm_regression",
+      "candidates": [
+        "Walther PPK 手枪",
+        "Beretta PX4 Storm 手枪",
+        "FN P90 冲锋枪",
+        "HK MP5K 冲锋枪"
+      ]
+    }
+  ],
+  "samples": [
+    {
+      "id": "01",
+      "group": "short_handle",
+      "identity": "一把黄色橡胶头、短木柄的小橡皮锤",
+      "candidate_index": 0
+    },
+    {
+      "id": "02",
+      "group": "long_handle",
+      "identity": "一根细长竹制晾衣杆",
+      "candidate_index": 3
+    },
+    {
+      "id": "03",
+      "group": "flexible",
+      "identity": "一条带两个蓝色握柄的跳绳",
+      "candidate_index": 2
+    },
+    {
+      "id": "04",
+      "group": "deployable",
+      "identity": "一个能伸缩的长柄垃圾夹，前端有两个夹爪",
+      "candidate_index": 1
+    },
+    {
+      "id": "05",
+      "group": "directed_output",
+      "identity": "一个带侧把手和前端喷嘴的手压式园艺喷水壶",
+      "candidate_index": 0
+    },
+    {
+      "id": "06",
+      "group": "firearm_regression",
+      "identity": "HK MP5K 冲锋枪",
+      "candidate_index": 3
+    }
+  ]
+}

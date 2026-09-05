@@ -3,18 +3,22 @@ extends "res://scripts/services/forge_visual_provider.gd"
 
 const VISUAL_BRIEF := preload("res://scripts/combat_feel/mechanism_visual_brief.gd")
 const ANCHOR_RESOLVER := preload("res://scripts/systems/anchor_resolver.gd")
+const CHURCH_PIXEL_STYLE := preload("res://scripts/art_vertical_slice_v1/church_pixel_style.gd")
+const SIDE_LOOP_GRIP := preload("res://scripts/combat_feel/side_loop_grip_resolver.gd")
 const BRIDGE_SCRIPT := "res://tools/visual/fal_general_object_pixel_bridge.py"
-const REQUEST_SCHEMA := "forge-fal-general-object-visual-request-v1"
+const REQUEST_SCHEMA := "forge-fal-general-object-visual-request-v2"
 const MANIFEST_SCHEMA := "forge-fal-general-object-visual-manifest-v1"
 const OUTPUT_ROOT := "user://playlab/fal_general_object_visual/requests"
-const CACHE_ROOT := "user://playlab/fal_general_object_visual/cache_v1"
-const CACHE_SCHEMA := "forge-fal-general-object-visual-cache-v1"
-const PIPELINE_VERSION := "fal-gpt-image-1.5-general-object-image2pixel24-v1"
+const CACHE_ROOT := "user://playlab/fal_general_object_visual/cache_v2"
+const CACHE_SCHEMA := "forge-fal-general-object-visual-cache-v2"
+const PIPELINE_VERSION := "fal-gpt-image-1.5-general-object-image2pixel24-v3-grip-left-role-bound"
 const PROVIDER_ID := "FAL_GENERAL_OBJECT"
 const CANVAS_SIZE := Vector2i(96, 96)
 const SUBJECT_SPAN := 82
 
 var python_executable := "python"
+var cache_root := CACHE_ROOT
+var output_root := OUTPUT_ROOT
 var timeout_seconds := 240.0
 var process_id := -1
 var active_revision := 0
@@ -65,6 +69,9 @@ func request_visual(
 	if not _is_supported_blueprint(blueprint):
 		failure_reason = "GENERAL_OBJECT_VISUAL_FAL_REQUIRES_MELEE_OBJECT"
 		return active_revision
+	if not _art_style_id(blueprint).is_empty() and _art_style_contract(blueprint).is_empty():
+		failure_reason = "GENERAL_OBJECT_VISUAL_ART_STYLE_UNSUPPORTED"
+		return active_revision
 	var brief := VISUAL_BRIEF.compile(blueprint.affordance, blueprint.affordance_source)
 	var brief_errors := VISUAL_BRIEF.validation_errors(brief)
 	if not brief_errors.is_empty():
@@ -74,14 +81,14 @@ func request_visual(
 	blueprint.visual_structure_brief_source = str(brief.get("source", ""))
 	active_request_payload = _build_request_payload(blueprint, brief)
 	active_cache_key = _cache_key(active_request_payload)
-	var cache_directory := _absolute_path(CACHE_ROOT.path_join(active_cache_key))
-	if _cache_entry_valid(cache_directory, active_cache_key):
+	var cache_directory := _absolute_path(cache_root.path_join(active_cache_key))
+	if _can_reuse_visual_cache() and _cache_entry_valid(cache_directory, active_cache_key):
 		active_output_directory = cache_directory
 		active_cache_hit = true
 		process_id = -1
 		return active_revision
 	var run_id := "request_%d_r%d" % [roundi(Time.get_unix_time_from_system() * 1000.0), active_revision]
-	active_output_directory = ProjectSettings.globalize_path(OUTPUT_ROOT.path_join(run_id))
+	active_output_directory = ProjectSettings.globalize_path(output_root.path_join(run_id))
 	if DirAccess.make_dir_recursive_absolute(active_output_directory) != OK:
 		failure_reason = "GENERAL_OBJECT_VISUAL_FAL_OUTPUT_DIRECTORY_FAILED"
 		return active_revision
@@ -130,6 +137,8 @@ func poll() -> Dictionary:
 
 func load_atomic_result(directory: String, blueprint: WeaponBlueprint) -> Dictionary:
 	active_blueprint = blueprint
+	if not _art_style_id(blueprint).is_empty() and _art_style_contract(blueprint).is_empty():
+		return _failure("GENERAL_OBJECT_VISUAL_ART_STYLE_UNSUPPORTED", false)
 	var brief := VISUAL_BRIEF.compile(blueprint.affordance, blueprint.affordance_source)
 	active_request_payload = _build_request_payload(blueprint, brief)
 	active_cache_key = _cache_key(active_request_payload)
@@ -165,12 +174,40 @@ func _load_completed_result(manifest_path: String) -> Dictionary:
 	if str(manifest.get("schema", "")) != MANIFEST_SCHEMA:
 		delivered = true
 		return _failure("GENERAL_OBJECT_VISUAL_FAL_MANIFEST_SCHEMA_INVALID", false)
+	var recover_from_identity_art := false
 	if str(manifest.get("status", "")) != "success":
+		var upstream_failure := str(manifest.get("failure_reason", "GENERAL_OBJECT_VISUAL_FAL_GENERATION_FAILED"))
+		recover_from_identity_art = upstream_failure.begins_with("GENERAL_OBJECT_VISUAL_FAL_PIXELIZER_") \
+			and FileAccess.file_exists(active_output_directory.path_join("ai_raw.png"))
+		if not recover_from_identity_art:
+			delivered = true
+			return _failure(upstream_failure, false)
+		# The paid identity renderer already returned a validated transparent PNG.
+		# If only the optional remote pixelizer fails, use the same local 96px,
+		# palette and Alpha normalizer that already backs successful manifests.
+		# Identity-renderer failures and missing raw images never enter this path.
+		manifest["upstream_status"] = "failed"
+		manifest["pixelizer_failure_reason"] = upstream_failure
+		manifest["status"] = "success"
+		manifest["recovery"] = {
+			"method": "validated_transparent_identity_art_local_pixel_fallback",
+			"new_network_requests": 0,
+			"source": "ai_raw.png",
+		}
+		if active_request_payload.has("art_style"):
+			manifest["art_style"] = (active_request_payload.art_style as Dictionary).duplicate(true)
+	if not _art_style_matches(manifest):
 		delivered = true
-		return _failure(str(manifest.get("failure_reason", "GENERAL_OBJECT_VISUAL_FAL_GENERATION_FAILED")), false)
+		return _failure("GENERAL_OBJECT_VISUAL_ART_STYLE_MANIFEST_MISMATCH", false)
 	var normalized: Dictionary
 	var candidate_source := "fal_image2pixel"
-	if active_cache_hit:
+	if recover_from_identity_art:
+		normalized = _normalize_pixel_candidate(
+			active_output_directory.path_join("ai_raw.png"),
+			active_output_directory.path_join("processed_sprite.png")
+		)
+		candidate_source = "fal_transparent_identity_art_local_pixel_fallback"
+	elif active_cache_hit:
 		normalized = _load_normalized_candidate(active_output_directory.path_join("processed_sprite.png"))
 	else:
 		normalized = _normalize_pixel_candidate(
@@ -186,12 +223,20 @@ func _load_completed_result(manifest_path: String) -> Dictionary:
 	if not bool(normalized.get("ok", false)):
 		delivered = true
 		return _failure(str(normalized.get("error", "GENERAL_OBJECT_VISUAL_FAL_NORMALIZE_FAILED")), true)
+	var styled := _apply_art_style(normalized, manifest, active_cache_hit)
+	if not bool(styled.get("ok", false)):
+		delivered = true
+		return _failure(str(styled.get("error", "GENERAL_OBJECT_VISUAL_ART_STYLE_FAILED")), false)
 	var image := normalized.get("image") as Image
 	var asset: WeaponVisualAsset = ANCHOR_RESOLVER.resolve(image, active_blueprint)
 	if asset == null:
 		delivered = true
 		return _failure("GENERAL_OBJECT_VISUAL_FAL_ALPHA_INVALID", true)
 	_apply_mechanism_anchor_intent(asset, active_blueprint)
+	if str(active_blueprint.affordance.get("functional_output", "contact_only")) != "contact_only" \
+			and not bool((active_blueprint.modifiers.get("native_function_origin_evidence", {}) as Dictionary).get("resolved", false)):
+		delivered = true
+		return _failure("GENERAL_OBJECT_VISUAL_NATIVE_FUNCTION_ORIGIN_UNRESOLVED", true)
 	asset.tether_origin = asset.tip
 	manifest["candidate_source"] = candidate_source
 	manifest["cache"] = {
@@ -252,13 +297,14 @@ func _build_request_payload(blueprint: WeaponBlueprint, brief: Dictionary) -> Di
 		axes[axis] = str(blueprint.affordance.get(axis, legacy_axis_defaults.get(axis, "")))
 	for flag: String in ["has_point", "has_edge", "has_broad_face", "has_barrel", "has_stock"]:
 		axes[flag] = bool(blueprint.affordance.get(flag, false))
-	return {
+	var payload := {
 		"schema": REQUEST_SCHEMA,
 		"identity": blueprint.player_identity_text.strip_edges(),
 		"canonical_name": str(blueprint.modifiers.get("general_object_canonical_name", blueprint.display_name)),
 		"visual_description": blueprint.visual_description,
 		"required_identity_parts": parts,
 		"confusable_exclusions": exclusions,
+		"mechanism_roles": (blueprint.modifiers.get("general_object_mechanism_roles", {}) as Dictionary).duplicate(true),
 		"structure_prompt": str(brief.get("prompt_clause", "")),
 		"scale_treatment": str(blueprint.modifiers.get("general_object_scale_treatment", "handheld")),
 		"axes": axes,
@@ -266,6 +312,56 @@ func _build_request_payload(blueprint: WeaponBlueprint, brief: Dictionary) -> Di
 		"retry_index": clampi(int(blueprint.modifiers.get("mechanism_visual_retry_count", 0)), 0, 2),
 		"retry_prompt": str(blueprint.modifiers.get("mechanism_visual_retry_prompt", "")),
 	}
+	var style := _art_style_contract(blueprint)
+	if not style.is_empty():
+		payload["art_style"] = style
+	return payload
+
+
+func _art_style_id(blueprint: WeaponBlueprint) -> String:
+	return "" if blueprint == null else str(blueprint.modifiers.get("art_style_id", "")).strip_edges()
+
+
+func _art_style_contract(blueprint: WeaponBlueprint) -> Dictionary:
+	var id := _art_style_id(blueprint)
+	if id.is_empty():
+		return {}
+	var style: Dictionary = CHURCH_PIXEL_STYLE.contract(id)
+	if str(style.get("id", "")) != id or str(style.get("version", "")).is_empty() or str(style.get("prompt", "")).is_empty():
+		return {}
+	return {"id": id, "version": str(style.version), "prompt": str(style.prompt)}
+
+
+func _art_style_matches(evidence: Dictionary) -> bool:
+	var expected: Dictionary = active_request_payload.get("art_style", {})
+	if expected.is_empty():
+		return not evidence.has("art_style")
+	return evidence.get("art_style") is Dictionary and evidence.art_style == expected
+
+
+func _apply_art_style(normalized: Dictionary, manifest: Dictionary, from_cache: bool) -> Dictionary:
+	var style: Dictionary = active_request_payload.get("art_style", {})
+	if style.is_empty():
+		return {"ok": true}
+	if not _art_style_matches(manifest):
+		return {"ok": false, "error": "GENERAL_OBJECT_VISUAL_ART_STYLE_MANIFEST_MISMATCH"}
+	var image := normalized.get("image") as Image
+	var original_bytes := image.get_data()
+	var applied: Dictionary = CHURCH_PIXEL_STYLE.normalize(image, str(style.id))
+	if not bool(applied.get("ok", false)) or not applied.get("image") is Image:
+		return {"ok": false, "error": str(applied.get("error", "GENERAL_OBJECT_VISUAL_ART_STYLE_FAILED"))}
+	var styled_image := applied.get("image") as Image
+	if from_cache:
+		var report: Dictionary = manifest.get("art_style_report", {}) if manifest.get("art_style_report") is Dictionary else {}
+		if not bool(report.get("ok", false)) or report.get("id") != style.id or report.get("version") != style.version or styled_image.get_data() != original_bytes:
+			return {"ok": false, "error": "GENERAL_OBJECT_VISUAL_ART_STYLE_CACHE_NOT_CANONICAL"}
+	if not from_cache:
+		if _save_png_atomic(styled_image, active_output_directory.path_join("processed_sprite.png")) != OK:
+			return {"ok": false, "error": "GENERAL_OBJECT_VISUAL_ART_STYLE_WRITE_FAILED"}
+		manifest["art_style_report"] = (applied.get("report", {}) as Dictionary).duplicate(true)
+	normalized["image"] = styled_image
+	normalized["opaque_colors_after"] = _opaque_color_count(styled_image)
+	return {"ok": true}
 
 
 func _cache_key(payload: Dictionary) -> String:
@@ -275,6 +371,11 @@ func _cache_key(payload: Dictionary) -> String:
 	fingerprint.erase("retry_prompt")
 	fingerprint["pipeline_version"] = PIPELINE_VERSION
 	return JSON.stringify(fingerprint).sha256_text()
+
+
+func _can_reuse_visual_cache() -> bool:
+	# A downstream structural rejection requests a redraw, not the same cached pixels.
+	return int(active_request_payload.get("retry_index", 0)) == 0
 
 
 func _cache_entry_valid(directory: String, key: String) -> bool:
@@ -289,6 +390,8 @@ func _cache_entry_valid(directory: String, key: String) -> bool:
 		return false
 	var record := record_value as Dictionary
 	var manifest := manifest_value as Dictionary
+	if not _art_style_matches(manifest) or not _art_style_matches(record):
+		return false
 	var sprite_bytes := FileAccess.get_file_as_bytes(directory.path_join("processed_sprite.png"))
 	return str(record.get("schema", "")) == CACHE_SCHEMA \
 		and str(record.get("key", "")) == key \
@@ -305,7 +408,7 @@ func _persist_cache(source_directory: String, manifest: Dictionary) -> Dictionar
 	var sprite_path := source_directory.path_join("processed_sprite.png")
 	if not FileAccess.file_exists(sprite_path):
 		return {"ok": false, "error": "GENERAL_OBJECT_VISUAL_CACHE_SPRITE_MISSING"}
-	var cache_directory := _absolute_path(CACHE_ROOT.path_join(active_cache_key))
+	var cache_directory := _absolute_path(cache_root.path_join(active_cache_key))
 	if DirAccess.make_dir_recursive_absolute(cache_directory) != OK:
 		return {"ok": false, "error": "GENERAL_OBJECT_VISUAL_CACHE_DIRECTORY_FAILED"}
 	var sprite_bytes := FileAccess.get_file_as_bytes(sprite_path)
@@ -321,6 +424,8 @@ func _persist_cache(source_directory: String, manifest: Dictionary) -> Dictionar
 		"processed_sprite_sha256": _bytes_sha256(sprite_bytes),
 		"player_confirmation_required": false,
 	}
+	if active_request_payload.has("art_style"):
+		record["art_style"] = (active_request_payload.art_style as Dictionary).duplicate(true)
 	if _write_json_atomic(cache_directory.path_join("cache_record.json"), record) != OK:
 		return {"ok": false, "error": "GENERAL_OBJECT_VISUAL_CACHE_RECORD_WRITE_FAILED"}
 	return {"ok": true, "directory": cache_directory}
@@ -457,10 +562,28 @@ func _apply_mechanism_anchor_intent(asset: WeaponVisualAsset, blueprint: WeaponB
 		return
 	var grip_topology := str(blueprint.affordance.get("grip_topology", ""))
 	if grip_topology == "one_hand_handle":
+		var loop := SIDE_LOOP_GRIP.resolve(asset.source_image, blueprint.affordance)
+		blueprint.modifiers["side_loop_grip_evidence"] = (loop.get("evidence", {}) as Dictionary).duplicate(true)
+		if bool(loop.get("resolved", false)):
+			asset.grip_primary = loop.grip_primary
+			asset.grip_secondary = loop.grip_secondary
+			asset.tip = loop.strike_point
+			asset.muzzle = asset.tip
+			asset.rear_contact = asset.grip_primary
+			asset.anchor_source = "alpha_side_loop+ai_rigid_broad_contact"
+			asset.anchor_confidence = minf(asset.anchor_confidence, 0.82)
+			_normalize_asset_forward(asset)
+			blueprint.modifiers.side_loop_grip_evidence["orientation_flipped"] = asset.orientation_flipped
+			blueprint.modifiers.side_loop_grip_evidence["normalized_grip_primary"] = [asset.grip_primary.x, asset.grip_primary.y]
+			blueprint.modifiers.side_loop_grip_evidence["normalized_strike_point"] = [asset.tip.x, asset.tip.y]
+			_apply_native_function_origin(asset, blueprint)
+			return
 		if _apply_one_hand_endpoint_roles(asset, blueprint):
 			_normalize_asset_forward(asset)
-		return
+			_apply_native_function_origin(asset, blueprint)
+			return
 	if grip_topology not in ["body_grip", "clamp_grip"]:
+		_apply_native_function_origin(asset, blueprint)
 		return
 	var target_ratio: float = float({
 		"rear": 0.16,
@@ -477,6 +600,77 @@ func _apply_mechanism_anchor_intent(asset: WeaponVisualAsset, blueprint: WeaponB
 	)
 	asset.anchor_source = "alpha+ai_grip_topology+mass_distribution"
 	asset.anchor_confidence = minf(asset.anchor_confidence, 0.82)
+	_apply_native_function_origin(asset, blueprint)
+
+
+func refresh_automatic_handle_binding(asset: WeaponVisualAsset, blueprint: WeaponBlueprint) -> bool:
+	# Runtime-only migration for older generated entries whose Alpha already has
+	# an unambiguous closed/open side handle or a structurally distinct long-blade
+	# terminal. Never write the source package.
+	if asset == null or blueprint == null or str(blueprint.affordance.get("grip_topology", "")) != "one_hand_handle": return false
+	if asset.anchor_source not in ["alpha_local_search+profile", "alpha_principal_terminals+ai_contact_surface", "alpha_side_loop+ai_rigid_broad_contact"]: return false
+	var before_pixels := asset.source_image.get_data()
+	var loop := SIDE_LOOP_GRIP.resolve(asset.source_image, blueprint.affordance)
+	if bool(loop.get("resolved", false)):
+		asset.grip_primary = loop.grip_primary
+		asset.grip_secondary = loop.grip_secondary
+		asset.tip = loop.strike_point
+		asset.muzzle = asset.tip
+		asset.rear_contact = asset.grip_primary
+		asset.anchor_source = "alpha_side_loop+ai_rigid_broad_contact"
+		asset.anchor_confidence = minf(asset.anchor_confidence, 0.82)
+	elif not _apply_one_hand_endpoint_roles(asset, blueprint):
+		return false
+	_normalize_asset_forward(asset)
+	# Stage loading may migrate an old asset in memory, but the immutable
+	# blueprint/card remains byte-for-byte unchanged.
+	_apply_native_function_origin(asset, blueprint, false)
+	return asset.source_image.get_data() == before_pixels or asset.orientation_flipped
+
+
+func _apply_native_function_origin(asset: WeaponVisualAsset, blueprint: WeaponBlueprint, write_evidence: bool = true) -> void:
+	var output := str(blueprint.affordance.get("functional_output", "contact_only"))
+	var roles: Dictionary = blueprint.modifiers.get("general_object_mechanism_roles", {})
+	var evidence := {"resolved": true, "output": output, "role": str(roles.get("effect_origin_part_zh", "")), "method": "contact_anchor", "alpha_changed": false}
+	if output == "contact_only":
+		asset.muzzle = asset.tip
+		if write_evidence: blueprint.modifiers["native_function_origin_evidence"] = evidence
+		return
+	if output == "radial_field":
+		asset.muzzle = _nearest_opaque(asset.source_image, asset.spin_pivot, 18)
+		evidence.method = "nearest_alpha_to_mass_pivot"
+		evidence.origin = [asset.muzzle.x, asset.muzzle.y]
+		if write_evidence: blueprint.modifiers["native_function_origin_evidence"] = evidence
+		return
+	var forward_delta := asset.tip - asset.grip_primary
+	if forward_delta.length() < 8.0:
+		evidence.resolved = false; evidence.method = "forward_axis_unresolved"
+		if write_evidence: blueprint.modifiers["native_function_origin_evidence"] = evidence
+		return
+	var forward := forward_delta.normalized()
+	var origin := Vector2.ZERO
+	var maximum_projection := -INF
+	var nearest_to_axis := INF
+	for y: int in range(asset.opaque_bounds.position.y, asset.opaque_bounds.end.y):
+		for x: int in range(asset.opaque_bounds.position.x, asset.opaque_bounds.end.x):
+			if asset.source_image.get_pixel(x, y).a <= 0.10: continue
+			var point := Vector2(float(x), float(y))
+			var relative := point - asset.grip_primary
+			var projection := relative.dot(forward)
+			var perpendicular := absf(relative.cross(forward))
+			if projection > maximum_projection + 0.001 or (is_equal_approx(projection, maximum_projection) and perpendicular < nearest_to_axis):
+				origin = point; maximum_projection = projection; nearest_to_axis = perpendicular
+	var minimum_span := maxf(14.0, forward_delta.length() * 1.08)
+	if maximum_projection < minimum_span or asset.source_image.get_pixelv(Vector2i(origin)).a <= 0.10:
+		evidence.resolved = false; evidence.method = "effect_origin_not_separated_from_grip"
+	else:
+		asset.muzzle = origin
+		evidence.method = "farthest_forward_alpha_terminal_from_grip"
+		evidence.origin = [origin.x, origin.y]
+		evidence.grip_to_origin_pixels = origin.distance_to(asset.grip_primary)
+		evidence.forward_projection_pixels = maximum_projection
+		evidence.forward_vector = [forward.x, forward.y]
+	if write_evidence: blueprint.modifiers["native_function_origin_evidence"] = evidence
 
 
 func _apply_one_hand_endpoint_roles(asset: WeaponVisualAsset, blueprint: WeaponBlueprint) -> bool:
@@ -484,15 +678,41 @@ func _apply_one_hand_endpoint_roles(asset: WeaponVisualAsset, blueprint: WeaponB
 	if not bool(terminals.get("ok", false)):
 		return false
 	var contact_surface := str(blueprint.affordance.get("contact_surface", ""))
-	if contact_surface not in ["point", "broad", "whole_body"]:
+	var long_blade_edge := (
+		contact_surface == "edge"
+		and str(blueprint.affordance.get("secondary_contact_surface", "")) == "point"
+		and str(blueprint.affordance.get("body_length", "")) == "long"
+		and bool(blueprint.affordance.get("has_edge", false))
+		and bool(blueprint.affordance.get("has_point", false))
+	)
+	if contact_surface not in ["point", "broad", "whole_body"] and not long_blade_edge:
 		return false
 	var low_count := int(terminals.get("low_count", 0))
 	var high_count := int(terminals.get("high_count", 0))
 	var smaller := maxi(1, mini(low_count, high_count))
 	var larger := maxi(low_count, high_count)
-	if float(larger) / float(smaller) < 1.18:
+	var terminal_ratio := float(larger) / float(smaller)
+	var guarded_grip := ""
+	if long_blade_edge:
+		var low_guard_score := float(terminals.get("low_guard_score", 0.0))
+		var high_guard_score := float(terminals.get("high_guard_score", 0.0))
+		# A long handle followed by a guard creates one isolated terminal-side
+		# thickness step. Smoothly widening blade points do not. The rule uses
+		# Alpha cross-sections only, so colors and object names cannot select it.
+		if high_guard_score >= 1.35 and low_guard_score < 1.35:
+			guarded_grip = "high"
+		elif low_guard_score >= 1.35 and high_guard_score < 1.35:
+			guarded_grip = "low"
+	if guarded_grip.is_empty() and terminal_ratio < 1.18:
 		return false
-	var strike_uses_low := low_count < high_count if contact_surface == "point" else low_count > high_count
+	# Long edged objects expose their point as independent evidence. Without a
+	# guard decision, the narrower terminal is the point and the wider terminal
+	# is the held fixture. Ambiguous silhouettes fail closed above.
+	var strike_uses_low := (
+		guarded_grip == "high"
+		or (guarded_grip.is_empty() and (contact_surface == "point" or long_blade_edge) and low_count < high_count)
+		or (guarded_grip.is_empty() and contact_surface not in ["point", "edge"] and low_count > high_count)
+	)
 	var strike_terminal := Vector2(terminals.get("low", Vector2.ZERO) if strike_uses_low else terminals.get("high", Vector2.ZERO))
 	var grip_terminal := Vector2(terminals.get("high", Vector2.ZERO) if strike_uses_low else terminals.get("low", Vector2.ZERO))
 	var centroid := Vector2(terminals.get("centroid", asset.spin_pivot))
@@ -535,6 +755,9 @@ func _principal_terminal_analysis(image: Image, bounds: Rect2i) -> Dictionary:
 	var axis := Vector2(cos(angle), sin(angle)).normalized()
 	var minimum_projection := INF
 	var maximum_projection := -INF
+	var projection_profile: Array[int] = []
+	projection_profile.resize(40)
+	projection_profile.fill(0)
 	for y: int in range(bounds.position.y, bounds.end.y):
 		for x: int in range(bounds.position.x, bounds.end.x):
 			if image.get_pixel(x, y).a <= 0.10:
@@ -545,6 +768,13 @@ func _principal_terminal_analysis(image: Image, bounds: Rect2i) -> Dictionary:
 	var span := maximum_projection - minimum_projection
 	if span < 18.0:
 		return {"ok": false}
+	for y: int in range(bounds.position.y, bounds.end.y):
+		for x: int in range(bounds.position.x, bounds.end.x):
+			if image.get_pixel(x, y).a <= 0.10:
+				continue
+			var projection := (Vector2(float(x), float(y)) - centroid).dot(axis)
+			var bin := clampi(roundi((projection - minimum_projection) / span * float(projection_profile.size() - 1)), 0, projection_profile.size() - 1)
+			projection_profile[bin] += 1
 	var terminal_band := maxf(2.5, span * 0.045)
 	var low_total := Vector2.ZERO
 	var high_total := Vector2.ZERO
@@ -576,7 +806,38 @@ func _principal_terminal_analysis(image: Image, bounds: Rect2i) -> Dictionary:
 		"high": high,
 		"low_count": _opaque_neighborhood_count(image, low, radius),
 		"high_count": _opaque_neighborhood_count(image, high, radius),
+		"low_guard_score": _terminal_guard_score(projection_profile),
+		"high_guard_score": _terminal_guard_score(_reversed_profile(projection_profile)),
 	}
+
+
+func _terminal_guard_score(profile: Array[int]) -> float:
+	if profile.size() < 20:
+		return 0.0
+	var outer := profile.slice(roundi(profile.size() * 0.05), roundi(profile.size() * 0.20))
+	var guard := profile.slice(roundi(profile.size() * 0.20), roundi(profile.size() * 0.36))
+	var inner := profile.slice(roundi(profile.size() * 0.36), roundi(profile.size() * 0.50))
+	if outer.is_empty() or guard.is_empty() or inner.is_empty():
+		return 0.0
+	var guard_peak := 0
+	for value: int in guard:
+		guard_peak = maxi(guard_peak, value)
+	return float(guard_peak) / maxf(1.0, maxf(_median_ints(outer), _median_ints(inner)))
+
+
+func _median_ints(values: Array) -> float:
+	var sorted := values.duplicate()
+	sorted.sort()
+	var middle := sorted.size() / 2
+	if sorted.size() % 2 == 1:
+		return float(sorted[middle])
+	return (float(sorted[middle - 1]) + float(sorted[middle])) * 0.5
+
+
+func _reversed_profile(profile: Array[int]) -> Array[int]:
+	var reversed := profile.duplicate()
+	reversed.reverse()
+	return reversed
 
 
 func _opaque_neighborhood_count(image: Image, center: Vector2, radius: int) -> int:

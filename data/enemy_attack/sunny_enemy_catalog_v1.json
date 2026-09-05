@@ -1,0 +1,308 @@
+{
+  "schema": "forge-offline-encounter-catalog-v1",
+  "catalog_id": "sunny-expedition-enemies-2026-09",
+  "blueprints": [
+    {
+      "catalog_id": "spring_hopper",
+      "response": {
+        "schema": "forge-enemy-ai-blueprint-response-v1",
+        "requested_concept": "弹簧菇怪",
+        "canonical_name_zh": "弹簧菇怪",
+        "battle_role_zh": "轻巧脆弱，弹跳近身并用预告落点迫使玩家离开原位",
+        "confidence": 0.96,
+        "visual_axes": {
+          "body_plan": "biped",
+          "scale": "small",
+          "material": "flesh",
+          "palette": "venom",
+          "signature_feature": "halo"
+        },
+        "mechanical_profile": {
+          "mass_class": "light",
+          "armor_class": "none",
+          "durability": "fragile",
+          "mobility": "fast"
+        },
+        "attacks": [
+          {
+            "slot_label_zh": "弹簧扑击",
+            "axes": {
+              "delivery": "contact",
+              "target_lock": "live_until_active",
+              "hit_shape": "arc",
+              "depth_path": "same_lane",
+              "tempo": "quick",
+              "stability": "fragile",
+              "recovery": "brief"
+            },
+            "selection": {
+              "preferred_range": "close",
+              "depth_fit": "aligned",
+              "base_priority": 76,
+              "coordination_cost": 1,
+              "requires_clear_path": false,
+              "selection_rank": 10
+            }
+          },
+          {
+            "slot_label_zh": "压顶弹跳",
+            "axes": {
+              "delivery": "marked_impact",
+              "target_lock": "point_on_commit",
+              "hit_shape": "circle",
+              "depth_path": "depth_band",
+              "tempo": "committed",
+              "stability": "tell_interruptible",
+              "recovery": "punishable",
+              "hazard_mode": "lingering"
+            },
+            "selection": {
+              "preferred_range": "far",
+              "depth_fit": "any",
+              "base_priority": 63,
+              "coordination_cost": 1,
+              "requires_clear_path": false,
+              "selection_rank": 20
+            }
+          }
+        ]
+      }
+    },
+    {
+      "catalog_id": "spore_raider",
+      "response": {
+        "schema": "forge-enemy-ai-blueprint-response-v1",
+        "requested_concept": "毒雾菇巡游者",
+        "canonical_name_zh": "毒雾菇巡游者",
+        "battle_role_zh": "高速切入同一横排，远处喷吐毒雾牵制玩家走位",
+        "confidence": 0.95,
+        "visual_axes": {
+          "body_plan": "biped",
+          "scale": "small",
+          "material": "flesh",
+          "palette": "venom",
+          "signature_feature": "halo"
+        },
+        "mechanical_profile": {
+          "mass_class": "medium",
+          "armor_class": "light",
+          "durability": "standard",
+          "mobility": "fast"
+        },
+        "attacks": [
+          {
+            "slot_label_zh": "菇盖冲刺",
+            "axes": {
+              "delivery": "rush",
+              "target_lock": "direction_on_commit",
+              "hit_shape": "strip",
+              "depth_path": "cross_depth",
+              "tempo": "committed",
+              "stability": "tell_interruptible",
+              "recovery": "extended"
+            },
+            "selection": {
+              "preferred_range": "mid",
+              "depth_fit": "tolerant",
+              "base_priority": 74,
+              "coordination_cost": 1,
+              "requires_clear_path": true,
+              "selection_rank": 10
+            }
+          },
+          {
+            "slot_label_zh": "毒雾喷吐",
+            "axes": {
+              "delivery": "projectile",
+              "target_lock": "direction_on_commit",
+              "hit_shape": "capsule",
+              "depth_path": "same_lane",
+              "tempo": "standard",
+              "stability": "fragile",
+              "recovery": "brief"
+            },
+            "selection": {
+              "preferred_range": "far",
+              "depth_fit": "aligned",
+              "base_priority": 65,
+              "coordination_cost": 1,
+              "requires_clear_path": true,
+              "selection_rank": 20
+            }
+          }
+        ]
+      }
+    },
+    {
+      "catalog_id": "wind_wisp",
+      "response": {
+        "schema": "forge-enemy-ai-blueprint-response-v1",
+        "requested_concept": "晴风幽灵",
+        "canonical_name_zh": "晴风幽灵",
+        "battle_role_zh": "身体轻且容易被推开，近身掠击后撤开；远处先标出一整条脉冲风道封锁通路",
+        "confidence": 0.96,
+        "visual_axes": {
+          "body_plan": "floating",
+          "scale": "medium",
+          "material": "spectral",
+          "palette": "arcane",
+          "signature_feature": "halo"
+        },
+        "mechanical_profile": {
+          "mass_class": "light",
+          "armor_class": "none",
+          "durability": "fragile",
+          "mobility": "fast"
+        },
+        "attacks": [
+          {
+            "slot_label_zh": "贴身掠击",
+            "axes": {
+              "delivery": "contact",
+              "target_lock": "live_until_active",
+              "hit_shape": "arc",
+              "depth_path": "cross_depth",
+              "tempo": "quick",
+              "stability": "fragile",
+              "recovery": "brief"
+            },
+            "selection": {
+              "preferred_range": "close",
+              "depth_fit": "tolerant",
+              "base_priority": 79,
+              "coordination_cost": 1,
+              "requires_clear_path": false,
+              "selection_rank": 10
+            }
+          },
+          {
+            "slot_label_zh": "横风封路",
+            "axes": {
+              "delivery": "marked_impact",
+              "target_lock": "point_on_commit",
+              "hit_shape": "strip",
+              "depth_path": "depth_band",
+              "tempo": "committed",
+              "stability": "tell_interruptible",
+              "recovery": "punishable",
+              "hazard_mode": "pulsing"
+            },
+            "selection": {
+              "preferred_range": "far",
+              "depth_fit": "any",
+              "base_priority": 68,
+              "coordination_cost": 1,
+              "requires_clear_path": false,
+              "selection_rank": 20
+            }
+          }
+        ]
+      }
+    },
+    {
+      "catalog_id": "thorn_guardian",
+      "response": {
+        "schema": "forge-enemy-ai-blueprint-response-v1",
+        "requested_concept": "荆棘食人花守望者",
+        "canonical_name_zh": "荆棘食人花守望者",
+        "battle_role_zh": "重而耐打，正面有护甲，以近身啃咬和远程种弹守住出口",
+        "confidence": 0.95,
+        "visual_axes": {
+          "body_plan": "serpentine",
+          "scale": "large",
+          "material": "flesh",
+          "palette": "venom",
+          "signature_feature": "mandibles"
+        },
+        "mechanical_profile": {
+          "mass_class": "heavy",
+          "armor_class": "heavy",
+          "durability": "sturdy",
+          "mobility": "slow"
+        },
+        "attacks": [
+          {
+            "slot_label_zh": "护甲啃咬",
+            "axes": {
+              "delivery": "contact",
+              "target_lock": "live_until_active",
+              "hit_shape": "arc",
+              "depth_path": "same_lane",
+              "tempo": "committed",
+              "stability": "armored_commit",
+              "recovery": "extended",
+              "defense_mode": "frontal_guard"
+            },
+            "selection": {
+              "preferred_range": "close",
+              "depth_fit": "aligned",
+              "base_priority": 78,
+              "coordination_cost": 1,
+              "requires_clear_path": false,
+              "selection_rank": 10
+            }
+          },
+          {
+            "slot_label_zh": "荆棘种弹",
+            "axes": {
+              "delivery": "projectile",
+              "target_lock": "direction_on_commit",
+              "hit_shape": "capsule",
+              "depth_path": "same_lane",
+              "tempo": "standard",
+              "stability": "tell_interruptible",
+              "recovery": "punishable",
+              "defense_mode": "channel_guard"
+            },
+            "selection": {
+              "preferred_range": "far",
+              "depth_fit": "aligned",
+              "base_priority": 69,
+              "coordination_cost": 1,
+              "requires_clear_path": true,
+              "selection_rank": 20
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "encounters": [
+    {
+      "encounter_id": "sunny_meadow_mix",
+      "title_zh": "草甸混战",
+      "brief_zh": "先推开弹簧菇，再处理毒雾菇的直线切入。",
+      "blueprint_ids": ["spring_hopper", "spore_raider"],
+      "pressure": {
+        "health_multiplier": 1.0,
+        "movement_multiplier": 1.0,
+        "damage_multiplier": 1.0,
+        "attack_tempo_multiplier": 1.0
+      }
+    },
+    {
+      "encounter_id": "sunny_canopy_mix",
+      "title_zh": "林风夹击",
+      "brief_zh": "幽灵穿行与毒雾菇冲刺从不同方向施压。",
+      "blueprint_ids": ["spore_raider", "wind_wisp"],
+      "pressure": {
+        "health_multiplier": 1.12,
+        "movement_multiplier": 1.08,
+        "damage_multiplier": 1.12,
+        "attack_tempo_multiplier": 0.92
+      }
+    },
+    {
+      "encounter_id": "sunny_creek_guard",
+      "title_zh": "溪谷守望",
+      "brief_zh": "清理轻型异怪，再抓住重甲食人花的收招。",
+      "blueprint_ids": ["spring_hopper", "wind_wisp", "thorn_guardian"],
+      "pressure": {
+        "health_multiplier": 1.24,
+        "movement_multiplier": 1.12,
+        "damage_multiplier": 1.24,
+        "attack_tempo_multiplier": 0.84
+      }
+    }
+  ]
+}

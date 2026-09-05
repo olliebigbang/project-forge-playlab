@@ -13,6 +13,7 @@ const RANGED_AXES := preload("res://scripts/combat_feel/ranged_mechanism_axis_re
 
 var passed := 0
 var failed := 0
+var test_root := "res://screenshots/provider_contract_%d" % Time.get_ticks_usec()
 
 func _initialize() -> void:
 	print("Forge Open Identity local provider boundary tests")
@@ -36,9 +37,9 @@ func _run(test_name: String, callable: Callable) -> void:
 		printerr("FAIL | %s | %s" % [test_name, str(result)])
 
 func _test_strict_loopback_url() -> Variant:
-	var valid_path := "user://playlab/tests/provider-valid.json"
-	var malicious_path := "user://playlab/tests/provider-malicious.json"
-	var invalid_port_path := "user://playlab/tests/provider-invalid-port.json"
+	var valid_path := test_root.path_join("provider-valid.json")
+	var malicious_path := test_root.path_join("provider-malicious.json")
+	var invalid_port_path := test_root.path_join("provider-invalid-port.json")
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(valid_path).get_base_dir())
 	_write_json(valid_path, {"api_base": "http://127.0.0.1:8188"})
 	_write_json(malicious_path, {"api_base": "http://127.0.0.1:8188@evil.example"})
@@ -55,7 +56,7 @@ func _test_strict_loopback_url() -> Variant:
 	return true
 
 func _test_atomic_result_is_read_only() -> Variant:
-	var directory := "user://playlab/tests/provider-atomic-result"
+	var directory := test_root.path_join("provider-atomic-result")
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(directory))
 	_write_json(directory.path_join("manifest.json"), {"status": "success"})
 	var sentinel := "{\"producer\":\"bridge\",\"sentinel\":true}"

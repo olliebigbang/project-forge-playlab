@@ -14,6 +14,11 @@
     "not a thin flat-screen television",
     "not a narrow locker with multiple small doors"
   ],
+  "mechanism_roles": {
+    "grip_part_zh": "高矩形柜体",
+    "activation_part_zh": "",
+    "effect_origin_part_zh": "大块前门"
+  },
   "behavior_family": "heavy_melee",
   "scale_treatment": "oversized_fantasy",
   "declaration": {

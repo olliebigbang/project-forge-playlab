@@ -125,6 +125,11 @@ func _movement_for(arena: GameplayArena, enemy: Dictionary) -> Vector2:
 	if enemy.is_empty():
 		return Vector2.ZERO
 	var offset := Vector2(enemy["pos"]) - arena.player_position
+	if not bool(arena.weapon_strategy_profile.get("firearm", false)) and absf(offset.x) < 70.0 and (arena.player_position.x < 140.0 or arena.player_position.x > 1140.0):
+		# Escape the boundary through a depth dodge instead of backing forever
+		# into the wall. These are ordinary movement/dodge inputs, no teleport.
+		arena.request_touch_dodge()
+		return Vector2(1.0 if arena.player_position.x < 140.0 else -1.0, 0.65).normalized()
 	if bool(arena.weapon_strategy_profile.get("firearm", false)):
 		var vertical := clampf(offset.y / 90.0, -1.0, 1.0)
 		var horizontal := 0.0
@@ -135,8 +140,11 @@ func _movement_for(arena: GameplayArena, enemy: Dictionary) -> Vector2:
 		return Vector2(horizontal, vertical).limit_length(1.0)
 	if absf(offset.y) > 14.0:
 		return Vector2(0.0, signf(offset.y))
-	if absf(offset.x) <= 4.0:
-		return Vector2(-1.0 if arena.player_position.x > 640.0 else 1.0, 0.0)
+	# A terminal-contact weapon needs spacing. Walking through the target and
+	# attacking inside the handle's dead zone is not a valid control strategy.
+	if absf(offset.x) < 60.0:
+		if not arena.melee_runtime.busy(): arena.request_touch_dodge()
+		return Vector2(-signf(offset.x) if absf(offset.x) > 1.0 else -arena.facing, 0.0)
 	if absf(offset.x) > 82.0:
 		return Vector2(signf(offset.x), 0.0)
 	return Vector2.ZERO

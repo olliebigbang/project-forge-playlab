@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed AI selector for one missing automatic-armory role.
-
-This bridge is intentionally narrower than the firearm identity compiler.  It
-may choose a real model name, but it cannot declare combat mechanics.  The
-existing identity compiler and Godot mechanism compiler remain authoritative.
-"""
+"""Select an object identity for a missing capability; never author mechanics."""
 
 from __future__ import annotations
 
@@ -24,16 +19,16 @@ from firearm_identity_ai_bridge import anthropic_transport_schema
 
 PLAYLAB_ROOT = Path(__file__).resolve().parents[3]
 SCHEMA_PATH = (
-    PLAYLAB_ROOT / "data" / "combat_feel" / "automatic_armory_candidate_schema_v1.json"
+    PLAYLAB_ROOT / "data" / "combat_feel" / "automatic_armory_candidate_schema_v2.json"
 )
 PROMPT_PATH = (
-    PLAYLAB_ROOT / "data" / "combat_feel" / "automatic_armory_candidate_prompt_v1.txt"
+    PLAYLAB_ROOT / "data" / "combat_feel" / "automatic_armory_candidate_prompt_v2.txt"
 )
-REQUEST_SCHEMA = "forge-automatic-armory-candidate-request-v1"
-RESPONSE_SCHEMA = "forge-automatic-armory-candidate-v1"
-RESULT_SCHEMA = "forge-automatic-armory-candidate-bridge-result-v1"
+REQUEST_SCHEMA = "forge-automatic-armory-candidate-request-v2"
+RESPONSE_SCHEMA = "forge-automatic-armory-candidate-v2"
+RESULT_SCHEMA = "forge-automatic-armory-candidate-bridge-result-v2"
 ROLES = frozenset(
-    {"close_quarters", "precision", "sidearm", "scatter", "support", "service"}
+    {"control", "defense", "area", "reach", "breach", "mobility"}
 )
 MIN_CONFIDENCE = 0.75
 MAX_IDENTITIES = 64
@@ -129,7 +124,7 @@ def validate_candidate(request: Mapping[str, Any], payload: Mapping[str, Any]) -
     if isinstance(confidence, bool) or not isinstance(confidence, (int, float)):
         raise AutomaticArmoryCandidateError("CONFIDENCE_INVALID")
     confidence = float(confidence)
-    if confidence < MIN_CONFIDENCE or confidence > 1.0:
+    if not MIN_CONFIDENCE <= confidence <= 1.0:
         raise AutomaticArmoryCandidateError("CONFIDENCE_TOO_LOW")
     forbidden = {
         _normalize(str(item))
@@ -141,6 +136,7 @@ def validate_candidate(request: Mapping[str, Any], payload: Mapping[str, Any]) -
     generic_names = {
         "gun", "firearm", "pistol", "revolver", "rifle", "shotgun", "smg",
         "submachinegun", "machinegun", "枪", "手枪", "步枪", "霰弹枪", "冲锋枪",
+        "weapon", "object", "item", "tool", "武器", "物品", "东西", "工具",
     }
     if _normalize(canonical_name) in generic_names:
         raise AutomaticArmoryCandidateError("GENERIC_IDENTITY_FORBIDDEN")
@@ -219,11 +215,11 @@ def main(argv: list[str] | None = None) -> int:
             provider = "offline-fixture"
             model_id = "offline-fixture"
             usage: Mapping[str, Any] = {"input_tokens": 0, "output_tokens": 0}
-            source = "AI_TEST_FIXTURE_AUTOMATIC_ARMORY_CANDIDATE_V1"
+            source = "AI_TEST_FIXTURE_AUTOMATIC_ARMORY_CANDIDATE_V2"
         else:
             candidate, model_id, usage = resolve_with_anthropic(request)
             provider = "anthropic"
-            source = "AI_ANTHROPIC_AUTOMATIC_ARMORY_CANDIDATE_V1"
+            source = "AI_ANTHROPIC_AUTOMATIC_ARMORY_CANDIDATE_V2"
         record = {
             "schema": RESULT_SCHEMA,
             "status": "success",

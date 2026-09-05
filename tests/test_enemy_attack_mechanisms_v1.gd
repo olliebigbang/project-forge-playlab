@@ -2,6 +2,8 @@ extends SceneTree
 
 const COMPILER := preload("res://scripts/enemy_attack/enemy_attack_mechanism_compiler.gd")
 const SELECTOR := preload("res://scripts/enemy_attack/enemy_attack_selector.gd")
+const RUNTIME := preload("res://scripts/enemy_attack/enemy_attack_runtime_driver.gd")
+const MODIFIER_COMPILER := preload("res://scripts/enemy_attack/enemy_modifier_compiler.gd")
 
 var passed := 0
 var failed := 0
@@ -20,6 +22,11 @@ func _init() -> void:
 	_test_selector_filters_path_budget_and_cooldown()
 	_test_selector_repeat_penalty_and_rank_are_deterministic()
 	_test_mechanism_sources_have_no_enemy_identity_branches()
+	_test_v2_hazard_modes_compile_as_independent_runtime_contracts()
+	_test_v2_lingering_and_pulsing_zones_outlive_attack_active_phase()
+	_test_v2_directional_guards_have_explicit_front_and_break_windows()
+	_test_v2_anonymous_elite_modifiers_compile_and_execute()
+	_test_v2_clear_path_and_recovery_multipliers_are_live_runtime_results()
 	print("ENEMY ATTACK MECHANISMS V1 RESULT: %d passed, %d failed" % [passed, failed])
 	quit(1 if failed > 0 else 0)
 
@@ -260,11 +267,157 @@ func _test_mechanism_sources_have_no_enemy_identity_branches() -> void:
 	var source := "\n".join([
 		FileAccess.get_file_as_string("res://scripts/enemy_attack/enemy_attack_mechanism_compiler.gd"),
 		FileAccess.get_file_as_string("res://scripts/enemy_attack/enemy_attack_selector.gd"),
+		FileAccess.get_file_as_string("res://scripts/enemy_attack/enemy_attack_runtime_driver.gd"),
+		FileAccess.get_file_as_string("res://scripts/enemy_attack/enemy_modifier_compiler.gd"),
 	]).to_lower()
 	var ok := true
 	for forbidden: String in ["enemy_kind", "slag_puppet", "forge_ram", "match enemy", "if enemy"]:
 		ok = ok and not source.contains(forbidden)
 	_check(ok, "12 compiler and selector contain no enemy-name or enemy-kind dispatch")
+
+
+func _test_v2_hazard_modes_compile_as_independent_runtime_contracts() -> void:
+	var instant := COMPILER.compile(_declaration({"hazard_mode": "instant"}))
+	var lingering := COMPILER.compile(_declaration({"hazard_mode": "lingering"}))
+	var pulsing := COMPILER.compile(_declaration({"hazard_mode": "pulsing"}))
+	var instant_zone := instant.get("danger_zone", {}) as Dictionary
+	var lingering_zone := lingering.get("danger_zone", {}) as Dictionary
+	var pulsing_zone := pulsing.get("danger_zone", {}) as Dictionary
+	var ok := str(instant_zone.get("contact_mode", "")) == "single"
+	ok = ok and not bool(instant_zone.get("persists_after_active", true))
+	ok = ok and str(lingering_zone.get("contact_mode", "")) == "continuous"
+	ok = ok and float(lingering_zone.get("duration_seconds", 0.0)) > float(instant_zone.get("duration_seconds", 0.0))
+	ok = ok and str(pulsing_zone.get("contact_mode", "")) == "pulse"
+	ok = ok and float(pulsing_zone.get("pulse_interval_seconds", 0.0)) > float(pulsing_zone.get("pulse_active_seconds", 0.0))
+	ok = ok and str((instant.get("axes", {}) as Dictionary).get("defense_mode", "")) == "none"
+	ok = ok and str((instant.get("parameter_owners", {}) as Dictionary).get("danger_zone", "")) == "hazard_mode"
+	_check(ok, "13 instant lingering and pulsing compile to distinct danger-zone timing without breaking old defaults")
+
+
+func _test_v2_lingering_and_pulsing_zones_outlive_attack_active_phase() -> void:
+	var lingering_runtime: RefCounted = RUNTIME.new()
+	var lingering_configured: Dictionary = lingering_runtime.configure([
+		_declaration({"hazard_mode": "lingering"})
+	])
+	var ok := bool(lingering_configured.get("ok", false))
+	lingering_runtime.begin_attack(_context(60.0, 0.0, 3, true), Vector2.ZERO, Vector2(60, 0))
+	var timeline := lingering_runtime.current_attack.get("timeline", {}) as Dictionary
+	lingering_runtime.step(
+		float(timeline.get("telegraph_seconds", 0.0)) + float(timeline.get("commit_seconds", 0.0)) + 0.01,
+		Vector2.ZERO,
+		Vector2(60, 0)
+	)
+	ok = ok and lingering_runtime.active_hazards.size() == 1
+	lingering_runtime.step(float(timeline.get("active_seconds", 0.0)) + 0.01, Vector2.ZERO, Vector2(60, 0))
+	ok = ok and lingering_runtime.phase == "recovery"
+	ok = ok and lingering_runtime.hazard_hit_contains(0, Vector2(60, 0))
+
+	var pulsing_runtime: RefCounted = RUNTIME.new()
+	pulsing_runtime.configure([_declaration({"hazard_mode": "pulsing"})])
+	pulsing_runtime.begin_attack(_context(60.0, 0.0, 3, true), Vector2.ZERO, Vector2(60, 0))
+	var pulse_timeline := pulsing_runtime.current_attack.get("timeline", {}) as Dictionary
+	pulsing_runtime.step(
+		float(pulse_timeline.get("telegraph_seconds", 0.0)) + float(pulse_timeline.get("commit_seconds", 0.0)) + 0.01,
+		Vector2.ZERO,
+		Vector2(60, 0)
+	)
+	ok = ok and pulsing_runtime.hazard_hit_contains(0, Vector2(60, 0))
+	pulsing_runtime.step(0.30, Vector2.ZERO, Vector2(60, 0))
+	ok = ok and not pulsing_runtime.hazard_hit_contains(0, Vector2(60, 0))
+	var pulse_step: Dictionary = pulsing_runtime.step(0.31, Vector2.ZERO, Vector2(60, 0))
+	ok = ok and pulsing_runtime.hazard_hit_contains(0, Vector2(60, 0))
+	ok = ok and (pulse_step.get("hazard_events", []) as Array).size() == 1
+	_check(ok, "14 persistent zones keep frozen real geometry and pulsing zones expose timed hit windows")
+
+
+func _test_v2_directional_guards_have_explicit_front_and_break_windows() -> void:
+	var runtime: RefCounted = RUNTIME.new()
+	var configured: Dictionary = runtime.configure([
+		_declaration({"target_lock": "direction_on_commit", "hit_shape": "capsule", "defense_mode": "frontal_guard"})
+	])
+	var ok := bool(configured.get("ok", false))
+	runtime.begin_attack(_context(60.0, 0.0, 3, true), Vector2.ZERO, Vector2(60, 0))
+	var front: Dictionary = runtime.resolve_defense(Vector2.RIGHT, 0.40)
+	var rear: Dictionary = runtime.resolve_defense(Vector2.LEFT, 2.00)
+	ok = ok and bool(front.get("blocked", false)) and float(front.get("damage_multiplier", 1.0)) < 1.0
+	ok = ok and not bool(rear.get("blocked", true)) and not bool(rear.get("guard_broken", true))
+	var broken: Dictionary = runtime.resolve_defense(Vector2.RIGHT, 1.50)
+	ok = ok and bool(broken.get("guard_broken", false)) and runtime.phase == "recovery"
+
+	var channel := COMPILER.compile(_declaration({"defense_mode": "channel_guard"}))
+	var channel_defense := channel.get("defense", {}) as Dictionary
+	ok = ok and (channel_defense.get("guarded_phases", []) as Array) == ["telegraph", "commit"]
+	ok = ok and (channel_defense.get("exposed_phases", []) as Array).has("active")
+	ok = ok and str((channel.get("parameter_owners", {}) as Dictionary).get("defense", "")) == "defense_mode"
+	_check(ok, "15 frontal and channel guards defend only declared directions and phases with an explicit break window")
+
+
+func _test_v2_anonymous_elite_modifiers_compile_and_execute() -> void:
+	var declarations := [
+		{"modifier_key": "modifier_a", "family": "echo"},
+		{"modifier_key": "modifier_b", "family": "barrier"},
+		{"modifier_key": "modifier_c", "family": "residue"},
+	]
+	var stack: Dictionary = MODIFIER_COMPILER.compile_stack(declarations)
+	var ok := bool(stack.get("ok", false)) and (stack.get("families", []) as Array).size() == 3
+	var runtime: RefCounted = RUNTIME.new()
+	var configured: Dictionary = runtime.configure([_declaration()], 1.0, declarations)
+	ok = ok and int(configured.get("compiled_modifier_count", 0)) == 3
+	var blocked: Dictionary = runtime.resolve_defense(Vector2.LEFT, 0.2)
+	var broken: Dictionary = runtime.resolve_defense(Vector2.LEFT, 2.0)
+	ok = ok and bool(blocked.get("blocked", false)) and str(blocked.get("source", "")) == "barrier"
+	ok = ok and bool(broken.get("guard_broken", false)) and runtime.barrier_charges_remaining == 0
+	runtime.begin_attack(_context(60.0, 0.0, 3, true), Vector2.ZERO, Vector2(60, 0))
+	var timeline := runtime.current_attack.get("timeline", {}) as Dictionary
+	var activation: Dictionary = runtime.step(
+		float(timeline.get("telegraph_seconds", 0.0)) + float(timeline.get("commit_seconds", 0.0)) + 0.01,
+		Vector2.ZERO,
+		Vector2(60, 0)
+	)
+	var danger_zone := (activation.get("activation_event", {}) as Dictionary).get("danger_zone", {}) as Dictionary
+	ok = ok and str(danger_zone.get("modifier_source", "")) == "residue"
+	ok = ok and runtime.active_hazards.size() == 1 and runtime.scheduled_echoes.size() == 1
+	var echo_step: Dictionary = runtime.step(0.43, Vector2.ZERO, Vector2(60, 0))
+	var echo_events := echo_step.get("echo_events", []) as Array
+	ok = ok and echo_events.size() == 1
+	ok = ok and str((echo_events[0] as Dictionary).get("schema", "")) == "forge-enemy-attack-echo-event-v1"
+	var rejected := MODIFIER_COMPILER.compile_stack([{"modifier_key": "bad", "family": "echo", "enemy_name": "forbidden"}])
+	ok = ok and not bool(rejected.get("ok", true))
+	_check(ok, "16 echo barrier and residue compile by anonymous family and execute through one modifier runtime")
+
+
+func _test_v2_clear_path_and_recovery_multipliers_are_live_runtime_results() -> void:
+	var requires_path := _declaration(
+		{"delivery": "projectile", "target_lock": "direction_on_commit", "hit_shape": "capsule"},
+		{"requires_clear_path": true, "base_priority": 100, "preferred_range": "any", "depth_fit": "any"},
+		"slot_requires_path"
+	)
+	var fallback := _declaration(
+		{},
+		{"requires_clear_path": false, "base_priority": 10, "preferred_range": "any", "depth_fit": "any"},
+		"slot_blocked_fallback"
+	)
+	var runtime: RefCounted = RUNTIME.new()
+	runtime.configure([requires_path, fallback])
+	var begun: Dictionary = runtime.begin_attack(_context(80.0, 0.0, 3, false), Vector2.ZERO, Vector2(80, 0))
+	var ok := str(begun.get("attack_key", "")) == "slot_blocked_fallback"
+	ok = ok and begun.get("last_selection_clear_path", true) == false
+	var timeline := runtime.current_attack.get("timeline", {}) as Dictionary
+	runtime.step(
+		float(timeline.get("telegraph_seconds", 0.0)) + float(timeline.get("commit_seconds", 0.0)) + float(timeline.get("active_seconds", 0.0)) + 0.01,
+		Vector2.ZERO,
+		Vector2(80, 0)
+	)
+	var recovery := runtime.current_attack.get("recovery", {}) as Dictionary
+	ok = ok and runtime.phase == "recovery"
+	ok = ok and is_equal_approx(runtime.movement_multiplier(), float(recovery.get("movement_multiplier", -1.0)))
+	ok = ok and is_equal_approx(runtime.turn_rate_multiplier(), float(recovery.get("turn_rate_multiplier", -1.0)))
+	ok = ok and is_equal_approx(runtime.scale_incoming_stagger(2.0), 2.0 * float(recovery.get("incoming_stagger_multiplier", -1.0)))
+	var no_path_runtime: RefCounted = RUNTIME.new()
+	no_path_runtime.configure([requires_path])
+	var rejected: Dictionary = no_path_runtime.begin_attack(_context(80.0, 0.0, 3, false), Vector2.ZERO, Vector2(80, 0))
+	ok = ok and not bool(rejected.get("ok", true)) and str(rejected.get("error", "")) == "NO_ELIGIBLE_ATTACK"
+	_check(ok, "17 clear_path false selects only legal attacks and recovery multipliers are live movement turn and stagger results")
 
 
 func _declaration(

@@ -5,7 +5,7 @@
 ## 启动 Revision A（真实生成武器）
 
 ```powershell
-cd "C:\Users\Eddie L\Documents\project-forge-playlab"
+cd "<USERPROFILE>\Documents\project-forge-playlab"
 .\scripts\run_combat_feel_slice.ps1
 ```
 

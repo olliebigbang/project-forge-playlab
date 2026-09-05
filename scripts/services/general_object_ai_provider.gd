@@ -7,6 +7,7 @@ const RESULT_SCHEMA := "forge-general-object-ai-bridge-result-v1"
 const OUTPUT_ROOT := "user://playlab/general_object_ai/requests"
 
 var python_executable := "python"
+var output_root := OUTPUT_ROOT
 var timeout_seconds := 70.0
 var offline_fixture_path := ""
 var process_id := -1
@@ -36,7 +37,7 @@ func request_identity(player_text: String) -> int:
 	started_msec = Time.get_ticks_msec()
 	process_exited_msec = 0
 	var run_id := "request_%d_r%d" % [roundi(Time.get_unix_time_from_system() * 1000.0), active_revision]
-	active_output_directory = ProjectSettings.globalize_path(OUTPUT_ROOT.path_join(run_id))
+	active_output_directory = ProjectSettings.globalize_path(output_root.path_join(run_id))
 	if DirAccess.make_dir_recursive_absolute(active_output_directory) != OK:
 		failure_reason = "AI_GENERAL_OBJECT_REQUEST_DIRECTORY_CREATE_FAILED"
 		return active_revision

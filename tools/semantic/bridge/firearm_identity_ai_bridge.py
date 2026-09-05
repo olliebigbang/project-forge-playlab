@@ -88,7 +88,7 @@ LEGAL_VALUES = {
     "magazine_shape": frozenset({"straight", "curved", "in_grip", "tube", "cylinder", "belt_box"}),
     "barrel_length": frozenset({"short", "medium", "long"}),
     "upper_profile": frozenset({"carry_handle", "top_rail", "raised_gas_tube", "slide", "ribbed_barrel", "revolver_frame", "feed_cover"}),
-    "support_mode": frozenset({"one_hand", "two_hand_shouldered"}),
+    "support_mode": frozenset({"one_hand", "two_hand_shouldered", "two_hand_free"}),
     "fire_control": frozenset({"semi_auto", "three_round_burst", "select_fire_auto"}),
     "action_mechanism": frozenset({"self_loading", "bolt_action", "pump_action", "revolving_cylinder"}),
     "feed_system": frozenset({"detachable_box", "internal_tube", "revolving_cylinder", "belt_box"}),
@@ -238,9 +238,15 @@ def _validate_declaration(value: Any, classification: str) -> dict[str, str]:
     ):
         raise FirearmIdentityBridgeError("DECLARATION_BULLPUP_CONFLICT")
     if layout == "conventional_rifle" and not (
-        feed == "ahead_of_grip" and stock != "none" and support == "two_hand_shouldered"
+        feed == "ahead_of_grip" and (
+            (stock != "none" and support == "two_hand_shouldered")
+            or (stock == "none" and support in {"one_hand", "two_hand_free"})
+        )
     ):
-        raise FirearmIdentityBridgeError("DECLARATION_CONVENTIONAL_CONFLICT")
+        raise FirearmIdentityBridgeError("DECLARATION_CONVENTIONAL_CONFLICT", {
+            "layout": layout, "stock_structure": stock,
+            "feed_position": feed, "support_mode": support,
+        })
     if layout == "pistol" and not (
         feed == "in_grip"
         and magazine == "in_grip"

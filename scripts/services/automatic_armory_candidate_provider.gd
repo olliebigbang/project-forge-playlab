@@ -2,8 +2,8 @@ class_name AutomaticArmoryCandidateProvider
 extends RefCounted
 
 const BRIDGE_SCRIPT := "res://tools/semantic/bridge/automatic_armory_candidate_bridge.py"
-const REQUEST_SCHEMA := "forge-automatic-armory-candidate-request-v1"
-const RESULT_SCHEMA := "forge-automatic-armory-candidate-bridge-result-v1"
+const REQUEST_SCHEMA := "forge-automatic-armory-candidate-request-v2"
+const RESULT_SCHEMA := "forge-automatic-armory-candidate-bridge-result-v2"
 const OUTPUT_ROOT := "user://playlab/automatic_armory/requests"
 
 var python_executable := "python"

@@ -33,14 +33,14 @@ func _run_all() -> void:
 	_check("Every weapon is fitted to the player from structure rather than its name", _test_identity_free_player_fit)
 	_check("Weapon capability profiles produce different three-battle tactics", _test_capability_driven_strategy)
 	_check("Attacking keeps aim on the target while the player retreats", _test_retreating_attack_aim)
-	_check("A close melee sweep still connects when an enemy crosses the facing axis", _test_close_melee_sweep)
+	_check("Melee uses visible contact instead of granting invisible body-overlap hits", _test_close_melee_sweep)
 	_check("Enemy pressure rises across the three battles without removing telegraphs", _test_enemy_pressure_curve)
 	_check("General melee attacks apply their compiled control and armor interactions", _test_general_melee_target_interaction)
 	_check("Level weapon cards preserve bolt-action mechanism timing", _test_cycle_action_weapon_card)
-	_check("Mechanism coverage chooses one missing firearm role without player input", _test_automatic_armory_gap_plan)
+	_check("Mechanism coverage chooses missing general capabilities without player input", _test_automatic_armory_gap_plan)
 	_check("A level encounter executes two distinct compiled attack deliveries", _test_two_compiled_deliveries_execute)
 	_check("Three encounter completions produce the playable completed state", _test_completed_state)
-	_check("A generated firearm is offered as an optional post-run reward", _test_generated_armory_reward)
+	_check("A saved complete weapon is offered as an optional post-run reward", _test_generated_armory_reward)
 	_check("Exhausted health produces a failed run state", _test_failed_state)
 	print("AUTOMATIC_LEVEL_LOOP_TESTS passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
@@ -227,22 +227,15 @@ func _test_automatic_armory_gap_plan() -> Variant:
 	var missing_close_quarters: Dictionary = automatic_armory.plan(service_only)
 	if (
 		not bool(missing_close_quarters.get("needs_generation", false))
-		or str(missing_close_quarters.get("target_role", "")) != "close_quarters"
+		or str(missing_close_quarters.get("target_role", "")) != "control"
 		or bool(missing_close_quarters.get("player_confirmation_required", true))
 	):
 		return missing_close_quarters
-	var covered: Array[Dictionary] = [
-		_role_entry("submachine_gun", "self_loading", "close"),
-		_role_entry("precision_rifle", "bolt_action", "precision"),
-		_role_entry("semi_auto_pistol", "self_loading", "sidearm"),
-		_role_entry("shotgun", "pump_action", "scatter"),
-		_role_entry("light_machine_gun", "self_loading", "support"),
-		_role_entry("rifle", "self_loading", "service"),
-	]
+	var covered: Array[Dictionary] = [_weapon_entry(), _mechanism_weapon_entry()]
 	var complete: Dictionary = automatic_armory.plan(covered)
 	return true if (
-		not bool(complete.get("needs_generation", true))
-		and (complete.get("occupied_roles", {}) as Dictionary).size() == 6
+		str(complete.get("target_role", "")) == "defense"
+		and (complete.get("occupied_roles", {}) as Dictionary).has("control")
 	) else complete
 
 
@@ -294,15 +287,16 @@ func _test_general_mechanism_handoff() -> Variant:
 	ok = ok and handed.get("asset") == entry.get("asset")
 	ok = ok and handed_profile != null and handed_profile.to_dict() == source_profile.to_dict()
 	ok = ok and (handed.get("ranged_runtime_profile", {}) as Dictionary).is_empty()
-	ok = ok and not loop.automatic_armory_attempted
+	ok = ok and loop.automatic_armory_attempted
 	ok = ok and loop.attack_button.text == "攻击"
 	var arena: GameplayArena = ARENA.new() as GameplayArena
-	arena.blueprint = entry.get("blueprint") as WeaponBlueprint
-	arena.asset = entry.get("asset") as WeaponVisualAsset
+	arena.start_stage("training", entry.blueprint, entry.asset)
+	arena.enemies.clear()
 	arena.facing = 1.0
-	arena.melee_timer = 0.0
 	var idle_geometry := arena._soft_weapon_geometry(Vector2(250, 410), 0.0)
-	arena.melee_timer = 0.31
+	arena._update_melee_attack(true, 0.0, true)
+	while not arena.melee_runtime.active(): arena._update_melee_attack(false, 1.0 / 120.0, true)
+	arena._update_melee_attack(false, float(arena.melee_runtime.controller.phase_duration) * 0.62, true)
 	var cast_geometry := arena._soft_weapon_geometry(Vector2(250, 410), 0.0)
 	var idle_contact := Vector2(idle_geometry.get("contact", Vector2.ZERO))
 	var cast_contact := Vector2(cast_geometry.get("contact", Vector2.ZERO))
@@ -526,13 +520,16 @@ func _test_retreating_attack_aim() -> Variant:
 
 func _test_close_melee_sweep() -> Variant:
 	var entry := _mechanism_weapon_entry()
-	if not bool(entry.get("ok", false)):
-		return entry
+	if not bool(entry.get("ok", false)): return entry
 	var arena := ARENA.new() as GameplayArena
-	arena.blueprint = entry.get("blueprint") as WeaponBlueprint
-	var crossed_axis := arena._melee_axis_contains(Vector2(-3.0, 18.0), arena._melee_axis_reach())
+	arena.start_stage("training", entry.blueprint, entry.asset)
+	arena._update_melee_attack(true, 0.0)
+	var no_idle_overlap_damage := not arena._melee_axis_contains(Vector2(-3.0, 18.0), arena._melee_axis_reach())
+	while not arena.melee_runtime.active(): arena._update_melee_attack(false, 1.0 / 120.0)
+	var contacts: PackedVector2Array = arena.melee_frame.get("contacts", PackedVector2Array())
+	var visible_contact := not contacts.is_empty() and arena._melee_frame_contains(contacts[0], 0.1)
 	arena.free()
-	return true if crossed_axis else "CLOSE_MELEE_SWEEP_MISSED_CROSSED_AXIS"
+	return true if no_idle_overlap_damage and visible_contact else "MELEE_CONTACT_PIXEL_CONTRACT_FAILED"
 
 
 func _test_enemy_pressure_curve() -> Variant:
@@ -570,24 +567,30 @@ func _test_enemy_pressure_curve() -> Variant:
 
 func _test_general_melee_target_interaction() -> Variant:
 	var entry := _mechanism_weapon_entry()
-	if not bool(entry.get("ok", false)):
-		return entry
+	if not bool(entry.get("ok", false)): return entry
 	var arena := ARENA.new() as GameplayArena
-	arena.start_stage(
-		"training",
-		entry.get("blueprint") as WeaponBlueprint,
-		entry.get("asset") as WeaponVisualAsset
-	)
+	arena.start_stage("training", entry.blueprint, entry.asset)
 	var enemy := arena.enemies[0]
-	enemy["pos"] = arena.player_position + Vector2(72.0, 0.0)
+	enemy["pos"] = arena.player_position + Vector2(600, 0)
+	for attack: int in range(3):
+		arena._update_melee_attack(true, 0.0)
+		while not arena.melee_runtime.active(): arena._update_melee_attack(false, 1.0 / 120.0)
+		if attack < 2:
+			while arena.melee_runtime.busy(): arena._update_melee_attack(false, 1.0 / 120.0)
+	# Exercise a real drawn contact on the third primitive, which owns hook.
+	arena._update_melee_attack(false, float(arena.melee_runtime.controller.phase_duration) * 0.62)
+	var points: PackedVector2Array = arena.melee_frame.get("contacts", PackedVector2Array())
+	if points.is_empty():
+		arena.free()
+		return "COMPILED_SOFT_CONTACT_MISSING"
+	enemy["pos"] = points[-1]
 	var before := Vector2(enemy["pos"])
-	arena._update_melee_attack(true, 0.0)
-	arena._update_melee_attack(false, 0.45)
+	arena._resolve_compiled_melee_hits()
 	var outcome := enemy.get("last_target_interaction", {}) as Dictionary
 	var moved := Vector2(enemy["pos"])
 	var ok := bool(outcome.get("ok", false)) and str(outcome.get("primary_reaction", "")) in ["hook_pull", "entangle", "stagger"]
-	ok = ok and moved.x < before.x and float(enemy.get("interaction_status_time", 0.0)) > 0.0
-	var result: Variant = true if ok else {"outcome": outcome, "before": before, "after": moved, "strategy": arena.weapon_strategy_profile}
+	ok = ok and moved.distance_to(arena.player_position) < before.distance_to(arena.player_position) and float(enemy.get("interaction_status_time", 0.0)) > 0.0
+	var result: Variant = true if ok else {"outcome": outcome, "before": before, "after": moved}
 	arena.free()
 	return result
 
@@ -599,7 +602,13 @@ func _test_generated_armory_reward() -> Variant:
 	var reward_blueprint := reward.get("blueprint") as WeaponBlueprint
 	reward_blueprint.display_name = "AI 自动奖励冲锋枪"
 	reward["display_name"] = reward_blueprint.display_name
-	loop.pending_armory_reward = reward
+	reward["accepted_visual"] = true
+	reward["visual_evidence"] = {"source": "OFFLINE_TEST_ONLY"}
+	var staged: Dictionary = loop.armory.stage_reward(reward)
+	if not bool(staged.get("ok", false)):
+		loop.queue_free()
+		return staged
+	loop.pending_armory_reward = staged.entry
 	loop._begin_run(_weapon_entry())
 	for index: int in range(3):
 		loop._process(2.0)
@@ -609,7 +618,7 @@ func _test_generated_armory_reward() -> Variant:
 		)
 	var offered := (
 		loop.state == "completed"
-		and loop.primary_button.text == "装备新枪再战"
+		and loop.primary_button.text == "装备奖励物品再战"
 		and loop.message_body.text.contains("AI 自动奖励冲锋枪")
 	)
 	if not offered:

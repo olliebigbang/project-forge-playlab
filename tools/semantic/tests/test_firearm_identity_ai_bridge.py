@@ -146,6 +146,17 @@ class FirearmIdentityAIBridgeTests(unittest.TestCase):
         with self.assertRaisesRegex(bridge.FirearmIdentityBridgeError, "CONVENTIONAL_CONFLICT"):
             bridge.validate_response("AK-47", value)
 
+    def test_stockless_layout_keeps_independent_hand_support(self) -> None:
+        # Anonymous structure, not an exception for a gun name.
+        value = rifle_payload("anonymous stockless compact structure")
+        value["declaration"].update(firearm_family="submachine_gun", stock_structure="none", support_mode="two_hand_free", barrel_length="short")
+        result = bridge.validate_response(value["requested_identity"], value)
+        self.assertEqual(result["declaration"]["stock_structure"], "none")
+        self.assertEqual(result["declaration"]["support_mode"], "two_hand_free")
+        value["declaration"]["support_mode"] = "two_hand_shouldered"
+        with self.assertRaisesRegex(bridge.FirearmIdentityBridgeError, "CONVENTIONAL_CONFLICT"):
+            bridge.validate_response(value["requested_identity"], value)
+
     def test_feed_system_capacity_relationships_fail_closed(self) -> None:
         cases = (
             ("firearm_ai_mossberg_500_response_v4.json", "standard", "INTERNAL_TUBE_CAPACITY"),

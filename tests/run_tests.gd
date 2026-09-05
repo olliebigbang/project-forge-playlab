@@ -69,7 +69,7 @@ func _initialize() -> void:
 
 func _run(test_name: String, test_callable: Callable) -> void:
 	var result: Variant = test_callable.call()
-	if result == true:
+	if result is bool and result:
 		passed += 1
 		print("PASS | %s" % test_name)
 	else:
@@ -465,15 +465,16 @@ func _test_open_identity_arena_contract() -> Variant:
 		if source.to_lower().contains(identity_mapping):
 			return "object-specific runtime mapping leaked: %s" % identity_mapping
 	for required_contract: String in [
-		'blueprint.delivery == "whole_object_return"',
-		'blueprint.delivery == "whole_object_strike"',
+		'super._update_melee_attack',
+		'super._draw_player_and_weapon',
 		'match blueprint.effect_type',
 		'draw_texture_rect(asset.texture'
 	]:
 		if not source.contains(required_contract):
 			return "training runtime does not consume contract: %s" % required_contract
-	if source.count("draw_texture_rect(asset.texture") < 2:
-		return "held and returning presentations do not share the delivered Sprite texture"
+	var parent_source := FileAccess.get_file_as_string("res://scripts/systems/gameplay_arena.gd")
+	if not parent_source.contains('blueprint.delivery == "whole_object_return"') or not parent_source.contains("draw_texture_rect(asset.texture") or not parent_source.contains("_build_melee_frame"):
+		return "shared held/returning renderer is missing the delivered source pixels"
 	if source.contains("fixed_blueprint(") or source.contains("ProceduralWeaponRenderer"):
 		return "training runtime substitutes a fixed/procedural identity"
 	var arena := OPEN_IDENTITY_TRAINING_ARENA.new() as OpenIdentityTrainingArena
@@ -529,14 +530,20 @@ func _melee_health_after_hit(effect_type: String) -> float:
 	blueprint.behavior_family = "heavy_melee"
 	blueprint.delivery = "whole_object_strike"
 	blueprint.effect_type = effect_type
+	var axes := preload("res://scripts/combat_feel/object_affordance_profile.gd").new()
+	axes.evidence_parts = PackedStringArray(["controlled legacy effect test"])
+	blueprint.affordance = axes.to_dict()
 	arena.blueprint = blueprint
 	arena.asset = _minimal_visual_asset()
 	arena.player_position = Vector2(100, 100)
 	arena.player_health = 50.0
 	arena.facing = 1.0
-	arena.melee_timer = 0.20
 	arena.enemies = [_test_enemy(1, Vector2(150, 100), 100.0)]
-	arena._update_melee_attack(false, 0.01)
+	arena._update_melee_attack(true, 0.0)
+	while not arena.melee_runtime.active(): arena._update_melee_attack(false, 1.0 / 120.0)
+	var points: PackedVector2Array = arena.melee_frame.get("contacts", PackedVector2Array())
+	if not points.is_empty(): arena.enemies[0]["pos"] = points[-1]
+	arena._resolve_compiled_melee_hits()
 	var health := arena.player_health
 	arena.free()
 	return health
@@ -563,6 +570,11 @@ func _projectile_burn_after_hit(effect_type: String) -> float:
 func _minimal_visual_asset() -> WeaponVisualAsset:
 	var asset := WeaponVisualAsset.new()
 	asset.canvas_size = Vector2i(96, 96)
+	asset.source_image = Image.create(96, 96, false, Image.FORMAT_RGBA8)
+	asset.source_image.fill(Color.TRANSPARENT)
+	asset.source_image.fill_rect(Rect2i(16, 44, 66, 8), Color.WHITE)
+	asset.texture = ImageTexture.create_from_image(asset.source_image)
+	asset.opaque_bounds = asset.source_image.get_used_rect()
 	asset.grip_primary = Vector2(20, 48)
 	asset.grip_secondary = Vector2(32, 48)
 	asset.muzzle = Vector2(70, 48)

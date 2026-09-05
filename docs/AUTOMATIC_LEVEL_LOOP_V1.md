@@ -1,5 +1,7 @@
 # Automatic Level Loop V2
 
+> 阶段文档：下文保留接入通用物品时的关卡合同；其中“直接打开只显示枪械选择器”等旧入口说明已被统一武器库取代。当前玩家流程和保存/奖励规则见 [通用武器系统 V1](COMPLETE_WEAPON_SYSTEM_V1.md)，最新验证见 [PROJECT_STATUS.md](../PROJECT_STATUS.md)。本页的历史测试入口不替代当前隔离总回归。
+
 This slice turns the enemy-mechanism work into a short playable level without asking the player to design an enemy.
 
 ## Player flow

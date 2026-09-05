@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-named-object-identity-resolution-v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "requested_identity", "status", "physical_class_zh", "body_span", "confidence", "identity_evidence"],
+  "properties": {
+    "schema": {"type": "string", "const": "forge-named-object-identity-resolution-v2"},
+    "requested_identity": {"type": "string", "minLength": 1, "maxLength": 160},
+    "status": {"type": "string", "enum": ["resolved", "unknown"]},
+    "physical_class_zh": {"type": "string", "maxLength": 48},
+    "body_span": {"type": "string", "enum": ["unknown", "short", "medium", "long"]},
+    "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+    "identity_evidence": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {"type": "string", "minLength": 1, "maxLength": 180}
+    }
+  }
+}

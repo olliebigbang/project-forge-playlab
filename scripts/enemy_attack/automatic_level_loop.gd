@@ -7,6 +7,7 @@ const AUTOMATIC_ARMORY := preload("res://scripts/combat_feel/automatic_armory_di
 const DIRECTOR := preload("res://scripts/enemy_attack/automatic_encounter_director.gd")
 const RANGED_AXIS_RESOLVER := preload("res://scripts/combat_feel/ranged_mechanism_axis_resolver.gd")
 const WEAPON_STRATEGY := preload("res://scripts/combat_feel/weapon_strategy_compiler.gd")
+const CAPABILITIES := preload("res://scripts/combat_feel/weapon_capability_catalog.gd")
 
 var arena: GameplayArena
 var armory: RefCounted = ARMORY.new()
@@ -20,6 +21,7 @@ var intermission_seconds := 0.0
 var automatic_armory_attempted := false
 var automatic_armory_message := ""
 var pending_armory_reward: Dictionary = {}
+var reward_claim_ready := false
 var run_health := 100.0
 var encounter_start_health := 100.0
 var run_metrics := {
@@ -56,10 +58,15 @@ func _ready() -> void:
 		_show_fatal_error("离线敌人蓝图没有通过机制检查：%s" % str(configured.get("error", "未知错误")))
 		return
 	armory_entries = armory.load_entries()
+	pending_armory_reward = armory.pending_reward()
 	if _take_mechanism_handoff():
 		_begin_run(equipped_entry)
 		return
 	_show_weapon_picker()
+
+
+func _exit_tree() -> void:
+	automatic_armory.reset()
 
 
 func _process(delta: float) -> void:
@@ -94,22 +101,14 @@ func _take_mechanism_handoff() -> bool:
 	if payload.is_empty():
 		return false
 	var blueprint := payload.get("blueprint") as WeaponBlueprint
-	equipped_entry = {
-		"kind": str(payload.get("kind", "")),
-		"blueprint": blueprint,
-		"asset": payload.get("asset"),
-		"ranged_runtime_profile": (payload.get("ranged_runtime_profile", {}) as Dictionary).duplicate(true),
-		"affordance_profile": payload.get("affordance_profile"),
-		"display_name": blueprint.display_name if blueprint != null else "",
-		"source_kind": "runtime_mechanism_handoff",
-	}
+	equipped_entry = payload.duplicate(true)
+	equipped_entry["display_name"] = blueprint.display_name if blueprint != null else ""
 	return true
 
 
 func _show_weapon_picker() -> void:
 	arena.stop()
 	arena.visible = false
-	_start_automatic_armory_expansion()
 	state = "weapon_select"
 	weapon_panel.visible = true
 	combat_controls.visible = false
@@ -121,7 +120,7 @@ func _show_weapon_picker() -> void:
 
 
 func _start_automatic_armory_expansion() -> void:
-	if automatic_armory_attempted:
+	if automatic_armory_attempted or not pending_armory_reward.is_empty():
 		return
 	automatic_armory_attempted = true
 	var python_path := _argument_value(
@@ -129,13 +128,13 @@ func _start_automatic_armory_expansion() -> void:
 	)
 	var started: Dictionary = automatic_armory.start(armory_entries, python_path)
 	if bool(started.get("ok", false)) and str(started.get("status", "")) == "running":
-		automatic_armory_message = "AI 正在后台补充“%s”；战斗和选枪不会等它。" % str(
+		automatic_armory_message = "AI 正在后台补充“%s”能力的物品；战斗不会等它。" % str(
 			started.get("target_role_label_zh", "新机制武器")
 		)
 	elif bool(started.get("ok", false)):
-		automatic_armory_message = "当前军械库已经覆盖六种主要枪械机制，本次不调用 AI 造枪。"
+		automatic_armory_message = "当前武器库已覆盖六种主要能力，本次不额外调用 AI。"
 	else:
-		automatic_armory_message = "后台造枪本次未启动；现有武器和关卡仍可正常使用。"
+		automatic_armory_message = "后台造物本次未启动；现有武器和关卡仍可正常使用。"
 
 
 func _poll_automatic_armory() -> void:
@@ -146,15 +145,23 @@ func _poll_automatic_armory() -> void:
 	if result_status in ["idle", "running"]:
 		return
 	if result_status == "success" and result.get("entry", {}) is Dictionary:
-		pending_armory_reward = (result.get("entry", {}) as Dictionary).duplicate(true)
-		automatic_armory_message = "AI 新枪“%s”已经通过图片和机制审核，完成三战即可领取。" % str(
+		var stored: Dictionary = armory.stage_reward(result.get("entry", {}) as Dictionary)
+		if not bool(stored.get("ok", false)):
+			automatic_armory_message = "新物品未能完整保存，本轮不发放；现有武器不受影响。"
+			_refresh_armory_message()
+			return
+		pending_armory_reward = (stored.get("entry", {}) as Dictionary).duplicate(true)
+		automatic_armory_message = "新物品“%s”已经通过结构与机制检查并保存，完成三战即可领取。" % str(
 			result.get("candidate_identity", "新武器")
 		)
 		armory.invalidate_cache()
 		if state == "completed":
-			_show_completion_reward()
+			var unlocked: Dictionary = armory.record_run(equipped_entry, true, run_metrics)
+			reward_claim_ready = bool(unlocked.get("ok", false))
+			if reward_claim_ready:
+				_show_completion_reward()
 	elif result_status == "failed":
-		automatic_armory_message = "后台新枪没有通过自动审核，已安全放弃；不会影响当前关卡。"
+		automatic_armory_message = "后台物品没有通过自动检查，本轮已停止尝试；不会影响当前关卡。"
 	_refresh_armory_message()
 
 
@@ -163,10 +170,12 @@ func _refresh_armory_message() -> void:
 		return
 	var base := ""
 	if armory_entries.is_empty():
-		base = "本地武器库里还没有通过图片和机制检查的枪。请先在 Forge 生成一把枪，再回来开战。"
+		base = "武器库还是空的。点“描述新物品”，输入任何想尝试的东西；AI 会判断结构和攻击方式。"
 	else:
 		base = "只选你的武器。敌人、出现顺序和攻击方式全部由系统用离线验收蓝图安排。"
 	armory_message.text = base
+	if not (armory.last_load_diagnostics.get("library_rejections", []) as Array).is_empty():
+		armory_message.text += "\n部分存档检查未通过，已单独跳过；没有替换成默认武器。"
 	if not automatic_armory_message.is_empty():
 		armory_message.text += "\n" + automatic_armory_message
 
@@ -177,6 +186,16 @@ func _begin_run(entry: Dictionary) -> void:
 		_show_fatal_error("这件武器的机制交接不完整：%s" % str(started.get("error", "未知错误")))
 		return
 	equipped_entry = entry.duplicate(true)
+	reward_claim_ready = false
+	if bool(equipped_entry.get("accepted_visual", false)):
+		var saved: Dictionary = armory.remember_equipped(equipped_entry)
+		if not bool(saved.get("ok", false)):
+			_show_fatal_error("武器未能完整保存，尚未开始本局：%s" % str(saved.get("error", "保存失败")))
+			return
+		pending_armory_reward = armory.pending_reward()
+	if pending_armory_reward.is_empty() and automatic_armory.state not in ["candidate", "generating"]:
+		automatic_armory_attempted = false
+	_start_automatic_armory_expansion()
 	run_health = 100.0
 	run_metrics = {
 		"damage_taken": 0.0,
@@ -256,13 +275,17 @@ func _finish_success() -> void:
 	combat_controls.visible = false
 	message_panel.visible = true
 	message_title.text = "三战完成"
+	var saved: Dictionary = armory.record_run(equipped_entry, true, run_metrics)
 	message_body.text = "你带着 %s 击败了 %d 个敌人，剩余生命 %d。\n敌人的身份和攻击方式全程由离线机制蓝图自动安排。" % [
 		_weapon_display_name(),
 		int(run_metrics.get("defeated", 0)),
 		roundi(run_health),
 	]
-	if not pending_armory_reward.is_empty():
+	reward_claim_ready = bool(saved.get("ok", false)) and not pending_armory_reward.is_empty()
+	if reward_claim_ready:
 		_show_completion_reward()
+	if not bool(saved.get("ok", false)):
+		message_body.text += "\n结算暂未保存；已有武器存档没有被覆盖。"
 	_configure_result_buttons()
 	var action_total := int(run_metrics.get("shots_fired", 0)) if _is_firearm_equipped() else int(run_metrics.get("attacks_used", 0))
 	var action_label := "总射击" if _is_firearm_equipped() else "总攻击"
@@ -272,13 +295,13 @@ func _finish_success() -> void:
 
 
 func _show_completion_reward() -> void:
-	if pending_armory_reward.is_empty() or state != "completed":
+	if pending_armory_reward.is_empty() or state != "completed" or not reward_claim_ready:
 		return
 	var reward_blueprint := pending_armory_reward.get("blueprint") as WeaponBlueprint
 	var reward_name := reward_blueprint.display_name if reward_blueprint != null else str(
-		pending_armory_reward.get("display_name", "AI 新枪")
+		pending_armory_reward.get("display_name", "AI 新物品")
 	)
-	message_body.text = "三战奖励已经解锁：%s。\n它经过 AI 识别、双重图片审核和 Godot 机制检查；你可以选择装备，不会强制替换当前武器。" % reward_name
+	message_body.text = "三战奖励已保存并解锁：%s。\n%s。\n可以装备它再战，也可以在武器库继续使用原来的物品。" % [reward_name, CAPABILITIES.summary(pending_armory_reward)]
 	_configure_result_buttons()
 
 
@@ -294,11 +317,14 @@ func _finish_failure(reason: String) -> void:
 	combat_controls.visible = false
 	message_panel.visible = true
 	message_title.text = "本次挑战失败"
+	var saved: Dictionary = armory.record_run(equipped_entry, false, run_metrics)
 	message_body.text = "%s。已经完成 %d / %d 场。\n武器和敌人编排不变，可以直接重试。" % [
 		reason,
 		int((director.snapshot() as Dictionary).get("completed_count", 0)),
 		int((director.snapshot() as Dictionary).get("encounter_count", 0)),
 	]
+	if not bool(saved.get("ok", false)):
+		message_body.text += "\n本次结算未能保存，原有武器存档仍保留。"
 	_configure_result_buttons()
 	status_label.text = "挑战结束\nR 重新开始　B 换武器　Esc 返回 Forge"
 
@@ -321,18 +347,19 @@ func _show_fatal_error(message: String) -> void:
 
 func _configure_result_buttons() -> void:
 	primary_button.visible = true
-	primary_button.text = "装备新枪再战" if not pending_armory_reward.is_empty() else "再来一次"
+	primary_button.text = "装备奖励物品再战" if reward_claim_ready else "再来一次"
 	secondary_button.visible = true
-	secondary_button.text = "查看全部武器" if not pending_armory_reward.is_empty() else "更换武器"
+	secondary_button.text = "查看全部武器" if reward_claim_ready else "更换武器"
 
 
 func _on_primary_result_pressed() -> void:
 	if state not in ["completed", "failed"]:
 		return
-	if state == "completed" and not pending_armory_reward.is_empty():
+	if state == "completed" and reward_claim_ready:
 		var reward := pending_armory_reward.duplicate(true)
-		pending_armory_reward.clear()
 		_begin_run(reward)
+		if state == "between_encounters":
+			pending_armory_reward.clear()
 		return
 	_begin_run(equipped_entry)
 
@@ -406,7 +433,7 @@ func _rebuild_weapon_cards() -> void:
 		var blueprint := entry.get("blueprint") as WeaponBlueprint
 		var asset := entry.get("asset") as WeaponVisualAsset
 		var runtime := entry.get("ranged_runtime_profile", {}) as Dictionary
-		if blueprint == null or asset == null or not bool(runtime.get("ok", false)):
+		if blueprint == null or asset == null:
 			continue
 		var card := VBoxContainer.new()
 		card.custom_minimum_size = Vector2(220, 300)
@@ -420,12 +447,14 @@ func _rebuild_weapon_cards() -> void:
 		preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		card.add_child(preview)
 		var name_label := Label.new()
-		name_label.text = blueprint.display_name
+		name_label.text = blueprint.display_name + (" · 上次使用" if bool(entry.get("last_equipped", false)) else "")
+		name_label.custom_minimum_size = Vector2(210, 42)
+		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		name_label.add_theme_font_size_override("font_size", 19)
 		card.add_child(name_label)
 		var mechanism := Label.new()
-		mechanism.text = "%s　%s\n%s　%s\n伤害 %.0f　后坐 %.0f　容量 %d" % [
+		mechanism.text = ("%s　%s\n%s　%s\n伤害 %.0f　后坐 %.0f　容量 %d" % [
 			_fire_mode_label(runtime),
 			_fire_timing_label(runtime),
 			_shot_pattern_label(runtime),
@@ -433,7 +462,9 @@ func _rebuild_weapon_cards() -> void:
 			float(runtime.get("projectile_damage", 0.0)),
 			float(runtime.get("recoil_pixels", 0.0)),
 			int(runtime.get("magazine_size", 0)),
-		]
+		]) if bool(runtime.get("ok", false)) else _general_weapon_card_text(entry)
+		mechanism.custom_minimum_size = Vector2(210, 84)
+		mechanism.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		mechanism.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		mechanism.add_theme_font_size_override("font_size", 14)
 		mechanism.modulate = Color("bae6fd")
@@ -445,6 +476,15 @@ func _rebuild_weapon_cards() -> void:
 		var selected_index := index
 		select.pressed.connect(func() -> void: _select_armory_weapon(selected_index))
 		card.add_child(select)
+
+
+func _general_weapon_card_text(entry: Dictionary) -> String:
+	var blueprint := entry.get("blueprint") as WeaponBlueprint
+	var axes := blueprint.affordance
+	var mechanism_axes := preload("res://scripts/combat_feel/mechanism_axis_resolver.gd")
+	var state_label := str(mechanism_axes.OPTION_LABELS_ZH["state_topology"].get(str(axes.get("state_topology", "fixed")), "结构固定"))
+	var output_label := str(mechanism_axes.OPTION_LABELS_ZH["functional_output"].get(str(axes.get("functional_output", "contact_only")), "接触打击"))
+	return "%s\n%s\n%s" % [CAPABILITIES.summary(entry), state_label, output_label]
 
 
 func _select_armory_weapon(index: int) -> void:
@@ -469,6 +509,11 @@ func _weapon_runtime_status() -> String:
 			arena.ammo_in_magazine,
 			int(arena.ranged_runtime_profile.get("magazine_size", 0)),
 		]
+	if arena.melee_runtime.profile != null:
+		var runtime: RefCounted = arena.melee_runtime
+		if not runtime.busy(): return "点按连击 · 长按能力"
+		var phase := str({"startup": "蓄势", "active": "出招", "recovery": "收招"}.get(str(runtime.controller.phase), "待机"))
+		return "%s · %s" % ["能力" if str(runtime.controller.attack_kind) == "charge" else "连击 %d/3" % int(runtime.controller.combo_index), phase]
 	var profile: Variant = equipped_entry.get("affordance_profile")
 	if profile == null:
 		return "机制轴已接管"
@@ -582,6 +627,14 @@ func _build_ui() -> void:
 	_style_pixel_button(refresh)
 	refresh.pressed.connect(_show_weapon_picker)
 	weapon_panel.add_child(refresh)
+	var create := Button.new()
+	create.text = "描述新物品"
+	create.position = Vector2(750, 174)
+	create.size = Vector2(194, 46)
+	create.add_theme_font_override("font", font)
+	_style_pixel_button(create)
+	create.pressed.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/open_identity_spike.tscn"))
+	weapon_panel.add_child(create)
 	var scroll := ScrollContainer.new()
 	scroll.position = Vector2(104, 286)
 	scroll.size = Vector2(1070, 338)

@@ -200,7 +200,7 @@ class RuntimeIsolationAndModelTests(unittest.TestCase):
         runtime = Path(profile["runtime_root"]).resolve()
         legacy = {
             Path("C:/AI/ComfyUI").resolve(),
-            Path("C:/Users/Eddie L/Documents/ai漫剧/tools/ComfyUI").resolve(),
+            Path("C:/Users/example/Documents/other-project/tools/ComfyUI").resolve(),
         }
         self.assertNotIn(runtime, legacy)
         self.assertEqual(runtime.name, "ComfyUI-ForgeFlux2")

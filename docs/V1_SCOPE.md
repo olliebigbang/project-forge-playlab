@@ -1,5 +1,7 @@
 # V1 Scope
 
+> 历史记录：本文保留早期 Mock、三类动作和双房间实验的范围，其中 `CONFIRMED` 仅指当时阶段。它不是当前项目总范围；现行方向见 [GAME_DESIGN.md](../GAME_DESIGN.md)，实现与验收见 [PROJECT_STATUS.md](../PROJECT_STATUS.md)。
+
 Status legend: `CONFIRMED`, `ASSUMPTION`, `TO VALIDATE`, `TBD`.
 
 ## Product hypothesis
